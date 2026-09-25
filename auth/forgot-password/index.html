@@ -50,6 +50,9 @@
         await sendPasswordResetEmail(auth, email);
         msg.style.color = "#00d1b2";
         msg.textContent = "Check your email for the password reset link!";
+        document.getElementById("email").value = "";
+        document.getElementById("email").blur();
+        
       } catch (err) {
         msg.style.color = "#f00";
         
