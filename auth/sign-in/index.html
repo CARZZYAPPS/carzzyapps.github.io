@@ -44,6 +44,9 @@
       try {
         await signInWithEmailAndPassword(auth, document.getElementById("email").value, document.getElementById("password").value);
         msg.style.color = "#00d1b2"; msg.textContent = "Logged in successfully!";
+        setTimeout(() => {
+          window.history.back();
+        }, 500);
       } catch {
         msg.style.color = "#f00"; msg.textContent = "Incorrect email or password";
       }
