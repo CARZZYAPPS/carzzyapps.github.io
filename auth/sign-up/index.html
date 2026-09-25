@@ -67,7 +67,9 @@
         await updateProfile(cred.user, { displayName: username });
         await setDoc(usernameRef, { uid: cred.user.uid });
         msg.style.color = "#00d1b2"; msg.textContent = "Account registered successfully!";
-        window.history.back();
+        setTimeout(() => {
+          window.history.back();
+        }, 1000);
       } catch (err) {
         msg.style.color = "#f00"; msg.textContent = err.message;
       }
