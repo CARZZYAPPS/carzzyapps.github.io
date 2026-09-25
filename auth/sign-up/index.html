@@ -71,7 +71,32 @@
           window.history.back();
         }, 1000);
       } catch (err) {
-        msg.style.color = "#f00"; msg.textContent = err.message;
+        msg.style.color = "#f00";
+  
+        let friendlyMessage = "An unexpected error occurred. Please try again.";
+
+        // Map Firebase error codes to custom messages
+        switch (err.code) {
+          case "auth/email-already-in-use":
+            friendlyMessage = "This email address is already registered. Try logging in instead.";
+            break;
+          case "auth/invalid-email":
+            friendlyMessage = "Please enter a valid email address.";
+            break;
+          case "auth/weak-password":
+            friendlyMessage = "Your password is too weak. It must be at least 6 characters.";
+            break;
+          case "auth/network-request-failed":
+            friendlyMessage = "Network error. Please check your internet connection.";
+            break;
+          case "permission-denied":
+            friendlyMessage = "Username registration failed due to database permissions.";
+            break;
+          default:
+          friendlyMessage = err.message;
+        }
+
+        msg.textContent = friendlyMessage;
       }
     });
   </script>
