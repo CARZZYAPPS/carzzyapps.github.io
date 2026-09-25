@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sign Up | Carzzy Apps</title>
+  <style>
+    body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
+    .card{background:#121212;border:1px solid #00d1b2;padding:30px;border-radius:12px;width:100%;max-width:350px;box-sizing:border-box;margin:100px auto 0 auto;}
+    h2 {font-size: 32px; text-align: center;}
+    label{display:block;margin-top:20px;font-size:15px}
+    input,button{width:100%;padding:10px;margin-top:5px;border-radius:6px;box-sizing:border-box}
+    input{background:#1a1a1a;border:1px solid #333;color:#fff}
+    button{background:#00d1b2;border:none;color:#0a0a0a;font-weight:bold;cursor:pointer;margin-top:25px}
+    .msg{text-align:center;margin-top:15px}
+  </style>
+</head>
+<body>
+  <script src="/nav-bar.js"></script>
+  <div class="card">
+    <h2>Sign Up</h2>
+    <form id="signup-form">
+      <label for="username">Username</label>
+      <input type="text" id="username" required placeholder="carzzy_driver">
+
+      <label for="email">Email Address</label>
+      <input type="email" id="email" required placeholder="you@example.com">
+
+      <label for="password">Password</label>
+      <input type="password" id="password" required placeholder="••••••••">
+
+      <button type="submit">Sign Up</button>
+    </form>
+    <div id="msg" class="msg"></div>
+    <div style="text-align:center; margin-top:15px;">Already have an account?<a href="/auth/sign-in" style="color:#00d1b2">Sign In</a></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
+    const auth = getAuth(app); const db = getFirestore(app);
+
+    document.getElementById("signup-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("msg");
+      const username = document.getElementById("username").value.trim();
+      try {
+        const usernameRef = doc(db, "usernames", username.toLowerCase());
+        const snap = await getDoc(usernameRef);
+        if (snap.exists()) { msg.style.color = "#f00"; msg.textContent = "Username is already taken!"; return; }
+
+        const cred = await createUserWithEmailAndPassword(auth, document.getElementById("email").value, document.getElementById("password").value);
+        await updateProfile(cred.user, { displayName: username });
+        await setDoc(usernameRef, { uid: cred.user.uid });
+        msg.style.color = "#00d1b2"; msg.textContent = "Account registered successfully!";
+      } catch (err) {
+        msg.style.color = "#f00"; msg.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
