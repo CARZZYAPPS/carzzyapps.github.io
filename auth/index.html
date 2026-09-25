@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome - Carzzy Apps</title>
+  <style>
+    body { background-color: #0a0a0a; color: #00d1b2; font-family: "Segoe UI", sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .auth-card { background-color: #121212; border: 1px solid #00d1b2; padding: 40px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 209, 178, 0.15); width: 100%; max-width: 380px; box-sizing: border-box; }
+    h2 { text-align: center; margin-bottom: 24px; }
+    .input-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; }
+    input { width: 100%; padding: 12px; background-color: #1a1a1a; border: 1px solid #333; border-radius: 6px; color: #fff; box-sizing: border-box; }
+    input:focus { outline: none; border-color: #00d1b2; }
+    button { width: 100%; padding: 14px; background-color: #00d1b2; border: none; border-radius: 6px; color: #0a0a0a; font-weight: bold; cursor: pointer; }
+    button:hover { background-color: #00b89c; }
+    .status-msg { text-align: center; margin-top: 15px; min-height: 20px; }
+    .toggle-msg { text-align: center; margin-top: 20px; font-size: 14px; color: #888; }
+    .toggle-msg span { color: #00d1b2; cursor: pointer; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <script src="/nav-bar.js"></script>
+  <div class="auth-card">
+    <h2 id="form-title">Login</h2>
+    <form id="auth-form">
+      <div class="input-group" id="username-group" style="display: none;">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="carzzy_driver">
+      </div>
+      <div class="input-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" required placeholder="you@example.com">
+      </div>
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required placeholder="••••••••">
+      </div>
+      <div class="input-group" id="confirm-password-group" style="display: none;">
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" id="confirm-password" placeholder="••••••••">
+      </div>
+      <button type="submit" id="submit-btn">Sign In</button>
+    </form>
+    
+    <div id="status-message" class="status-msg"></div>
+    <div class="toggle-msg" id="toggle-container">
+      Don't have an account? <span id="switch-mode">Sign Up</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", 
+      authDomain: "carzzy-apps.firebaseapp.com",
+      projectId: "carzzy-apps"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let isLoginMode = true;
+    const formTitle = document.getElementById("form-title");
+    const submitBtn = document.getElementById("submit-btn");
+    const switchMode = document.getElementById("switch-mode");
+    const toggleContainer = document.getElementById("toggle-container");
+    const authForm = document.getElementById("auth-form");
+    const usernameGroup = document.getElementById("username-group");
+    const usernameInput = document.getElementById("username");
+    const confirmPasswordGroup = document.getElementById("confirm-password-group");
+    const confirmPasswordInput = document.getElementById("confirm-password");
+    const statusMessage = document.getElementById("status-message");
+
+    function displayError(msg) { statusMessage.style.color = "#f00"; statusMessage.textContent = msg; }
+    function displaySuccess(msg) { statusMessage.style.color = "#00d1b2"; statusMessage.textContent = msg; }
+
+    switchMode.addEventListener("click", () => {
+      isLoginMode = !isLoginMode;
+      statusMessage.textContent = "";
+      if (isLoginMode) {
+        formTitle.textContent = "Login";
+        submitBtn.textContent = "Sign In";
+        usernameGroup.style.display = "none";
+        usernameInput.removeAttribute("required");
+        confirmPasswordGroup.style.display = "none";
+        confirmPasswordInput.removeAttribute("required");
+        toggleContainer.innerHTML = 'Don\'t have an account? <span id="switch-mode">Sign Up</span>';
+      } else {
+        formTitle.textContent = "Sign Up";
+        submitBtn.textContent = "Create Account";
+        usernameGroup.style.display = "block";
+        usernameInput.setAttribute("required", "true");
+        confirmPasswordGroup.style.display = "block";
+        confirmPasswordInput.setAttribute("required", "true");
+        toggleContainer.innerHTML = 'Already have an account? <span id="switch-mode">Login</span>';
+      }
+      document.getElementById("switch-mode").addEventListener("click", () => switchMode.click());
+    });
+
+    authForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusMessage.textContent = "";
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      if (!isLoginMode) {
+        const username = usernameInput.value.trim();
+        const confirmPassword = confirmPasswordInput.value;
+
+        if (password !== confirmPassword) { return displayError("Passwords do not match!"); }
+
+        try {
+          // Check if username already exists in Firestore
+          const usernameRef = doc(db, "usernames", username.toLowerCase());
+          const usernameSnap = await getDoc(usernameRef);
+          if (usernameSnap.exists()) { return displayError("Username is already taken!"); }
+
+          // Create User
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          
+          // Update Display Name
+          await updateProfile(userCredential.user, { displayName: username });
+
+          // Store unique username in Firestore
+          await setDoc(usernameRef, { uid: userCredential.user.uid });
+
+          displaySuccess("Account registered successfully!");
+        } catch (error) {
+          displayError(error.message);
+        }
+      } else {
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          displaySuccess("Logged in successfully!");
+        } catch (error) {
+          displayError("Incorrect email or password");
+        }
+      }
+    });
+  </script>
+</body>
+</html>
