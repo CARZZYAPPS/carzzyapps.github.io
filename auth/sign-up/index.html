@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up | Carzzy Apps</title>
   <style>
     body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
@@ -53,49 +54,46 @@
       const confirmPassword = document.getElementById("confirm-password").value;
 
       if (password !== confirmPassword) {
-        msg.style.color = "#f00";
-        msg.textContent = "Passwords do not match!";
-        return;
+        msg.style.color = "#f00"; msg.textContent = "Passwords do not match!"; return;
       }
 
+      let cred = null;
       try {
         const usernameRef = doc(db, "usernames", username.toLowerCase());
         const snap = await getDoc(usernameRef);
         if (snap.exists()) { msg.style.color = "#f00"; msg.textContent = "Username is already taken!"; return; }
 
-        const cred = await createUserWithEmailAndPassword(auth, document.getElementById("email").value, password);
+        // 1. Create the Auth User
+        cred = await createUserWithEmailAndPassword(auth, document.getElementById("email").value, password);
+        
+        // 2. Set the display name in Auth
         await updateProfile(cred.user, { displayName: username });
+        
+        // 3. Save the username record in Firestore
         await setDoc(usernameRef, { uid: cred.user.uid });
+        
         msg.style.color = "#00d1b2"; msg.textContent = "Account registered successfully!";
-        setTimeout(() => {
-          window.history.back();
-        }, 1000);
+        setTimeout(() => { window.history.back(); }, 1000);
       } catch (err) {
-        msg.style.color = "#f00";
-  
-        let friendlyMessage = "An unexpected error occurred. Please try again.";
-
-        // Map Firebase error codes to custom messages
-        switch (err.code) {
-          case "auth/email-already-in-use":
-            friendlyMessage = "This email address is already registered. Try logging in instead.";
-            break;
-          case "auth/invalid-email":
-            friendlyMessage = "Please enter a valid email address.";
-            break;
-          case "auth/weak-password":
-            friendlyMessage = "Your password is too weak. It must be at least 6 characters.";
-            break;
-          case "auth/network-request-failed":
-            friendlyMessage = "Network error. Please check your internet connection.";
-            break;
-          case "permission-denied":
-            friendlyMessage = "Username registration failed due to database permissions.";
-            break;
-          default:
-          friendlyMessage = err.message;
+        // Rollback: If account was created but username write failed, delete the account
+        if (cred && cred.user) {
+          try {
+            await cred.user.delete();
+          } catch (delErr) {
+            console.error("Cleanup rollback failed:", delErr);
+          }
         }
 
+        msg.style.color = "#f00";
+        let friendlyMessage = "An unexpected error occurred. Please try again.";
+        switch (err.code) {
+          case "auth/email-already-in-use": friendlyMessage = "This email address is already registered."; break;
+          case "auth/invalid-email": friendlyMessage = "Please enter a valid email address."; break;
+          case "auth/weak-password": friendlyMessage = "Your password is too weak."; break;
+          case "auth/network-request-failed": friendlyMessage = "Network error. Check connection."; break;
+          case "permission-denied": friendlyMessage = "Username registration failed."; break;
+          default: friendlyMessage = err.message;
+        }
         msg.textContent = friendlyMessage;
       }
     });
