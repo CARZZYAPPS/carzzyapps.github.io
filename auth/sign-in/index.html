@@ -12,6 +12,25 @@
     input{background:#1a1a1a;border:1px solid #333;color:#fff}
     button{background:#00d1b2;border:none;color:#0a0a0a;font-weight:bold;cursor:pointer;margin-top:25px; font-size: 20px}
     .msg{text-align:center;margin-top:15px}
+    
+    /* Show Password styling to prevent checkbox from expanding 100% wide */
+    .show-pw-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .show-pw-container input {
+      width: auto;
+      margin: 0;
+      cursor: pointer;
+    }
+    .show-pw-container label {
+      margin: 0;
+      font-size: 14px;
+      color: #fff;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -24,6 +43,12 @@
 
       <label for="password">Password</label>
       <input type="password" id="password" required placeholder="••••••••">
+
+      <!-- Toggle Password Checkbox -->
+      <div class="show-pw-container">
+        <input type="checkbox" id="toggle-password">
+        <label for="toggle-password">Show password</label>
+      </div>
 
       <button type="submit">Sign In</button>
     </form>
@@ -40,6 +65,14 @@
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
+
+    // Show/Hide password logic
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.getElementById("toggle-password");
+
+    togglePassword.addEventListener("change", () => {
+      passwordInput.type = togglePassword.checked ? "text" : "password";
+    });
 
     document.getElementById("login-form").addEventListener("submit", async (e) => {
       e.preventDefault();
