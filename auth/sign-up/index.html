@@ -92,6 +92,7 @@
           case "auth/weak-password": friendlyMessage = "Your password is too weak."; break;
           case "auth/network-request-failed": friendlyMessage = "Network error. Check connection."; break;
           case "permission-denied": friendlyMessage = "Username registration failed."; break;
+          case "auth/password-does-not-meet-requirements": friendlyMessage = "Password must contain an uppercase and lowercase letter, a number, a special character, and be at least 6 characters long." break;
           default: friendlyMessage = err.message;
         }
         msg.textContent = friendlyMessage;
