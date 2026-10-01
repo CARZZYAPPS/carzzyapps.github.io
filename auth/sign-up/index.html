@@ -32,6 +32,12 @@
       <label for="confirm-password">Confirm Password</label>
       <input type="password" id="confirm-password" required placeholder="••••••••">
 
+      <!-- Show Password Checkbox -->
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 15px; font-size: 14px;">
+        <input type="checkbox" id="show-password" style="width: auto; margin: 0; cursor: pointer; accent-color: #00d1b2;">
+        <label for="show-password" style="margin: 0; cursor: pointer; color: #fff;">Show Password</label>
+      </div>
+
       <button type="submit">Sign Up</button>
     </form>
     <div id="msg" class="msg"></div>
@@ -46,12 +52,23 @@
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
     const auth = getAuth(app); const db = getFirestore(app);
 
+    // Toggle Password Visibility
+    const showPasswordCheckbox = document.getElementById("show-password");
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirm-password");
+
+    showPasswordCheckbox.addEventListener("change", () => {
+      const type = showPasswordCheckbox.checked ? "text" : "password";
+      passwordInput.type = type;
+      confirmPasswordInput.type = type;
+    });
+
     document.getElementById("signup-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const msg = document.getElementById("msg");
       const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
-      const confirmPassword = document.getElementById("confirm-password").value;
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
 
       if (password !== confirmPassword) {
         msg.style.color = "#f00"; msg.textContent = "Passwords do not match!"; return;
@@ -63,18 +80,12 @@
         const snap = await getDoc(usernameRef);
         if (snap.exists()) { msg.style.color = "#f00"; msg.textContent = "Username is already taken!"; return; }
 
-        // 1. Create the Auth User
         cred = await createUserWithEmailAndPassword(auth, document.getElementById("email").value, password);
-        
-        // 2. Set the display name in Auth
         await updateProfile(cred.user, { displayName: username });
-        
-        // 3. Save the username record in Firestore
         await setDoc(usernameRef, { uid: cred.user.uid });
         
         msg.style.color = "#00d1b2"; msg.textContent = "Account registered successfully!";
       } catch (err) {
-        // Rollback: If account was created but username write failed, delete the account
         if (cred && cred.user) {
           try {
             await cred.user.delete();
