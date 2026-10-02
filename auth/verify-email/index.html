@@ -123,6 +123,7 @@
 
         statusMsg.style.color = '#00d1b2';
         statusMsg.innerHTML = "Verification email sent! Please check your inbox.<br><span style='color: #ccc'>Didn't receive the email? Check your spam folder or resend the email.</span>";
+        sendBtn.disabled = false;
       } catch (error) {
         statusMsg.style.color = '#f00';
         statusMsg.textContent = `Error: ${error.message}`;
