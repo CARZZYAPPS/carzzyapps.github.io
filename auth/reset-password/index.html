@@ -49,7 +49,7 @@
       try {
         await sendPasswordResetEmail(auth, email);
         msg.style.color = "#00d1b2";
-        msg.textContent = "Check your email for the password reset link!";
+        msg.innerHTML = "Check your email for the password reset link!<br>Didn't receive the email? Check your spam folder or resend the email.";
         document.getElementById("email").value = "";
         document.getElementById("email").blur();
       } catch (err) {
