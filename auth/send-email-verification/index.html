@@ -67,13 +67,13 @@
   <div class="card">
     <h2>Verify Your Email</h2>
     <p>We need to verify your email address to secure your account on Carzzy Apps.</p>
-    <button id="sendBtn">Send Verification Email</button>
+    <button id="sendBtn" disabled>Send Verification Email</button>
     <div id="statusMsg" class="status"></div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     // Initialize Firebase
     const firebaseConfig = {
@@ -88,21 +88,36 @@
     const sendBtn = document.getElementById('sendBtn');
     const statusMsg = document.getElementById('statusMsg');
 
+    // Monitor Auth State and Verification Status
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (user.emailVerified) {
+          statusMsg.style.color = '#00d1b2';
+          statusMsg.textContent = "Your email is already verified!";
+          sendBtn.textContent = "Verified ✓";
+          sendBtn.disabled = true;
+        } else {
+          statusMsg.style.color = '#ccc';
+          statusMsg.textContent = "Your email is not verified yet.";
+          sendBtn.textContent = "Send Verification Email";
+          sendBtn.disabled = false;
+        }
+      } else {
+        statusMsg.style.color = '#ff3860';
+        statusMsg.textContent = "Error: You must be logged in to verify your email.";
+        sendBtn.disabled = true;
+      }
+    });
+
     sendBtn.addEventListener('click', async () => {
       const user = auth.currentUser;
-
-      if (!user) {
-        statusMsg.style.color = '#f00'; // Red error
-        statusMsg.textContent = "Error: You must be logged in to verify your email.";
-        return;
-      }
+      if (!user) return;
 
       try {
         sendBtn.disabled = true;
         statusMsg.style.color = '#ccc';
         statusMsg.textContent = "Sending verification link...";
 
-        // Sends the built-in Firebase template email to the user
         await sendEmailVerification(user);
 
         statusMsg.style.color = '#00d1b2';
