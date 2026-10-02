@@ -104,8 +104,8 @@
           sendBtn.disabled = false;
         }
       } else {
-        statusMsg.style.color = '#ff3860';
-        statusMsg.textContent = "Error: You must be logged in to verify your email.";
+        statusMsg.style.color = '#f00';
+        statusMsg.textContent = "You must be logged in to verify your email.";
         sendBtn.disabled = true;
       }
     });
@@ -122,9 +122,9 @@
         await sendEmailVerification(user);
 
         statusMsg.style.color = '#00d1b2';
-        statusMsg.textContent = "Verification email sent! Please check your inbox.";
+        statusMsg.innerHTML = "Verification email sent! Please check your inbox.<br><span style="color: #ccc">Didn't receive the email? Check your spam folder or resend the email.</span>";
       } catch (error) {
-        statusMsg.style.color = '#ff3860';
+        statusMsg.style.color = '#f00';
         statusMsg.textContent = `Error: ${error.message}`;
         sendBtn.disabled = false;
       }
