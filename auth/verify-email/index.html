@@ -92,6 +92,28 @@
     let cooldownInterval = null;
     const COOLDOWN_DURATION = 60000; // 60 seconds in milliseconds
 
+    // Helper to translate raw Firebase auth errors to readable user messages
+    function getFriendlyAuthErrorMessage(error) {
+      const code = error.code || error;
+
+      switch (code) {
+        case 'auth/too-many-requests':
+          return "You've made too many requests. Please wait a minute and try again.";
+        case 'auth/user-disabled':
+          return "This account has been disabled. Please contact support for help.";
+        case 'auth/user-token-expired':
+          return "Your session has expired. Please sign out and log back in to try again.";
+        case 'auth/network-request-failed':
+          return "A network error occurred. Please check your internet connection.";
+        case 'auth/invalid-email':
+          return "The associated email address is invalid.";
+        case 'auth/unauthorized-domain':
+          return "This domain is not authorized. Please configure your authorized domains in the Firebase Console.";
+        default:
+          return error.message || "An unexpected error occurred. Please try again later.";
+      }
+    }
+
     // Function to run the button timer
     function startCooldown(remainingSeconds) {
       clearInterval(cooldownInterval);
@@ -172,7 +194,8 @@
         startCooldown(60);
       } catch (error) {
         statusMsg.style.color = '#f00';
-        statusMsg.textContent = `Error: ${error.message}`;
+        // 3. Display user-friendly translated error message
+        statusMsg.textContent = getFriendlyAuthErrorMessage(error);
         sendBtn.disabled = false;
       }
     });
