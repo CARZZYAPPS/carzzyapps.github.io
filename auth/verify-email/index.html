@@ -88,9 +88,47 @@
 
     const sendBtn = document.getElementById('sendBtn');
     const statusMsg = document.getElementById('statusMsg');
+    
+    let cooldownInterval = null;
+    const COOLDOWN_DURATION = 60000; // 60 seconds in milliseconds
+
+    // Function to run the button timer
+    function startCooldown(remainingSeconds) {
+      clearInterval(cooldownInterval);
+      sendBtn.disabled = true;
+
+      const updateTimer = () => {
+        if (remainingSeconds <= 0) {
+          clearInterval(cooldownInterval);
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Resend Verification Email";
+          return;
+        }
+        sendBtn.textContent = `Resend in ${remainingSeconds}s`;
+        remainingSeconds--;
+      };
+
+      updateTimer();
+      cooldownInterval = setInterval(updateTimer, 1000);
+    }
+
+    // Function to check and resume previous cooldown from localStorage
+    function checkCooldown(uid) {
+      const lastSent = localStorage.getItem(`lastSentVerification_${uid}`);
+      if (lastSent) {
+        const timePassed = Date.now() - parseInt(lastSent, 10);
+        if (timePassed < COOLDOWN_DURATION) {
+          const remainingSeconds = Math.ceil((COOLDOWN_DURATION - timePassed) / 1000);
+          startCooldown(remainingSeconds);
+        }
+      }
+    }
 
     // Monitor Auth State and Verification Status
     onAuthStateChanged(auth, (user) => {
+      // Always clear running intervals if auth state changes
+      clearInterval(cooldownInterval);
+
       if (user) {
         if (user.emailVerified) {
           statusMsg.style.color = '#00d1b2';
@@ -102,6 +140,9 @@
           statusMsg.textContent = "Your email is not verified yet.";
           sendBtn.textContent = "Send Verification Email";
           sendBtn.disabled = false;
+          
+          // Resume cooldown if the page was refreshed during a wait
+          checkCooldown(user.uid);
         }
       } else {
         statusMsg.style.color = '#f00';
@@ -121,9 +162,14 @@
 
         await sendEmailVerification(user);
 
+        // 1. Save timestamp to localStorage
+        localStorage.setItem(`lastSentVerification_${user.uid}`, Date.now().toString());
+
         statusMsg.style.color = '#00d1b2';
         statusMsg.innerHTML = "Verification email sent! Please check your inbox.<br><span style='color: #ccc'>Didn't receive the email? Check your spam folder or resend the email.</span>";
-        sendBtn.disabled = false;
+        
+        // 2. Start the client-side 60s cooldown countdown
+        startCooldown(60);
       } catch (error) {
         statusMsg.style.color = '#f00';
         statusMsg.textContent = `Error: ${error.message}`;
