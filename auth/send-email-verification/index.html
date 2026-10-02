@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email | Carzzy Apps</title>
+  <style>
+    body {
+      background-color: #0a0a0a;
+      color: #ccc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background-color: #1a1a1a;
+      padding: 2.5rem;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    h1 {
+      color: #00d1b2;
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.8rem;
+    }
+    p {
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    button {
+      background-color: #00d1b2;
+      color: #0a0a0a;
+      border: none;
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.2s ease;
+    }
+    button:hover:not(:disabled) {
+      background-color: #00b59c;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Verify Your Email</h1>
+    <p>We need to verify your email address to secure your account on Carzzy Apps.</p>
+    <button id="sendBtn">Send Verification Email</button>
+    <div id="statusMsg" class="status"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4",
+      authDomain: "carzzy-apps.firebaseapp.com",
+      projectId: "carzzy-apps"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const sendBtn = document.getElementById('sendBtn');
+    const statusMsg = document.getElementById('statusMsg');
+
+    sendBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+
+      if (!user) {
+        statusMsg.style.color = '#f00'; // Red error
+        statusMsg.textContent = "Error: You must be logged in to verify your email.";
+        return;
+      }
+
+      try {
+        sendBtn.disabled = true;
+        statusMsg.style.color = '#ccc';
+        statusMsg.textContent = "Sending verification link...";
+
+        // Sends the built-in Firebase template email to the user
+        await sendEmailVerification(user);
+
+        statusMsg.style.color = '#00d1b2';
+        statusMsg.textContent = "Verification email sent! Please check your inbox.";
+      } catch (error) {
+        statusMsg.style.color = '#ff3860';
+        statusMsg.textContent = `Error: ${error.message}`;
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
