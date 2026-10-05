@@ -85,6 +85,7 @@
         await setDoc(usernameRef, { uid: cred.user.uid });
         
         msg.style.color = "#00d1b2"; msg.textContent = "Account registered successfully!";
+        setTimeout(() = {document.location = "verify-email";}, 500);
       } catch (err) {
         if (cred && cred.user) {
           try {
