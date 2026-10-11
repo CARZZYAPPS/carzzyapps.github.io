@@ -145,7 +145,9 @@
     } catch (e) {
       console.warn("localStorage is blocked or unavailable:", e);
     }
-    if (skip) startGame();
+    if (skip) {
+      document.getElementById("dont-show").checked = true;
+      startGame();
   });
 
   function startGame() {
