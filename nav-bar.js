@@ -1,3 +1,7 @@
+const feedbackPopupScript = document.createElement('script');
+feedbackPopupScript.src = '/feedback-popup.js';
+document.head.appendChild(feedbackPopupScript);
+
 fetch('https://www.carzzyapps.com/nav-bar.html')
     .then(response => response.text())
     .then(navbar => {

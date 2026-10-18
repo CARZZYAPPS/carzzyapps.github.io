@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080a09">
+  <meta name="description" content="Share your Carzzy Apps experience and help us improve.">
+  <meta name="author" content="Carzzy Apps">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Carzzy Apps">
+  <meta property="og:title" content="Feedback Survey | Carzzy Apps">
+  <meta property="og:description" content="Share your Carzzy Apps experience and help us improve.">
+  <meta property="og:url" content="https://www.carzzyapps.com/feedback/">
+  <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Feedback Survey | Carzzy Apps">
+  <meta name="twitter:description" content="Share your Carzzy Apps experience and help us improve.">
+  <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+  <title>Feedback Survey | Carzzy Apps</title>
+  <link rel="canonical" href="https://www.carzzyapps.com/feedback/">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <style>
+    @property --gradient-angle {
+      syntax: "<angle>";
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    :root {
+      color-scheme: dark;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: transparent;
+      color: #00d1b2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      display: grid;
+      min-width: 0;
+      min-height: 100dvh;
+      margin: 0;
+      padding: 12px;
+      place-items: center;
+      background: transparent;
+    }
+
+    .feedback-card {
+      width: min(100%, 464px);
+      max-height: calc(100dvh - 24px);
+      overflow-y: auto;
+      padding: 26px;
+      border: 4px solid transparent;
+      border-radius: 16px;
+      background:
+        linear-gradient(#080a09, #080a09) padding-box,
+        conic-gradient(
+          from var(--gradient-angle),
+          #00d1b2,
+          #007e70,
+          #9affed,
+          #008f7d,
+          #00d1b2
+        ) border-box;
+      box-shadow: 0 14px 40px rgb(0 0 0 / 24%);
+      animation: rotate-gradient 6s linear infinite;
+    }
+
+    @keyframes rotate-gradient {
+      to {
+        --gradient-angle: 360deg;
+      }
+    }
+
+    h1 {
+      margin: 0 0 22px;
+      font-size: clamp(1.55rem, 6vw, 1.9rem);
+      line-height: 1.2;
+    }
+
+    .field {
+      margin: 0 0 22px;
+    }
+
+    .field-label,
+    legend {
+      display: block;
+      margin-bottom: 10px;
+      padding: 0;
+      color: #00d1b2;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+
+    .label-row .field-label {
+      margin: 0;
+    }
+
+    .info-control {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .info-button {
+      display: grid;
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      place-items: center;
+      border: 1px solid #00d1b2;
+      border-radius: 50%;
+      background: transparent;
+      color: #00d1b2;
+      font: inherit;
+      font-size: 0.75rem;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .info-button:focus-visible {
+      outline: 2px solid #f3fffc;
+      outline-offset: 2px;
+    }
+
+    .info-popover {
+      position: absolute;
+      z-index: 1;
+      top: calc(100% + 8px);
+      left: 0;
+      width: max-content;
+      max-width: min(260px, calc(100vw - 80px));
+      padding: 10px 12px;
+      border: 1px solid #00d1b2;
+      border-radius: 8px;
+      background: #10211e;
+      box-shadow: 0 8px 20px rgb(0 0 0 / 35%);
+      color: #e8fffa;
+      font-size: 0.82rem;
+      font-weight: 400;
+      line-height: 1.4;
+    }
+
+    .info-popover[hidden] {
+      display: none;
+    }
+
+    input[type="email"],
+    input[type="text"],
+    textarea {
+      display: block;
+      width: 100%;
+      border: 1px solid #14574d;
+      border-radius: 9px;
+      outline: none;
+      background: #0b0f0e;
+      color: #f3fffc;
+      font: inherit;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    input[type="email"],
+    input[type="text"] {
+      min-height: 42px;
+      padding: 9px 11px;
+    }
+
+    textarea {
+      min-height: 78px;
+      padding: 10px 11px;
+      resize: vertical;
+    }
+
+    input[type="email"]:focus,
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: #00d1b2;
+      box-shadow: 0 0 0 3px rgb(0 209 178 / 16%);
+    }
+
+    fieldset {
+      min-width: 0;
+      margin: 0 0 22px;
+      padding: 0;
+      border: 0;
+    }
+
+    .ratings {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .rating-option {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      min-height: 64px;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      background: #0c2420;
+      color: #00d1b2;
+      cursor: pointer;
+      transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    }
+
+    .rating-option:hover {
+      transform: translateY(-2px);
+      background: #10352e;
+    }
+
+    .rating-option:has(input:checked) {
+      border-color: #00d1b2;
+      background: #12453b;
+      box-shadow: 0 0 0 2px rgb(0 209 178 / 14%);
+    }
+
+    .rating-option:focus-within {
+      outline: 2px solid #f3fffc;
+      outline-offset: 2px;
+    }
+
+    .rating-option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    .rating-option svg {
+      width: 25px;
+      height: 25px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.7;
+    }
+
+    .submit-button {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 16px;
+      border: 0;
+      border-radius: 999px;
+      background: #00d1b2;
+      color: #06110f;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 150ms ease, transform 150ms ease;
+    }
+
+    .submit-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background: #16e0c2;
+    }
+
+    .submit-button:focus-visible {
+      outline: 2px solid #f3fffc;
+      outline-offset: 3px;
+    }
+
+    .submit-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .status {
+      min-height: 1.25em;
+      margin: 12px 0 0;
+      color: #b9fff1;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .status[data-state="error"] {
+      color: #ffb6ad;
+    }
+
+    @media (max-width: 360px) {
+      .feedback-card {
+        padding: 22px 18px;
+      }
+
+      .ratings {
+        gap: 5px;
+      }
+
+      .rating-option {
+        min-height: 58px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .feedback-card {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="feedback-card">
+    <h1>Feedback Survey</h1>
+    <form id="feedback-form">
+      <div class="field">
+        <div class="label-row">
+          <label class="field-label" for="username">Your username*</label>
+          <span class="info-control">
+            <button
+              class="info-button"
+              id="username-info-button"
+              type="button"
+              aria-label="About your username"
+              aria-controls="username-info"
+              aria-expanded="false"
+            >i</button>
+            <span class="info-popover" id="username-info" role="tooltip" hidden>
+              Use the same username shown on the Rhythm Runner leaderboard.
+            </span>
+          </span>
+        </div>
+        <input id="username" name="username" type="text" autocomplete="username" maxlength="100" required>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="email">Your email*</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254" required>
+      </div>
+
+      <fieldset>
+        <legend>How would you rate your experience?*</legend>
+        <div class="ratings">
+          <label class="rating-option" title="Very unhappy">
+            <input type="radio" name="rating" value="1" required>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 9.5h.01M15.5 9.5h.01M8 17c1-2 2.4-3 4-3s3 1 4 3"></path></svg>
+            <span class="visually-hidden">Very unhappy</span>
+          </label>
+          <label class="rating-option" title="Unhappy">
+            <input type="radio" name="rating" value="2">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 9.5h.01M15.5 9.5h.01M8.5 16c1-1.5 2.2-2.2 3.5-2.2s2.5.7 3.5 2.2"></path></svg>
+            <span class="visually-hidden">Unhappy</span>
+          </label>
+          <label class="rating-option" title="Neutral">
+            <input type="radio" name="rating" value="3">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 9.5h.01M15.5 9.5h.01M9 15h6"></path></svg>
+            <span class="visually-hidden">Neutral</span>
+          </label>
+          <label class="rating-option" title="Happy">
+            <input type="radio" name="rating" value="4">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 9.5h.01M15.5 9.5h.01M8 13.5c1 2 2.4 3 4 3s3-1 4-3"></path></svg>
+            <span class="visually-hidden">Happy</span>
+          </label>
+          <label class="rating-option" title="Very happy">
+            <input type="radio" name="rating" value="5">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8.5 9.5h.01M15.5 9.5h.01M7.5 13c1 2.7 2.6 4 4.5 4s3.5-1.3 4.5-4"></path></svg>
+            <span class="visually-hidden">Very happy</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label class="field-label" for="reason">Please share the reason for your rating.</label>
+        <textarea id="reason" name="reason" maxlength="5000"></textarea>
+      </div>
+
+      <button class="submit-button" id="submit-button" type="submit">Submit Feedback</button>
+      <p class="status" id="form-status" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script src="./firebase-config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      addDoc,
+      collection,
+      getFirestore,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const form = document.querySelector("#feedback-form");
+    const submitButton = document.querySelector("#submit-button");
+    const status = document.querySelector("#form-status");
+    const usernameInfoButton = document.querySelector("#username-info-button");
+    const usernameInfo = document.querySelector("#username-info");
+    const config = window.CARZZY_FEEDBACK_FIREBASE_CONFIG
+      || window.firebaseConfig
+      || (typeof firebaseConfig !== "undefined" ? firebaseConfig : null);
+    const isConfigured = config && Object.values(config).every(
+      (value) => typeof value === "string" && value.length > 0 && !value.startsWith("REPLACE_WITH")
+    );
+
+    function setStatus(message, state = "success") {
+      status.textContent = message;
+      status.dataset.state = state;
+    }
+
+    usernameInfoButton.addEventListener("click", () => {
+      const isExpanded = usernameInfoButton.getAttribute("aria-expanded") === "true";
+      usernameInfoButton.setAttribute("aria-expanded", String(!isExpanded));
+      usernameInfo.hidden = isExpanded;
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".info-control")) {
+        usernameInfoButton.setAttribute("aria-expanded", "false");
+        usernameInfo.hidden = true;
+      }
+    });
+
+    usernameInfoButton.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        usernameInfoButton.setAttribute("aria-expanded", "false");
+        usernameInfo.hidden = true;
+        usernameInfoButton.focus();
+      }
+    });
+
+    if (!isConfigured) {
+      submitButton.disabled = true;
+      setStatus("Feedback is temporarily unavailable.", "error");
+      console.error("Firebase is not configured; feedback submissions are disabled.");
+    } else {
+      const app = initializeApp(config);
+      const database = getFirestore(app);
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+
+        const formData = new FormData(form);
+        const username = String(formData.get("username") || "").trim();
+        const email = String(formData.get("email") || "").trim();
+        const reason = String(formData.get("reason") || "").trim();
+        const rating = Number(formData.get("rating"));
+        submitButton.disabled = true;
+        setStatus("Sending your feedback…");
+
+        try {
+          await addDoc(collection(database, "feedbackSubmissions"), {
+            username,
+            email,
+            rating,
+            reason,
+            createdAt: serverTimestamp()
+          });
+          form.reset();
+          setStatus("Thanks for sharing your feedback!");
+          window.parent.postMessage(
+            { type: "carzzy-feedback-submitted" },
+            window.location.origin
+          );
+        } catch (error) {
+          console.error("Unable to save feedback submission", error);
+          setStatus("We couldn't send your feedback. Please try again.", "error");
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
