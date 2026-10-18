@@ -11,14 +11,14 @@
   <meta property="og:site_name" content="Carzzy Apps">
   <meta property="og:title" content="Feedback Survey | Carzzy Apps">
   <meta property="og:description" content="Share your Carzzy Apps experience and help us improve.">
-  <meta property="og:url" content="https://www.carzzyapps.com/fdback/">
+  <meta property="og:url" content="https://www.carzzyapps.com/feedback/">
   <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Feedback Survey | Carzzy Apps">
   <meta name="twitter:description" content="Share your Carzzy Apps experience and help us improve.">
   <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
   <title>Feedback Survey | Carzzy Apps</title>
-  <link rel="canonical" href="https://www.carzzyapps.com/fdback/">
+  <link rel="canonical" href="https://www.carzzyapps.com/feedback/">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <style>
     @property --gradient-angle {
@@ -481,6 +481,10 @@
           });
           form.reset();
           setStatus("Thanks for sharing your feedback!");
+          window.parent.postMessage(
+            { type: "carzzy-feedback-submitted" },
+            window.location.origin
+          );
         } catch (error) {
           console.error("Unable to save feedback submission", error);
           setStatus("We couldn't send your feedback. Please try again.", "error");

@@ -21,36 +21,30 @@ the contact form continues to use its existing Formcarry endpoint.
 ## Separate feedback project
 
 1. In Firebase Console, create or select the separate project for feedback and add a Web App.
-2. Copy that project's Web App config into `fdback/firebase-config.js`, replacing its `REPLACE_WITH_FEEDBACK_...` values.
-3. Create a Firestore database in the feedback project and deploy `fdback/firestore.rules` in that project's Firestore Rules editor.
+2. Copy that project's Web App config into `feedback/firebase-config.js`.
+3. Create a Firestore database in the feedback project and deploy `feedback/firestore.rules` in that project's Firestore Rules editor.
 4. Enable **Email/Password** under **Authentication > Sign-in method** for the separate admin app. Create admin accounts through the Firebase console or a trusted administrative process; do not add a public sign-up flow.
 
-The feedback page at `/fdback/` uses only `fdback/firebase-config.js`; changing it
+The feedback page at `/feedback/` uses only `feedback/firebase-config.js`; changing it
 does not change the existing site's Firebase project or contact form.
 
 ## Verify
 
 After publishing the files to GitHub Pages, submit the contact form once and
 confirm a document appears under `contactSubmissions` in the existing site
-project. Submit feedback at `/fdback/` and confirm a document with the username,
+project. Submit feedback at `/feedback/` and confirm a document with the username,
 email, rating, reason, and timestamp appears under `feedbackSubmissions` in the
 separate feedback project. The username should match the one shown on the
 Rhythm Runner leaderboard.
 
 ## Feedback admin access
 
-Feedback documents are created by the public feedback form, but only signed-in
-Firebase users whose ID token has the boolean custom claim `admin: true` can
-read `feedbackSubmissions`. Updates and deletes are denied. The separate admin
-app should use the feedback project's Firebase Authentication email/password sign-in only
-(`signInWithEmailAndPassword`), with no account-creation UI. Deploy its Firebase
-web config for the same feedback project so it reads from `feedbackSubmissions`.
-
-An administrator must set the `admin` custom claim from a trusted environment
-using the Firebase Admin SDK; never set the claim from browser code or expose
-service-account credentials in this repository. After changing a claim, the
-user must refresh their ID token before admin reads are allowed. Admin reads
-must still be performed through Firestore so the deployed security rules apply.
+Feedback documents are created publicly and can be read only by signed-in users.
+Updates and deletes are denied. The separate admin app should use the feedback
+project's Firebase Authentication email/password sign-in only
+(`signInWithEmailAndPassword`), with no public sign-up UI. Create accounts
+through the Firebase console or another trusted process, and use the feedback
+project's Firebase config in the admin app.
 
 ## Next backend candidates
 

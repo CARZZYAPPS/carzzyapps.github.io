@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-
-  <!-- Google tag (gtag.js) -->
+  <html lang="en"> 
+    <head> 
+      <!-- Google tag (gtag.js) -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VD38580YSL"></script>	
 	<script>
   		window.dataLayer = window.dataLayer || [];
@@ -10,564 +9,121 @@
   		gtag('js', new Date());
   		gtag('config', 'G-VD38580YSL');
 	</script>
-  
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hoops 2K: Ultimate Slam Edition</title>
-  <style>
-    body {
-      margin: 0;
-      background: #050508;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 16px 0;
-      overflow-x: hidden;
-      overflow-y: auto;
-      user-select: none;
-      max-width: 100%;
-      -webkit-touch-callout: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    #game-container {
-      position: relative;
-      width: min(98vw, 900px);
-      aspect-ratio: 900 / 550;
-      height: auto;
-      max-height: calc(100vh - 40px);
-      background: radial-gradient(circle at center, #0f1126 0%, #030305 100%);
-      border: 4px solid #00ffcc;
-      border-radius: 16px;
-      box-shadow: 0 0 35px rgba(0, 255, 204, 0.3);
-    }
-    canvas { display: block; width: 100%; height: 100%; border-radius: 12px; touch-action: none; }
-    #menu-layer {
-      position: absolute; top:0; left:0; width:100%; height:100%;
-      background: rgba(5,5,8,0.95);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      border-radius:12px; z-index:10;
-    }
-    h1 { font-size:42px; margin-bottom:25px; letter-spacing:3px; color:#00ffcc; text-shadow:0 0 15px rgba(0,255,204,0.5); }
-    .mode-btn { background:#11131c; color:#fff; border:2px solid #ff007f; padding:12px 20px; font-size:16px; font-weight:bold; border-radius:8px; cursor:pointer; margin:8px; width:min(340px, 86vw); transition:all 0.2s ease; box-shadow:0 0 10px rgba(255,0,127,0.1); }
-    .mode-btn:hover { background:#ff007f; color:#fff; box-shadow:0 0 20px rgba(255,0,127,0.4); transform:scale(1.05); }
-    #ui-layer { position:absolute; top:12px; left:12px; right:12px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; pointer-events:none; display:none; z-index:15; }
-    .hud-box { background: rgba(12,13,20,0.93); padding:8px 12px; border-radius:8px; border-bottom:4px solid #ff007f; font-size:12px; font-weight:900; letter-spacing:1px; pointer-events:auto; display:flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(0,0,0,0.5); min-width: 96px; }
-    select, input[type="checkbox"] { background:#11131c; color:#00ffcc; border:1px solid #00ffcc; font-weight:bold; border-radius:4px; padding:3px 6px; cursor:pointer; outline:none; font-size:12px; }
-    #meter-container { position:absolute; bottom:48px; left:50%; transform:translateX(-50%); width:min(92vw,220px); height:20px; background:rgba(255,255,255,0.1); border-radius:10px; border:2px solid #fff; overflow:hidden; display:none; }
-    #perfect-zone { position:absolute; left:74%; width:14px; height:100%; background:#00ffcc; box-shadow:0 0 25px #00ffcc, 0 0 10px #fff; }
-    #meter-bar { position:absolute; left:0; top:0; height:100%; width:0%; background:#ff007f; }
-    #prompt { position:absolute; bottom:72px; left:50%; transform:translateX(-50%); font-size:13px; font-weight:800; letter-spacing:1px; color:#00ffcc; text-shadow:2px 2px 4px #000; text-align:center; width:92%; display:none; }
-    #feedback { position:absolute; top:35%; left:50%; transform:translate(-50%,-50%); font-size:44px; font-weight:900; font-style:italic; opacity:0; pointer-events:none; text-shadow:4px 4px 0px #000; text-align:center; width:92%; white-space:pre-line; }
-    #touch-controls { display:none; position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:min(92vw, 440px); max-width:440px; padding:0 6px; gap:10px; z-index:18; justify-content:center; align-items:center; flex-direction:column; pointer-events:auto; }
-    #touch-controls .touch-row { display:flex; gap:10px; width:100%; justify-content:center; }
-    .touch-btn { background:rgba(255,255,255,0.08); color:#fff; border:2px solid rgba(0,255,204,0.45); border-radius:999px; min-width:60px; min-height:60px; font-size:24px; font-weight:900; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; }
-    .touch-btn#shoot-btn { min-width:90px; background:linear-gradient(135deg, #ff007f, #00ffcc); border-color:#ffffff; }
-    .touch-btn:active { transform:scale(0.96); }
-    @media (pointer: coarse), (hover: none) {
-      #touch-controls { display:flex; }
-    }
-    @media (max-width: 720px) {
-      h1 { font-size:32px; }
-      .mode-btn { font-size:14px; width:min(320px, 90vw); }
-      #meter-container { bottom:64px; }
-      #prompt { bottom:84px; font-size:12px; }
-      #feedback { font-size:30px; }
-      #ui-layer { top:10px; left:8px; right:8px; }
-      .hud-box { font-size:11px; padding:7px 10px; }
-    }
-  </style>
-</head>
+      
+      <meta charset="UTF-8"> 
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="description" content="An online basketball game with many different game modes.">
+      <meta name="keywords" content="carzzy apps, games, apps, crazzy apps, basketball">
+      <meta name="author" content="Avis, DeBus">
+      <title>Hoops 2K: Ultimate Slam Edition</title>
+      <link rel="icon" type="image/x-icon" href="/favicon.ico">
+      <link rel="stylesheet" href="style.css">
+      </head>
 <body>
-  <script src="/nav-bar.js"></script>
-  <div id="game-container">
-    <div id="menu-layer">
-      <h1>HOOPS 2K: SLAM KING</h1>
-      <button class="mode-btn" onclick="selectMode('practice')">🏀 Free Practice (Just Shoot/Dunk)</button>
-      <button class="mode-btn" onclick="selectMode('dunkKing')">👑 Dunk King (Insane Dunks! 60s)</button>
-      <button class="mode-btn" onclick="selectMode('timeAttack')">⏱️ Sudden Death (Time Attack)</button>
-      <button class="mode-btn" onclick="selectMode('oneOnOne')">🛡️ 1v1 Defender Challenge</button>
-      <button class="mode-btn" onclick="selectMode('overdrive')">🔥 Arcade Overdrive (All FX)</button>
+    <div id="game-container">
+
+        <!-- MENU LAYER -->
+        <div id="menu-layer">
+            <h1>HOOPS 2K: SLAM KING</h1>
+
+            <button class="mode-btn" onclick="selectMode('practice')">
+                🏀 Free Practice (Just Shoot/Dunk)
+            </button>
+
+            <button class="mode-btn" onclick="selectMode('dunkKing')">
+                👑 Dunk King (Insane Dunks! 60s)
+            </button>
+
+            <button class="mode-btn" onclick="selectMode('timeAttack')">
+                ⏱️ Sudden Death (Time Attack)
+            </button>
+
+            <button class="mode-btn" onclick="selectMode('oneOnOne')">
+                🛡️ 1v1 Defender Challenge
+            </button>
+
+            <button class="mode-btn" onclick="selectMode('overdrive')">
+                🔥 Arcade Overdrive (All FX)
+            </button>
+        </div>
+
+        <!-- GAME CANVAS -->
+        <canvas id="gameCanvas" width="900" height="550"></canvas>
+
+        <!-- UI LAYER -->
+        <div id="ui-layer">
+
+            <!-- SCORE -->
+            <div class="hud-box" style="border-bottom-color: #00ffcc;">
+                SCORE: <span id="score">0</span>
+            </div>
+
+            <!-- DUNK + OPTIONS -->
+            <div class="hud-box" style="border-bottom-color: #ffcc00;">
+
+                <span id="dunk-picker-label" style="display:none; color: #ff007f;">
+                    DUNK [1-6]:
+                </span>
+
+                <select id="dunk-style-select" style="display:none;" onchange="updateSelectedDunk(this.value)">
+                    <option value="normal">⚡ Standard Power Slam</option>
+                    <option value="helicopter">🛸 Helicopter Spinner</option>
+                    <option value="meteor">☄️ Stratosphere Meteor</option>
+                    <option value="backbreaker">☠️ Inverted Backbreaker</option>
+                    <option value="windmill">🌪️ Windmill Crank</option>
+                    <option value="betweenLegs">🦵 Through The Legs</option>
+                </select>
+
+                <label id="poster-label" style="display:none; color:#ff3333; font-weight:bold; gap:4px; align-items:center;">
+                    <input type="checkbox" id="poster-defender-toggle" onchange="togglePosterDefender(this.checked)">
+                    Poster Target
+                </label>
+
+                <span style="margin-left: 5px;">SFX:</span>
+
+                <select id="dunk-sfx-select">
+                    <option value="boom">💥 Arcade Boom</option>
+                    <option value="laser">⚡ Laser Burst</option>
+                    <option value="zap">🔌 Electric Zap</option>
+                    <option value="metal">🎸 Metal Riff</option>
+                </select>
+
+                <label style="margin-left: 5px; display:flex; align-items:center; gap:4px;">
+                    <input type="checkbox" id="crowd-toggle" checked>
+                    Crowd
+                </label>
+            </div>
+
+            <!-- TIMER -->
+            <div class="hud-box" id="hud-center-box" style="border-bottom-color: #ffaa00;">
+                TIME: <span id="time">60</span>s
+            </div>
+
+            <!-- STREAK -->
+            <div class="hud-box" id="hud-right-box">
+                STREAK: <span id="streak">0</span>
+            </div>
+        </div>
+
+        <!-- FEEDBACK TEXT -->
+        <div id="feedback">BOOMSHAKALAKA!</div>
+
+        <!-- CONTROLS PROMPT -->
+        <div id="prompt">
+            ARROWS: MOVE | SPACE: SLAM / SHOOT | KEYS 1-6 CHOOSES DUNK STYLE!
+        </div>
+
+        <!-- METER BAR -->
+        <div id="meter-container">
+            <div id="perfect-zone"></div>
+            <div id="meter-bar"></div>
+        </div>
+
     </div>
-    <canvas id="gameCanvas" width="900" height="550"></canvas>
-    <div id="ui-layer">
-      <div class="hud-box" style="border-bottom-color: #00ffcc;">SCORE: <span id="score">0</span></div>
-      <div class="hud-box" style="border-bottom-color: #ffcc00;">
-        <span id="dunk-picker-label" style="display:none; color: #ff007f;">DUNK [1-6]:</span>
-        <select id="dunk-style-select" style="display:none;" onchange="updateSelectedDunk(this.value)">
-          <option value="normal">⚡ Standard Power Slam</option>
-          <option value="helicopter">🛸 Helicopter Spinner</option>
-          <option value="meteor">☄️ Stratosphere Meteor</option>
-          <option value="backbreaker">☠️ Inverted Backbreaker</option>
-          <option value="windmill">🌪️ Windmill Crank</option>
-          <option value="betweenLegs">🦵 Through The Legs</option>
-        </select>
-        <label id="poster-label" style="display: none; color: #ff3333; font-weight: bold; gap: 4px; align-items: center;">
-          <input type="checkbox" id="poster-defender-toggle" onchange="togglePosterDefender(this.checked)"> Poster Target
-        </label>
-        <span style="margin-left: 5px;">SFX:</span>
-        <select id="dunk-sfx-select">
-          <option value="boom">💥 Arcade Boom</option>
-          <option value="laser">⚡ Laser Burst</option>
-          <option value="zap">🔌 Electric Zap</option>
-          <option value="metal">🎸 Metal Riff</option>
-        </select>
-        <label style="margin-left: 5px; display: flex; align-items: center; gap: 4px;">
-          <input type="checkbox" id="crowd-toggle" checked> Crowd
-        </label>
-      </div>
-      <div class="hud-box" id="hud-center-box" style="border-bottom-color: #ffaa00;">TIME: <span id="time">60</span>s</div>
-      <div class="hud-box" id="hud-right-box">STREAK: <span id="streak">0</span></div>
-    </div>
-    <div id="feedback">BOOMSHAKALAKA!</div>
-    <div id="prompt">ARROWS / TOUCH: MOVE | SPACE / TAP: SLAM / SHOOT | KEYS 1-6 CHOOSES DUNK STYLE!</div>
-    <div id="meter-container">
-      <div id="perfect-zone"></div>
-      <div id="meter-bar"></div>
-    </div>
-    <div id="touch-controls">
-      <div class="touch-row">
-        <div class="touch-btn" id="left-btn">◀</div>
-        <div class="touch-btn" id="shoot-btn">●</div>
-        <div class="touch-btn" id="right-btn">▶</div>
-      </div>
-      <div class="touch-row">
-        <div class="touch-btn" id="up-btn">▲</div>
-        <div class="touch-btn" id="down-btn">▼</div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('score');
-    const streakEl = document.getElementById('streak');
-    const meterContainer = document.getElementById('meter-container');
-    const meterBar = document.getElementById('meter-bar');
-    const perfectZoneEl = document.getElementById('perfect-zone');
-    const promptEl = document.getElementById('prompt');
-    const feedbackEl = document.getElementById('feedback');
-    const menuLayer = document.getElementById('menu-layer');
-    const uiLayer = document.getElementById('ui-layer');
-    const hudCenterBox = document.getElementById('hud-center-box');
-    const hudRightBox = document.getElementById('hud-right-box');
-    const sfxSelect = document.getElementById('dunk-sfx-select');
-    const dunkStyleSelect = document.getElementById('dunk-style-select');
-    const dunkPickerLabel = document.getElementById('dunk-picker-label');
-    const posterLabel = document.getElementById('poster-label');
-    const posterDefenderToggle = document.getElementById('poster-defender-toggle');
-    const crowdToggle = document.getElementById('crowd-toggle');
-
-    let currentMode = '';
-    let score = 0;
-    let streak = 0;
-    let shotsTaken = 0;
-    let isMoneyBall = false;
-    let timeLeft = 60;
-    let gameState = 'menu';
-    let keys = {};
-    let screenShake = 0;
-    let timerInterval = null;
-    let hueClock = 0;
-    let chosenDunkType = 'normal';
-    let meterValue = 0;
-    let meterSpeed = 3.8;
-    let perfectStart = 74;
-    let perfectWidth = 14;
-
-    const FOV = 350;
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2 - 20;
-
-    function project(x, y, z) {
-      const scale = FOV / (FOV + z);
-      return { x: cx + x * scale, y: cy + y * scale, scale: scale };
-    }
-
-    const hoop3D = { x: 0, y: -90, z: 460, radius: 24 };
-    const backboard3D = { x: 0, y: -130, z: 485, w: 140, h: 90 };
-
-    let player = { x: 0, y: 160, z: 320, vx: 0, vy: 0, vz: 0, baseSpeed: 5, speed: 5, animTime: 0, isJumping: false, armAngle: 0, spinAngle: 0, hasSpun360: false, isWindmill: false, windmillAngle: 0, isBetweenLegs: false, legBallYOffset: 0, dunkType: 'normal', originalY: 160, meteorTimer: 0 };
-
-    let defender = { x: 0, y: 160, z: 430, speed: 2.8, animTime: 0, active: false, underRimMode: false };
-
-    let ball = { x: 0, y: 120, z: 320, vx: 0, vy: 0, vz: 0, radius: 11, attached: true, isPerfectGreen: false };
-
-    let particles = [];
-    let shockwaves = [];
-    let crowd = [];
-    for (let i = 0; i < 60; i++) { crowd.push({ x: -380 + (i * 13), y: -140 - (Math.random() * 40), z: 500, bounceOffset: Math.random() * Math.PI * 2, vibeY: 0, color: `hsl(${Math.random() * 360}, 85%, 60%)` }); }
-
-    let audioCtx = null;
-    function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-
-    function playCustomSound(style) {
-      if (!audioCtx) return;
-      let osc = audioCtx.createOscillator();
-      let gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      if (style === 'boom') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(160, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(30, audioCtx.currentTime + 0.6);
-        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.6);
-        let bufferSize = audioCtx.sampleRate * 0.5, buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate), data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        let noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-        let noiseGain = audioCtx.createGain();
-        noiseGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        noiseGain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        noise.connect(noiseGain);
-        noiseGain.connect(audioCtx.destination);
-        noise.start();
-      } else if (style === 'laser') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(900, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
-      } else if (style === 'zap') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-        for(let i=0; i<0.3; i+=0.05) { osc.frequency.setValueAtTime(Math.random() * 600 + 200, audioCtx.currentTime + i); }
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.35);
-      } else if (style === 'metal') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-        let distortion = audioCtx.createWaveShaper();
-        function makeDistortionCurve(amount) {
-          let k = typeof amount === 'number' ? amount : 50, n_samples = 44100, curve = new Float32Array(n_samples);
-          for (let i = 0; i < n_samples; ++i ) { let x = ( i * 2 ) / n_samples - 1; curve[i] = ( ( 3 + k ) * x * 20 * Math.PI / 180 ) / ( Math.PI + k * Math.abs(x) ); }
-          return curve;
-        }
-        distortion.curve = makeDistortionCurve(400);
-        osc.disconnect(gain);
-        osc.connect(distortion);
-        distortion.connect(gain);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
-      }
-    }
-
-    function playSound(type) {
-      if (!audioCtx) return;
-      if (type === 'dunk') { playCustomSound(sfxSelect.value); return; }
-      let osc = audioCtx.createOscillator();
-      let gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      if (type === 'launch') {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.35); gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.35); osc.start(); osc.stop(audioCtx.currentTime + 0.35);
-      } else if (type === 'swish') {
-        osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.15); gain.gain.setValueAtTime(0.2, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-      } else if (type === 'buzzer') {
-        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(90, audioCtx.currentTime); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 1.0); osc.start(); osc.stop(audioCtx.currentTime + 1.0);
-      }
-    }
-
-    function updateSelectedDunk(val) { chosenDunkType = val; dunkStyleSelect.value = val; }
-    function togglePosterDefender(checked) { if (currentMode === 'dunkKing') { defender.active = checked; defender.underRimMode = checked; if (checked) { defender.x = 0; defender.z = 430; } } }
-
-    function selectMode(mode) {
-      initAudio();
-      currentMode = mode;
-      menuLayer.style.display = 'none';
-      uiLayer.style.display = 'flex';
-      if (touchEnabled) touchControls.style.display = 'flex';
-      promptEl.style.display = 'block';
-      shotsTaken = 0; checkBallStatus();
-      if (mode === 'dunkKing') {
-        dunkPickerLabel.style.display = 'inline-block'; dunkStyleSelect.style.display = 'inline-block'; posterLabel.style.display = 'inline-flex'; posterDefenderToggle.checked = false; defender.active = false; defender.underRimMode = false; hudCenterBox.style.display = 'block'; hudRightBox.style.display = 'block'; timeLeft = 60; startTimer();
-      } else {
-        dunkPickerLabel.style.display = 'none'; dunkStyleSelect.style.display = 'none'; posterLabel.style.display = 'none'; chosenDunkType = 'normal';
-        if (mode === 'practice') { defender.active = false; hudCenterBox.style.display = 'none'; hudRightBox.style.display = 'block'; }
-        else if (mode === 'timeAttack') { defender.active = false; hudCenterBox.style.display = 'block'; hudRightBox.style.display = 'block'; timeLeft = 45; startTimer(); }
-        else if (mode === 'oneOnOne') { defender.active = true; defender.underRimMode = false; hudCenterBox.style.display = 'block'; hudCenterBox.innerHTML = "GOAL: 10 POINTS"; hudRightBox.style.display = 'none'; }
-        else if (mode === 'overdrive') { defender.active = true; defender.underRimMode = false; hudCenterBox.style.display = 'block'; hudCenterBox.innerHTML = 'TIME: <span id="time">45</span>s'; hudRightBox.style.display = 'block'; timeLeft = 45; startTimer(); }
-      }
-      gameState = 'court';
-    }
-
-    function startTimer() { if(timerInterval) clearInterval(timerInterval); timerInterval = setInterval(() => { if (gameState !== 'gameover' && gameState !== 'menu') { timeLeft--; const timeDisplay = document.getElementById('time'); if(timeDisplay) timeDisplay.innerText = timeLeft; if (timeLeft <= 0) { playSound('buzzer'); endGame(false); } } }, 1000); }
-
-    function checkBallStatus() { shotsTaken++; isMoneyBall = (shotsTaken % 5 === 0); }
-
-    function launchDunkSequence(chosenType) {
-      gameState = 'dunking'; player.isJumping = true; player.spinAngle = 0; player.hasSpun360 = false; player.isWindmill = false; player.windmillAngle = 0; player.isBetweenLegs = false; player.legBallYOffset = 0; player.dunkType = chosenType;
-      if (player.dunkType === 'windmill') player.isWindmill = true;
-      if (player.dunkType === 'betweenLegs') player.isBetweenLegs = true;
-      let ticksToRim = 28;
-      if (player.dunkType === 'meteor') { player.meteorTimer = 120; player.vy = -16; ticksToRim = 120; } else { player.vy = -7.5; ticksToRim = 54; }
-      player.vx = (hoop3D.x - player.x) / ticksToRim; player.vz = (hoop3D.z - 25 - player.z) / ticksToRim; ball.attached = true; playSound('launch');
-    }
-
-    window.addEventListener('keydown', e => {
-      if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Digit1","Digit2","Digit3","Digit4","Digit5","Digit6"].indexOf(e.code) > -1) { e.preventDefault(); }
-      keys[e.code] = true;
-      if (e.code === 'Escape') { returnToMenu(); return; }
-      if (currentMode === 'dunkKing') {
-        if (e.code === 'Digit1') updateSelectedDunk('helicopter'); if (e.code === 'Digit2') updateSelectedDunk('meteor'); if (e.code === 'Digit3') updateSelectedDunk('backbreaker'); if (e.code === 'Digit4') updateSelectedDunk('normal'); if (e.code === 'Digit5') updateSelectedDunk('windmill'); if (e.code === 'Digit6') updateSelectedDunk('betweenLegs');
-      }
-      if (e.code === 'Space') {
-        if (gameState === 'gameover') { returnToMenu(); return; }
-        if (gameState === 'court') {
-          let distToRim = Math.hypot(player.x - hoop3D.x, player.z - hoop3D.z);
-          let allowedDunkRange = (currentMode === 'dunkKing') ? 9999 : 150;
-          let allowedZDrop = (currentMode === 'dunkKing') ? 0 : 310;
-          if (currentMode === 'dunkKing' || (distToRim < allowedDunkRange && player.z > allowedZDrop)) { launchDunkSequence(chosenDunkType); }
-          else {
-            if (defender.active && !defender.underRimMode) {
-              let distToDef = Math.hypot(player.x - defender.x, player.z - defender.z);
-              if (distToDef < 52) { showTxt("BLOCKED BY DEFENDER! ❌", "#ff0055"); screenShake = 5; handleMiss(); gameState = 'reset'; ball.attached = false; ball.vy = -3; ball.vx = -4; ball.vz = -2; return; }
-            }
-            perfectWidth = (currentMode === 'overdrive' && streak >= 3) ? 28 : 14;
-            perfectZoneEl.style.width = perfectWidth + "px";
-            gameState = 'charging'; meterValue = 0; meterContainer.style.display = 'block';
-          }
-        }
-      }
-    });
-
-    window.addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'Space' && gameState === 'charging') { gameState = 'shooting'; meterContainer.style.display = 'none'; releaseJumpShot(meterValue); } });
-
-    const touchLeft = document.getElementById('left-btn');
-    const touchRight = document.getElementById('right-btn');
-    const touchUp = document.getElementById('up-btn');
-    const touchDown = document.getElementById('down-btn');
-    const touchShoot = document.getElementById('shoot-btn');
-    const touchControls = document.getElementById('touch-controls');
-    const touchEnabled = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
-
-    if (touchEnabled) {
-      touchControls.style.display = 'flex';
-    }
-
-    function setTouchKey(code, active) {
-      keys[code] = active;
-    }
-
-    function handleShootTouch(down) {
-      if (down) {
-        if (gameState === 'gameover') { returnToMenu(); return; }
-        if (gameState === 'court') {
-          let distToRim = Math.hypot(player.x - hoop3D.x, player.z - hoop3D.z);
-          let allowedDunkRange = (currentMode === 'dunkKing') ? 9999 : 150;
-          let allowedZDrop = (currentMode === 'dunkKing') ? 0 : 310;
-          if (currentMode === 'dunkKing' || (distToRim < allowedDunkRange && player.z > allowedZDrop)) { launchDunkSequence(chosenDunkType); }
-          else {
-            if (defender.active && !defender.underRimMode) {
-              let distToDef = Math.hypot(player.x - defender.x, player.z - defender.z);
-              if (distToDef < 52) { showTxt("BLOCKED BY DEFENDER! ❌", "#ff0055"); screenShake = 5; handleMiss(); gameState = 'reset'; ball.attached = false; ball.vy = -3; ball.vx = -4; ball.vz = -2; return; }
-            }
-            perfectWidth = (currentMode === 'overdrive' && streak >= 3) ? 28 : 14;
-            perfectZoneEl.style.width = perfectWidth + "px";
-            gameState = 'charging'; meterValue = 0; meterContainer.style.display = 'block';
-          }
-        }
-      } else {
-        if (gameState === 'charging') { gameState = 'shooting'; meterContainer.style.display = 'none'; releaseJumpShot(meterValue); }
-      }
-    }
-
-    function bindTouchButton(btn, code) {
-      btn.addEventListener('touchstart', e => { e.preventDefault(); setTouchKey(code, true); });
-      btn.addEventListener('touchend', e => { e.preventDefault(); setTouchKey(code, false); });
-      btn.addEventListener('touchcancel', e => { e.preventDefault(); setTouchKey(code, false); });
-      btn.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') { e.preventDefault(); setTouchKey(code, true); } });
-      btn.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') { e.preventDefault(); setTouchKey(code, false); } });
-      btn.addEventListener('mousedown', e => { e.preventDefault(); setTouchKey(code, true); });
-      btn.addEventListener('mouseup', e => { e.preventDefault(); setTouchKey(code, false); });
-      btn.addEventListener('mouseleave', e => { e.preventDefault(); setTouchKey(code, false); });
-    }
-
-    bindTouchButton(touchLeft, 'ArrowLeft');
-    bindTouchButton(touchRight, 'ArrowRight');
-    bindTouchButton(touchUp, 'ArrowUp');
-    bindTouchButton(touchDown, 'ArrowDown');
-
-    function bindShootButton(btn) {
-      btn.addEventListener('touchstart', e => { e.preventDefault(); handleShootTouch(true); });
-      btn.addEventListener('touchend', e => { e.preventDefault(); handleShootTouch(false); });
-      btn.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') { e.preventDefault(); handleShootTouch(true); } });
-      btn.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') { e.preventDefault(); handleShootTouch(false); } });
-      btn.addEventListener('mousedown', e => { e.preventDefault(); handleShootTouch(true); });
-      btn.addEventListener('mouseup', e => { e.preventDefault(); handleShootTouch(false); });
-      btn.addEventListener('mouseleave', e => { e.preventDefault(); handleShootTouch(false); });
-    }
-
-    bindShootButton(touchShoot);
-
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); if (gameState === 'court') handleShootTouch(true); });
-    canvas.addEventListener('touchend', e => { e.preventDefault(); if (gameState === 'charging') handleShootTouch(false); });
-    canvas.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') { e.preventDefault(); if (gameState === 'court') handleShootTouch(true); } });
-    canvas.addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') { e.preventDefault(); if (gameState === 'charging') handleShootTouch(false); } });
-    canvas.addEventListener('mousedown', e => { e.preventDefault(); if (gameState === 'court') handleShootTouch(true); });
-    canvas.addEventListener('mouseup', e => { e.preventDefault(); if (gameState === 'charging') handleShootTouch(false); });
-
-    function releaseJumpShot(timing) {
-      ball.attached = false; player.isJumping = true; player.vy = -4.5;
-      const dx = hoop3D.x - ball.x; const dy = hoop3D.y - ball.y; const dz = hoop3D.z - ball.z; const airTime = 45; const gravity = 0.38;
-      let targetVx = dx / airTime; let targetVz = dz / airTime; let targetVy = (dy - 0.5 * gravity * airTime * airTime) / airTime;
-      let greenCenter = perfectStart + (perfectWidth / 2); let distanceFromGreen = Math.abs(timing - greenCenter);
-      if (timing >= perfectStart && timing <= (perfectStart + perfectWidth)) { ball.vx = targetVx; ball.vz = targetVz; ball.vy = targetVy; ball.isPerfectGreen = true; ball.willMakeIt = true; return; }
-      let maxDistance = 60; let proximityFactor = Math.max(0, 1 - (distanceFromGreen / maxDistance)); let makeProbability = 0.80 * Math.pow(proximityFactor, 1.5); let shotRoll = Math.random();
-      if (shotRoll < makeProbability) { let softBounceModifier = 0.97 + (Math.random() * 0.06); ball.vx = targetVx * softBounceModifier; ball.vz = targetVz * softBounceModifier; ball.vy = targetVy * (2 - softBounceModifier); ball.isPerfectGreen = false; ball.willMakeIt = true; showTxt(distanceFromGreen < 15 ? "Slightly Early/Late" : "Good Release", "#ffcc00"); }
-      else { let missDirection = (timing < perfectStart) ? 0.84 : 1.16; let randomSpray = (Math.random() - 0.5) * 0.2; ball.vx = targetVx * (missDirection + randomSpray); ball.vz = targetVz * 0.9; ball.vy = targetVy * 1.1; ball.isPerfectGreen = false; ball.willMakeIt = false; showTxt(distanceFromGreen > 30 ? "Very Early/Late 😫" : "Bad Release Timing", "#ff007f"); }
-    }
-
-    function showTxt(text, color) { feedbackEl.innerText = text; feedbackEl.style.color = color; feedbackEl.style.opacity = '1'; feedbackEl.style.transform = 'translate(-50%, -50%) scale(1.1)'; setTimeout(() => feedbackEl.style.opacity = '0', 1400); }
-
-    function createExplosion(x, y, z, color, count=20) { for(let i=0;i<count;i++){ particles.push({ x:x, y:y, z:z, vx:(Math.random()-0.5)*16, vy:(Math.random()-0.5)*16, vz:(Math.random()-0.5)*16, alpha:1, color:color }); } }
-
-    function addRingWave(x, y, z, color) { if (!crowdToggle.checked) return; shockwaves.push({ x: x, y: y, z: z, radius: 10, maxRadius: 160, alpha: 1, color: color }); }
-
-    function handleScore(isDunk = false, isGreenShot = false) {
-      let points = isDunk ? 3 : 2; let bonusText = "";
-      if (isDunk) {
-        if (player.dunkType === 'helicopter') { points += 3; bonusText += "\n🛸 HELICOPTER SPINNER!"; }
-        if (player.dunkType === 'meteor') { points += 4; bonusText += "\n☄️ STRATOSPHERE METEOR SHOT!"; }
-        if (player.dunkType === 'backbreaker') { points += 3; bonusText += "\n☠️ INVERTED BACKBREAKER!"; }
-        if (player.dunkType === 'windmill') { points += 3; bonusText += "\n🌪 *CYCLONE WINDMILL!*"; }
-        if (player.dunkType === 'betweenLegs') { points += 4; bonusText += "\n🦵 THROUGH THE LEGS SKYWALK!"; }
-        if (defender.active && defender.underRimMode) { points += 5; bonusText += "\n😤 POSTERIZED THE DEFENDER!"; defender.y = 160; defender.animTime = 5; }
-      } else if (isGreenShot) { bonusText = "\n👑 CRITICAL GREEN RELEASE! 👑"; }
-      if (isMoneyBall) { points *= 2; bonusText = "\n💰 MONEY BALL BUCKET! 💰" + bonusText; }
-      score += points; streak++; scoreEl.innerText = score; streakEl.innerText = streak;
-      if (currentMode === 'timeAttack' || currentMode === 'overdrive') { timeLeft += isDunk ? 5 : 3; }
-      if (currentMode === 'oneOnOne' && score >= 10) { endGame(true); return; }
-      if (crowdToggle.checked) { crowd.forEach(fan => { fan.vibeY = -35 - (Math.random() * 30); }); }
-      if (isDunk) { playSound('dunk'); addRingWave(hoop3D.x, hoop3D.y, hoop3D.z, isMoneyBall ? '#00ffcc' : '#ff0055'); createExplosion(hoop3D.x, hoop3D.y, hoop3D.z, isMoneyBall ? '#ff00ff' : '#ffaa00', 60); }
-      else { playSound('swish'); createExplosion(hoop3D.x, hoop3D.y, hoop3D.z, '#00ffcc', 45); }
-      const alerts = isDunk ? ["BOOMSHAKALAKA! 🔨","MONSTER JAM! ⚡","POSTERIZED! 💥"] : ["GREEN NET SYNERGY!","PERFECT RELEASE! 🔥"];
-      showTxt(alerts[Math.floor(Math.random() * alerts.length)] + bonusText, (!isDunk && isGreenShot) ? '#00ffcc' : (isMoneyBall ? '#ff00ff' : '#ff0055'));
-    }
-
-    function handleMiss() { streak = 0; streakEl.innerText = streak; player.speed = player.baseSpeed; }
-
-    function endGame(victory = false) { gameState = 'gameover'; clearInterval(timerInterval); if (currentMode === 'oneOnOne' && victory) showTxt("VICTORY! 👑\nCOURT DEMOLISHED", "#00ffcc"); else showTxt("GAME OVER\nFINAL SCORE: " + score, "#ff0055"); promptEl.innerText = "TAP SPACEBAR TO RETURN TO MAIN MENU"; }
-
-    function returnToMenu() { clearInterval(timerInterval); gameState = 'menu'; score = 0; streak = 0; scoreEl.innerText = 0; streakEl.innerText = 0; player.x = 0; player.z = 320; player.speed = player.baseSpeed; player.spinAngle = 0; player.y = 160; player.isJumping = false; defender.x = 40; defender.z = 280; defender.active = false; defender.underRimMode = false; ball.attached = true; uiLayer.style.display = 'none'; promptEl.style.display = 'none'; menuLayer.style.display = 'flex'; if (touchEnabled) touchControls.style.display = 'none'; }
-
-    function update() {
-      if (gameState === 'menu' || gameState === 'gameover') return;
-      if (screenShake > 0) screenShake -= 0.3;
-      hueClock += 4;
-      if ((currentMode === 'overdrive' && streak >= 3 && gameState === 'shooting') || gameState === 'dunking') {
-        particles.push({ x: ball.x + (Math.random()-0.5)*15, y: ball.y + (Math.random()-0.5)*15, z: ball.z, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4, vz: (Math.random()-0.5)*4, alpha: 0.9, color: isMoneyBall ? `hsl(${hueClock % 360}, 100%, 60%)` : (gameState === 'dunking' ? '#ff007f' : '#00ffcc') });
-      }
-      if (gameState === 'court') {
-        let moving = false;
-        if (keys['ArrowUp'] || keys['KeyW']) { player.z += player.speed; moving = true; }
-        if (keys['ArrowDown'] || keys['KeyS']) { player.z -= player.speed; moving = true; }
-        if (keys['ArrowLeft'] || keys['KeyA']) { player.x -= player.speed; moving = true; }
-        if (keys['ArrowRight'] || keys['KeyD']) { player.x += player.speed; moving = true; }
-        player.x = Math.max(-280, Math.min(280, player.x)); player.z = Math.max(90, Math.min(450, player.z));
-        if (moving) player.animTime += 0.35; else player.animTime = 0;
-        ball.x = player.x; ball.y = player.y - 45 + Math.sin(player.animTime) * 4; ball.z = player.z - 15;
-        if (defender.active && !defender.underRimMode) {
-          let dx = player.x - defender.x; let dz = player.z - 40 - defender.z; let distToPlayer = Math.hypot(dx, dz);
-          if (distToPlayer > 10) { defender.x += (dx / distToPlayer) * defender.speed; defender.z += (dz / distToPlayer) * defender.speed; defender.animTime += 0.2; }
-        } else if (defender.active && defender.underRimMode) { defender.x = 0; defender.z = 430; defender.animTime = 0; }
-      }
-      if (gameState === 'charging') { let prfWidth = (currentMode === 'overdrive' && streak >= 3) ? 28 : 14; perfectZoneEl.style.width = prfWidth + "px"; meterValue += meterSpeed; if (meterValue > 100 || meterValue < 0) meterSpeed *= -1; meterBar.style.width = meterValue + '%'; player.armAngle = -(meterValue / 100) * Math.PI; }
-      if (gameState === 'dunking') {
-        if (player.dunkType === 'meteor') {
-          if (player.meteorTimer > 0) { player.meteorTimer--; if (player.meteorTimer > 100) player.y -= 7; player.x += player.vx; player.z += player.vz; player.spinAngle += 0.15; }
-          else { player.y += 18; if (player.y >= -80) { gameState = 'reset'; ball.attached = false; handleScore(true); screenShake = 30; ball.vx = (Math.random() - 0.5) * 5; ball.vy = 12; ball.vz = -3; } }
-        } else {
-          player.x += player.vx; player.y += player.vy; player.z += player.vz; player.vy += 0.11;
-          if (player.dunkType === 'helicopter') { player.spinAngle += 0.25; } else if (player.dunkType === 'backbreaker') { player.armAngle = Math.PI * 0.5; }
-          if (player.isWindmill) { player.windmillAngle += 0.15; player.armAngle = player.windmillAngle; } else if (player.dunkType !== 'backbreaker') { player.armAngle = -Math.PI * 1.5; }
-          if (player.isBetweenLegs) player.legBallYOffset = 35 * Math.sin((player.y / 160) * Math.PI); else player.legBallYOffset = 0;
-          if (defender.active && defender.underRimMode && player.z >= defender.z - 25) { defender.y = 175; }
-          if (player.vy > -1 && player.z >= hoop3D.z - 65) { gameState = 'reset'; ball.attached = false; handleScore(true); screenShake = 22; ball.vx = (Math.random() - 0.5) * 5; ball.vy = 12; ball.vz = -3; }
-          if (player.y >= 160) { player.y = 160; player.spinAngle = 0; gameState = 'court'; handleMiss(); }
-        }
-        ball.x = player.x; ball.y = player.y - 65 + player.legBallYOffset; ball.z = player.z - 10;
-      }
-      if (gameState === 'shooting') {
-        ball.vy += 0.38; ball.x += ball.vx; ball.y += ball.vy; ball.z += ball.vz;
-        let distToRim = Math.hypot(ball.x - hoop3D.x, ball.y - hoop3D.y, ball.z - hoop3D.z);
-        if (distToRim < hoop3D.radius + 6 && ball.vy > 0) {
-          if (ball.willMakeIt || (Math.abs(ball.x - hoop3D.x) < 18 && Math.abs(ball.z - hoop3D.z) < 18)) { handleScore(false, ball.isPerfectGreen); gameState = 'reset'; }
-          else { ball.vx = (ball.x - hoop3D.x) * 0.5; ball.vz = -ball.vz * 0.4; ball.vy = -ball.vy * 0.3; createExplosion(ball.x, ball.y, ball.z, '#ffcc00', 8); handleMiss(); gameState = 'reset'; }
-        }
-        if (ball.y > 220) { handleMiss(); gameState = 'reset'; }
-      }
-      if (player.isJumping && gameState !== 'dunking') { player.y += player.vy; player.vy += 0.35; if (player.y >= 160) { player.y = 160; player.spinAngle = 0; player.isJumping = false; player.armAngle = 0; } }
-      if (gameState === 'reset') {
-        if (ball.y > 240) {
-          checkBallStatus(); player.x = (Math.random() - 0.5) * 160; player.z = currentMode === 'dunkKing' ? 200 + Math.random() * 80 : 290 + Math.random() * 90; player.y = 160; player.spinAngle = 0;
-          if (defender.active && !defender.underRimMode) { defender.x = player.x + (Math.random() > 0.5 ? 90 : -90); defender.z = player.z - 60; }
-          if (defender.active && defender.underRimMode) { defender.x = 0; defender.y = 160; defender.z = 430; }
-          ball.attached = true; gameState = 'court';
-        } else { ball.vy += 0.5; ball.x += ball.vx; ball.y += ball.vy; ball.z += ball.vz; }
-      }
-      particles.forEach((p, idx) => { p.x += p.vx; p.y += p.vy; p.z += p.vz; p.alpha -= 0.025; if (p.alpha <= 0) particles.splice(idx, 1); });
-      shockwaves.forEach((w, idx) => { w.radius += 5; w.alpha -= 0.025; if (w.alpha <= 0 || w.radius >= w.maxRadius) shockwaves.splice(idx, 1); });
-      if (crowdToggle.checked) { crowd.forEach(fan => { fan.vibeY *= 0.88; }); }
-    }
-
-    function drawPerson(ctx, x, y, scale, animTime, armAngle, bodyAngle=0, isDefender=false) {
-      ctx.save(); ctx.translate(x, y); ctx.rotate(bodyAngle);
-      if (!isDefender && streak >= 3) ctx.strokeStyle = `hsl(${(hueClock) % 360}, 100%, 65%)`; else ctx.strokeStyle = isDefender ? '#ff3333' : '#00ffcc';
-      ctx.lineWidth = 4 * scale; ctx.lineCap = 'round';
-      let hHead = -65 * scale, hNeck = -50 * scale, hWaist = -20 * scale;
-      if (player.dunkType === 'backbreaker' && gameState === 'dunking' && !isDefender) { hHead = -45 * scale; hNeck = -55 * scale; }
-      let leftFootX = -12 * scale + Math.sin(animTime) * 12 * scale; let rightFootX = 12 * scale - Math.sin(animTime) * 12 * scale;
-      ctx.beginPath(); ctx.moveTo(-5 * scale, hWaist); ctx.lineTo(leftFootX, 0); ctx.moveTo(5 * scale, hWaist); ctx.lineTo(rightFootX, 0); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, hNeck); ctx.lineTo(0, hWaist); ctx.stroke();
-      let leftHandX = -20 * scale + Math.cos(armAngle) * 15 * scale, leftHandY = hNeck + Math.sin(armAngle) * 20 * scale;
-      let rightHandX = 20 * scale + Math.cos(armAngle) * 15 * scale, rightHandY = hNeck + Math.sin(armAngle) * 20 * scale;
-      ctx.beginPath(); ctx.moveTo(0, hNeck - 2 * scale); ctx.lineTo(leftHandX, leftHandY); ctx.moveTo(0, hNeck - 2 * scale); ctx.lineTo(rightHandX, rightHandY); ctx.stroke();
-      ctx.fillStyle = isDefender ? 'rgba(255, 50, 50, 0.4)' : (streak >= 3 ? `hsl(${(hueClock + 120) % 360}, 100%, 50%)` : '#ff007f');
-      ctx.beginPath(); ctx.arc(0, hHead, 10 * scale, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
-    }
-
-    function draw() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.save(); if (screenShake > 0) ctx.translate((Math.random()-0.5) * screenShake * 4, (Math.random()-0.5) * screenShake * 4);
-      if (crowdToggle.checked) { crowd.forEach(fan => { let fanProj = project(fan.x, fan.y + fan.vibeY + Math.sin((hueClock / 30) + fan.bounceOffset) * 6, fan.z); ctx.fillStyle = fan.color; ctx.beginPath(); ctx.arc(fanProj.x, fanProj.y, 7 * fanProj.scale, 0, Math.PI * 2); ctx.fill(); }); }
-      ctx.fillStyle = '#06070d'; let floorPts = [project(-400,160,520), project(400,160,520), project(500,160,40), project(-400,160,40)]; ctx.beginPath(); ctx.moveTo(floorPts[0].x, floorPts[0].y); for(let i=1;i<4;i++) ctx.lineTo(floorPts[i].x, floorPts[i].y); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 0, 127, 0.2)'; ctx.lineWidth = 3; let keyLeftFar = project(-70,160,520), keyRightFar = project(70,160,520); let keyLeftClose = project(-70,160,360), keyRightClose = project(70,160,360); ctx.beginPath(); ctx.moveTo(keyLeftFar.x, keyLeftFar.y); ctx.lineTo(keyRightFar.x, keyRightFar.y); ctx.lineTo(keyRightClose.x, keyRightClose.y); ctx.lineTo(keyLeftClose.x, keyLeftClose.y); ctx.closePath(); ctx.stroke();
-      ctx.strokeStyle = 'rgba(0, 255, 204, 0.1)'; ctx.beginPath(); for(let a=Math.PI; a<=2*Math.PI; a+=0.04) { let pt = project(Math.cos(a)*260, 160, 460 + Math.sin(a)*230); if(a===Math.PI) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y); } ctx.stroke();
-      shockwaves.forEach(w => { ctx.save(); ctx.globalAlpha = w.alpha; ctx.strokeStyle = w.color; ctx.lineWidth = 6; ctx.beginPath(); let segments = 40; for(let i=0;i<=segments;i++){ let angle = (i/segments) * Math.PI * 2; let pt = project(w.x + Math.cos(angle)*w.radius, w.y, w.z + Math.sin(angle)*w.radius*0.5); if(i===0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y); } ctx.stroke(); ctx.restore(); });
-      let bbTL = project(backboard3D.x - backboard3D.w/2, backboard3D.y - backboard3D.h/2, backboard3D.z); let bbBR = project(backboard3D.x + backboard3D.w/2, backboard3D.y + backboard3D.h/2, backboard3D.z); ctx.fillRect(bbTL.x, bbTL.y, bbBR.x - bbTL.x, bbBR.y - bbTL.y);
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 5; ctx.beginPath(); for(let a=0;a<Math.PI*2;a+=0.2) { let pt = project(hoop3D.x + Math.cos(a)*hoop3D.radius, hoop3D.y, hoop3D.z + Math.sin(a)*hoop3D.radius); if(a===0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y); } ctx.closePath(); ctx.stroke();
-      let drawQueue = [];
-      if (gameState !== 'menu') { drawQueue.push({ type: 'player', depth: player.z, obj: player }); if (defender.active) drawQueue.push({ type: 'defender', depth: defender.z, obj: defender }); }
-      drawQueue.sort((a,b) => b.depth - a.depth);
-      drawQueue.forEach(item => { let proj = project(item.obj.x, item.obj.y, item.obj.z); if (item.type === 'player') drawPerson(ctx, proj.x, proj.y, proj.scale, player.animTime, player.armAngle, player.spinAngle, false); else drawPerson(ctx, proj.x, proj.y, proj.scale, defender.animTime, -Math.PI*0.5, 0, true); });
-      if (gameState !== 'menu' && gameState !== 'reset') {
-        let bProj = project(ball.x, ball.y, ball.z);
-        let ballRad = ball.radius * bProj.scale;
-        if (ballRad > 0) { ctx.fillStyle = isMoneyBall ? `hsl(${(hueClock) % 360}, 100%, 60%)` : ((gameState === 'dunking' || (currentMode=='overdrive' && streak >= 3)) ? '#ff0055' : '#e67e22'); ctx.beginPath(); ctx.arc(bProj.x, bProj.y, ballRad, 0, Math.PI*2); ctx.fill(); }
-      }
-      particles.forEach(p => { let pt = project(p.x, p.y, p.z); ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, (gameState === 'dunking' ? 5 : 4) * pt.scale, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
-      ctx.restore();
-    }
-
-    function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
-    gameLoop();
-  </script>
-
-	<script data-goatcounter="https://carzzyapps.goatcounter.com/count"
+   <script src="script.js"></script>
+   <script src="/feedback-popup.js"></script>
+</body>
+	  <script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 
-</body>
-</html>
+  </html>
