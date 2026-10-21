@@ -6,9 +6,9 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const config = window.CARZZY_FIREBASE_CONFIG;
+const config = window.CARZZY_FEEDBACK_FIREBASE_CONFIG;
 const isConfigured = config && Object.values(config).every(
-  (value) => value && !value.startsWith("REPLACE_WITH")
+  (value) => typeof value === "string" && value.length > 0 && !value.startsWith("REPLACE_WITH")
 );
 
 if (!isConfigured) {
@@ -18,8 +18,11 @@ if (!isConfigured) {
   const database = getFirestore(app);
   const form = document.querySelector("form");
   const submitButton = form?.querySelector("button[type=submit]");
+  let submittingToEmailService = false;
 
   form?.addEventListener("submit", async (event) => {
+    if (submittingToEmailService) return;
+
     event.preventDefault();
 
     if (!form.reportValidity()) return;
@@ -34,13 +37,14 @@ if (!isConfigured) {
         comments: String(formData.get("Comments") || "").trim(),
         createdAt: serverTimestamp()
       });
-      form.reset();
-      alert("Thanks! Your message was sent.");
     } catch (error) {
       console.error("Unable to save contact submission", error);
-      alert("We could not send your message. Please try again.");
+      alert("Your message will still be sent by email, but could not be added to the admin contact list.");
     } finally {
       submitButton.disabled = false;
     }
+
+    submittingToEmailService = true;
+    form.requestSubmit();
   });
 }

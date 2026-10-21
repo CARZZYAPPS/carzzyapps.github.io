@@ -1,4 +1,4 @@
-firebaseConfig = {
+window.CARZZY_FEEDBACK_FIREBASE_CONFIG = {
   apiKey: "AIzaSyC-p2GVENAFsrrRU7owYuLcxXx5dlpYUp4",
   authDomain: "ca-feedback-89122.firebaseapp.com",
   projectId: "ca-feedback-89122",
