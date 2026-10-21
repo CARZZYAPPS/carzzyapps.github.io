@@ -9,8 +9,8 @@
   launcherStyles.textContent = `
     #feedback-launcher {
       position: fixed !important;
-      right: 0 !important;
-      bottom: 0 !important;
+      right: 8px !important;
+      bottom: 8px !important;
       z-index: 9999 !important;
       display: inline-flex !important;
       width: auto !important;
@@ -42,12 +42,6 @@
       outline-offset: 3px !important;
     }
 
-    @media (max-width: 480px) {
-      #feedback-launcher {
-        right: 0 !important;
-        bottom: 0 !important;
-      }
-    }
   `;
   document.head.append(launcherStyles);
 
