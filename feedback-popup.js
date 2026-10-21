@@ -3,8 +3,78 @@
 
   const path = window.location.pathname;
   if (/^\/(?:feedback|admin)(?:\/|$)/i.test(path)) return;
+  const submissionStorageKey = "carzzyFeedbackSubmitted";
 
-  function showFeedbackPopup() {
+  const launcherStyles = document.createElement("style");
+  launcherStyles.textContent = `
+    #feedback-launcher {
+      position: fixed !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      z-index: 9999 !important;
+      display: inline-flex !important;
+      width: auto !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 !important;
+      padding: 12px 18px !important;
+      border: 1px solid #00d1b2 !important;
+      border-radius: 999px !important;
+      appearance: none !important;
+      background: #080a09 !important;
+      box-shadow: 0 5px 18px rgb(0 0 0 / 35%) !important;
+      color: #00d1b2 !important;
+      font: 700 15px/1.2 'Segoe UI', sans-serif !important;
+      text-align: center !important;
+      cursor: pointer !important;
+    }
+
+    #feedback-launcher:hover,
+    #feedback-launcher:focus-visible {
+      background: #00d1b2 !important;
+      color: #080a09 !important;
+    }
+
+    #feedback-launcher:focus-visible {
+      outline: 2px solid #fff !important;
+      outline-offset: 3px !important;
+    }
+
+    @media (max-width: 480px) {
+      #feedback-launcher {
+        right: 0 !important;
+        bottom: 0 !important;
+      }
+    }
+  `;
+  document.head.append(launcherStyles);
+
+  function getSubmissionStatus() {
+    try {
+      const savedStatus = localStorage.getItem(submissionStorageKey);
+      if (savedStatus === null) {
+        localStorage.setItem(submissionStorageKey, "false");
+        return false;
+      }
+      return savedStatus === "true";
+    } catch (error) {
+      console.error("Unable to read feedback submission status", error);
+      return false;
+    }
+  }
+
+  function saveSubmissionStatus(submitted) {
+    try {
+      localStorage.setItem(submissionStorageKey, String(submitted));
+    } catch (error) {
+      console.error("Unable to save feedback submission status", error);
+    }
+  }
+
+  function showFeedbackPopup(force = false) {
+    if (!force && getSubmissionStatus()) return;
     if (document.querySelector("#feedback-popup")) return;
 
     const previousOverflow = document.documentElement.style.overflow;
@@ -67,6 +137,7 @@
           outline: 2px solid #fff;
           outline-offset: 3px;
         }
+
       </style>
       <div class="feedback-popup__dialog" role="dialog" aria-modal="true" aria-label="Carzzy Apps feedback">
         <iframe src="/feedback/?embed=1" title="Carzzy Apps feedback form"></iframe>
@@ -77,7 +148,8 @@
     const closeButton = overlay.querySelector(".feedback-popup__close");
     const frame = overlay.querySelector("iframe");
 
-    function closePopup() {
+    function closePopup(submitted = false) {
+      if (submitted) saveSubmissionStatus(true);
       overlay.remove();
       document.documentElement.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeydown);
@@ -94,11 +166,11 @@
         && event.source === frame.contentWindow
         && event.data?.type === "carzzy-feedback-submitted"
       ) {
-        closePopup();
+        closePopup(true);
       }
     }
 
-    closeButton.addEventListener("click", closePopup);
+    closeButton.addEventListener("click", () => closePopup());
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) closePopup();
     });
@@ -109,9 +181,27 @@
     closeButton.focus({ preventScroll: true });
   }
 
+  function addHomepageLauncher() {
+    if (!/^\/(?:index\.html)?$/i.test(path) || document.querySelector("#feedback-launcher")) return;
+
+    const launcher = document.createElement("button");
+    launcher.id = "feedback-launcher";
+    launcher.type = "button";
+    launcher.textContent = "Send Feedback";
+    launcher.setAttribute("aria-label", "Open feedback form");
+    launcher.addEventListener("click", () => showFeedbackPopup(true));
+    document.body.append(launcher);
+  }
+
+  window.addEventListener("pageshow", () => showFeedbackPopup());
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", showFeedbackPopup, { once: true });
+    document.addEventListener("DOMContentLoaded", () => {
+      addHomepageLauncher();
+      showFeedbackPopup();
+    }, { once: true });
   } else {
+    addHomepageLauncher();
     showFeedbackPopup();
   }
 })();
