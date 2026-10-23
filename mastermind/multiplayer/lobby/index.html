@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="keywords" content="mastermind, carzzy apps, carzzyapps, game, multiplayer">
+  <meta name="description" content="Play the classic game of mastermind online against other people.">
+  <meta name="author" content="Avis, DeBus">
   <title>Mastermind Lobby</title>
   <style>
     body {
@@ -12,7 +15,7 @@
       height: 100vh; margin: 0;
     }
     #lobby-container { text-align: center; width: 100%; max-width: 400px; padding: 20px; }
-    h1 { color: #00d1b2; letter-spacing: 2px; margin-bottom: 30px; font-weight: 700; }
+    h2 { font-size: 32px; color: #00d1b2; letter-spacing: 2px; margin-bottom: 30px; font-weight: 700; }
     .card {
       background-color: #121212; border: 1px solid #333; border-radius: 8px;
       padding: 30px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
@@ -29,8 +32,9 @@
 </head>
 <body>
 
+  <script src="/nav-bar.js">
   <div id="lobby-container">
-    <h1>MASTERMIND</h1>
+    <h2>MASTERMIND</h2>
     <div class="card">
       <button id="play-btn">Play Game</button>
     </div>
@@ -59,7 +63,6 @@
     playBtn.addEventListener('click', async () => {
       try {
         playBtn.disabled = true;
-        playBtn.innerText = "Searching...";
 
         // Step 1: Sign in anonymously
         const cred = await signInAnonymously(auth);
@@ -69,7 +72,7 @@
         const lobbyId = await findOrHostMatch(playerUid);
 
         // Step 3: Redirect straight to multiplayer.html
-        window.location.href = `multiplayer.html?lobbyId=${lobbyId}`;
+        window.location.href = `/mastermind/multiplayer?lobbyId=${lobbyId}`;
       } catch (error) {
         console.error("Matchmaking failed: ", error);
         playBtn.disabled = false;
