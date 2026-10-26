@@ -4,6 +4,8 @@
   const path = window.location.pathname;
   if (/^\/(?:feedback|admin)(?:\/|$)/i.test(path)) return;
   const submissionStorageKey = "carzzyFeedbackSubmitted";
+  const dismissalStorageKey = "carzzyFeedbackDismissedAt";
+  const dismissalDurationMs = 30 * 24 * 60 * 60 * 1000;
 
   const launcherStyles = document.createElement("style");
   launcherStyles.textContent = `
@@ -67,8 +69,28 @@
     }
   }
 
+  function isDismissalActive() {
+    try {
+      const dismissedAt = Number(localStorage.getItem(dismissalStorageKey));
+      if (!Number.isFinite(dismissedAt) || dismissedAt <= 0) return false;
+      if (Date.now() < dismissedAt + dismissalDurationMs) return true;
+      localStorage.removeItem(dismissalStorageKey);
+    } catch (error) {
+      console.error("Unable to read feedback popup dismissal status", error);
+    }
+    return false;
+  }
+
+  function saveDismissalStatus() {
+    try {
+      localStorage.setItem(dismissalStorageKey, String(Date.now()));
+    } catch (error) {
+      console.error("Unable to save feedback popup dismissal status", error);
+    }
+  }
+
   function showFeedbackPopup(force = false) {
-    if (!force && getSubmissionStatus()) return;
+    if (!force && (getSubmissionStatus() || isDismissalActive())) return;
     if (document.querySelector("#feedback-popup")) return;
 
     const previousOverflow = document.documentElement.style.overflow;
@@ -142,8 +164,9 @@
     const closeButton = overlay.querySelector(".feedback-popup__close");
     const frame = overlay.querySelector("iframe");
 
-    function closePopup(submitted = false) {
+    function closePopup(submitted = false, dismissed = false) {
       if (submitted) saveSubmissionStatus(true);
+      if (dismissed) saveDismissalStatus();
       overlay.remove();
       document.documentElement.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeydown);
@@ -164,7 +187,7 @@
       }
     }
 
-    closeButton.addEventListener("click", () => closePopup());
+    closeButton.addEventListener("click", () => closePopup(false, true));
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) closePopup();
     });
