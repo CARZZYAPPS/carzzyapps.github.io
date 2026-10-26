@@ -2,6 +2,25 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /contactSubmissions/{submissionId} {
+      allow create: if request.resource.data.keys().hasOnly([
+        'username', 'email', 'comments', 'createdAt'
+      ])
+      && request.resource.data.username is string
+      && request.resource.data.username.size() > 0
+      && request.resource.data.username.size() <= 100
+      && request.resource.data.email is string
+      && request.resource.data.email.size() > 3
+      && request.resource.data.email.size() <= 254
+      && request.resource.data.comments is string
+      && request.resource.data.comments.size() > 0
+      && request.resource.data.comments.size() <= 5000
+      && request.resource.data.createdAt == request.time;
+
+      allow read: if request.auth != null;
+      allow update, delete: if false;
+    }
+
     match /feedbackSubmissions/{submissionId} {
       allow create: if request.resource.data.keys().hasOnly([
         'username', 'email', 'rating', 'reason', 'createdAt'
