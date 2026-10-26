@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="keywords" content="mastermind, carzzy apps, carzzyapps, game, multiplayer">
+  <meta name="description" content="Play the classic game of mastermind online against other people.">
+  <meta name="author" content="Avis, DeBus">
+  <title>Mastermind Lobby</title>
+  <style>
+    body {
+      background-color: #0a0a0a; color: #ccc;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      display: flex; justify-content: center;
+      height: 100vh; margin: 0;
+    }
+    #lobby-container { text-align: center; width: 100%; max-width: 400px; padding: 20px; }
+    h2 { font-size: 32px; color: #00d1b2; letter-spacing: 2px; margin-top: 120px; margin-bottom: 30px; font-weight: 700; }
+    .card {
+      background-color: #121212; border: 1px solid #333; border-radius: 8px;
+      padding: 30px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+    }
+    button {
+      background-color: #00d1b2; color: #0a0a0a; border: none; padding: 16px 36px;
+      font-weight: bold; font-family: inherit; border-radius: 4px; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 1.5px; font-size: 1.1rem;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #00b59b; }
+    button:disabled { background-color: #555; color: #aaa; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+  <script src="/nav-bar.js"></script>
+  <div id="lobby-container">
+    <h2>MULTIPLAYER MASTERMIND</h2>
+    <h3 style="color: #00d1b2; font-size: 24px;">Play Mastermind online against other people!</h3>
+    <div class="card">
+      <button id="play-btn">Join Lobby</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, get, query, orderByChild, equalTo, limitToFirst, runTransaction } 
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4",
+      authDomain: "carzzy-apps.firebaseapp.com",
+      projectId: "carzzy-apps",
+      databaseURL: "https://carzzy-apps-default-rtdb.firebaseio.com",
+      appId: "1:716862658931:web:2d987c92c3021837dc0d06"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    const playBtn = document.getElementById('play-btn');
+
+    playBtn.addEventListener('click', async () => {
+      try {
+        playBtn.disabled = true;
+
+        // Step 1: Sign in anonymously
+        const cred = await signInAnonymously(auth);
+        const playerUid = cred.user.uid;
+
+        // Step 2: Matchmake or host a new lobby
+        const lobbyId = await findOrHostMatch(playerUid);
+
+        // Step 3: Redirect straight to multiplayer.html
+        window.location.href = `/mastermind/multiplayer?lobbyId=${lobbyId}`;
+      } catch (error) {
+        console.error("Matchmaking failed: ", error);
+        playBtn.disabled = false;
+        playBtn.innerText = "Play Game";
+        alert("Failed to join game. Please try again!");
+      }
+    });
+
+    async function findOrHostMatch(playerId) {
+      const lobbiesRef = ref(db, 'lobbies');
+      const waitingQuery = query(lobbiesRef, orderByChild('status'), equalTo('waiting'), limitToFirst(5));
+      const snapshot = await get(waitingQuery);
+      const lobbies = snapshot.val();
+      
+      if (lobbies) {
+        for (const lobbyId of Object.keys(lobbies)) {
+          const lobbyPlayersRef = ref(db, `lobbies/${lobbyId}/players`);
+          
+          const result = await runTransaction(lobbyPlayersRef, (currentPlayers) => {
+            if (!currentPlayers) {
+              return { [playerId]: true };
+            }
+            if (Object.keys(currentPlayers).length >= 2) {
+              return; // Abort if lobby is full
+            }
+            currentPlayers[playerId] = true;
+            return currentPlayers;
+          });
+
+          if (result.committed) {
+            await set(ref(db, `lobbies/${lobbyId}/status`), 'playing');
+            return lobbyId;
+          }
+        }
+      }
+
+      // If no open lobbies, host a brand-new one
+      const newLobbyRef = push(lobbiesRef);
+      await set(newLobbyRef, {
+        host: playerId, status: 'waiting',
+        players: { [playerId]: true }
+      });
+      return newLobbyRef.key;
+    }
+  </script>
+</body>
+</html>
