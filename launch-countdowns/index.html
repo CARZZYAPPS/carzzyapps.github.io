@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Launch Countdown | Carzzy Apps</title>
+  <meta name="description" content="See what’s coming next from Carzzy Apps and count down to upcoming game releases, updates, and announcements.">
+  <meta name="keywords" content="Carzzy Apps launches, game release countdown, upcoming games, game updates">
+  <meta name="author" content="Carzzy Apps">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#090d0d">
+  <meta name="color-scheme" content="dark">
+  <meta name="application-name" content="Carzzy Apps">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Carzzy Apps">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Launch Countdown | Carzzy Apps">
+  <meta property="og:description" content="See what’s coming next from Carzzy Apps and count down to upcoming game releases, updates, and announcements.">
+  <meta property="og:url" content="https://www.carzzyapps.com/launch-countdowns/">
+  <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+  <meta property="og:image:alt" content="Carzzy Apps logo">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Launch Countdown | Carzzy Apps">
+  <meta name="twitter:description" content="See what’s coming next from Carzzy Apps and count down to upcoming game releases, updates, and announcements.">
+  <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+  <meta name="twitter:image:alt" content="Carzzy Apps logo">
+  <link rel="canonical" href="https://www.carzzyapps.com/launch-countdowns/">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "DM Sans", sans-serif;
+      color: #edf2ef;
+      background: #090d0d;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      --panel: #111716;
+      --line: #27322e;
+      --muted: #9aa59f;
+      --teal: #00d1b2;
+    }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; min-height: 100vh; margin: 0; }
+    a { color: inherit; }
+    .page { width: min(100% - 40px, 1060px); margin: 0 auto; padding: 28px 0 64px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 22px; border-bottom: 1px solid #1e2724; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+    .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #265149; border-radius: 10px; color: var(--teal); background: rgba(0,209,178,.09); }
+    .brand-mark svg { width: 18px; height: 18px; }
+    .brand-name { font: 800 13px Manrope, sans-serif; letter-spacing: -.3px; }
+    .back-link { color: #aab5af; font-size: 11px; text-decoration: none; }
+    .back-link:hover { color: var(--teal); }
+    .intro { position: relative; overflow: hidden; padding: 52px 0 40px; }
+    .intro::after { position: absolute; top: 5px; right: 6%; width: 235px; height: 235px; border: 1px solid rgba(0,209,178,.12); border-radius: 50%; box-shadow: 0 0 0 28px rgba(0,209,178,.025), 0 0 0 58px rgba(0,209,178,.018); content: ""; pointer-events: none; }
+    .eyebrow { display: flex; align-items: center; gap: 8px; color: var(--teal); font-size: 10px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+    .eyebrow::before { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px rgba(0,209,178,.7); content: ""; }
+    h1 { max-width: 720px; margin: 14px 0 10px; font: 700 clamp(32px, 5vw, 52px)/1.08 Manrope, sans-serif; letter-spacing: -1.7px; }
+    .intro-copy { max-width: 510px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 15px; margin-bottom: 16px; }
+    .section-heading h2 { margin: 0; font: 700 16px Manrope, sans-serif; }
+    .section-heading p { margin: 4px 0 0; color: #7f8a84; font-size: 11px; }
+    .launch-count { color: #87938d; font-size: 10px; }
+    .launch-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .launch-card { --accent: var(--teal); overflow: hidden; border: 1px solid var(--line); border-radius: 13px; background: var(--panel); text-decoration: none; transition: border-color .16s, transform .16s; }
+    .launch-card:hover { border-color: color-mix(in srgb, var(--accent) 50%, #27322e); transform: translateY(-2px); }
+    .card-head { min-height: 125px; padding: 19px 20px 16px; border-bottom: 1px solid #242d2a; background: radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--accent) 15%, transparent), transparent 49%), #121917; }
+    .card-topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .category { color: var(--accent); font-size: 9px; font-weight: 700; letter-spacing: 1.15px; text-transform: uppercase; }
+    .release-date { color: #a5b0aa; font-size: 10px; }
+    .card-head h2 { margin: 19px 0 5px; font: 700 18px Manrope, sans-serif; letter-spacing: -.45px; }
+    .tagline { margin: 0; color: #9da9a2; font-size: 11px; line-height: 1.5; }
+    .card-body { padding: 16px 20px 18px; }
+    .timer { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .timer-unit { padding: 10px 5px; border: 1px solid #29332f; border-radius: 8px; text-align: center; background: #0c1110; }
+    .timer-unit strong { display: block; font: 700 22px Manrope, sans-serif; letter-spacing: -.5px; }
+    .timer-unit span { display: block; margin-top: 3px; color: #849089; font-size: 8px; letter-spacing: .7px; text-transform: uppercase; }
+    .timer-ended { padding: 12px 0; color: var(--accent); font: 700 16px Manrope, sans-serif; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 15px; color: #8d9992; font-size: 10px; }
+    .card-cta { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 700; }
+    .card-cta svg { width: 14px; height: 14px; }
+    .detail { --accent: var(--teal); max-width: 800px; margin: 20px auto 0; padding: clamp(24px, 5vw, 48px); border: 1px solid #2c3934; border-radius: 17px; background: radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--accent) 13%, transparent), transparent 48%), #111716; }
+    .detail .category { display: inline-block; }
+    .detail h1 { margin-top: 18px; }
+    .detail-copy { max-width: 600px; margin: 0; color: #a4afa9; font-size: 13px; line-height: 1.75; white-space: pre-line; }
+    .detail-date { margin: 22px 0 12px; color: #a3aea8; font-size: 11px; }
+    .detail .timer { gap: 12px; }
+    .detail .timer-unit { padding: 17px 8px; border-color: color-mix(in srgb, var(--accent) 25%, #29332f); }
+    .detail .timer-unit strong { color: var(--accent); font-size: clamp(24px, 6vw, 38px); }
+    .detail .timer-unit span { font-size: 9px; }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
+    .action-link, .share-button { min-height: 39px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 13px; border: 1px solid #34413c; border-radius: 8px; color: #d7e0db; background: #171e1c; font: 600 11px "DM Sans", sans-serif; text-decoration: none; cursor: pointer; }
+    .action-link:hover, .share-button:hover { border-color: var(--accent); }
+    .action-link.primary { border-color: var(--accent); color: #08110f; background: var(--accent); }
+    .toast {
+      position: fixed; z-index: 5; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 10px;
+      max-width: calc(100vw - 32px); padding: 13px 17px; border: 1px solid #2d6558; border-radius: 10px;
+      color: #e8f5f0; background: #14201c; box-shadow: 0 12px 35px rgba(0,0,0,.4);
+      font-size: 12px; font-weight: 600; opacity: 0; pointer-events: none; transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+    .toast-icon { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; color: #07110f; background: var(--teal); }
+    .toast-icon svg { width: 13px; height: 13px; }
+    .state { min-height: 190px; display: grid; place-items: center; padding: 25px; border: 1px dashed #303b36; border-radius: 12px; text-align: center; }
+    .state h2 { margin: 0 0 7px; font: 700 15px Manrope, sans-serif; }
+    .state p { max-width: 400px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .spinner { width: 18px; height: 18px; display: inline-block; border: 2px solid #43514a; border-top-color: var(--teal); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    footer { padding-top: 34px; margin-top: 36px; border-top: 1px solid #1e2724; color: #738078; font-size: 10px; text-align: center; }
+    .hidden { display: none !important; }
+    @media (max-width: 680px) {
+      .page { width: min(100% - 30px, 1060px); padding-top: 18px; }
+      .intro { padding: 40px 0 30px; }
+      .intro::after { right: -100px; opacity: .6; }
+      .launch-grid { grid-template-columns: 1fr; }
+      .detail .timer { gap: 7px; }
+      .detail .timer-unit { padding: 12px 5px; }
+      .toast { right: 16px; bottom: 16px; }
+    }
+    @media (max-width: 380px) {
+      .timer { gap: 5px; }
+      .timer-unit strong { font-size: 18px; }
+      .timer-unit { padding: 9px 3px; }
+      .detail-actions > * { flex: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <a class="brand" href="https://www.carzzyapps.com/" aria-label="Carzzy Apps home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 13h6L9 21l8.5-11h-6L12 3Z"/></svg></span>
+        <span class="brand-name">CARZZY APPS</span>
+      </a>
+      <a class="back-link" href="https://www.carzzyapps.com/">Back to Carzzy Apps</a>
+    </header>
+    <section id="listing-view">
+      <header class="intro">
+        <div class="eyebrow">On the horizon</div>
+        <h1>Something fun is on the way.</h1>
+        <p class="intro-copy">A first look at what’s next from Carzzy Apps. Find a new game, an update, or a feature to look forward to.</p>
+      </header>
+      <div class="section-heading">
+        <div><h2>Upcoming launches</h2><p>Keep an eye on the countdown.</p></div>
+        <span id="launch-count" class="launch-count" aria-live="polite"></span>
+      </div>
+      <div id="launch-grid" class="launch-grid" aria-live="off">
+        <div class="state"><div><span class="spinner" aria-label="Loading"></span><p style="margin-top:12px">Loading upcoming launches…</p></div></div>
+      </div>
+    </section>
+    <section id="detail-view" class="hidden"></section>
+    <footer>Made for what’s next · Carzzy Apps</footer>
+  </div>
+  <div id="copy-toast" class="toast" role="status" aria-live="polite">
+    <span class="toast-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6"/></svg></span>
+    <span id="copy-toast-message">Countdown link copied.</span>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      collection, doc, getDoc, getDocs, getFirestore, limit, query, where
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-p2GVENAFsrrRU7owYuLcxXx5dlpYUp4",
+      authDomain: "ca-feedback-89122.firebaseapp.com",
+      projectId: "ca-feedback-89122",
+      storageBucket: "ca-feedback-89122.firebasestorage.app",
+      messagingSenderId: "32843716300",
+      appId: "1:32843716300:web:52b3617aa1e05a0c4c9469",
+      measurementId: "G-PQXJ25LD54"
+    };
+    const accents = { teal: "#00d1b2", blue: "#66aaff", violet: "#b49aff", amber: "#f3c779" };
+    const listingView = document.getElementById("listing-view");
+    const detailView = document.getElementById("detail-view");
+    const launchGrid = document.getElementById("launch-grid");
+    const launchCount = document.getElementById("launch-count");
+    const db = getFirestore(initializeApp(firebaseConfig));
+    let toastTimer;
+
+    function showCopyToast(message) {
+      const toast = document.getElementById("copy-toast");
+      document.getElementById("copy-toast-message").textContent = message;
+      toast.classList.add("visible");
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 3000);
+    }
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+
+    function dateOf(data) {
+      return data.targetAt?.toDate instanceof Function ? data.targetAt.toDate() : null;
+    }
+
+    function formatDate(date) {
+      return new Intl.DateTimeFormat(undefined, {
+        weekday: "long", month: "long", day: "numeric", year: "numeric",
+        hour: "numeric", minute: "2-digit"
+      }).format(date);
+    }
+
+    function timer(target, large = false) {
+      const container = element("div", "timer");
+      if (large) container.classList.add("large");
+      const remaining = Math.max(0, target.getTime() - Date.now());
+      const values = [
+        ["Days", Math.floor(remaining / 86400000)],
+        ["Hours", Math.floor((remaining % 86400000) / 3600000)],
+        ["Minutes", Math.floor((remaining % 3600000) / 60000)],
+        ["Seconds", Math.floor((remaining % 60000) / 1000)]
+      ];
+      for (const [label, value] of values) {
+        const unit = element("div", "timer-unit");
+        unit.append(element("strong", "", label === "Days" ? String(value) : String(value).padStart(2, "0")));
+        unit.append(element("span", "", label));
+        container.append(unit);
+      }
+      return container;
+    }
+
+    function makeCard(id, data) {
+      const target = dateOf(data);
+      if (!target) return null;
+      const accent = accents[data.accent] || accents.teal;
+      const link = element("a", "launch-card");
+      link.href = `?id=${encodeURIComponent(id)}`;
+      link.style.setProperty("--accent", accent);
+      const head = element("div", "card-head");
+      const topline = element("div", "card-topline");
+      topline.append(element("span", "category", data.category || "Launch"));
+      topline.append(element("span", "release-date", new Intl.DateTimeFormat(undefined, {
+        month: "short", day: "numeric", year: "numeric"
+      }).format(target)));
+      head.append(topline);
+      head.append(element("h2", "", data.title || "Upcoming launch"));
+      head.append(element("p", "tagline", data.subtitle || "A new release is on the way."));
+      const body = element("div", "card-body");
+      const countdown = timer(target);
+      countdown.dataset.targetTime = String(target.getTime());
+      body.append(countdown);
+      const footer = element("div", "card-footer");
+      footer.append(element("span", "", formatDate(target)));
+      const cta = element("span", "card-cta", "Explore launch");
+      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      arrow.setAttribute("viewBox", "0 0 24 24");
+      arrow.setAttribute("fill", "none");
+      arrow.setAttribute("stroke", "currentColor");
+      arrow.setAttribute("stroke-width", "1.8");
+      arrow.innerHTML = '<path d="M5 12h14m-6-6 6 6-6 6"/>';
+      cta.append(arrow);
+      footer.append(cta);
+      body.append(footer);
+      link.append(head, body);
+      return link;
+    }
+
+    function renderLaunchDetails(id, data) {
+      const target = dateOf(data);
+      if (!target) throw new TypeError("This launch does not have a valid date.");
+      const accent = accents[data.accent] || accents.teal;
+      listingView.classList.add("hidden");
+      detailView.classList.remove("hidden");
+      detailView.replaceChildren();
+      const card = element("article", "detail");
+      card.style.setProperty("--accent", accent);
+      card.append(element("div", "category", data.category || "Launch"));
+      card.append(element("h1", "", data.title || "Upcoming launch"));
+      if (data.subtitle) card.append(element("p", "intro-copy", data.subtitle));
+      if (data.description) card.append(element("p", "detail-copy", data.description));
+      card.append(element("p", "detail-date", `Launches ${formatDate(target)}`));
+      const countdown = timer(target, true);
+      countdown.dataset.targetTime = String(target.getTime());
+      card.append(countdown);
+      const actions = element("div", "detail-actions");
+      const back = element("a", "action-link primary", "See all launches");
+      back.href = "/launch-countdowns/";
+      actions.append(back);
+      const share = element("button", "share-button", "Copy countdown link");
+      share.type = "button";
+      share.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          share.textContent = "Link copied";
+          showCopyToast("Countdown link copied to clipboard.");
+        } catch (error) {
+          console.error("Unable to copy the countdown link.", error);
+          share.textContent = "Copy unavailable — use the address bar";
+          showCopyToast("Copy wasn’t available. Copy the link from your address bar.");
+        }
+      });
+      actions.append(share);
+      card.append(actions);
+      detailView.append(card);
+      document.title = `${data.title || "Launch countdown"} | Carzzy Apps`;
+    }
+
+    function showState(title, message, isError = false) {
+      launchGrid.replaceChildren();
+      const state = element("div", "state");
+      const content = document.createElement("div");
+      content.append(element("h2", "", title));
+      content.append(element("p", "", message));
+      if (isError) {
+        const retry = element("button", "share-button", "Try again");
+        retry.type = "button";
+        retry.addEventListener("click", loadListing);
+        content.append(retry);
+      }
+      state.append(content);
+      launchGrid.append(state);
+    }
+
+    function updateTimers() {
+      for (const node of document.querySelectorAll(".timer[data-target-time]")) {
+        const target = new Date(Number(node.dataset.targetTime));
+        if (Number.isNaN(target.getTime())) continue;
+        if (target <= new Date()) {
+          node.replaceWith(element("div", "timer-ended", "Now live"));
+        } else {
+          const replacement = timer(target, node.closest(".detail") != null);
+          replacement.dataset.targetTime = node.dataset.targetTime;
+          node.replaceWith(replacement);
+        }
+      }
+    }
+
+    async function loadListing() {
+      launchCount.textContent = "";
+      try {
+        const snapshot = await getDocs(query(
+          collection(db, "launchCountdowns"),
+          where("status", "==", "published"),
+          limit(100)
+        ));
+        const launches = snapshot.docs
+          .map((item) => ({ id: item.id, data: item.data() }))
+          .filter(({ data }) => dateOf(data))
+          .sort((a, b) => dateOf(a.data) - dateOf(b.data));
+        launchGrid.replaceChildren();
+        launchCount.textContent = `${launches.length} ${launches.length === 1 ? "launch" : "launches"}`;
+        if (launches.length === 0) {
+          showState("A little quiet for now.", "No launches are scheduled at the moment. Check back soon to see what’s next.");
+          return;
+        }
+        for (const launch of launches) {
+          const card = makeCard(launch.id, launch.data);
+          if (card) launchGrid.append(card);
+        }
+      } catch (error) {
+        console.error("Unable to load public countdowns.", error);
+        showState(
+          "Launches are unavailable right now.",
+          "We couldn’t load the launch schedule. Please try again in a moment.",
+          true
+        );
+      }
+    }
+
+    async function loadDetail(id) {
+      try {
+        const snapshot = await getDoc(doc(db, "launchCountdowns", id));
+        if (!snapshot.exists() || snapshot.data().status !== "published") {
+          detailView.replaceChildren();
+          detailView.classList.remove("hidden");
+          listingView.classList.add("hidden");
+          const state = element("div", "state");
+          const content = document.createElement("div");
+          content.append(element("h2", "", "This launch isn’t public."));
+          content.append(element("p", "", "The countdown may be a draft or have been removed."));
+          const back = element("a", "action-link primary", "View all launches");
+          back.href = "/launch-countdowns/";
+          content.append(back);
+          state.append(content);
+          detailView.append(state);
+          return;
+        }
+        renderLaunchDetails(snapshot.id, snapshot.data());
+      } catch (error) {
+        console.error("Unable to load public countdown.", error);
+        detailView.replaceChildren();
+        detailView.classList.remove("hidden");
+        listingView.classList.add("hidden");
+        const state = element("div", "state");
+        const content = document.createElement("div");
+        content.append(element("h2", "", error.code === "permission-denied"
+          ? "This launch isn’t public."
+          : "This countdown couldn’t be loaded."));
+        content.append(element("p", "", error.code === "permission-denied"
+          ? "The countdown may still be a draft or may have been removed."
+          : "Please check your connection and try again."));
+        const back = element("a", "action-link primary", "View all launches");
+        back.href = "/launch-countdowns/";
+        content.append(back);
+        state.append(content);
+        detailView.append(state);
+      }
+    }
+
+    const launchId = new URLSearchParams(window.location.search).get("id");
+    if (launchId && /^[A-Za-z0-9_-]{1,128}$/.test(launchId)) {
+      loadDetail(launchId);
+    } else {
+      loadListing();
+    }
+    window.setInterval(updateTimers, 1000);
+  </script>
+</body>
+</html>
