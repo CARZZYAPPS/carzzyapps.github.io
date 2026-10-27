@@ -48,4 +48,10 @@
   <url>
     <loc>https://www.carzzyapps.com/mastermind/</loc>
   </url>
+  <url>
+    <loc>https://www.carzzyapps.com/mastermind/singleplayer/</loc>
+  </url>
+  <url>
+    <loc>https://www.carzzyapps.com/mastermind/multiplayer/lobby/</loc>
+  </url>
 </urlset>
