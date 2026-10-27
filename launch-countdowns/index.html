@@ -125,44 +125,48 @@
       .timer { gap: 5px; }
       .timer-unit strong { font-size: 18px; }
       .timer-unit { padding: 9px 3px; }
-      .detail-actions > * { flex: 1; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
+    body { background: #090d0d; }
+    .page { width: min(100% - 32px, 960px); margin: 0 auto; padding: 112px 0 40px; }
+    .launch-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 14px; }
+    .launch-card { display: block; padding: 22px; border-radius: 12px; }
+    .card-head { min-height: 0; padding: 0 0 17px; border: 0; background: none; }
+    .card-topline { justify-content: flex-start; }
+    .release-date, .tagline, .card-footer { display: none; }
+    .card-head h2 { margin: 0; font-size: 19px; }
+    .card-body { padding: 0; }
+    .timer { gap: 9px; }
+    .timer-unit { padding: 14px 6px; border-radius: 9px; }
+    .timer-unit strong { font-size: clamp(22px, 4vw, 30px); }
+    .detail { max-width: 700px; margin: clamp(35px, 10vh, 100px) auto 0; padding: clamp(22px, 5vw, 42px); border-radius: 12px; text-align: center; }
+    .detail h1 { margin: 0 0 27px; font-size: clamp(25px, 5vw, 40px); letter-spacing: -1px; }
+    .detail .timer { gap: 10px; }
+    .detail .timer-unit { padding: clamp(14px, 4vw, 24px) 7px; border-radius: 10px; }
+    .detail .timer-unit strong { font-size: clamp(24px, 7vw, 46px); }
+    .detail .timer-unit span { font-size: 9px; }
+    .detail .timer { margin-top: 25px; }
+    .state { min-height: 180px; }
+    @media (max-width: 530px) {
+      .page { padding-top: 98px; }
+      .launch-card { padding: 17px; }
+      .timer { gap: 6px; }
+      .timer-unit { padding: 12px 3px; }
+    }
   </style>
 </head>
 <body>
-  <div class="page">
-    <header class="topbar">
-      <a class="brand" href="https://www.carzzyapps.com/" aria-label="Carzzy Apps home">
-        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 13h6L9 21l8.5-11h-6L12 3Z"/></svg></span>
-        <span class="brand-name">CARZZY APPS</span>
-      </a>
-      <a class="back-link" href="https://www.carzzyapps.com/">Back to Carzzy Apps</a>
-    </header>
+  <script src="/nav-bar.js"></script>
+  <main class="page">
     <section id="listing-view">
-      <header class="intro">
-        <div class="eyebrow">On the horizon</div>
-        <h1>Something fun is on the way.</h1>
-        <p class="intro-copy">A first look at what’s next from Carzzy Apps. Find a new game, an update, or a feature to look forward to.</p>
-      </header>
-      <div class="section-heading">
-        <div><h2>Upcoming launches</h2><p>Keep an eye on the countdown.</p></div>
-        <span id="launch-count" class="launch-count" aria-live="polite"></span>
-      </div>
       <div id="launch-grid" class="launch-grid" aria-live="off">
         <div class="state"><div><span class="spinner" aria-label="Loading"></span><p style="margin-top:12px">Loading upcoming launches…</p></div></div>
       </div>
     </section>
     <section id="detail-view" class="hidden"></section>
-    <footer>Made for what’s next · Carzzy Apps</footer>
-  </div>
-  <div id="copy-toast" class="toast" role="status" aria-live="polite">
-    <span class="toast-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 4 4L19 6"/></svg></span>
-    <span id="copy-toast-message">Countdown link copied.</span>
-  </div>
-
+  </main>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import {
@@ -182,17 +186,7 @@
     const listingView = document.getElementById("listing-view");
     const detailView = document.getElementById("detail-view");
     const launchGrid = document.getElementById("launch-grid");
-    const launchCount = document.getElementById("launch-count");
     const db = getFirestore(initializeApp(firebaseConfig));
-    let toastTimer;
-
-    function showCopyToast(message) {
-      const toast = document.getElementById("copy-toast");
-      document.getElementById("copy-toast-message").textContent = message;
-      toast.classList.add("visible");
-      window.clearTimeout(toastTimer);
-      toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 3000);
-    }
 
     function element(tag, className, text) {
       const node = document.createElement(tag);
@@ -203,13 +197,6 @@
 
     function dateOf(data) {
       return data.targetAt?.toDate instanceof Function ? data.targetAt.toDate() : null;
-    }
-
-    function formatDate(date) {
-      return new Intl.DateTimeFormat(undefined, {
-        weekday: "long", month: "long", day: "numeric", year: "numeric",
-        hour: "numeric", minute: "2-digit"
-      }).format(date);
     }
 
     function timer(target, large = false) {
@@ -239,30 +226,11 @@
       link.href = `?id=${encodeURIComponent(id)}`;
       link.style.setProperty("--accent", accent);
       const head = element("div", "card-head");
-      const topline = element("div", "card-topline");
-      topline.append(element("span", "category", data.category || "Launch"));
-      topline.append(element("span", "release-date", new Intl.DateTimeFormat(undefined, {
-        month: "short", day: "numeric", year: "numeric"
-      }).format(target)));
-      head.append(topline);
       head.append(element("h2", "", data.title || "Upcoming launch"));
-      head.append(element("p", "tagline", data.subtitle || "A new release is on the way."));
       const body = element("div", "card-body");
       const countdown = timer(target);
       countdown.dataset.targetTime = String(target.getTime());
       body.append(countdown);
-      const footer = element("div", "card-footer");
-      footer.append(element("span", "", formatDate(target)));
-      const cta = element("span", "card-cta", "Explore launch");
-      const arrow = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      arrow.setAttribute("viewBox", "0 0 24 24");
-      arrow.setAttribute("fill", "none");
-      arrow.setAttribute("stroke", "currentColor");
-      arrow.setAttribute("stroke-width", "1.8");
-      arrow.innerHTML = '<path d="M5 12h14m-6-6 6 6-6 6"/>';
-      cta.append(arrow);
-      footer.append(cta);
-      body.append(footer);
       link.append(head, body);
       return link;
     }
@@ -276,33 +244,10 @@
       detailView.replaceChildren();
       const card = element("article", "detail");
       card.style.setProperty("--accent", accent);
-      card.append(element("div", "category", data.category || "Launch"));
       card.append(element("h1", "", data.title || "Upcoming launch"));
-      if (data.subtitle) card.append(element("p", "intro-copy", data.subtitle));
-      if (data.description) card.append(element("p", "detail-copy", data.description));
-      card.append(element("p", "detail-date", `Launches ${formatDate(target)}`));
       const countdown = timer(target, true);
       countdown.dataset.targetTime = String(target.getTime());
       card.append(countdown);
-      const actions = element("div", "detail-actions");
-      const back = element("a", "action-link primary", "See all launches");
-      back.href = "/launch-countdowns/";
-      actions.append(back);
-      const share = element("button", "share-button", "Copy countdown link");
-      share.type = "button";
-      share.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          share.textContent = "Link copied";
-          showCopyToast("Countdown link copied to clipboard.");
-        } catch (error) {
-          console.error("Unable to copy the countdown link.", error);
-          share.textContent = "Copy unavailable — use the address bar";
-          showCopyToast("Copy wasn’t available. Copy the link from your address bar.");
-        }
-      });
-      actions.append(share);
-      card.append(actions);
       detailView.append(card);
       document.title = `${data.title || "Launch countdown"} | Carzzy Apps`;
     }
@@ -313,12 +258,6 @@
       const content = document.createElement("div");
       content.append(element("h2", "", title));
       content.append(element("p", "", message));
-      if (isError) {
-        const retry = element("button", "share-button", "Try again");
-        retry.type = "button";
-        retry.addEventListener("click", loadListing);
-        content.append(retry);
-      }
       state.append(content);
       launchGrid.append(state);
     }
@@ -338,7 +277,6 @@
     }
 
     async function loadListing() {
-      launchCount.textContent = "";
       try {
         const snapshot = await getDocs(query(
           collection(db, "launchCountdowns"),
@@ -350,7 +288,6 @@
           .filter(({ data }) => dateOf(data))
           .sort((a, b) => dateOf(a.data) - dateOf(b.data));
         launchGrid.replaceChildren();
-        launchCount.textContent = `${launches.length} ${launches.length === 1 ? "launch" : "launches"}`;
         if (launches.length === 0) {
           showState("A little quiet for now.", "No launches are scheduled at the moment. Check back soon to see what’s next.");
           return;
