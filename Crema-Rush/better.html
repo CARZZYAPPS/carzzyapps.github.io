@@ -183,6 +183,11 @@ button{font:inherit;color:inherit}
 .rc h1{margin:0;font:700 50px/.95 var(--display);text-transform:uppercase;letter-spacing:.03em;text-wrap:balance}
 .rc h2{margin:16px 0 4px;font:700 20px var(--display);letter-spacing:.1em;text-transform:uppercase}
 .rc-sub{margin:6px 0 12px;font:400 12px/1.5 var(--mono);color:var(--paper-mute)}
+.account-label{display:block;margin:10px 0 4px;font:600 12px var(--mono)}
+.account-input{display:block;width:100%;padding:11px;border:1px solid var(--paper-line);border-radius:4px;background:#fff;color:var(--paper-ink);font:500 15px var(--mono);user-select:text;-webkit-user-select:text}
+.account-error{min-height:1em;margin:8px 0 0;color:#a21c12;font:500 12px/1.4 var(--mono)}
+.account-note{margin:10px 0 0;color:var(--paper-mute);font:400 11px/1.5 var(--mono)}
+.account-note a{color:inherit}
 .how{margin:0 0 12px;padding-left:20px;font:400 13px/1.45 var(--mono);display:flex;flex-direction:column;gap:6px}
 .ln{display:flex;gap:6px;align-items:baseline;font:500 13px var(--mono);padding:2px 0}
 .ln i{flex:1;border-bottom:2px dotted var(--paper-line);transform:translateY(-3px)}
@@ -1051,8 +1056,10 @@ function animPerson(p,dt,speed,time){
 var SAVEKEY='crema-tycoon-v1';
 function defState(){return {v:1,day:1,cash:60,rating:3.5,lvl:1,mach:['E','D'],spd:{E:0,M:0,D:0,C:0},cashiers:0,baristas:0,cTrain:0,bTrain:0,locs:{},served:0,earned:0};}
 var G=defState();
-var cloudSave={db:null,uid:null,write:null,enabled:false,chain:Promise.resolve(),lastWrite:0};
+var cloudSave={db:null,uid:null,auth:null,account:null,storeModule:null,write:null,enabled:false,chain:Promise.resolve(),lastWrite:0};
 var saveErrorShown=false,cloudErrorShown=false;
+var LEGACY_MIGRATION_KEY=SAVEKEY+'-migrated';
+function localSaveKey(){return cloudSave.uid?SAVEKEY+'-'+cloudSave.uid:SAVEKEY;}
 function validSave(s){
   return !!(s&&s.v===1&&Array.isArray(s.mach)&&s.mach.length>0&&s.mach.length<=LEVELS[3].slots
     &&s.mach.every(function(k){return !!KIND[k];})
@@ -1074,9 +1081,9 @@ function validSave(s){
         &&typeof s.locs[k]==='number'&&isFinite(s.locs[k])&&s.locs[k]>=0&&s.locs[k]<=3;
     }));
 }
-function readLocalSave(){
+function readLocalSave(key){
   try{
-    var raw=localStorage.getItem(SAVEKEY);
+    var raw=localStorage.getItem(key||localSaveKey());
     if(!raw)return null;
     var s=JSON.parse(raw);
     if(validSave(s))return s;
@@ -1084,23 +1091,21 @@ function readLocalSave(){
   }catch(e){console.error('Unable to load the saved Crema Tycoon game.',e);}
   return null;
 }
+function migrateLocalSave(uid){
+  try{
+    if(localStorage.getItem(LEGACY_MIGRATION_KEY))return;
+    var legacy=readLocalSave(SAVEKEY);
+    if(legacy)localStorage.setItem(SAVEKEY+'-'+uid,JSON.stringify(legacy));
+    localStorage.setItem(LEGACY_MIGRATION_KEY,'1');
+  }catch(e){console.error('Unable to migrate the existing local café save.',e);}
+}
 async function connectCloudSave(){
-  var config=window.CARZZY_FIREBASE_CONFIG;
-  if(!config||!config.apiKey||!config.authDomain||!config.projectId||!config.appId){
-    throw new Error('Firebase web configuration is missing or incomplete.');
-  }
-  var appModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
-  var authModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+  var accountModule=await import('./account.js');
+  var account=await accountModule.connectCremaAccount(window.CARZZY_FIREBASE_CONFIG,modal,window.location.pathname);
   var storeModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
-  var app=appModule.initializeApp(config);
-  var auth=authModule.getAuth(app);
-  var user=await new Promise(function(resolve,reject){
-    var unsubscribe=authModule.onAuthStateChanged(auth,function(currentUser){
-      unsubscribe();resolve(currentUser);
-    },function(error){unsubscribe();reject(error);});
-  });
-  if(!user)user=(await authModule.signInAnonymously(auth)).user;
-  var db=storeModule.getFirestore(app);
+  var user=account.user,db=account.db;
+  cloudSave.auth=account.auth;cloudSave.account=account;cloudSave.storeModule=storeModule;cloudSave.uid=user.uid;
+  migrateLocalSave(user.uid);
   var saveRef=storeModule.doc(db,'cremaTycoonSaves',user.uid);
   var snapshot=await storeModule.getDoc(saveRef);
   cloudSave.db=db;cloudSave.uid=user.uid;
@@ -1116,14 +1121,10 @@ async function connectCloudSave(){
   cloudSave.lastWrite=Date.now();
   return null;
 }
-function loadSave(){
-  var s=readLocalSave();
-  return s||defState();
-}
 function save(forceCloud){
   var saved=true;
   try{
-    localStorage.setItem(SAVEKEY,JSON.stringify(G));
+    localStorage.setItem(localSaveKey(),JSON.stringify(G));
     saveErrorShown=false;
   }catch(e){
     saved=false;
@@ -1811,6 +1812,7 @@ function showStart(hasSave){
     +'</ol>'
     +(hasSave?'<div class="btns"><button class="btn" type="button" data-act="continue">Open day '+G.day+'</button></div><button class="btn ghost" type="button" data-act="fresh">Start a new café</button>'
       :'<button class="btn" type="button" data-act="continue">Open the café</button>')
+    +'<button class="btn ghost" type="button" data-act="switchaccount">Switch username</button>'
     +'<p class="best">Your café saves automatically to the cloud and this device. Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
 }
 function showSummary(s){
@@ -1828,6 +1830,7 @@ function showPause(){
   openModal('pause','<div class="rc"><h1>Paused</h1><p class="rc-sub">Day '+G.day+' · '+money(G.cash)+' · rating '+G.rating.toFixed(1)+'</p>'
     +'<button class="btn" type="button" data-act="resume">Resume</button>'
     +'<div class="btns"><button class="btn ghost" type="button" data-act="upgrades">Upgrades</button><button class="btn ghost" type="button" data-act="sound">Sound '+(muted?'off':'on')+'</button><button class="btn ghost" type="button" data-act="music">Music '+(musicOn?'on':'off')+'</button></div>'
+    +'<button class="btn ghost" type="button" data-act="switchaccount">Switch username</button>'
     +'<button class="btn ghost" type="button" data-act="wipe">Start a new café</button></div>');
 }
 function shopRows(tab){
@@ -1896,6 +1899,13 @@ modal.addEventListener('click',function(e){
   else if(act==='nextday'){startDay();}
   else if(act==='sound'){muted=!muted;syncMusic();showPause();}
   else if(act==='music'){musicOn=!musicOn;syncMusic();showPause();}
+  else if(act==='switchaccount'){
+    save();
+    cloudSave.chain.then(function(){return cloudSave.account.switchAccount();}).then(function(){window.location.reload();}).catch(function(error){
+      console.error('Unable to switch username accounts.',error);
+      toast('Could not sign out. Try again.','bad');
+    });
+  }
 });
 $('#upb').addEventListener('click',function(){if(modalKind==='up'){closeModal();return;}audioOn();showUpgrades();});
 $('#pauseb').addEventListener('click',function(){if(modalKind==='pause'){closeModal();return;}if(!modal.hidden&&modalKind!=='pause')return;showPause();});
@@ -2158,15 +2168,24 @@ function frame(now){
 window.addEventListener('pagehide',save);
 
 /* ================= INIT ================= */
-(async function init(){
-  var s=loadSave();
+async function initializeGame(){
+  var s=defState(),localState=null;
   try{
     var cloudState=await connectCloudSave();
+    localState=readLocalSave();
     if(cloudState)s=cloudState;
-    else if(readLocalSave())queueCloudSave(s);
+    else if(localState){s=localState;queueCloudSave(s);}
   }catch(e){
     console.error('Unable to connect to Crema Tycoon cloud saves; using this device’s save.',e);
+    if(!cloudSave.uid){
+      modal.innerHTML='<div class="rc"><h1>Username required</h1><p class="rc-sub">Sign in or create a username to play and save your progress.</p><p class="account-error" role="alert">Account access failed. Check your connection and try again.</p><button class="btn" type="button" id="retry-account">Try again</button></div>';
+      modal.hidden=false;
+      $('#retry-account').addEventListener('click',function(){window.location.reload();});
+      return;
+    }
     if(!cloudErrorShown){cloudErrorShown=true;toast('Cloud save unavailable; your café is saved on this device','bad');}
+    localState=readLocalSave();
+    if(localState)s=localState;
   }
   if(s){G=Object.assign(defState(),s);G.spd=Object.assign({E:0,M:0,D:0,C:0},s.spd||{});G.locs=s.locs||{};}
   buildRoom(G.lvl);rebuildMachines();syncStaff();drawMenu();
@@ -2177,7 +2196,8 @@ window.addEventListener('pagehide',save);
   showStart(!!s&&(s.day>1||s.served>0));
   requestAnimationFrame(function(t){last=t;requestAnimationFrame(frame);});
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){drawMenu();setOpenSign(R?R.phase==='open':true);});
-})();
+}
+initializeGame();
 })();
 </script>
 

@@ -97,5 +97,31 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /cremaRushProgress/{playerId} {
+      function validRushProgress(data) {
+        return data.keys().hasAll([
+            'best', 'lastScore', 'lastServed', 'shifts', 'updatedAt'
+          ])
+          && data.keys().hasOnly([
+            'best', 'lastScore', 'lastServed', 'shifts', 'updatedAt'
+          ])
+          && data.best is int
+          && data.best >= 0
+          && data.lastScore is int
+          && data.lastScore >= 0
+          && data.lastServed is int
+          && data.lastServed >= 0
+          && data.shifts is int
+          && data.shifts >= 0
+          && data.updatedAt == request.time;
+      }
+
+      allow read: if request.auth != null && request.auth.uid == playerId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == playerId
+        && validRushProgress(request.resource.data);
+      allow delete: if false;
+    }
+
   }
 }

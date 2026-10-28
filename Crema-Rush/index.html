@@ -983,6 +983,37 @@
         font: 500 12px/1.4 var(--mono);
         color: var(--paper-mute);
       }
+      .account-label {
+        display: block;
+        margin: 10px 0 4px;
+        font: 600 12px var(--mono);
+      }
+      .account-input {
+        display: block;
+        width: 100%;
+        padding: 11px;
+        border: 1px solid var(--paper-line);
+        border-radius: 4px;
+        background: #fff;
+        color: var(--paper-ink);
+        font: 500 15px var(--mono);
+        user-select: text;
+        -webkit-user-select: text;
+      }
+      .account-error {
+        min-height: 1em;
+        margin: 8px 0 0;
+        color: #a21c12;
+        font: 500 12px/1.4 var(--mono);
+      }
+      .account-note {
+        margin: 10px 0 0;
+        color: var(--paper-mute);
+        font: 400 11px/1.5 var(--mono);
+      }
+      .account-note a {
+        color: inherit;
+      }
       .how {
         margin: 0 0 12px;
         padding-left: 20px;
@@ -1299,6 +1330,7 @@
       <div id="shop" hidden></div>
     </div>
 
+    <script src="/firebase-config.js"></script>
     <script>
       (function () {
         "use strict";
@@ -1355,6 +1387,149 @@
         try {
           best = +localStorage.getItem("crema-rush-best") || 0;
         } catch (e) {}
+        var rushAccount = null,
+          rushStore = null,
+          rushProgressRef = null,
+          rushCloudEnabled = false,
+          rushCloudErrorShown = false,
+          rushLocalErrorShown = false,
+          rushProgress = { best: best, shifts: 0, lastScore: 0, lastServed: 0 };
+        function rushProgressKey(uid) {
+          return "crema-rush-progress-v1-" + uid;
+        }
+        function validRushProgress(progress) {
+          return !!(
+            progress &&
+            Number.isInteger(progress.best) &&
+            progress.best >= 0 &&
+            Number.isInteger(progress.shifts) &&
+            progress.shifts >= 0 &&
+            Number.isInteger(progress.lastScore) &&
+            progress.lastScore >= 0 &&
+            Number.isInteger(progress.lastServed) &&
+            progress.lastServed >= 0
+          );
+        }
+        function readRushProgress(key) {
+          try {
+            var raw = localStorage.getItem(key);
+            if (!raw) return null;
+            var value = JSON.parse(raw);
+            if (validRushProgress(value)) return value;
+            console.warn("Saved Crema Rush progress is invalid.");
+          } catch (error) {
+            console.error("Unable to load saved Crema Rush progress.", error);
+          }
+          return null;
+        }
+        function writeRushProgress() {
+          if (!rushAccount) {
+            try {
+              localStorage.setItem("crema-rush-best", String(best));
+            } catch (error) {
+              if (!rushLocalErrorShown) {
+                rushLocalErrorShown = true;
+                console.error("Unable to save the Crema Rush best score on this device.", error);
+                toast("Could not save your score on this device", "bad");
+              }
+            }
+            return;
+          }
+          try {
+            localStorage.setItem(rushProgressKey(rushAccount.user.uid), JSON.stringify(rushProgress));
+            rushLocalErrorShown = false;
+          } catch (error) {
+            if (!rushLocalErrorShown) {
+              rushLocalErrorShown = true;
+              console.error("Unable to save Crema Rush progress on this device.", error);
+              toast("Cloud save is available; local score save failed", "bad");
+            }
+          }
+          if (!rushCloudEnabled) return;
+          rushStore
+            .setDoc(rushProgressRef, {
+              best: rushProgress.best,
+              lastScore: rushProgress.lastScore,
+              lastServed: rushProgress.lastServed,
+              shifts: rushProgress.shifts,
+              updatedAt: rushStore.serverTimestamp(),
+            })
+            .then(function () {
+              rushCloudErrorShown = false;
+            })
+            .catch(function (error) {
+              if (!rushCloudErrorShown) {
+                rushCloudErrorShown = true;
+                console.error("Unable to save Crema Rush progress to Firestore.", error);
+                toast("Cloud score save failed; progress remains on this device", "bad");
+              }
+            });
+        }
+        async function connectRushProgress() {
+          var accountModule = await import("./account.js");
+          rushAccount = await accountModule.connectCremaAccount(
+            window.CARZZY_FIREBASE_CONFIG,
+            ov,
+            window.location.pathname,
+          );
+          var uid = rushAccount.user.uid;
+          var key = rushProgressKey(uid);
+          var marker = "crema-rush-progress-v1-migrated";
+          var local = readRushProgress(key);
+          if (!local) {
+            try {
+              if (!localStorage.getItem(marker)) {
+                local = { best: best, shifts: 0, lastScore: 0, lastServed: 0 };
+                localStorage.setItem(key, JSON.stringify(local));
+                localStorage.setItem(marker, "1");
+              }
+            } catch (error) {
+              console.error("Unable to migrate the existing Crema Rush best score.", error);
+            }
+          }
+          rushProgress = local || { best: 0, shifts: 0, lastScore: 0, lastServed: 0 };
+          best = rushProgress.best;
+          rushStore = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+          rushProgressRef = rushStore.doc(rushAccount.db, "cremaRushProgress", uid);
+          var snapshot = await rushStore.getDoc(rushProgressRef);
+          if (snapshot.exists()) {
+            var cloud = snapshot.data();
+            if (validRushProgress(cloud)) {
+              var needsSync =
+                cloud.best < rushProgress.best || cloud.shifts < rushProgress.shifts;
+              rushProgress.best = Math.max(rushProgress.best, cloud.best);
+              rushProgress.shifts = Math.max(rushProgress.shifts, cloud.shifts);
+              rushProgress.lastScore = cloud.lastScore;
+              rushProgress.lastServed = cloud.lastServed;
+              best = rushProgress.best;
+              rushCloudEnabled = true;
+              if (needsSync) writeRushProgress();
+              return;
+            }
+            console.warn("Saved Crema Rush cloud progress is invalid; using this device's save.");
+          }
+          rushCloudEnabled = true;
+        }
+        function saveRushShift() {
+          rushProgress.best = best;
+          rushProgress.lastScore = S.score;
+          rushProgress.lastServed = S.served;
+          rushProgress.shifts++;
+          writeRushProgress();
+        }
+        function switchRushAccount() {
+          S.paused = true;
+          shopEl.hidden = true;
+          rushAccount
+            .switchAccount()
+            .then(function () {
+              window.location.reload();
+            })
+            .catch(function (error) {
+              console.error("Unable to switch Crema Rush accounts.", error);
+              toast("Could not switch usernames. Try again.", "bad");
+            });
+        }
 
         /* ---------- helpers ---------- */
         function wpick(obj) {
@@ -1640,10 +1815,8 @@
           if (S.score > best) {
             best = S.score;
             nb = true;
-            try {
-              localStorage.setItem("crema-rush-best", String(best));
-            } catch (e) {}
           }
+          saveRushShift();
           setTimeout(function () {
             showOver(nb);
           }, 900);
@@ -2602,7 +2775,11 @@
           html +=
             '<div class="foot"><button type="button" id="snd" class="btn ghost">Sound ' +
             (muted ? "off" : "on") +
-            '</button><button type="button" id="shut" class="btn">Back to counter</button></div></div>';
+            '</button>' +
+            (rushAccount
+              ? '<button type="button" id="accountb" class="btn ghost">Switch username</button>'
+              : "") +
+            '<button type="button" id="shut" class="btn">Back to counter</button></div></div>';
           shopEl.innerHTML = html;
           var nr = shopEl.querySelector(".rc");
           if (nr) nr.scrollTop = sc;
@@ -2621,6 +2798,10 @@
           var b = e.target.closest(".buy");
           if (b && !b.disabled) {
             buy(b.dataset.id, b);
+            return;
+          }
+          if (e.target.closest("#accountb")) {
+            switchRushAccount();
             return;
           }
           if (e.target.closest("#shut")) {
@@ -2708,12 +2889,14 @@
             ln("Cold brew tap", "8s") +
             '<p class="rc-sub">Times are for a medium. Small x0.8, large x1.3.</p>' +
             '<button id="go" class="btn" type="button">Open the shop</button>' +
+            '<button id="switch-user" class="btn ghost" type="button">Switch username</button>' +
             (best
               ? '<p class="best">Best shift: ' + best.toLocaleString() + "</p>"
               : "") +
             "</div>";
           ov.hidden = false;
           $("#go").onclick = begin;
+          $("#switch-user").onclick = switchRushAccount;
         }
         function showOver(nb) {
           shopEl.hidden = true;
@@ -2762,12 +2945,39 @@
           if (S.running && !S.paused) update(dt);
           render();
         }
+        function showAccountRequired() {
+          ov.innerHTML =
+            '<div class="rc"><h1>Username required</h1>' +
+            '<p class="rc-sub">Sign in or create a username to play and save your progress.</p>' +
+            '<p class="account-error" role="alert">Account access failed. Check your connection and try again.</p>' +
+            '<button id="retry-account" class="btn" type="button">Try again</button></div>';
+          ov.hidden = false;
+          $("#retry-account").onclick = function () {
+            window.location.reload();
+          };
+        }
         setup(true);
-        showStart();
-        requestAnimationFrame(function (t) {
-          last = t;
-          requestAnimationFrame(frame);
-        });
+        (async function initializeRush() {
+          try {
+            await connectRushProgress();
+          } catch (error) {
+            console.error("Unable to connect Crema Rush account progress.", error);
+            if (!rushAccount) {
+              showAccountRequired();
+              requestAnimationFrame(function (t) {
+                last = t;
+                requestAnimationFrame(frame);
+              });
+              return;
+            }
+            toast("Cloud progress is unavailable; this shift can still be played", "bad");
+          }
+          showStart();
+          requestAnimationFrame(function (t) {
+            last = t;
+            requestAnimationFrame(frame);
+          });
+        })();
       })();
     </script>
     <script src="/nav-bar.js"></script>

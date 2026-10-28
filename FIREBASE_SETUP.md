@@ -15,19 +15,28 @@ Each valid contact submission is first saved to Firestore, then submitted to For
 
 The Firebase web configuration is public client configuration. Do not put service-account JSON, private keys, or other server credentials in this repository.
 
-## Crema Tycoon cloud saves
+## Crema Rush cloud saves
 
-Crema Tycoon (`/Crema-Rush/better.html`) saves café progress to the site's
-`carzzy-apps` Firebase project in the `cremaTycoonSaves` collection. The shared
-web config is in `firebase-config.js`. Enable **Anonymous** under
+Crema Rush (`/Crema-Rush/` and `/Crema-Rush/better.html`) saves progress to the
+site's `carzzy-apps` Firebase project. The shared web config is in
+`firebase-config.js`. Enable **Email/Password** under
 **Authentication > Sign-in method**, then deploy the root `firestore.rules`
 file to this project's Firestore database.
 
-Each save is stored at `cremaTycoonSaves/{uid}` and can only be read or changed
-by the matching authenticated user. Players with an existing site sign-in use
-that account; other players are signed in anonymously. Anonymous cloud saves
-are tied to that browser's Firebase identity and do not transfer between
-devices. Local browser saves remain available as an offline fallback.
+Players create or sign in with a unique username and password. Username
+accounts use Firebase Email/Password Authentication with an internal
+`@players.carzzyapps.com` address; players do not need to provide an email.
+Existing anonymous save sessions can be upgraded to a username without
+changing their Firebase UID. Existing Carzzy email accounts can continue
+signing in from the site's email sign-in page.
+
+Tycoon saves are stored at `cremaTycoonSaves/{uid}`. Original Crema Rush best
+score and shift summaries are stored at `cremaRushProgress/{uid}`. Both
+collections can only be read or changed by the matching authenticated user.
+Local browser saves remain available as an offline fallback; Tycoon saves are
+isolated by account on the same device, and Crema Rush progress is namespaced
+by account. Username password recovery is not available yet, so players should
+keep their password safe.
 
 ## Verify
 
@@ -38,10 +47,13 @@ the admin dashboard and an email is delivered by Formcarry. Submit feedback at
 and timestamp appears under `feedbackSubmissions`. The username should match
 the one shown on the Rhythm Runner leaderboard.
 
-Open `/Crema-Rush/better.html`, start a café, and confirm a document appears in
-`cremaTycoonSaves` with the signed-in user's UID as its document ID. Reload the
-page and confirm the same café progress loads. Confirm a different signed-in
-user cannot read or overwrite that document.
+Open `/Crema-Rush/better.html`, create a username, start a café, and confirm a
+document appears in `cremaTycoonSaves` with the account UID as its document ID.
+Sign out, reload, and sign in with that username to confirm the same café
+progress loads. Then play a shift in `/Crema-Rush/` and confirm a document
+appears in `cremaRushProgress` under that UID. Sign out and sign in on either
+game to confirm the username accesses its saved data. Confirm a different
+username cannot read or overwrite either document.
 
 ## Feedback admin access
 

@@ -95,6 +95,7 @@
     .action-link, .share-button { min-height: 39px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 13px; border: 1px solid #34413c; border-radius: 8px; color: #d7e0db; background: #171e1c; font: 600 11px "DM Sans", sans-serif; text-decoration: none; cursor: pointer; }
     .action-link:hover, .share-button:hover { border-color: var(--accent); }
     .action-link.primary { border-color: var(--accent); color: #08110f; background: var(--accent); }
+    .home-link { margin-bottom: 14px; }
     .toast {
       position: fixed; z-index: 5; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 10px;
       max-width: calc(100vw - 32px); padding: 13px 17px; border: 1px solid #2d6558; border-radius: 10px;
@@ -160,6 +161,7 @@
 <body>
   <script src="/nav-bar.js"></script>
   <main class="page">
+    <a class="action-link home-link" href="/">Return to Home</a>
     <section id="listing-view">
       <div id="launch-grid" class="launch-grid" aria-live="off">
         <div class="state"><div><span class="spinner" aria-label="Loading"></span><p style="margin-top:12px">Loading upcoming launches…</p></div></div>
