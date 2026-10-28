@@ -1,5 +1,31 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Crema Tycoon</title>
+<!doctype html><html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Crema Tycoon | Carzzy Apps</title>
+<meta name="description" content="Build and manage your own coffee shop in Crema Tycoon. Serve customers, upgrade machines, hire staff, and grow your cafe empire.">
+<meta name="keywords" content="Crema Tycoon, coffee shop game, cafe simulator, tycoon game, browser game, Carzzy Apps">
+<meta name="author" content="Avis, DeBus">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#101815">
+<meta name="color-scheme" content="dark">
+<meta name="application-name" content="Carzzy Apps">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Carzzy Apps">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="Crema Tycoon | Carzzy Apps">
+<meta property="og:description" content="Build and manage your own coffee shop in Crema Tycoon. Serve customers, upgrade machines, hire staff, and grow your cafe empire.">
+<meta property="og:url" content="https://www.carzzyapps.com/Crema-Rush/better.html">
+<meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+<meta property="og:image:alt" content="Carzzy Apps logo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Crema Tycoon | Carzzy Apps">
+<meta name="twitter:description" content="Build and manage your own coffee shop in Crema Tycoon. Serve customers, upgrade machines, hire staff, and grow your cafe empire.">
+<meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+<meta name="twitter:image:alt" content="Carzzy Apps logo">
+<link rel="canonical" href="https://www.carzzyapps.com/Crema-Rush/better.html">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+</head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -245,6 +271,7 @@ button{font:inherit;color:inherit}
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="modal" hidden></div>
+<script src="/firebase-config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -1024,8 +1051,108 @@ function animPerson(p,dt,speed,time){
 var SAVEKEY='crema-tycoon-v1';
 function defState(){return {v:1,day:1,cash:60,rating:3.5,lvl:1,mach:['E','D'],spd:{E:0,M:0,D:0,C:0},cashiers:0,baristas:0,cTrain:0,bTrain:0,locs:{},served:0,earned:0};}
 var G=defState();
-function loadSave(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s&&s.v===1&&s.mach)return s;}catch(e){}return null;}
-function save(){try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}}
+var cloudSave={db:null,uid:null,write:null,enabled:false,chain:Promise.resolve(),lastWrite:0};
+var saveErrorShown=false,cloudErrorShown=false;
+function validSave(s){
+  return !!(s&&s.v===1&&Array.isArray(s.mach)&&s.mach.length>0&&s.mach.length<=LEVELS[3].slots
+    &&s.mach.every(function(k){return !!KIND[k];})
+    &&typeof s.day==='number'&&isFinite(s.day)&&s.day>=1&&typeof s.cash==='number'&&isFinite(s.cash)
+    &&typeof s.rating==='number'&&isFinite(s.rating)&&s.rating>=1&&s.rating<=5
+    &&typeof s.lvl==='number'&&isFinite(s.lvl)&&s.lvl>=1&&s.lvl<=3
+    &&typeof s.cashiers==='number'&&isFinite(s.cashiers)&&s.cashiers>=0&&s.cashiers<=3
+    &&typeof s.baristas==='number'&&isFinite(s.baristas)&&s.baristas>=0&&s.baristas<=4
+    &&typeof s.cTrain==='number'&&isFinite(s.cTrain)&&s.cTrain>=0&&s.cTrain<=3
+    &&typeof s.bTrain==='number'&&isFinite(s.bTrain)&&s.bTrain>=0&&s.bTrain<=3
+    &&typeof s.served==='number'&&isFinite(s.served)&&s.served>=0
+    &&typeof s.earned==='number'&&isFinite(s.earned)&&s.earned>=0
+    &&s.spd&&typeof s.spd==='object'&&!Array.isArray(s.spd)
+    &&['E','M','D','C'].every(function(k){return typeof s.spd[k]==='number'&&isFinite(s.spd[k])&&s.spd[k]>=0&&s.spd[k]<=3;})
+    &&Object.keys(s.spd).every(function(k){return !!KIND[k];})
+    &&s.locs&&typeof s.locs==='object'&&!Array.isArray(s.locs)
+    &&Object.keys(s.locs).every(function(k){
+      return ['kiosk','midtown','airport','roastery'].indexOf(k)>=0
+        &&typeof s.locs[k]==='number'&&isFinite(s.locs[k])&&s.locs[k]>=0&&s.locs[k]<=3;
+    }));
+}
+function readLocalSave(){
+  try{
+    var raw=localStorage.getItem(SAVEKEY);
+    if(!raw)return null;
+    var s=JSON.parse(raw);
+    if(validSave(s))return s;
+    console.warn('Saved Crema Tycoon data is invalid; starting a new café.');
+  }catch(e){console.error('Unable to load the saved Crema Tycoon game.',e);}
+  return null;
+}
+async function connectCloudSave(){
+  var config=window.CARZZY_FIREBASE_CONFIG;
+  if(!config||!config.apiKey||!config.authDomain||!config.projectId||!config.appId){
+    throw new Error('Firebase web configuration is missing or incomplete.');
+  }
+  var appModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+  var authModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+  var storeModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+  var app=appModule.initializeApp(config);
+  var auth=authModule.getAuth(app);
+  var user=await new Promise(function(resolve,reject){
+    var unsubscribe=authModule.onAuthStateChanged(auth,function(currentUser){
+      unsubscribe();resolve(currentUser);
+    },function(error){unsubscribe();reject(error);});
+  });
+  if(!user)user=(await authModule.signInAnonymously(auth)).user;
+  var db=storeModule.getFirestore(app);
+  var saveRef=storeModule.doc(db,'cremaTycoonSaves',user.uid);
+  var snapshot=await storeModule.getDoc(saveRef);
+  cloudSave.db=db;cloudSave.uid=user.uid;
+  cloudSave.write=function(state){
+    return storeModule.setDoc(saveRef,{state:state,updatedAt:storeModule.serverTimestamp()});
+  };
+  cloudSave.enabled=true;
+  if(snapshot.exists()){
+    var saved=snapshot.data().state;
+    if(validSave(saved))return saved;
+    console.warn('Saved Crema Tycoon cloud data is invalid; using this device’s save.');
+  }
+  cloudSave.lastWrite=Date.now();
+  return null;
+}
+function loadSave(){
+  var s=readLocalSave();
+  return s||defState();
+}
+function save(forceCloud){
+  var saved=true;
+  try{
+    localStorage.setItem(SAVEKEY,JSON.stringify(G));
+    saveErrorShown=false;
+  }catch(e){
+    saved=false;
+    if(!saveErrorShown){
+      saveErrorShown=true;
+      console.error('Unable to save the Crema Tycoon game to this device.',e);
+      if(!document.hidden)toast('Could not save your café on this device','bad');
+    }
+  }
+  if(cloudSave.enabled&&(forceCloud!==false||Date.now()-cloudSave.lastWrite>=15000)){
+    cloudSave.lastWrite=Date.now();
+    var state=JSON.parse(JSON.stringify(G));
+    queueCloudSave(state);
+  }
+  return saved;
+}
+function queueCloudSave(state){
+  cloudSave.chain=cloudSave.chain.then(function(){
+    return cloudSave.write(state);
+  }).then(function(){
+    cloudErrorShown=false;
+  }).catch(function(e){
+    if(!cloudErrorShown){
+      cloudErrorShown=true;
+      console.error('Unable to save the Crema Tycoon game to Firestore.',e);
+      if(!document.hidden)toast('Cloud save failed; your café is saved on this device','bad');
+    }
+  });
+}
 
 function availDrinks(){
   var have={};G.mach.forEach(function(k){have[k]=1;});
@@ -1684,7 +1811,7 @@ function showStart(hasSave){
     +'</ol>'
     +(hasSave?'<div class="btns"><button class="btn" type="button" data-act="continue">Open day '+G.day+'</button></div><button class="btn ghost" type="button" data-act="fresh">Start a new café</button>'
       :'<button class="btn" type="button" data-act="continue">Open the café</button>')
-    +'<p class="best">You stand behind the bar. On a narrow screen, drag sideways to look around.</p></div>');
+    +'<p class="best">Your café saves automatically to the cloud and this device. Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
 }
 function showSummary(s){
   var net=s.rev+s.tips+s.loc+(s.bonus||0)-s.wages,dr=s.r1-s.r0;
@@ -1697,6 +1824,7 @@ function showSummary(s){
     +'<div class="btns"><button class="btn ghost" type="button" data-act="upgrades">Upgrades</button><button class="btn" type="button" data-act="nextday">Open day '+G.day+'</button></div></div>');
 }
 function showPause(){
+  save();
   openModal('pause','<div class="rc"><h1>Paused</h1><p class="rc-sub">Day '+G.day+' · '+money(G.cash)+' · rating '+G.rating.toFixed(1)+'</p>'
     +'<button class="btn" type="button" data-act="resume">Resume</button>'
     +'<div class="btns"><button class="btn ghost" type="button" data-act="upgrades">Upgrades</button><button class="btn ghost" type="button" data-act="sound">Sound '+(muted?'off':'on')+'</button><button class="btn ghost" type="button" data-act="music">Music '+(musicOn?'on':'off')+'</button></div>'
@@ -1988,7 +2116,7 @@ var musPaused=null;
 function startDay(){
   startMusic();
   modal.hidden=true;modalKind=null;
-  newDay();paused=false;hudC={};alertKey='';
+  newDay();save();paused=false;hudC={};alertKey='';
   setView(view);
 }
 function demo(){
@@ -2009,11 +2137,14 @@ function demo(){
 }
 
 /* ================= LOOP ================= */
-var last=performance.now(),simT=0;
+var last=performance.now(),simT=0,saveElapsed=0;
 function frame(now){
   requestAnimationFrame(frame);
   var dt=Math.min(.1,Math.max(0,(now-last)/1000));last=now;
-  if(!paused&&R&&R.phase!=='done'){simT+=dt;update(dt,simT);}
+  if(!paused&&R&&R.phase!=='done'){
+    simT+=dt;update(dt,simT);saveElapsed+=dt;
+    if(saveElapsed>=5){saveElapsed=0;save(false);}
+  }
   var vdt=paused?0:dt;
   updFlights(vdt);updPops(vdt);updPuffs(dt);updBills(dt);
   if(frameNo%20===0)measureShift();
@@ -2024,10 +2155,19 @@ function frame(now){
   if(paused!==musPaused){musPaused=paused;syncMusic();}
   renderFrame(dt);
 }
+window.addEventListener('pagehide',save);
 
 /* ================= INIT ================= */
-(function init(){
+(async function init(){
   var s=loadSave();
+  try{
+    var cloudState=await connectCloudSave();
+    if(cloudState)s=cloudState;
+    else if(readLocalSave())queueCloudSave(s);
+  }catch(e){
+    console.error('Unable to connect to Crema Tycoon cloud saves; using this device’s save.',e);
+    if(!cloudErrorShown){cloudErrorShown=true;toast('Cloud save unavailable; your café is saved on this device','bad');}
+  }
   if(s){G=Object.assign(defState(),s);G.spd=Object.assign({E:0,M:0,D:0,C:0},s.spd||{});G.locs=s.locs||{};}
   buildRoom(G.lvl);rebuildMachines();syncStaff();drawMenu();
   newDay();demo();

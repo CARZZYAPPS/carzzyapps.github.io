@@ -1,24 +1,101 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /contactSubmissions/{submissionId} {
-      allow create: if request.resource.data.keys().hasOnly([
-        'username', 'email', 'comments', 'createdAt'
-      ])
-      && request.resource.data.username is string
-      && request.resource.data.username.size() > 0
-      && request.resource.data.username.size() <= 100
-      && request.resource.data.email is string
-      && request.resource.data.email.size() > 3
-      && request.resource.data.email.size() <= 254
-      && request.resource.data.comments is string
-      && request.resource.data.comments.size() > 0
-      && request.resource.data.comments.size() <= 5000
-      && request.resource.data.createdAt is timestamp;
 
-      allow read: if request.auth != null;
-      allow update, delete: if false;
+    match /usernames/{username} {
+      // Anyone can read (essential for checking if a username exists during signup)
+      allow read: if true;
+
+      // Allow creation if the user is logged in and assigns their own UID
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+
+      // Only allow updates or deletions if the logged-in user is the verified owner
+      allow update, delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
     }
+
+    match /cremaTycoonSaves/{playerId} {
+      function isNumber(value) {
+        return value is int || value is float;
+      }
+
+      function validGameState(state) {
+        return state.keys().hasAll([
+          'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
+          'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
+        ])
+        && state.keys().hasOnly([
+          'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
+          'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
+        ])
+        && state.v == 1
+        && isNumber(state.day)
+        && state.day >= 1
+        && isNumber(state.cash)
+        && isNumber(state.rating)
+        && state.rating >= 1
+        && state.rating <= 5
+        && state.lvl is int
+        && state.lvl >= 1
+        && state.lvl <= 3
+        && state.mach is list
+        && state.mach.size() >= 1
+        && state.mach.size() <= 11
+        && state.mach.hasOnly(['E', 'M', 'D', 'C'])
+        && state.spd is map
+        && state.spd.keys().hasAll(['E', 'M', 'D', 'C'])
+        && state.spd.keys().hasOnly(['E', 'M', 'D', 'C'])
+        && state.spd.E is int
+        && state.spd.E >= 0
+        && state.spd.E <= 3
+        && state.spd.M is int
+        && state.spd.M >= 0
+        && state.spd.M <= 3
+        && state.spd.D is int
+        && state.spd.D >= 0
+        && state.spd.D <= 3
+        && state.spd.C is int
+        && state.spd.C >= 0
+        && state.spd.C <= 3
+        && state.cashiers is int
+        && state.cashiers >= 0
+        && state.cashiers <= 3
+        && state.baristas is int
+        && state.baristas >= 0
+        && state.baristas <= 4
+        && state.cTrain is int
+        && state.cTrain >= 0
+        && state.cTrain <= 3
+        && state.bTrain is int
+        && state.bTrain >= 0
+        && state.bTrain <= 3
+        && state.locs is map
+        && state.locs.keys().hasOnly(['kiosk', 'midtown', 'airport', 'roastery'])
+        && (!('kiosk' in state.locs) || (state.locs.kiosk is int && state.locs.kiosk >= 0 && state.locs.kiosk <= 3))
+        && (!('midtown' in state.locs) || (state.locs.midtown is int && state.locs.midtown >= 0 && state.locs.midtown <= 3))
+        && (!('airport' in state.locs) || (state.locs.airport is int && state.locs.airport >= 0 && state.locs.airport <= 3))
+        && (!('roastery' in state.locs) || (state.locs.roastery is int && state.locs.roastery >= 0 && state.locs.roastery <= 3))
+        && isNumber(state.served)
+        && state.served >= 0
+        && isNumber(state.earned)
+        && state.earned >= 0;
+      }
+
+      function validGameSave(data) {
+        return data.keys().hasAll(['state', 'updatedAt'])
+          && data.keys().hasOnly(['state', 'updatedAt'])
+          && data.state is map
+          && validGameState(data.state)
+          && data.updatedAt == request.time;
+      }
+
+      allow read: if request.auth != null && request.auth.uid == playerId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == playerId
+        && validGameSave(request.resource.data);
+      allow delete: if false;
+    }
+
   }
 }

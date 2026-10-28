@@ -15,6 +15,20 @@ Each valid contact submission is first saved to Firestore, then submitted to For
 
 The Firebase web configuration is public client configuration. Do not put service-account JSON, private keys, or other server credentials in this repository.
 
+## Crema Tycoon cloud saves
+
+Crema Tycoon (`/Crema-Rush/better.html`) saves café progress to the site's
+`carzzy-apps` Firebase project in the `cremaTycoonSaves` collection. The shared
+web config is in `firebase-config.js`. Enable **Anonymous** under
+**Authentication > Sign-in method**, then deploy the root `firestore.rules`
+file to this project's Firestore database.
+
+Each save is stored at `cremaTycoonSaves/{uid}` and can only be read or changed
+by the matching authenticated user. Players with an existing site sign-in use
+that account; other players are signed in anonymously. Anonymous cloud saves
+are tied to that browser's Firebase identity and do not transfer between
+devices. Local browser saves remain available as an offline fallback.
+
 ## Verify
 
 After publishing the files to GitHub Pages and deploying the rules, submit the
@@ -23,6 +37,11 @@ the admin dashboard and an email is delivered by Formcarry. Submit feedback at
 `/feedback/` and confirm a document with the username, email, rating, reason,
 and timestamp appears under `feedbackSubmissions`. The username should match
 the one shown on the Rhythm Runner leaderboard.
+
+Open `/Crema-Rush/better.html`, start a café, and confirm a document appears in
+`cremaTycoonSaves` with the signed-in user's UID as its document ID. Reload the
+page and confirm the same café progress loads. Confirm a different signed-in
+user cannot read or overwrite that document.
 
 ## Feedback admin access
 
