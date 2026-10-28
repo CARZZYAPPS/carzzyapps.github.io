@@ -1102,10 +1102,12 @@ function migrateLocalSave(uid){
 async function connectCloudSave(){
   var accountModule=await import('./account.js');
   var account=await accountModule.connectCremaAccount(window.CARZZY_FIREBASE_CONFIG,modal,window.location.pathname);
-  var storeModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
   var user=account.user,db=account.db;
-  cloudSave.auth=account.auth;cloudSave.account=account;cloudSave.storeModule=storeModule;cloudSave.uid=user.uid;
+  cloudSave.auth=account.auth;cloudSave.account=account;cloudSave.uid=user.uid;
   migrateLocalSave(user.uid);
+  if(account.isGuest)return null;
+  var storeModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+  cloudSave.storeModule=storeModule;
   var saveRef=storeModule.doc(db,'cremaTycoonSaves',user.uid);
   var snapshot=await storeModule.getDoc(saveRef);
   cloudSave.db=db;cloudSave.uid=user.uid;
@@ -1813,7 +1815,7 @@ function showStart(hasSave){
     +(hasSave?'<div class="btns"><button class="btn" type="button" data-act="continue">Open day '+G.day+'</button></div><button class="btn ghost" type="button" data-act="fresh">Start a new café</button>'
       :'<button class="btn" type="button" data-act="continue">Open the café</button>')
     +'<button class="btn ghost" type="button" data-act="switchaccount">Switch username</button>'
-    +'<p class="best">Your café saves automatically to the cloud and this device. Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
+    +'<p class="best">'+(cloudSave.account&&cloudSave.account.isGuest?'Guest progress saves only on this device. ':'Your café saves automatically to the cloud and this device. ')+'Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
 }
 function showSummary(s){
   var net=s.rev+s.tips+s.loc+(s.bonus||0)-s.wages,dr=s.r1-s.r0;

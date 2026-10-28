@@ -27,8 +27,10 @@ Players create or sign in with a unique username and password. Username
 accounts use Firebase Email/Password Authentication with an internal
 `@players.carzzyapps.com` address; players do not need to provide an email.
 Existing anonymous save sessions can be upgraded to a username without
-changing their Firebase UID. Existing Carzzy email accounts can continue
-signing in from the site's email sign-in page.
+changing their Firebase UID. Players can also enter a username and continue
+as a guest; guest progress is stored only in that browser and is not synced to
+Firestore. Existing Carzzy email accounts can continue signing in from the
+site's email sign-in page.
 
 Tycoon saves are stored at `cremaTycoonSaves/{uid}`. Original Crema Rush best
 score and shift summaries are stored at `cremaRushProgress/{uid}`. Both

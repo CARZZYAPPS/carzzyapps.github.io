@@ -16,8 +16,39 @@ import {
   runTransaction
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
+var GUEST_USERNAME_KEY = "carzzy-crema-guest-username";
+
 function usernameEmail(username) {
   return username.toLowerCase() + "@players.carzzyapps.com";
+}
+
+function guestUser(username) {
+  var normalized = username.toLowerCase();
+  return {
+    uid: "guest-" + normalized,
+    displayName: username,
+    username: username,
+    isAnonymous: false,
+    isGuest: true
+  };
+}
+
+function readGuestUsername() {
+  try {
+    var username = localStorage.getItem(GUEST_USERNAME_KEY);
+    return username && /^[A-Za-z0-9_]{3,20}$/.test(username) ? username : null;
+  } catch (error) {
+    console.error("Unable to read the saved guest username.", error);
+    return null;
+  }
+}
+
+function saveGuestUsername(username) {
+  try {
+    localStorage.setItem(GUEST_USERNAME_KEY, username);
+  } catch (error) {
+    console.error("Unable to remember the guest username on this device.", error);
+  }
 }
 
 function errorMessage(error) {
@@ -81,6 +112,8 @@ function requestUser(auth, db, container, pendingUser, returnTo) {
             '<p class="account-note">Usernames use 3–20 letters, numbers, or underscores. Password recovery is not available yet, so keep your password safe.</p>' +
             '<p class="account-note">Have an existing Carzzy email account? <a href="/auth/sign-in/?returnTo=' +
             encodeURIComponent(returnTo) + '">Sign in here</a>, then return to the game.</p>') +
+        '<button class="btn ghost" type="button" data-account-guest' + (account.busy ? " disabled" : "") + '>Continue as guest</button>' +
+        '<p class="account-note">Guest progress is saved only on this device and is not synced to Firestore.</p>' +
         "</div>";
       var usernameInput = container.querySelector("#account-username");
       if (usernameInput) usernameInput.focus();
@@ -154,13 +187,42 @@ function requestUser(auth, db, container, pendingUser, returnTo) {
       render("");
     }
 
+    async function continueAsGuest(event) {
+      var button = event.target.closest("[data-account-guest]");
+      if (!button) return;
+      var usernameInput = container.querySelector("#account-username");
+      var username = usernameInput ? usernameInput.value.trim() : "";
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+        render("Enter 3–20 letters, numbers, or underscores to continue as a guest.", username);
+        return;
+      }
+      if (account.busy) return;
+      account.busy = true;
+      render("", username);
+      try {
+        if (account.user && account.user.isAnonymous) await signOut(auth);
+        saveGuestUsername(username);
+        var guest = guestUser(username);
+        account.cleanup();
+        container.hidden = true;
+        container.innerHTML = "";
+        resolve(guest);
+      } catch (error) {
+        account.busy = false;
+        console.error("Unable to continue as a guest.", error);
+        render("Could not continue as a guest. Please try again.", username);
+      }
+    }
+
     container.hidden = false;
     render("");
     container.addEventListener("submit", submit);
     container.addEventListener("click", changeMode);
+    container.addEventListener("click", continueAsGuest);
     account.cleanup = function () {
       container.removeEventListener("submit", submit);
       container.removeEventListener("click", changeMode);
+      container.removeEventListener("click", continueAsGuest);
     };
   });
 }
@@ -182,17 +244,30 @@ export async function connectCremaAccount(config, container, returnTo) {
     });
   });
   if (!user || user.isAnonymous) {
-    user = await requestUser(auth, db, container, user, returnTo);
+    var savedGuestUsername = user ? null : readGuestUsername();
+    if (savedGuestUsername) {
+      user = guestUser(savedGuestUsername);
+    } else {
+      user = await requestUser(auth, db, container, user, returnTo);
+    }
   }
   return {
     app: app,
     auth: auth,
     db: db,
     user: user,
+    isGuest: !!user.isGuest,
     signOut: function () { return signOut(auth); },
     switchAccount: async function () {
+      try {
+        localStorage.removeItem(GUEST_USERNAME_KEY);
+      } catch (error) {
+        console.error("Unable to clear the saved guest username.", error);
+      }
       await signOut(auth);
       user = await requestUser(auth, db, container, null, returnTo);
+      this.user = user;
+      this.isGuest = !!user.isGuest;
       return user;
     }
   };

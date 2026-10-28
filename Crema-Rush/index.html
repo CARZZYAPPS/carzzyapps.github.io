@@ -1445,7 +1445,7 @@
               toast("Cloud save is available; local score save failed", "bad");
             }
           }
-          if (!rushCloudEnabled) return;
+          if (!rushCloudEnabled || rushAccount.isGuest) return;
           rushStore
             .setDoc(rushProgressRef, {
               best: rushProgress.best,
@@ -1489,6 +1489,7 @@
           }
           rushProgress = local || { best: 0, shifts: 0, lastScore: 0, lastServed: 0 };
           best = rushProgress.best;
+          if (rushAccount.isGuest) return;
           rushStore = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
           rushProgressRef = rushStore.doc(rushAccount.db, "cremaRushProgress", uid);
           var snapshot = await rushStore.getDoc(rushProgressRef);
