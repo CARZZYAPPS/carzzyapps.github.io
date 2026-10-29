@@ -313,6 +313,7 @@
         } else {
           const replacement = timer(target, node.closest(".detail") != null);
           replacement.dataset.targetTime = node.dataset.targetTime;
+          replacement.dataset.liveUrl = node.dataset.liveUrl;
           node.replaceWith(replacement);
         }
       }
