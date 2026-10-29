@@ -79,6 +79,9 @@
     .timer-unit strong { display: block; font: 700 22px Manrope, sans-serif; letter-spacing: -.5px; }
     .timer-unit span { display: block; margin-top: 3px; color: #849089; font-size: 8px; letter-spacing: .7px; text-transform: uppercase; }
     .timer-ended { padding: 12px 0; color: var(--accent); font: 700 16px Manrope, sans-serif; }
+    .launch-ended { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .detail .launch-ended { justify-content: center; margin-top: 25px; }
+    .launch-ended .timer-ended { padding: 0; }
     .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 15px; color: #8d9992; font-size: 10px; }
     .card-cta { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 700; }
     .card-cta svg { width: 14px; height: 14px; }
@@ -220,21 +223,53 @@
       return container;
     }
 
+    function safeLiveUrl(value) {
+      if (typeof value !== "string" || !value.trim()) return "";
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+      } catch {
+        return "";
+      }
+    }
+
+    function endedState(data) {
+      const container = element("div", "launch-ended");
+      container.append(element("div", "timer-ended", "Now live"));
+      const liveUrl = safeLiveUrl(data.liveUrl);
+      if (liveUrl) {
+        const button = element("a", "action-link primary", "Now Live");
+        button.href = liveUrl;
+        button.target = "_blank";
+        button.rel = "noopener noreferrer";
+        container.append(button);
+      }
+      return container;
+    }
+
     function makeCard(id, data) {
       const target = dateOf(data);
       if (!target) return null;
       const accent = accents[data.accent] || accents.teal;
-      const link = element("a", "launch-card");
-      link.href = `?id=${encodeURIComponent(id)}`;
-      link.style.setProperty("--accent", accent);
+      const card = element("article", "launch-card");
+      card.style.setProperty("--accent", accent);
       const head = element("div", "card-head");
-      head.append(element("h2", "", data.title || "Upcoming launch"));
+      const titleLink = element("a", "", data.title || "Upcoming launch");
+      titleLink.href = `?id=${encodeURIComponent(id)}`;
+      const title = element("h2");
+      title.append(titleLink);
+      head.append(title);
       const body = element("div", "card-body");
-      const countdown = timer(target);
-      countdown.dataset.targetTime = String(target.getTime());
-      body.append(countdown);
-      link.append(head, body);
-      return link;
+      if (target <= new Date()) {
+        body.append(endedState(data));
+      } else {
+        const countdown = timer(target);
+        countdown.dataset.targetTime = String(target.getTime());
+        countdown.dataset.liveUrl = safeLiveUrl(data.liveUrl);
+        body.append(countdown);
+      }
+      card.append(head, body);
+      return card;
     }
 
     function renderLaunchDetails(id, data) {
@@ -247,9 +282,14 @@
       const card = element("article", "detail");
       card.style.setProperty("--accent", accent);
       card.append(element("h1", "", data.title || "Upcoming launch"));
-      const countdown = timer(target, true);
-      countdown.dataset.targetTime = String(target.getTime());
-      card.append(countdown);
+      if (target <= new Date()) {
+        card.append(endedState(data));
+      } else {
+        const countdown = timer(target, true);
+        countdown.dataset.targetTime = String(target.getTime());
+        countdown.dataset.liveUrl = safeLiveUrl(data.liveUrl);
+        card.append(countdown);
+      }
       detailView.append(card);
       document.title = `${data.title || "Launch countdown"} | Carzzy Apps`;
     }
@@ -269,7 +309,7 @@
         const target = new Date(Number(node.dataset.targetTime));
         if (Number.isNaN(target.getTime())) continue;
         if (target <= new Date()) {
-          node.replaceWith(element("div", "timer-ended", "Now live"));
+          node.replaceWith(endedState({ liveUrl: node.dataset.liveUrl }));
         } else {
           const replacement = timer(target, node.closest(".detail") != null);
           replacement.dataset.targetTime = node.dataset.targetTime;
