@@ -1000,6 +1000,20 @@
         user-select: text;
         -webkit-user-select: text;
       }
+      .account-remember {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 10px 0 0;
+        color: var(--paper-ink);
+        font: 500 12px var(--mono);
+      }
+      .account-remember input {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: var(--go);
+      }
       .account-error {
         min-height: 1em;
         margin: 8px 0 0;
@@ -1330,7 +1344,7 @@
       <div id="shop" hidden></div>
     </div>
 
-    <script src="/firebase-config.js"></script>
+    <script src="./firebase-config.js"></script>
     <script>
       (function () {
         "use strict";
@@ -1445,7 +1459,7 @@
               toast("Cloud save is available; local score save failed", "bad");
             }
           }
-          if (!rushCloudEnabled || rushAccount.isGuest) return;
+          if (!rushCloudEnabled) return;
           rushStore
             .setDoc(rushProgressRef, {
               best: rushProgress.best,
@@ -1489,7 +1503,6 @@
           }
           rushProgress = local || { best: 0, shifts: 0, lastScore: 0, lastServed: 0 };
           best = rushProgress.best;
-          if (rushAccount.isGuest) return;
           rushStore = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
           rushProgressRef = rushStore.doc(rushAccount.db, "cremaRushProgress", uid);
           var snapshot = await rushStore.getDoc(rushProgressRef);
@@ -1522,13 +1535,13 @@
           S.paused = true;
           shopEl.hidden = true;
           rushAccount
-            .switchAccount()
+            .changeUsername(ov)
             .then(function () {
               window.location.reload();
             })
             .catch(function (error) {
-              console.error("Unable to switch Crema Rush accounts.", error);
-              toast("Could not switch usernames. Try again.", "bad");
+              console.error("Unable to change the Crema Rush username.", error);
+              toast("Could not change username. Try again.", "bad");
             });
         }
 
@@ -2777,8 +2790,11 @@
             '<div class="foot"><button type="button" id="snd" class="btn ghost">Sound ' +
             (muted ? "off" : "on") +
             '</button>' +
+            (rushAccount && rushAccount.canChangeUsername
+              ? '<button type="button" id="accountb" class="btn ghost">Change username</button>'
+              : "") +
             (rushAccount
-              ? '<button type="button" id="accountb" class="btn ghost">Switch username</button>'
+              ? '<button type="button" id="switch-account" class="btn ghost">Switch account</button>'
               : "") +
             '<button type="button" id="shut" class="btn">Back to counter</button></div></div>';
           shopEl.innerHTML = html;
@@ -2803,6 +2819,15 @@
           }
           if (e.target.closest("#accountb")) {
             switchRushAccount();
+            return;
+          }
+          if (e.target.closest("#switch-account")) {
+            rushAccount.switchAccount().then(function () {
+              window.location.reload();
+            }).catch(function (error) {
+              console.error("Unable to switch the Crema Rush account.", error);
+              toast("Could not switch accounts. Try again.", "bad");
+            });
             return;
           }
           if (e.target.closest("#shut")) {
@@ -2890,14 +2915,34 @@
             ln("Cold brew tap", "8s") +
             '<p class="rc-sub">Times are for a medium. Small x0.8, large x1.3.</p>' +
             '<button id="go" class="btn" type="button">Open the shop</button>' +
-            '<button id="switch-user" class="btn ghost" type="button">Switch username</button>' +
+            (rushAccount && rushAccount.canChangeUsername
+              ? '<button id="switch-user" class="btn ghost" type="button">Change username</button>'
+              : "") +
+            (rushAccount
+              ? '<button id="switch-account" class="btn ghost" type="button">Switch account</button>'
+              : "") +
             (best
               ? '<p class="best">Best shift: ' + best.toLocaleString() + "</p>"
+              : "") +
+            (rushAccount && rushAccount.isGuest
+              ? '<p class="best">Guest username: ' + rushAccount.username + '. Progress saves to Firebase.</p>'
               : "") +
             "</div>";
           ov.hidden = false;
           $("#go").onclick = begin;
-          $("#switch-user").onclick = switchRushAccount;
+          var changeUsernameButton = $("#switch-user");
+          if (changeUsernameButton) changeUsernameButton.onclick = switchRushAccount;
+          var switchAccountButton = $("#switch-account");
+          if (switchAccountButton) {
+            switchAccountButton.onclick = function () {
+              rushAccount.switchAccount().then(function () {
+                window.location.reload();
+              }).catch(function (error) {
+                console.error("Unable to switch the Crema Rush account.", error);
+                toast("Could not switch accounts. Try again.", "bad");
+              });
+            };
+          }
         }
         function showOver(nb) {
           shopEl.hidden = true;

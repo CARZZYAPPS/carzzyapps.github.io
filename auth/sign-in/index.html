@@ -60,6 +60,23 @@
       color: #ccc;
       cursor: pointer;
     }
+    .stay-signed-in-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      color: #ccc;
+      font-size: 14px;
+    }
+    .stay-signed-in-container input {
+      width: auto;
+      margin: 0;
+      accent-color: #00d1b2;
+    }
+    .stay-signed-in-container label {
+      margin: 0;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -67,8 +84,8 @@
   <div class="card">
     <h2>Sign In</h2>
     <form id="login-form">
-      <label for="email">Email Address</label>
-      <input type="email" id="email" required placeholder="you@example.com">
+      <label for="email">Username or Email Address</label>
+      <input type="text" id="email" required placeholder="username or you@example.com" autocomplete="username">
 
       <label for="password">Password</label>
       <input type="password" id="password" required placeholder="••••••••">
@@ -77,6 +94,11 @@
       <div class="show-pw-container">
         <input type="checkbox" id="toggle-password">
         <label for="toggle-password">Show password</label>
+      </div>
+
+      <div class="stay-signed-in-container">
+        <input type="checkbox" id="stay-signed-in">
+        <label for="stay-signed-in">Stay signed in on this device</label>
       </div>
 
       <button type="submit">Sign In</button>
@@ -90,10 +112,19 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import {
+      browserLocalPersistence,
+      browserSessionPersistence,
+      getAuth,
+      setPersistence,
+      signInWithEmailAndPassword,
+      signInWithCustomToken
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
+    const signInWithUsername = httpsCallable(getFunctions(app, "us-central1"), "signInWithUsername");
 
     // Show/Hide password logic
     const passwordInput = document.getElementById("password");
@@ -107,14 +138,29 @@
       e.preventDefault();
       const msg = document.getElementById("msg");
       try {
-        await signInWithEmailAndPassword(auth, document.getElementById("email").value, document.getElementById("password").value);
+        const staySignedIn = document.getElementById("stay-signed-in").checked;
+        await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);
+        const identifier = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value;
+        if (identifier.includes("@")) {
+          await signInWithEmailAndPassword(auth, identifier, password);
+        } else {
+          const result = await signInWithUsername({ username: identifier, password });
+          await signInWithCustomToken(auth, result.data.customToken);
+        }
+        if (staySignedIn) {
+          localStorage.setItem("signIn", "true");
+        } else {
+          localStorage.removeItem("signIn");
+        }
         msg.style.color = "#00d1b2"; msg.textContent = "Logged in successfully!";
         const returnTo = new URLSearchParams(window.location.search).get("returnTo");
         if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
           window.location.assign(returnTo);
         }
-      } catch {
-        msg.style.color = "#f00"; msg.textContent = "Incorrect email or password";
+      } catch (error) {
+        console.error("Sign-in failed.", error);
+        msg.style.color = "#f00"; msg.textContent = "Incorrect username/email or password";
       }
     });
   </script>

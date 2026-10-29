@@ -3,16 +3,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /usernames/{username} {
-      // Anyone can read (essential for checking if a username exists during signup)
+      // Public username-to-UID mappings never contain account email addresses.
       allow read: if true;
+      allow create, update, delete: if false;
+    }
 
-      // Allow creation if the user is logged in and assigns their own UID
-      allow create: if request.auth != null
-        && request.resource.data.uid == request.auth.uid;
+    match /usernameAuthLookup/{username} {
+      allow read, write: if false;
+    }
 
-      // Only allow updates or deletions if the logged-in user is the verified owner
-      allow update, delete: if request.auth != null
-        && resource.data.uid == request.auth.uid;
+    match /guestAccounts/{playerId} {
+      allow read, write: if false;
     }
 
     match /cremaTycoonSaves/{playerId} {

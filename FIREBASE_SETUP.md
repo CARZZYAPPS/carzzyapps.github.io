@@ -18,23 +18,60 @@ The Firebase web configuration is public client configuration. Do not put servic
 ## Crema Rush cloud saves
 
 Crema Rush (`/Crema-Rush/` and `/Crema-Rush/better.html`) saves progress to the
-site's `carzzy-apps` Firebase project. The shared web config is in
-`firebase-config.js`. Enable **Email/Password** under
+Firebase project configured in `Crema-Rush/firebase-config.js`. Both game pages
+load this game-specific config, so it can differ from the site-wide
+`firebase-config.js`. Enable **Email/Password** and **Anonymous** under
 **Authentication > Sign-in method**, then deploy the root `firestore.rules`
 file to this project's Firestore database.
 
-Players create or sign in with a unique username and password. Username
-accounts use Firebase Email/Password Authentication with an internal
-`@players.carzzyapps.com` address; players do not need to provide an email.
-Existing anonymous save sessions can be upgraded to a username without
-changing their Firebase UID. Players can also enter a username and continue
-as a guest; guest progress is stored only in that browser and is not synced to
-Firestore. Existing Carzzy email accounts can continue signing in from the
-site's email sign-in page.
+When signed out, both games offer three choices: continue as a guest, sign up,
+or sign in. Guest mode uses Firebase Anonymous Authentication and a server
+function generates a unique guest username, saved in the public `usernames`
+collection. Guest progress is saved to Firestore under the anonymous UID, as
+well as locally on the device. Firebase Auth keeps the guest session on that
+browser so it can load the same UID after a reload; a guest username is not a
+password and cannot sign in on another device. Choosing **Switch account** and
+then signing up links the guest session to the new email account without
+changing its UID or losing the saves.
+
+Players can also create a registered account with a unique username, email
+address, and password. The email is the account's Firebase Authentication
+email; players can sign in with either their username or email. The
+email-to-username lookup is kept in the server-only `usernameAuthLookup`
+collection and is never exposed through public Firestore reads.
+
+Username registration and username sign-in require the Firebase callable
+functions in `functions/`. Enable Firebase Authentication Email/Password and
+the Identity Toolkit API, select the Blaze plan for Cloud Functions, then
+install and deploy the functions:
+
+```powershell
+cd "C:\path\to\CARZZYAPPS.github.io\functions"
+npm install
+cd ..
+firebase deploy --only functions --project YOUR_FIREBASE_PROJECT_ID
+```
+
+Replace `YOUR_FIREBASE_PROJECT_ID` with the `projectId` value in
+`Crema-Rush/firebase-config.js`. During first deploy, set
+`FIREBASE_WEB_API_KEY` to the public `apiKey` value from that same config when
+prompted. This key is not a private credential.
+Deploy Firestore rules separately with
+`firebase deploy --only firestore:rules --project YOUR_FIREBASE_PROJECT_ID`.
+
+Sign-in has an optional **Stay signed in on this device** choice. When selected,
+Firebase Auth uses browser-local persistence and the site records
+`localStorage.signIn` as `"true"`. When unchecked, Firebase Auth uses
+browser-session persistence and the site removes that local-storage marker.
+Firebase Auth remains the source of truth for authentication. Signed-in
+username accounts can change their username after confirming their password.
+The rename updates the Firestore username mappings while retaining the same
+Firebase Auth email, UID, and saved game progress.
 
 Tycoon saves are stored at `cremaTycoonSaves/{uid}`. Original Crema Rush best
-score and shift summaries are stored at `cremaRushProgress/{uid}`. Both
-collections can only be read or changed by the matching authenticated user.
+score and shift summaries are stored at `cremaRushProgress/{uid}`. This includes
+anonymous guest UIDs. Both collections can only be read or changed by the
+matching authenticated user.
 Local browser saves remain available as an offline fallback; Tycoon saves are
 isolated by account on the same device, and Crema Rush progress is namespaced
 by account. Username password recovery is not available yet, so players should
@@ -49,13 +86,14 @@ the admin dashboard and an email is delivered by Formcarry. Submit feedback at
 and timestamp appears under `feedbackSubmissions`. The username should match
 the one shown on the Rhythm Runner leaderboard.
 
-Open `/Crema-Rush/better.html`, create a username, start a café, and confirm a
-document appears in `cremaTycoonSaves` with the account UID as its document ID.
-Sign out, reload, and sign in with that username to confirm the same café
-progress loads. Then play a shift in `/Crema-Rush/` and confirm a document
-appears in `cremaRushProgress` under that UID. Sign out and sign in on either
-game to confirm the username accesses its saved data. Confirm a different
-username cannot read or overwrite either document.
+Open either game while signed out and verify the three choices are shown.
+Continue as a guest and confirm a generated username appears in `usernames`.
+Play each game and confirm documents appear in `cremaTycoonSaves` and
+`cremaRushProgress` under the guest's anonymous UID. Reload and verify the same
+guest session and saves load. Use **Switch account**, sign up, and verify
+registered saves use the new account UID. Sign out and sign in with its
+username, then verify the same saves load. Confirm a different account cannot
+read or overwrite either user's documents.
 
 ## Feedback admin access
 

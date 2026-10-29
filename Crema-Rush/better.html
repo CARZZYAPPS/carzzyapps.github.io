@@ -185,6 +185,8 @@ button{font:inherit;color:inherit}
 .rc-sub{margin:6px 0 12px;font:400 12px/1.5 var(--mono);color:var(--paper-mute)}
 .account-label{display:block;margin:10px 0 4px;font:600 12px var(--mono)}
 .account-input{display:block;width:100%;padding:11px;border:1px solid var(--paper-line);border-radius:4px;background:#fff;color:var(--paper-ink);font:500 15px var(--mono);user-select:text;-webkit-user-select:text}
+.account-remember{display:flex;align-items:center;gap:8px;margin:10px 0 0;color:var(--paper-ink);font:500 12px var(--mono)}
+.account-remember input{width:16px;height:16px;margin:0;accent-color:#13703b}
 .account-error{min-height:1em;margin:8px 0 0;color:#a21c12;font:500 12px/1.4 var(--mono)}
 .account-note{margin:10px 0 0;color:var(--paper-mute);font:400 11px/1.5 var(--mono)}
 .account-note a{color:inherit}
@@ -276,7 +278,7 @@ button{font:inherit;color:inherit}
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="modal" hidden></div>
-<script src="/firebase-config.js"></script>
+<script src="./firebase-config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
@@ -1105,7 +1107,6 @@ async function connectCloudSave(){
   var user=account.user,db=account.db;
   cloudSave.auth=account.auth;cloudSave.account=account;cloudSave.uid=user.uid;
   migrateLocalSave(user.uid);
-  if(account.isGuest)return null;
   var storeModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
   cloudSave.storeModule=storeModule;
   var saveRef=storeModule.doc(db,'cremaTycoonSaves',user.uid);
@@ -1814,8 +1815,9 @@ function showStart(hasSave){
     +'</ol>'
     +(hasSave?'<div class="btns"><button class="btn" type="button" data-act="continue">Open day '+G.day+'</button></div><button class="btn ghost" type="button" data-act="fresh">Start a new café</button>'
       :'<button class="btn" type="button" data-act="continue">Open the café</button>')
-    +'<button class="btn ghost" type="button" data-act="switchaccount">Switch username</button>'
-    +'<p class="best">'+(cloudSave.account&&cloudSave.account.isGuest?'Guest progress saves only on this device. ':'Your café saves automatically to the cloud and this device. ')+'Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
+    +(cloudSave.account&&cloudSave.account.canChangeUsername?'<button class="btn ghost" type="button" data-act="changeusername">Change username</button>':'')
+    +(cloudSave.account?'<button class="btn ghost" type="button" data-act="switchaccount">Switch account</button>':'')
+    +'<p class="best">'+(cloudSave.account&&cloudSave.account.isGuest?'Guest username: '+cloudSave.account.username+'. Progress saves to Firebase and this device. ':'Your café saves automatically to the cloud and this device. ')+'Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
 }
 function showSummary(s){
   var net=s.rev+s.tips+s.loc+(s.bonus||0)-s.wages,dr=s.r1-s.r0;
@@ -1832,7 +1834,8 @@ function showPause(){
   openModal('pause','<div class="rc"><h1>Paused</h1><p class="rc-sub">Day '+G.day+' · '+money(G.cash)+' · rating '+G.rating.toFixed(1)+'</p>'
     +'<button class="btn" type="button" data-act="resume">Resume</button>'
     +'<div class="btns"><button class="btn ghost" type="button" data-act="upgrades">Upgrades</button><button class="btn ghost" type="button" data-act="sound">Sound '+(muted?'off':'on')+'</button><button class="btn ghost" type="button" data-act="music">Music '+(musicOn?'on':'off')+'</button></div>'
-    +'<button class="btn ghost" type="button" data-act="switchaccount">Switch username</button>'
+    +(cloudSave.account&&cloudSave.account.canChangeUsername?'<button class="btn ghost" type="button" data-act="changeusername">Change username</button>':'')
+    +(cloudSave.account?'<button class="btn ghost" type="button" data-act="switchaccount">Switch account</button>':'')
     +'<button class="btn ghost" type="button" data-act="wipe">Start a new café</button></div>');
 }
 function shopRows(tab){
@@ -1893,6 +1896,12 @@ modal.addEventListener('click',function(e){
   var a=e.target.closest('[data-act]');if(!a)return;
   var act=a.dataset.act;audioOn();
   if(act==='continue'){startDay();}
+  else if(act==='switchaccount'){
+  cloudSave.account.switchAccount().then(function(){window.location.reload();}).catch(function(error){
+    console.error('Unable to switch the Crema Tycoon account.',error);
+    toast('Could not switch accounts. Try again.','bad');
+  });
+  }
   else if(act==='fresh'){if(a.dataset.sure){G=defState();save();resetWorld();startDay();}else{a.dataset.sure='1';a.textContent='Tap again to erase your café';}}
   else if(act==='wipe'){if(a.dataset.sure){G=defState();save();resetWorld();startDay();}else{a.dataset.sure='1';a.textContent='Tap again to erase your café';}}
   else if(act==='resume'){closeModal();}
@@ -1901,11 +1910,10 @@ modal.addEventListener('click',function(e){
   else if(act==='nextday'){startDay();}
   else if(act==='sound'){muted=!muted;syncMusic();showPause();}
   else if(act==='music'){musicOn=!musicOn;syncMusic();showPause();}
-  else if(act==='switchaccount'){
-    save();
-    cloudSave.chain.then(function(){return cloudSave.account.switchAccount();}).then(function(){window.location.reload();}).catch(function(error){
-      console.error('Unable to switch username accounts.',error);
-      toast('Could not sign out. Try again.','bad');
+  else if(act==='changeusername'){
+    cloudSave.account.changeUsername(modal).then(function(){window.location.reload();}).catch(function(error){
+      console.error('Unable to open the username change form.',error);
+      toast('Could not change username. Try again.','bad');
     });
   }
 });
