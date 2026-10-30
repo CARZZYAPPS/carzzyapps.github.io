@@ -56,24 +56,25 @@ This works on Firebase Spark; no Cloud Functions billing plan or deployment is
 needed. The Firebase web config is public client configuration and contains no
 server credentials.
 
-The admin workspace's **Crema Rush scores** section connects separately to this
-project so it can edit a player's best shift score. Enable Email/Password sign-in
-for trusted game-project admin accounts. For each authorized admin, create
-`adminUsers/{UID}` in this project's Firestore console, using the account UID as
-the document ID and `{ "enabled": true }` as its data. Deploy the root rules
-after adding the allowlist entry:
+The admin workspace's **Crema Rush scores** section uses the same email and
+password entered in its single admin sign-in form to sign in to this project;
+there is no separate Crema Rush login. Enable Email/Password sign-in and make
+sure the same admin email/password can sign in to both Firebase projects.
+Firebase Auth users and UIDs are scoped to each project, so allowlist the UID
+for this admin login in this project's Firestore console by creating
+`adminUsers/{UID}` with `{ "enabled": true }`. Deploy the root rules after
+adding the allowlist entry:
 
 ```powershell
 firebase deploy --only firestore:rules --project carzzy-apps
 ```
 
 The admin workspace must also be listed under **Authentication → Settings →
-Authorized domains** in `carzzy-apps`. Admins sign in to the workspace as usual,
-then connect with their separate `carzzy-apps` account in **Crema Rush scores**.
-The rules allow those allowlisted accounts to read progress and update only
-the `best` score and its timestamp; other players can still edit only their
-own progress. Admin edits increment a revision so a corrected score is not
-replaced by an older local high score the next time that player opens the game.
+Authorized domains** in `carzzy-apps`. The rules allow the allowlisted admin
+login to read progress and update only the `best` score and its timestamp;
+other players can still edit only their own progress. Admin edits increment a
+revision so a corrected score is not replaced by an older local high score the
+next time that player opens the game.
 
 Sign-in has an optional **Stay signed in on this device** choice. When selected,
 Firebase Auth uses browser-local persistence and the site records
