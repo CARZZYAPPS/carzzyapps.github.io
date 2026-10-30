@@ -1407,7 +1407,7 @@
           rushCloudEnabled = false,
           rushCloudErrorShown = false,
           rushLocalErrorShown = false,
-          rushProgress = { best: best, shifts: 0, lastScore: 0, lastServed: 0 };
+          rushProgress = { best: best, shifts: 0, lastScore: 0, lastServed: 0, adminRevision: 0 };
         function rushProgressKey(uid) {
           return "crema-rush-progress-v1-" + uid;
         }
@@ -1421,7 +1421,9 @@
             Number.isInteger(progress.lastScore) &&
             progress.lastScore >= 0 &&
             Number.isInteger(progress.lastServed) &&
-            progress.lastServed >= 0
+            progress.lastServed >= 0 &&
+            (progress.adminRevision === undefined ||
+              (Number.isInteger(progress.adminRevision) && progress.adminRevision >= 0))
           );
         }
         function readRushProgress(key) {
@@ -1466,6 +1468,7 @@
               lastScore: rushProgress.lastScore,
               lastServed: rushProgress.lastServed,
               shifts: rushProgress.shifts,
+              adminRevision: rushProgress.adminRevision || 0,
               updatedAt: rushStore.serverTimestamp(),
             })
             .then(function () {
@@ -1493,7 +1496,7 @@
           if (!local) {
             try {
               if (!localStorage.getItem(marker)) {
-                local = { best: best, shifts: 0, lastScore: 0, lastServed: 0 };
+                local = { best: best, shifts: 0, lastScore: 0, lastServed: 0, adminRevision: 0 };
                 localStorage.setItem(key, JSON.stringify(local));
                 localStorage.setItem(marker, "1");
               }
@@ -1501,7 +1504,7 @@
               console.error("Unable to migrate the existing Crema Rush best score.", error);
             }
           }
-          rushProgress = local || { best: 0, shifts: 0, lastScore: 0, lastServed: 0 };
+          rushProgress = local || { best: 0, shifts: 0, lastScore: 0, lastServed: 0, adminRevision: 0 };
           best = rushProgress.best;
           rushStore = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
           rushProgressRef = rushStore.doc(rushAccount.db, "cremaRushProgress", uid);
@@ -1509,12 +1512,19 @@
           if (snapshot.exists()) {
             var cloud = snapshot.data();
             if (validRushProgress(cloud)) {
-              var needsSync =
-                cloud.best < rushProgress.best || cloud.shifts < rushProgress.shifts;
-              rushProgress.best = Math.max(rushProgress.best, cloud.best);
+              var cloudRevision = Number.isInteger(cloud.adminRevision) ? cloud.adminRevision : 0;
+              var localRevision = Number.isInteger(rushProgress.adminRevision) ? rushProgress.adminRevision : 0;
+              var adminAdjusted = cloudRevision > localRevision;
+              var needsSync = adminAdjusted ||
+                (!adminAdjusted && cloud.best < rushProgress.best) ||
+                cloud.shifts < rushProgress.shifts;
+              rushProgress.best = adminAdjusted
+                ? cloud.best
+                : Math.max(rushProgress.best, cloud.best);
               rushProgress.shifts = Math.max(rushProgress.shifts, cloud.shifts);
               rushProgress.lastScore = cloud.lastScore;
               rushProgress.lastServed = cloud.lastServed;
+              rushProgress.adminRevision = Math.max(localRevision, cloudRevision);
               best = rushProgress.best;
               rushCloudEnabled = true;
               if (needsSync) writeRushProgress();
