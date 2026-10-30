@@ -92,10 +92,16 @@ username accounts can change their username after confirming their password.
 The rename updates the Firestore username mappings while retaining the same
 Firebase Auth email, UID, and saved game progress.
 
-Tycoon saves are stored at `cremaTycoonSaves/{uid}`. Original Crema Rush best
-score and shift summaries are stored at `cremaRushProgress/{uid}`. This includes
-anonymous guest UIDs. Both collections can only be read or changed by the
-matching authenticated user.
+The graphics version of Crema Rush stores Tycoon saves in
+`cremaRushYesGraphicsSaves/{uid}`. The no-graphics version stores best scores
+and shift summaries in `cremaRushNoGraphicsProgress/{uid}`. Both include
+anonymous guest UIDs and are separate collections. Existing saves in the legacy
+`cremaTycoonSaves` and `cremaRushProgress` collections are read as a fallback
+and copied into their matching version-specific collection on the player's next
+game load. The admin score editor can still view and edit legacy score records
+until players have loaded the updated game. Each collection can only be read or
+changed by its matching authenticated user, except for the configured
+Crema Rush score administrator.
 Local browser saves remain available as an offline fallback; Tycoon saves are
 isolated by account on the same device, and Crema Rush progress is namespaced
 by account. Username password recovery is not available yet, so players should
@@ -112,12 +118,14 @@ the one shown on the Rhythm Runner leaderboard.
 
 Open either game while signed out and verify the three choices are shown.
 Continue as a guest and confirm a generated username appears in `usernames`.
-Play each game and confirm documents appear in `cremaTycoonSaves` and
-`cremaRushProgress` under the guest's anonymous UID. Reload and verify the same
-guest session and saves load. Use **Switch account**, sign up, and verify
-registered saves use the new account UID. Sign out and sign in with the account
-email, then verify the same saves load. Confirm a different account cannot read
-or overwrite either user's documents.
+Play each game and confirm documents appear in `cremaRushYesGraphicsSaves` and
+`cremaRushNoGraphicsProgress` under the guest's anonymous UID. Reload and verify
+the same guest session and saves load. For a test account with legacy saves,
+verify the next game load creates a corresponding version-specific document
+without changing the original legacy document. Use **Switch account**, sign
+up, and verify registered saves use the new account UID. Sign out and sign in
+with the account email, then verify the same saves load. Confirm a different
+account cannot read or overwrite either user's documents.
 
 ## Feedback admin access
 

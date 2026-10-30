@@ -1060,6 +1060,8 @@ function animPerson(p,dt,speed,time){
 
 /* ================= GAME ================= */
 var SAVEKEY='crema-tycoon-v1';
+var SAVE_COLLECTION='cremaRushYesGraphicsSaves';
+var LEGACY_SAVE_COLLECTION='cremaTycoonSaves';
 function defState(){return {v:1,day:1,cash:60,rating:3.5,lvl:1,mach:['E','D'],spd:{E:0,M:0,D:0,C:0},cashiers:0,baristas:0,cTrain:0,bTrain:0,locs:{},served:0,earned:0};}
 var G=defState();
 var cloudSave={db:null,uid:null,auth:null,account:null,storeModule:null,write:null,enabled:false,chain:Promise.resolve(),lastWrite:0};
@@ -1113,16 +1115,29 @@ async function connectCloudSave(){
   migrateLocalSave(user.uid);
   var storeModule=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
   cloudSave.storeModule=storeModule;
-  var saveRef=storeModule.doc(db,'cremaTycoonSaves',user.uid);
+  var saveRef=storeModule.doc(db,SAVE_COLLECTION,user.uid);
   var snapshot=await storeModule.getDoc(saveRef);
+  var legacySave=false;
+  if(!snapshot.exists()){
+    snapshot=await storeModule.getDoc(storeModule.doc(db,LEGACY_SAVE_COLLECTION,user.uid));
+    legacySave=snapshot.exists();
+  }
   cloudSave.db=db;cloudSave.uid=user.uid;
   cloudSave.write=function(state){
-    return storeModule.setDoc(saveRef,{state:state,updatedAt:storeModule.serverTimestamp()});
+    return storeModule.setDoc(saveRef,{
+      state:state,
+      username:account.username,
+      gameVersion:'yes-graphics',
+      updatedAt:storeModule.serverTimestamp()
+    });
   };
   cloudSave.enabled=true;
   if(snapshot.exists()){
     var saved=snapshot.data().state;
-    if(validSave(saved))return saved;
+    if(validSave(saved)){
+      if(legacySave)queueCloudSave(saved);
+      return saved;
+    }
     console.warn('Saved Crema Tycoon cloud data is invalid; using this device’s save.');
   }
   cloudSave.lastWrite=Date.now();

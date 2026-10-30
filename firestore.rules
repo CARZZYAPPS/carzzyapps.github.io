@@ -44,81 +44,85 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    function isNumber(value) {
+      return value is int || value is float;
+    }
+
+    function validGameState(state) {
+      return state.keys().hasAll([
+        'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
+        'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
+      ])
+      && state.keys().hasOnly([
+        'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
+        'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
+      ])
+      && state.v == 1
+      && isNumber(state.day)
+      && state.day >= 1
+      && isNumber(state.cash)
+      && isNumber(state.rating)
+      && state.rating >= 1
+      && state.rating <= 5
+      && state.lvl is int
+      && state.lvl >= 1
+      && state.lvl <= 3
+      && state.mach is list
+      && state.mach.size() >= 1
+      && state.mach.size() <= 11
+      && state.mach.hasOnly(['E', 'M', 'D', 'C'])
+      && state.spd is map
+      && state.spd.keys().hasAll(['E', 'M', 'D', 'C'])
+      && state.spd.keys().hasOnly(['E', 'M', 'D', 'C'])
+      && state.spd.E is int
+      && state.spd.E >= 0
+      && state.spd.E <= 3
+      && state.spd.M is int
+      && state.spd.M >= 0
+      && state.spd.M <= 3
+      && state.spd.D is int
+      && state.spd.D >= 0
+      && state.spd.D <= 3
+      && state.spd.C is int
+      && state.spd.C >= 0
+      && state.spd.C <= 3
+      && state.cashiers is int
+      && state.cashiers >= 0
+      && state.cashiers <= 3
+      && state.baristas is int
+      && state.baristas >= 0
+      && state.baristas <= 4
+      && state.cTrain is int
+      && state.cTrain >= 0
+      && state.cTrain <= 3
+      && state.bTrain is int
+      && state.bTrain >= 0
+      && state.bTrain <= 3
+      && state.locs is map
+      && state.locs.keys().hasOnly(['kiosk', 'midtown', 'airport', 'roastery'])
+      && (!('kiosk' in state.locs) || (state.locs.kiosk is int && state.locs.kiosk >= 0 && state.locs.kiosk <= 3))
+      && (!('midtown' in state.locs) || (state.locs.midtown is int && state.locs.midtown >= 0 && state.locs.midtown <= 3))
+      && (!('airport' in state.locs) || (state.locs.airport is int && state.locs.airport >= 0 && state.locs.airport <= 3))
+      && (!('roastery' in state.locs) || (state.locs.roastery is int && state.locs.roastery >= 0 && state.locs.roastery <= 3))
+      && isNumber(state.served)
+      && state.served >= 0
+      && isNumber(state.earned)
+      && state.earned >= 0;
+    }
+
+    function validGameSave(data) {
+      return data.keys().hasAll(['state', 'updatedAt'])
+        && data.keys().hasOnly(['state', 'username', 'gameVersion', 'updatedAt'])
+        && data.state is map
+        && validGameState(data.state)
+        && (!('username' in data)
+          || (data.username is string && data.username.matches('^[A-Za-z0-9_]{3,20}$')))
+        && (!('gameVersion' in data)
+          || data.gameVersion == 'yes-graphics')
+        && data.updatedAt == request.time;
+    }
+
     match /cremaTycoonSaves/{playerId} {
-      function isNumber(value) {
-        return value is int || value is float;
-      }
-
-      function validGameState(state) {
-        return state.keys().hasAll([
-          'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
-          'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
-        ])
-        && state.keys().hasOnly([
-          'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
-          'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
-        ])
-        && state.v == 1
-        && isNumber(state.day)
-        && state.day >= 1
-        && isNumber(state.cash)
-        && isNumber(state.rating)
-        && state.rating >= 1
-        && state.rating <= 5
-        && state.lvl is int
-        && state.lvl >= 1
-        && state.lvl <= 3
-        && state.mach is list
-        && state.mach.size() >= 1
-        && state.mach.size() <= 11
-        && state.mach.hasOnly(['E', 'M', 'D', 'C'])
-        && state.spd is map
-        && state.spd.keys().hasAll(['E', 'M', 'D', 'C'])
-        && state.spd.keys().hasOnly(['E', 'M', 'D', 'C'])
-        && state.spd.E is int
-        && state.spd.E >= 0
-        && state.spd.E <= 3
-        && state.spd.M is int
-        && state.spd.M >= 0
-        && state.spd.M <= 3
-        && state.spd.D is int
-        && state.spd.D >= 0
-        && state.spd.D <= 3
-        && state.spd.C is int
-        && state.spd.C >= 0
-        && state.spd.C <= 3
-        && state.cashiers is int
-        && state.cashiers >= 0
-        && state.cashiers <= 3
-        && state.baristas is int
-        && state.baristas >= 0
-        && state.baristas <= 4
-        && state.cTrain is int
-        && state.cTrain >= 0
-        && state.cTrain <= 3
-        && state.bTrain is int
-        && state.bTrain >= 0
-        && state.bTrain <= 3
-        && state.locs is map
-        && state.locs.keys().hasOnly(['kiosk', 'midtown', 'airport', 'roastery'])
-        && (!('kiosk' in state.locs) || (state.locs.kiosk is int && state.locs.kiosk >= 0 && state.locs.kiosk <= 3))
-        && (!('midtown' in state.locs) || (state.locs.midtown is int && state.locs.midtown >= 0 && state.locs.midtown <= 3))
-        && (!('airport' in state.locs) || (state.locs.airport is int && state.locs.airport >= 0 && state.locs.airport <= 3))
-        && (!('roastery' in state.locs) || (state.locs.roastery is int && state.locs.roastery >= 0 && state.locs.roastery <= 3))
-        && isNumber(state.served)
-        && state.served >= 0
-        && isNumber(state.earned)
-        && state.earned >= 0;
-      }
-
-      function validGameSave(data) {
-        return data.keys().hasAll(['state', 'updatedAt'])
-          && data.keys().hasOnly(['state', 'updatedAt'])
-          && data.state is map
-          && validGameState(data.state)
-          && data.updatedAt == request.time;
-      }
-
       allow read: if request.auth != null && request.auth.uid == playerId;
       allow create, update: if request.auth != null
         && request.auth.uid == playerId
@@ -126,14 +130,33 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /cremaRushProgress/{playerId} {
+    match /cremaRushYesGraphicsSaves/{playerId} {
+      allow read: if request.auth != null && request.auth.uid == playerId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == playerId
+        && request.resource.data.username is string
+        && request.resource.data.username.matches('^[A-Za-z0-9_]{3,20}$')
+        && request.resource.data.gameVersion == 'yes-graphics'
+        && validGameSave(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /{progressCollection}/{playerId} {
+      function isRushProgressCollection() {
+        return progressCollection == 'cremaRushProgress'
+          || progressCollection == 'cremaRushNoGraphicsProgress';
+      }
+
       function validRushProgress(data) {
         return data.keys().hasAll([
             'best', 'lastScore', 'lastServed', 'shifts', 'updatedAt'
           ])
           && data.keys().hasOnly([
-            'best', 'lastScore', 'lastServed', 'shifts', 'adminRevision', 'username', 'updatedAt'
+            'best', 'lastScore', 'lastServed', 'shifts', 'adminRevision',
+            'username', 'gameVersion', 'updatedAt'
           ])
+          && (progressCollection != 'cremaRushNoGraphicsProgress'
+            || data.gameVersion == 'no-graphics')
           && data.best is int
           && data.best >= 0
           && data.lastScore is int
@@ -146,16 +169,20 @@ service cloud.firestore {
             || (data.adminRevision is int && data.adminRevision >= 0))
           && (!('username' in data)
             || (data.username is string && data.username.matches('^[A-Za-z0-9_]{3,20}$')))
+          && (!('gameVersion' in data) || data.gameVersion == 'no-graphics')
           && data.updatedAt == request.time;
       }
 
-      allow read: if (request.auth != null && request.auth.uid == playerId)
-        || isCremaRushAdmin();
-      allow create: if request.auth != null
+      allow read: if isRushProgressCollection()
+        && ((request.auth != null && request.auth.uid == playerId)
+          || isCremaRushAdmin());
+      allow create: if isRushProgressCollection()
+        && request.auth != null
         && request.auth.uid == playerId
         && validRushProgress(request.resource.data)
         && (!('adminRevision' in request.resource.data) || request.resource.data.adminRevision == 0);
-      allow update: if (request.auth != null
+      allow update: if isRushProgressCollection()
+        && ((request.auth != null
           && request.auth.uid == playerId
           && validRushProgress(request.resource.data)
           && (('adminRevision' in resource.data
@@ -170,7 +197,7 @@ service cloud.firestore {
             'best', 'adminRevision', 'username', 'updatedAt'
           ])
           && request.resource.data.adminRevision
-            == (('adminRevision' in resource.data) ? resource.data.adminRevision : 0) + 1);
+            == (('adminRevision' in resource.data) ? resource.data.adminRevision : 0) + 1));
       allow delete: if false;
     }
 
@@ -182,12 +209,13 @@ service cloud.firestore {
           ])
           && data.keys().hasOnly([
             'actorType', 'uid', 'username', 'best', 'lastScore',
-            'lastServed', 'shifts', 'savedAt'
+            'lastServed', 'shifts', 'gameVersion', 'savedAt'
           ])
           && data.actorType == 'player'
           && data.uid == request.auth.uid
           && data.username is string
           && data.username.matches('^[A-Za-z0-9_]{3,20}$')
+          && (!('gameVersion' in data) || data.gameVersion == 'no-graphics')
           && data.best is int
           && data.best >= 0
           && data.lastScore is int
@@ -206,12 +234,13 @@ service cloud.firestore {
           ])
           && data.keys().hasOnly([
             'actorType', 'uid', 'username', 'previousBest',
-            'newBest', 'changedBy', 'savedAt'
+            'newBest', 'changedBy', 'gameVersion', 'savedAt'
           ])
           && data.actorType == 'admin'
           && data.uid is string
           && data.username is string
           && data.username.matches('^[A-Za-z0-9_]{3,20}$')
+          && (!('gameVersion' in data) || data.gameVersion == 'no-graphics')
           && data.previousBest is int
           && data.previousBest >= 0
           && data.newBest is int

@@ -1426,6 +1426,7 @@
         var rushAccount = null,
           rushStore = null,
           rushProgressRef = null,
+          rushLegacyProgressRef = null,
           rushCloudEnabled = false,
           rushCloudErrorShown = false,
           rushLocalErrorShown = false,
@@ -1498,12 +1499,14 @@
             shifts: rushProgress.shifts,
             adminRevision: rushProgress.adminRevision || 0,
             username: rushAccount.username,
+            gameVersion: "no-graphics",
             updatedAt: rushStore.serverTimestamp(),
           });
           batch.set(scoreEventRef, {
             actorType: "player",
             uid: rushAccount.user.uid,
             username: rushAccount.username,
+            gameVersion: "no-graphics",
             best: rushProgress.best,
             lastScore: rushProgress.lastScore,
             lastServed: rushProgress.lastServed,
@@ -1550,8 +1553,12 @@
           rushProgress = local || { best: 0, shifts: 0, lastScore: 0, lastServed: 0, adminRevision: 0 };
           best = rushProgress.best;
           rushStore = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
-          rushProgressRef = rushStore.doc(rushAccount.db, "cremaRushProgress", uid);
+          rushProgressRef = rushStore.doc(rushAccount.db, "cremaRushNoGraphicsProgress", uid);
           var snapshot = await rushStore.getDoc(rushProgressRef);
+          if (!snapshot.exists()) {
+            rushLegacyProgressRef = rushStore.doc(rushAccount.db, "cremaRushProgress", uid);
+            snapshot = await rushStore.getDoc(rushLegacyProgressRef);
+          }
           if (snapshot.exists()) {
             var cloud = snapshot.data();
             if (validRushProgress(cloud)) {
@@ -1570,7 +1577,7 @@
               rushProgress.adminRevision = Math.max(localRevision, cloudRevision);
               best = rushProgress.best;
               rushCloudEnabled = true;
-              if (needsSync) writeRushProgress();
+              if (needsSync || rushLegacyProgressRef) writeRushProgress(false);
               return;
             }
             console.warn("Saved Crema Rush cloud progress is invalid; using this device's save.");
