@@ -168,8 +168,25 @@
         z-index: 21;
         display: flex;
         flex: none;
-        justify-content: flex-end;
+        align-items: center;
+        justify-content: space-between;
         min-height: 44px;
+      }
+      .dashboard-link {
+        display: inline-flex;
+        min-height: 40px;
+        align-items: center;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--ink);
+        font: 600 12px var(--mono);
+        text-decoration: none;
+      }
+      .dashboard-link:hover {
+        border-color: var(--amber);
+        color: var(--amber);
       }
       #fullscreen-toggle {
         display: grid;
@@ -1298,6 +1315,7 @@
     </style>
     <div id="game-shell">
       <div id="game-controls">
+        <a class="dashboard-link" href="https://admin.carzzyapps.com/" aria-label="Back to admin dashboard">Back to dashboard</a>
         <button
           id="fullscreen-toggle"
           type="button"
