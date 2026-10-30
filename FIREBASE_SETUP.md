@@ -76,6 +76,13 @@ other players can still edit only their own progress. Admin edits increment a
 revision so a corrected score is not replaced by an older local high score the
 next time that player opens the game.
 
+Crema Rush saves each player's display username on their progress document and
+adds an immutable `cremaRushScoreEvents` record for each successful game save
+or admin correction. The admin **Recent score activity** panel shows the latest
+20 events, including the player name, score, timestamp, and admin email for
+corrections. Score and event writes are committed together, so failed saves
+don't produce misleading activity records.
+
 Sign-in has an optional **Stay signed in on this device** choice. When selected,
 Firebase Auth uses browser-local persistence and the site records
 `localStorage.signIn` as `"true"`. When unchecked, Firebase Auth uses

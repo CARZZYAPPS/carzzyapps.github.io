@@ -132,7 +132,7 @@ service cloud.firestore {
             'best', 'lastScore', 'lastServed', 'shifts', 'updatedAt'
           ])
           && data.keys().hasOnly([
-            'best', 'lastScore', 'lastServed', 'shifts', 'adminRevision', 'updatedAt'
+            'best', 'lastScore', 'lastServed', 'shifts', 'adminRevision', 'username', 'updatedAt'
           ])
           && data.best is int
           && data.best >= 0
@@ -144,6 +144,8 @@ service cloud.firestore {
           && data.shifts >= 0
           && (!('adminRevision' in data)
             || (data.adminRevision is int && data.adminRevision >= 0))
+          && (!('username' in data)
+            || (data.username is string && data.username.matches('^[A-Za-z0-9_]{3,20}$')))
           && data.updatedAt == request.time;
       }
 
@@ -164,10 +166,65 @@ service cloud.firestore {
                 || request.resource.data.adminRevision == 0))))
         || (isCremaRushAdmin()
           && validRushProgress(request.resource.data)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['best', 'adminRevision', 'updatedAt'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'best', 'adminRevision', 'username', 'updatedAt'
+          ])
           && request.resource.data.adminRevision
             == (('adminRevision' in resource.data) ? resource.data.adminRevision : 0) + 1);
       allow delete: if false;
+    }
+
+    match /cremaRushScoreEvents/{eventId} {
+      function validPlayerScoreEvent(data) {
+        return data.keys().hasAll([
+            'actorType', 'uid', 'username', 'best', 'lastScore',
+            'lastServed', 'shifts', 'savedAt'
+          ])
+          && data.keys().hasOnly([
+            'actorType', 'uid', 'username', 'best', 'lastScore',
+            'lastServed', 'shifts', 'savedAt'
+          ])
+          && data.actorType == 'player'
+          && data.uid == request.auth.uid
+          && data.username is string
+          && data.username.matches('^[A-Za-z0-9_]{3,20}$')
+          && data.best is int
+          && data.best >= 0
+          && data.lastScore is int
+          && data.lastScore >= 0
+          && data.lastServed is int
+          && data.lastServed >= 0
+          && data.shifts is int
+          && data.shifts >= 0
+          && data.savedAt == request.time;
+      }
+
+      function validAdminScoreEvent(data) {
+        return data.keys().hasAll([
+            'actorType', 'uid', 'username', 'previousBest',
+            'newBest', 'changedBy', 'savedAt'
+          ])
+          && data.keys().hasOnly([
+            'actorType', 'uid', 'username', 'previousBest',
+            'newBest', 'changedBy', 'savedAt'
+          ])
+          && data.actorType == 'admin'
+          && data.uid is string
+          && data.username is string
+          && data.username.matches('^[A-Za-z0-9_]{3,20}$')
+          && data.previousBest is int
+          && data.previousBest >= 0
+          && data.newBest is int
+          && data.newBest >= 0
+          && data.changedBy == request.auth.token.email
+          && data.savedAt == request.time;
+      }
+
+      allow read: if isCremaRushAdmin();
+      allow create: if request.auth != null
+        && (validPlayerScoreEvent(request.resource.data)
+          || (isCremaRushAdmin() && validAdminScoreEvent(request.resource.data)));
+      allow update, delete: if false;
     }
 
   }

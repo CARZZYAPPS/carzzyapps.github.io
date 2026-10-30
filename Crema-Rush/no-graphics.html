@@ -1460,7 +1460,7 @@
           }
           return null;
         }
-        function writeRushProgress() {
+        function writeRushProgress(showCloudStatus) {
           if (!rushAccount) {
             try {
               localStorage.setItem("crema-rush-best", String(best));
@@ -1484,22 +1484,43 @@
             }
           }
           if (!rushCloudEnabled) return;
-          rushStore
-            .setDoc(rushProgressRef, {
-              best: rushProgress.best,
-              lastScore: rushProgress.lastScore,
-              lastServed: rushProgress.lastServed,
-              shifts: rushProgress.shifts,
-              adminRevision: rushProgress.adminRevision || 0,
-              updatedAt: rushStore.serverTimestamp(),
-            })
+          if (showCloudStatus) {
+            toast("Saving score for " + rushAccount.username + "…", "info");
+          }
+          var scoreEventRef = rushStore.doc(
+            rushStore.collection(rushAccount.db, "cremaRushScoreEvents")
+          );
+          var batch = rushStore.writeBatch(rushAccount.db);
+          batch.set(rushProgressRef, {
+            best: rushProgress.best,
+            lastScore: rushProgress.lastScore,
+            lastServed: rushProgress.lastServed,
+            shifts: rushProgress.shifts,
+            adminRevision: rushProgress.adminRevision || 0,
+            username: rushAccount.username,
+            updatedAt: rushStore.serverTimestamp(),
+          });
+          batch.set(scoreEventRef, {
+            actorType: "player",
+            uid: rushAccount.user.uid,
+            username: rushAccount.username,
+            best: rushProgress.best,
+            lastScore: rushProgress.lastScore,
+            lastServed: rushProgress.lastServed,
+            shifts: rushProgress.shifts,
+            savedAt: rushStore.serverTimestamp(),
+          });
+          batch.commit()
             .then(function () {
               rushCloudErrorShown = false;
+              if (showCloudStatus) {
+                toast("Score saved to Firebase for " + rushAccount.username, "good");
+              }
             })
             .catch(function (error) {
-              if (!rushCloudErrorShown) {
+              console.error("Unable to save Crema Rush score and activity to Firestore.", error);
+              if (!rushCloudErrorShown || showCloudStatus) {
                 rushCloudErrorShown = true;
-                console.error("Unable to save Crema Rush progress to Firestore.", error);
                 toast("Cloud score save failed; progress remains on this device", "bad");
               }
             });
@@ -1561,7 +1582,7 @@
           rushProgress.lastScore = S.score;
           rushProgress.lastServed = S.served;
           rushProgress.shifts++;
-          writeRushProgress();
+          writeRushProgress(true);
         }
         function switchRushAccount() {
           S.paused = true;
