@@ -3,9 +3,24 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /usernames/{username} {
-      // Public username-to-UID mappings never contain account email addresses.
+      function validUsernameClaim(data) {
+        return data.keys().hasAll(['uid', 'guest'])
+          && data.keys().hasOnly(['uid', 'guest'])
+          && data.uid == request.auth.uid
+          && data.guest is bool
+          && username.matches('^[a-z0-9_]{3,20}$')
+          && (data.guest
+            ? request.auth.token.firebase.sign_in_provider == 'anonymous'
+            : request.auth.token.email is string);
+      }
+
       allow read: if true;
-      allow create, update, delete: if false;
+      allow create: if request.auth != null
+        && validUsernameClaim(request.resource.data);
+      allow update: if request.auth != null
+        && resource.data.uid == request.auth.uid
+        && validUsernameClaim(request.resource.data);
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     match /usernameAuthLookup/{username} {

@@ -9,7 +9,6 @@ import {
   onAuthStateChanged,
   signInAnonymously,
   signInWithEmailAndPassword,
-  signInWithCustomToken,
   reauthenticateWithCredential,
   setPersistence,
   signOut,
@@ -17,13 +16,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
   doc,
-  getDoc,
-  getFirestore
+  getFirestore,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
 
 var SIGN_IN_KEY = "signIn";
-var PLAYER_EMAIL_DOMAIN = "@players.carzzyapps.com";
+var usernamePattern = /^[A-Za-z0-9_]{3,20}$/;
 
 function setSignedInFlag(isSignedIn) {
   try {
@@ -38,47 +36,85 @@ function setSignedInFlag(isSignedIn) {
 }
 
 function errorMessage(error) {
-  if (error.code === "username/taken") return "That username is already taken. Choose another.";
-  if (error.code === "username/not-linked") return "That username is not linked to this account.";
   if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
-    return "Username or password is incorrect.";
+    return "Email or password is incorrect.";
   }
   if (error.code === "auth/email-already-in-use" || error.code === "auth/credential-already-in-use") {
     return "That email already has an account. Sign in instead.";
   }
-  if (error.code === "functions/already-exists") return "That username is already taken. Choose another.";
-  if (error.code === "functions/unauthenticated" || error.code === "functions/invalid-argument") {
-    return "Username or password is incorrect.";
-  }
-  if (error.code === "functions/unavailable" || error.code === "functions/deadline-exceeded") {
-    return "Username sign-in is temporarily unavailable. Please try again.";
-  }
-  if (error.code === "functions/not-found") {
-    return "Account services are temporarily unavailable. Please try again later.";
-  }
-  if (error.code === "functions/failed-precondition" || error.code === "functions/permission-denied") {
-    return error.message || "Could not save that username. Try again.";
-  }
+  if (error.code === "username/taken") return "That username is already taken. Choose another.";
   if (error.code === "auth/weak-password") return "Choose a password with at least 6 characters.";
   if (error.code === "auth/password-does-not-meet-requirements") {
     return "Use a password with an uppercase letter, a number, and a special character.";
   }
   if (error.code === "auth/operation-not-allowed") {
-    return "Username and password sign-in is unavailable right now. Please try again later.";
+    return "Account sign-in is unavailable right now. Please try again later.";
   }
   if (error.code === "auth/network-request-failed") return "Network error. Check your connection and try again.";
-  if (error.code === "permission-denied") return "Could not save that username. Try another or sign in.";
+  if (error.code === "permission-denied" || error.code === "firestore/permission-denied") {
+    return "Could not save your username. Check the game's Firestore rules and try again.";
+  }
   return "Could not access your account. Please try again.";
 }
 
-function requestUser(auth, db, functions, container, pendingGuest, initialMode) {
+function usernameRef(db, username) {
+  return doc(db, "usernames", username.toLowerCase());
+}
+
+async function saveUsername(db, user, username, previousUsername) {
+  var normalizedUsername = username.toLowerCase();
+  var newRef = usernameRef(db, normalizedUsername);
+  var oldRef = previousUsername && previousUsername.toLowerCase() !== normalizedUsername
+    ? usernameRef(db, previousUsername)
+    : null;
+
+  await runTransaction(db, async function (transaction) {
+    var newSnapshot = await transaction.get(newRef);
+    if (newSnapshot.exists() && newSnapshot.data().uid !== user.uid) {
+      var takenError = new Error("That username is already taken.");
+      takenError.code = "username/taken";
+      throw takenError;
+    }
+
+    var oldSnapshot = oldRef ? await transaction.get(oldRef) : null;
+    transaction.set(newRef, { uid: user.uid, guest: user.isAnonymous });
+    if (oldSnapshot && oldSnapshot.exists() && oldSnapshot.data().uid === user.uid) {
+      transaction.delete(oldRef);
+    }
+  });
+}
+
+function randomGuestUsername() {
+  var bytes = new Uint8Array(5);
+  crypto.getRandomValues(bytes);
+  return "Guest_" + Array.from(bytes, function (byte) {
+    return byte.toString(16).padStart(2, "0");
+  }).join("");
+}
+
+async function ensureGuestUsername(db, user) {
+  for (var attempt = 0; attempt < 5; attempt += 1) {
+    var username = attempt === 0 && user.displayName && usernamePattern.test(user.displayName)
+      ? user.displayName
+      : randomGuestUsername();
+    try {
+      await saveUsername(db, user, username, user.displayName);
+      if (user.displayName !== username) {
+        await updateProfile(user, { displayName: username });
+      }
+      return username;
+    } catch (error) {
+      if (error.code !== "username/taken") throw error;
+    }
+  }
+  throw new Error("Could not generate an available guest username.");
+}
+
+function requestUser(auth, db, container, pendingGuest, initialMode) {
   return new Promise(function (resolve, reject) {
     var account = {
       auth: auth,
       db: db,
-      claimUsername: httpsCallable(functions, "claimUsername"),
-      signInWithUsername: httpsCallable(functions, "signInWithUsername"),
-      createGuestUsername: httpsCallable(functions, "createGuestUsername"),
       pendingGuest: pendingGuest || null,
       user: null,
       mode: initialMode === "signin" || initialMode === "create" ? initialMode : "choose",
@@ -121,10 +157,10 @@ function requestUser(auth, db, functions, container, pendingGuest, initialMode) 
         '<div class="rc"><h1>' + (creating ? "Sign up" : "Sign in") + "</h1>" +
         '<p class="rc-sub">' + (creating
           ? "Create an account with an email, username, and password."
-          : "Sign in with your username or email and password.") + "</p>" +
+          : "Sign in with your email address and password.") + "</p>" +
         '<form id="account-form" novalidate>' +
-        '<label class="account-label" for="account-username">' + (creating ? "Username" : "Username or email") + '</label>' +
-        '<input class="account-input" id="account-username" name="identifier" type="text" minlength="' + (creating ? "3" : "1") + '" maxlength="' + (creating ? "20" : "254") + '" value="' + escapedUsername + '" autocomplete="username" autocapitalize="none" spellcheck="false" required>' +
+        '<label class="account-label" for="account-username">' + (creating ? "Username" : "Email address") + '</label>' +
+        '<input class="account-input" id="account-username" name="identifier" type="' + (creating ? "text" : "email") + '" minlength="' + (creating ? "3" : "1") + '" maxlength="' + (creating ? "20" : "254") + '" value="' + (creating ? escapedUsername : escapedEmail) + '" autocomplete="' + (creating ? "username" : "email") + '" autocapitalize="none" spellcheck="false" required>' +
         (creating
           ? '<label class="account-label" for="account-email">Email address</label>' +
             '<input class="account-input" id="account-email" name="email" type="email" maxlength="254" value="' + escapedEmail + '" autocomplete="email" required>'
@@ -150,20 +186,22 @@ function requestUser(auth, db, functions, container, pendingGuest, initialMode) 
       event.preventDefault();
       var identifier = event.target.elements.identifier.value.trim();
       var username = identifier;
-      var email = account.mode === "create" ? event.target.elements.email.value.trim() : "";
+      var email = (account.mode === "create" ? event.target.elements.email.value : identifier)
+        .trim()
+        .toLowerCase();
       var password = event.target.elements.password.value;
       var staySignedIn = !!container.querySelector("#stay-signed-in").checked;
       var creating = account.mode === "create";
-      if (creating && !/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+      if (creating && !usernamePattern.test(username)) {
         render("Use 3–20 letters, numbers, or underscores for your username.", username);
+        return;
+      }
+      if (!creating && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        render("Enter a valid email address.", "", email);
         return;
       }
       if (creating && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         render("Enter a valid email address.", username, email);
-        return;
-      }
-      if (!creating && !/^[A-Za-z0-9_]{3,20}$/.test(identifier) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
-        render("Enter a valid username or email address.", identifier);
         return;
       }
       if (password.length < 6) {
@@ -180,35 +218,10 @@ function requestUser(auth, db, functions, container, pendingGuest, initialMode) 
         await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);
         var user;
         if (action === "signin") {
-          if (identifier.indexOf("@") >= 0) {
-            var emailCredential = await signInWithEmailAndPassword(auth, identifier, password);
-            user = emailCredential.user;
-          } else {
-            try {
-              var tokenResult = await account.signInWithUsername({
-                username: identifier,
-                password: password
-              });
-              var usernameCredential = await signInWithCustomToken(auth, tokenResult.data.customToken);
-              user = usernameCredential.user;
-            } catch (usernameError) {
-              if (usernameError.code !== "functions/unauthenticated" &&
-                  usernameError.code !== "functions/not-found") {
-                throw usernameError;
-              }
-              var legacyCredential = await signInWithEmailAndPassword(
-                auth,
-                identifier.toLowerCase() + "@players.carzzyapps.com",
-                password
-              );
-              user = legacyCredential.user;
-              var usernameSnapshot = await getDoc(doc(db, "usernames", identifier.toLowerCase()));
-              if (!usernameSnapshot.exists() || usernameSnapshot.data().uid !== user.uid) {
-                throw usernameError;
-              }
-            }
-          }
+          var credential = await signInWithEmailAndPassword(auth, email, password);
+          user = credential.user;
         } else {
+          var previousUsername = account.pendingGuest && account.pendingGuest.displayName;
           var created = account.pendingGuest
             ? await linkWithCredential(account.pendingGuest, EmailAuthProvider.credential(email, password))
             : auth.currentUser && auth.currentUser.email === email
@@ -216,7 +229,7 @@ function requestUser(auth, db, functions, container, pendingGuest, initialMode) 
               : await createUserWithEmailAndPassword(auth, email, password);
           account.pendingGuest = null;
           user = created.user;
-          await account.claimUsername({ username: username });
+          await saveUsername(db, user, username, previousUsername);
           await updateProfile(user, { displayName: username });
         }
         setSignedInFlag(staySignedIn);
@@ -256,9 +269,7 @@ function requestUser(auth, db, functions, container, pendingGuest, initialMode) 
         var credential = auth.currentUser && auth.currentUser.isAnonymous
           ? { user: auth.currentUser }
           : await signInAnonymously(auth);
-        var result = await account.createGuestUsername({});
-        var username = result.data.username;
-        await updateProfile(credential.user, { displayName: username });
+        await ensureGuestUsername(db, credential.user);
         setSignedInFlag(false);
         account.cleanup();
         container.hidden = true;
@@ -293,7 +304,6 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
   var app = initializeApp(config);
   var auth = getAuth(app);
   var db = getFirestore(app);
-  var functions = getFunctions(app, "us-central1");
   var user = await new Promise(function (resolve, reject) {
     var unsubscribe = onAuthStateChanged(auth, function (currentUser) {
       unsubscribe();
@@ -315,14 +325,13 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
   }
   if (!user) {
     setSignedInFlag(false);
-    user = await requestUser(auth, db, functions, container, null, initialMode);
+    user = await requestUser(auth, db, container, null, initialMode);
   } else if (user.isAnonymous) {
-    var guestUsername = user.displayName;
-    if (!guestUsername || !/^[A-Za-z0-9_]{3,20}$/.test(guestUsername)) {
-      var guestResult = await httpsCallable(functions, "createGuestUsername")({});
-      guestUsername = guestResult.data.username;
-      await updateProfile(user, { displayName: guestUsername });
-    }
+    await ensureGuestUsername(db, user);
+  } else if (user.displayName && usernamePattern.test(user.displayName)) {
+    await saveUsername(db, user, user.displayName, user.displayName);
+  } else {
+    user = await requestUser(auth, db, container, null, "create");
   }
   var isGuest = !!user.isAnonymous;
   var username = user.displayName || "";
@@ -333,9 +342,7 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
     user: user,
     username: username,
     isGuest: isGuest,
-    canChangeUsername: !isGuest && !!username && !!user.email &&
-      !user.email.toLowerCase().endsWith(PLAYER_EMAIL_DOMAIN),
-    changeUsernameRequest: httpsCallable(functions, "changeUsername"),
+    canChangeUsername: !isGuest && !!username && !!user.email,
     changeUsername: function (target) {
       var account = this;
       var currentUser = user;
@@ -394,10 +401,7 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
               currentUser,
               EmailAuthProvider.credential(currentUser.email, password)
             );
-            await account.changeUsernameRequest({
-              currentUsername: currentUsername,
-              username: nextUsername
-            });
+            await saveUsername(db, currentUser, nextUsername, currentUsername);
             try {
               await updateProfile(currentUser, { displayName: nextUsername });
             } catch (error) {
@@ -411,16 +415,12 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
             resolve(true);
           } catch (error) {
             console.error("Unable to change the account username.", error);
-            var message = error.code === "functions/already-exists" || error.code === "username/taken"
+            var message = error.code === "username/taken"
               ? "That username is already taken. Choose another."
-              : error.code === "functions/failed-precondition" || error.code === "functions/permission-denied"
-                ? error.message
               : error.code === "auth/wrong-password" || error.code === "auth/invalid-credential"
                 ? "The current password is incorrect."
                 : error.code === "auth/requires-recent-login"
                   ? "Sign in again before changing your username."
-                  : error.message === "The current username is not linked to this account."
-                    ? error.message
                     : "Could not change the username. Check your connection and try again.";
             render(message, nextUsername);
           }
@@ -445,13 +445,11 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
       setSignedInFlag(false);
       var pendingGuest = user.isAnonymous ? user : null;
       if (!pendingGuest) await signOut(auth);
-      user = await requestUser(auth, db, functions, container, pendingGuest);
+      user = await requestUser(auth, db, container, pendingGuest);
       this.user = user;
       this.isGuest = !!user.isAnonymous;
       this.username = user.displayName || "";
-      this.canChangeUsername = !this.isGuest && !!this.username && !!user.email &&
-        !user.email.toLowerCase().endsWith(PLAYER_EMAIL_DOMAIN);
-      this.changeUsernameRequest = httpsCallable(functions, "changeUsername");
+      this.canChangeUsername = !this.isGuest && !!this.username && !!user.email;
       return user;
     }
   };
