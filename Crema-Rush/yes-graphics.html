@@ -22,7 +22,7 @@
 <meta name="twitter:description" content="Build and manage your own coffee shop in Crema Tycoon. Serve customers, upgrade machines, hire staff, and grow your cafe empire.">
 <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
 <meta name="twitter:image:alt" content="Carzzy Apps logo">
-<link rel="canonical" href="https://www.carzzyapps.com/Crema-Rush/better.html">
+<link rel="canonical" href="https://www.carzzyapps.com/Crema-Rush/yes-graphics.html">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 </head><body>
@@ -1817,7 +1817,7 @@ function showStart(hasSave){
       :'<button class="btn" type="button" data-act="continue">Open the café</button>')
     +(cloudSave.account&&cloudSave.account.canChangeUsername?'<button class="btn ghost" type="button" data-act="changeusername">Change username</button>':'')
     +(cloudSave.account?'<button class="btn ghost" type="button" data-act="switchaccount">Switch account</button>':'')
-    +'<p class="best">'+(cloudSave.account&&cloudSave.account.isGuest?'Guest username: '+cloudSave.account.username+'. Progress saves to Firebase and this device. ':'Your café saves automatically to the cloud and this device. ')+'Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
+    +'<p class="best">'+(cloudSave.account&&cloudSave.account.isGuest?'Guest username: '+cloudSave.account.username+'. Progress saves to your account and this device. ':'Your café saves automatically to the cloud and this device. ')+'Leaving mid-day restarts the current shift. On a narrow screen, drag sideways to look around.</p></div>');
 }
 function showSummary(s){
   var net=s.rev+s.tips+s.loc+(s.bonus||0)-s.wages,dr=s.r1-s.r0;

@@ -54,24 +54,24 @@ function errorMessage(error) {
     return "Username sign-in is temporarily unavailable. Please try again.";
   }
   if (error.code === "functions/not-found") {
-    return "Firebase account services are not set up yet. Please try again later.";
+    return "Account services are temporarily unavailable. Please try again later.";
   }
   if (error.code === "functions/failed-precondition" || error.code === "functions/permission-denied") {
     return error.message || "Could not save that username. Try again.";
   }
   if (error.code === "auth/weak-password") return "Choose a password with at least 6 characters.";
   if (error.code === "auth/password-does-not-meet-requirements") {
-    return "Use a password that meets Firebase's requirements, including uppercase, number, and special characters.";
+    return "Use a password with an uppercase letter, a number, and a special character.";
   }
   if (error.code === "auth/operation-not-allowed") {
-    return "Enable this sign-in method in Firebase Authentication before trying again.";
+    return "Username and password sign-in is unavailable right now. Please try again later.";
   }
   if (error.code === "auth/network-request-failed") return "Network error. Check your connection and try again.";
   if (error.code === "permission-denied") return "Could not save that username. Try another or sign in.";
   return "Could not access your account. Please try again.";
 }
 
-function requestUser(auth, db, functions, container, pendingGuest) {
+function requestUser(auth, db, functions, container, pendingGuest, initialMode) {
   return new Promise(function (resolve, reject) {
     var account = {
       auth: auth,
@@ -81,7 +81,7 @@ function requestUser(auth, db, functions, container, pendingGuest) {
       createGuestUsername: httpsCallable(functions, "createGuestUsername"),
       pendingGuest: pendingGuest || null,
       user: null,
-      mode: "choose",
+      mode: initialMode === "signin" || initialMode === "create" ? initialMode : "choose",
       staySignedIn: false,
       busy: false
     };
@@ -90,7 +90,7 @@ function requestUser(auth, db, functions, container, pendingGuest) {
       if (account.mode === "choose") {
         container.innerHTML =
           '<div class="rc"><h1>Choose how to play</h1>' +
-          '<p class="rc-sub">Your progress is saved to your Firebase account.</p>' +
+          '<p class="rc-sub">Your progress is saved to your account.</p>' +
           '<button class="btn" type="button" data-account-guest' +
           (account.busy ? " disabled" : "") + '>' +
           (account.busy ? "Creating guest..." : "Continue as guest") + '</button>' +
@@ -286,7 +286,7 @@ function requestUser(auth, db, functions, container, pendingGuest) {
   });
 }
 
-export async function connectCremaAccount(config, container, returnTo) {
+export async function connectCremaAccount(config, container, returnTo, initialMode) {
   if (!config || !config.apiKey || !config.authDomain || !config.projectId || !config.appId) {
     throw new Error("Firebase web configuration is missing or incomplete.");
   }
@@ -315,7 +315,7 @@ export async function connectCremaAccount(config, container, returnTo) {
   }
   if (!user) {
     setSignedInFlag(false);
-    user = await requestUser(auth, db, functions, container);
+    user = await requestUser(auth, db, functions, container, null, initialMode);
   } else if (user.isAnonymous) {
     var guestUsername = user.displayName;
     if (!guestUsername || !/^[A-Za-z0-9_]{3,20}$/.test(guestUsername)) {
