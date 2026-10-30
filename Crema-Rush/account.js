@@ -7,6 +7,7 @@ import {
   getAuth,
   linkWithCredential,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInAnonymously,
   signInWithEmailAndPassword,
   reauthenticateWithCredential,
@@ -51,6 +52,7 @@ function errorMessage(error) {
     return "Account sign-in is unavailable right now. Please try again later.";
   }
   if (error.code === "auth/network-request-failed") return "Network error. Check your connection and try again.";
+  if (error.code === "auth/invalid-email") return "Enter a valid email address.";
   if (error.code === "permission-denied" || error.code === "firestore/permission-denied") {
     return "Could not save your username. Check the game's Firestore rules and try again.";
   }
@@ -77,7 +79,11 @@ async function saveUsername(db, user, username, previousUsername) {
     }
 
     var oldSnapshot = oldRef ? await transaction.get(oldRef) : null;
-    transaction.set(newRef, { uid: user.uid, guest: user.isAnonymous });
+    transaction.set(newRef, {
+      uid: user.uid,
+      guest: user.isAnonymous,
+      username: username
+    });
     if (oldSnapshot && oldSnapshot.exists() && oldSnapshot.data().uid === user.uid) {
       transaction.delete(oldRef);
     }
@@ -170,6 +176,10 @@ function requestUser(auth, db, container, pendingGuest, initialMode) {
         '<p class="account-error" id="account-error" role="alert">' + (message || "") + "</p>" +
         '<button class="btn" type="submit"' + (account.busy ? " disabled" : "") + ">" +
         (account.busy ? "Please wait…" : creating ? "Create account" : "Sign in") + "</button></form>" +
+        (!creating
+          ? '<button class="btn ghost" type="button" data-account-forgot' +
+            (account.busy ? " disabled" : "") + '>Forgot password?</button>'
+          : "") +
         '<label class="account-remember"><input id="stay-signed-in" type="checkbox"' + (account.staySignedIn ? " checked" : "") + '> Stay signed in on this device</label>' +
         '<button class="btn ghost" type="button" data-account-mode="choose"' +
         (account.busy ? " disabled" : "") + '>Back</button>' +
@@ -252,6 +262,38 @@ function requestUser(auth, db, container, pendingGuest, initialMode) {
       render("");
     }
 
+    async function resetPassword(event) {
+      var button = event.target.closest("[data-account-forgot]");
+      if (!button || account.busy) return;
+      var email = container.querySelector("#account-username").value.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        render("Enter your account email above, then choose Forgot password.", "", email);
+        return;
+      }
+      account.busy = true;
+      render("Sending password reset email…", "", email);
+      try {
+        await sendPasswordResetEmail(auth, email);
+        account.busy = false;
+        showResetConfirmation(email);
+      } catch (error) {
+        console.error("Unable to send a password reset email.", error);
+        account.busy = false;
+        if (error.code === "auth/user-not-found") {
+          showResetConfirmation(email);
+        } else {
+          render(errorMessage(error), "", email);
+        }
+      }
+    }
+
+    function showResetConfirmation(email) {
+      render("If an account exists for this email, password reset instructions have been sent.", "", email);
+      var confirmation = container.querySelector("#account-error");
+      confirmation.className = "account-note";
+      confirmation.setAttribute("role", "status");
+    }
+
     function rememberPersistenceChoice(event) {
       if (event.target && event.target.id === "stay-signed-in") {
         account.staySignedIn = event.target.checked;
@@ -286,11 +328,13 @@ function requestUser(auth, db, container, pendingGuest, initialMode) {
     render("");
     container.addEventListener("submit", submit);
     container.addEventListener("click", changeMode);
+    container.addEventListener("click", resetPassword);
     container.addEventListener("click", continueAsGuest);
     container.addEventListener("change", rememberPersistenceChoice);
     account.cleanup = function () {
       container.removeEventListener("submit", submit);
       container.removeEventListener("click", changeMode);
+      container.removeEventListener("click", resetPassword);
       container.removeEventListener("click", continueAsGuest);
       container.removeEventListener("change", rememberPersistenceChoice);
     };

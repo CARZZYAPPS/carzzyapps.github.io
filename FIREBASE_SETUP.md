@@ -28,7 +28,9 @@ under **Authentication > Sign-in method**, then deploy the root
 When signed out, both games offer three choices: continue as a guest, sign up,
 or sign in. Guest mode uses Firebase Anonymous Authentication and claims a
 unique username in the public `usernames` collection using a Firestore
-transaction. Guest progress is saved to Firestore under the anonymous UID, as
+transaction. Each username mapping stores the UID, guest flag, and
+display-cased username for leaderboard display. Guest progress is saved to
+Firestore under the anonymous UID, as
 well as locally on the device. Firebase Auth keeps the guest session on that
 browser so it can load the same UID after a reload; a guest username is not a
 password and cannot sign in on another device. Choosing **Switch account** and
@@ -41,6 +43,9 @@ email; sign-in uses that email and password. Username-based sign-in is not
 available without a trusted backend, because securely resolving a username to
 an email address cannot be done from public client code. Username uniqueness
 is enforced by Firestore transactions and the `usernames` security rules.
+The sign-in form's **Forgot password?** button sends a reset email to the
+account email; player accounts do not need admin access to save usernames or
+reset passwords.
 Deploy the updated Firestore rules to the Crema Rush project:
 
 ```powershell

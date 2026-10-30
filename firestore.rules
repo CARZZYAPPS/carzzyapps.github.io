@@ -15,10 +15,12 @@ service cloud.firestore {
 
     match /usernames/{username} {
       function validUsernameClaim(data) {
-        return data.keys().hasAll(['uid', 'guest'])
-          && data.keys().hasOnly(['uid', 'guest'])
+        return data.keys().hasAll(['uid', 'guest', 'username'])
+          && data.keys().hasOnly(['uid', 'guest', 'username'])
           && data.uid == request.auth.uid
           && data.guest is bool
+          && data.username is string
+          && data.username.matches('^[A-Za-z0-9_]{3,20}$')
           && username.matches('^[a-z0-9_]{3,20}$')
           && (data.guest
             ? request.auth.token.firebase.sign_in_provider == 'anonymous'
