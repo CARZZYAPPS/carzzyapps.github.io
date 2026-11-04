@@ -109,6 +109,7 @@
 	</div>
 	<script src="./firebase-config.js"></script>
 	<script type="module">
+		sessionStorage.setItem("prevPage", window.location.href);
 		const accountActions = document.getElementById("account-actions");
 		const accountPanel = document.getElementById("account-panel");
 		const accountStatus = document.getElementById("account-status");
