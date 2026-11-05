@@ -252,7 +252,7 @@ const catName = Object.fromEntries(cat.categories.map((c) => [c.id, c.name]));
 let playsBy = {}, myGames = {}, filter = "all";
 
 $("#sGames").textContent = cat.games.length;
-$("#sSoon").textContent = cat.upcoming.length;
+$("#sSoon").textContent = cat.upcoming.filter((u) => !cat.games.some((g) => g.name === u.name)).length;
 
 function chips() {
   const counts = {};
@@ -287,8 +287,9 @@ function feat(g) {
   f.querySelector("p").textContent = g.hook;
 }
 function soon() {
-  const nx = cat.upcoming.find((u) => u.status === "next");
-  const rest = cat.upcoming.filter((u) => u !== nx);
+  const live = new Set(cat.games.map((g) => g.name)), items = cat.upcoming.filter((u) => !live.has(u.name));
+  const nx = items.find((u) => u.status === "next") || items[0];
+  const rest = items.filter((u) => u !== nx);
   const launch = nx && nx.launch ? new Date(nx.launch) : null;
   $("#next").innerHTML = nx ? `<div class="panel next${launch ? " cd" : ""}"><div class="ico">${esc(nx.name[0])}</div><div><span class="pill nx">UP NEXT</span><h3 style="margin-top:8px">${esc(nx.name)}</h3><p>${esc(nx.hook)}</p>${launch ? `<div class="count" id="count" aria-label="Time until launch"></div><p class="launchd">Launches ${launch.toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>` : ""}</div><div class="nact">${nx.earlyAccess ? `<button class="btn sm" id="eaBtn">Request early access</button>` : ""}<button class="btn ghost sm" data-feedback="arcade">Suggest a feature</button></div></div>` : "";
   if (launch) {

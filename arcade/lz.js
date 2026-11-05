@@ -43,11 +43,17 @@ function catalog() {
     catalogP = Promise.all([
       fetch(BASE + "games.json", { cache: "no-cache" }).then((r) => r.json()),
       fetch(BASE + "upcoming.json", { cache: "no-cache" }).then((r) => r.json()).catch(() => ({ items: [] }))
-    ]).then(([g, u]) => ({ games: g.games || [], categories: g.categories || [], ratioNote: g.ratioNote || "", upcoming: u.items || [] }));
+    ]).then(([g, u]) => {
+      const d = new Date(), day = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      const all = g.games || [];
+      // games still in early access stay off the arcade (reachable only by direct link) until their release day
+      return { all, games: all.filter((x) => !x.released || x.released <= day), categories: g.categories || [], ratioNote: g.ratioNote || "", upcoming: u.items || [] };
+    });
   }
   return catalogP;
 }
-async function gameInfo(id) { const c = await catalog(); return c.games.find((g) => g.id === id) || { id, name: id, ratio: 0.04 }; }
+async function gameInfo(id) { const c = await catalog(); return c.all.find((g) => g.id === id) || { id, name: id, ratio: 0.04 }; }
+async function inEarlyAccess(id) { const g = await gameInfo(id); return !!(g.released && today() < g.released); }
 async function toLP(id, raw) { const g = await gameInfo(id); return Math.max(0, Math.round((raw || 0) * (g.ratio || 0))); }
 
 /* ---------------- auth state ---------------- */
@@ -316,10 +322,33 @@ async function addToAccount(entries) {
       const e = entries[k], o = Object.assign({ lp: 0, best: 0, plays: 0, last: 0 }, gm[k] || {});
       const lp = Math.min(SESSION_LP_CAP, Math.max(0, Math.round(e.lp || 0)));
       add += lp;
-      gm[k] = { lp: o.lp + lp, best: Math.max(o.best, Math.round(e.best || 0)), plays: o.plays + (e.plays || 0), last: Math.round(e.last || o.last || 0) };
+      const row = { lp: o.lp + lp, best: Math.max(o.best, Math.round(e.best || 0)), plays: o.plays + (e.plays || 0), last: Math.round(e.last || o.last || 0) };
+      const held = Math.max(0, Math.round((o.ea || 0) + (e.eaLp || 0)));
+      if (e.settle) { row.eaPaid = (o.eaPaid || 0) + lp; const left = Math.max(0, Math.round((o.ea || 0) - (e.eaUse || 0))); if (left) row.ea = left; } else if (held) row.ea = held;
+      if (o.eaPaid && !row.eaPaid) row.eaPaid = o.eaPaid;
+      gm[k] = row;
     });
     tx.set(ref, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() });
   });
+}
+async function settleEarly() {
+  if (!signedIn()) return 0;
+  const c = await catalog(), m = await me();
+  if (!m || !m.games) return 0;
+  let t = 0;
+  for (const g of c.games) {
+    const r = m.games[g.id], boost = g.eaBoost || 1.5;
+    let held = r && r.ea > 0 ? r.ea : 0;
+    // pay out in chunks so each write stays inside the per-write leaderboard limit
+    for (let i = 0; held > 0 && i < 20; i++) {
+      const use = Math.min(held, Math.floor(19000 / boost)), pay = Math.round(use * boost);
+      await addToAccount({ [g.id]: { lp: pay, best: 0, plays: 0, last: r.last || 0, settle: true, eaUse: use } });
+      held -= use; t += pay;
+    }
+  }
+  if (!t) return 0;
+  toast(`Early-access bonus: +${fmt(t)} Lazer Points`);
+  return t;
 }
 async function syncPending() {
   const p = pendingAll(); if (!Object.keys(p).length || !signedIn()) return 0;
@@ -331,9 +360,17 @@ async function syncPending() {
 
 let askedThisPage = false;
 async function endSession(id, raw, info) {
-  const mult = await multiplier(id), base = await toLP(id, raw), lp = Math.round(base * mult);
-  const won = await recordSession(id, lp, mult > 1);
-  const entry = { lp, best: raw, plays: 1, last: raw };
+  const early = await inEarlyAccess(id), mult = early ? 1 : await multiplier(id), base = await toLP(id, raw), lp = Math.round(base * mult);
+  const won = early ? [] : await recordSession(id, lp, mult > 1);
+  const entry = early ? { lp: 0, eaLp: lp, best: raw, plays: 1, last: raw } : { lp, best: raw, plays: 1, last: raw };
+  if (early) {
+    const boost = (await gameInfo(id)).eaBoost || 1.5;
+    if (signedIn()) { try { await addToAccount({ [id]: entry }); } catch (e) { stash(id, entry); } }
+    else stash(id, entry);
+    toast(`+${fmt(lp)} LP held for launch · paid ${boost}× = ${fmt(lp * boost)} LP`);
+    flush();
+    return lp;
+  }
   if (won.length) {
     const b = won.reduce((a, w) => a + (w.bonus || 0), 0);
     if (signedIn()) { try { await addToAccount({ bonus: { lp: b, best: 0, plays: 0, last: 0 } }); } catch (e) { stash("bonus", { lp: b, best: 0, plays: 0, last: 0 }); } }
@@ -354,7 +391,8 @@ async function endSession(id, raw, info) {
 }
 function stash(id, e) {
   const p = pendingAll(), o = p[id] || { lp: 0, best: 0, plays: 0, last: 0 };
-  p[id] = { lp: o.lp + e.lp, best: Math.max(o.best, e.best), plays: o.plays + e.plays, last: e.last };
+  p[id] = { lp: o.lp + (e.lp || 0), best: Math.max(o.best, e.best || 0), plays: o.plays + (e.plays || 0), last: e.last || o.last };
+  if (e.eaLp || o.eaLp) p[id].eaLp = (o.eaLp || 0) + (e.eaLp || 0);
   setPending(p);
 }
 function pendingLP() { let t = 0; Object.values(pendingAll()).forEach((e) => (t += e.lp || 0)); return t; }
@@ -410,7 +448,7 @@ onChange(() => {
   wasSignedIn = signedIn();
 });
 async function logout() { flush(); await sleep(300); ls.del("signIn"); await signOut(auth); }
-readyP.then(() => { if (signedIn()) { ls.del("lz.returnTo"); syncProg(); syncPending().then((n) => n && toast(`${fmt(n)} Lazer Points moved to your account`)).catch(() => {}); } });
+readyP.then(() => { if (signedIn()) { ls.del("lz.returnTo"); syncProg(); setTimeout(() => settleEarly().catch(() => {}), 2500); syncPending().then((n) => n && toast(`${fmt(n)} Lazer Points moved to your account`)).catch(() => {}); } });
 
 /* ================= UI (shadow DOM so it never clashes with a game's styles) ================= */
 const host = document.createElement("div");
@@ -564,7 +602,7 @@ function requestAccess(gameName) {
 }
 async function openFeedback(gameId) {
   const c = await catalog();
-  const opts = [`<option value="arcade">Lazer Arcade in general</option>`].concat(c.games.map((g) => `<option value="${esc(g.id)}" ${g.id === gameId ? "selected" : ""}>${esc(g.name)}</option>`));
+  const opts = [`<option value="arcade">Lazer Arcade in general</option>`].concat(c.all.map((g) => `<option value="${esc(g.id)}" ${g.id === gameId ? "selected" : ""}>${esc(g.name)}</option>`));
   return modal(`
     <h2>Send feedback</h2>
     <p class="sub">Bugs, ideas, game requests. Every ticket gets read.</p>
@@ -597,7 +635,7 @@ async function openFeedback(gameId) {
 const LZ = {
   ready: readyP, auth, db, catalog, gameInfo, toLP, onChange, signedIn,
   get user() { return state.user; }, get username() { return state.username; },
-  boot, save, flush, endSession, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles,
+  boot, save, flush, endSession, inEarlyAccess, settleEarly, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles,
   openAccount, openFeedback, requestAccess, accountMenu, toast, logout, base: BASE, fmt, esc
 };
 window.LZ = LZ;
