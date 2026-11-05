@@ -95,7 +95,9 @@ async function render() {
   $("#desc").textContent = g ? (metric === "lp" ? `Lazer Points earned in ${g.name}. These also count toward the overall board.` : `Best single ${g.scoreLabel || "score"} in ${g.name}.`) : "Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.";
   $("#rows").innerHTML = '<div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div>';
   if (unwatch) unwatch();
-  const fail = () => { $("#rows").innerHTML = '<div class="empty">The leaderboard is getting set up. Check back soon.</div>'; $("#podium").innerHTML = ""; };
+  const fail = () => fetch("/arcade/board-fallback.json", { cache: "no-cache" }).then((r) => r.json())
+    .then((j) => draw((j.players || []).filter((p) => !g || (p.games || {})[tab]).sort((a, b) => val(b) - val(a)), g, unit))
+    .catch(() => { $("#rows").innerHTML = '<div class="empty">The leaderboard is getting set up. Check back soon.</div>'; $("#podium").innerHTML = ""; });
   try { unwatch = LZ.watchTop(field(), 100, (rows) => draw(rows, g, unit), fail); } catch (e) { fail(); }
   you();
 }

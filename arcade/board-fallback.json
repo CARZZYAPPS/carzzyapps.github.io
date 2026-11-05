@@ -1,0 +1,6 @@
+{
+  "note": "Shown only while the live leaderboard can't be read (before the Firestore rules are deployed). Live data replaces it automatically.",
+  "players": [
+    {"uid": "fallback-lazeryudel", "username": "LazerYudel", "lp": 14785, "games": {"crema": {"lp": 14785, "best": 0, "plays": 0}}}
+  ]
+}
