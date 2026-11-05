@@ -19,12 +19,12 @@
 /* hero */
 .hero{position:relative;padding:64px 0 24px;overflow:hidden}
 .hero .wrap{display:grid;grid-template-columns:1.25fr .9fr;gap:36px;align-items:center}
-.beam{position:absolute;height:2px;left:-20%;right:-20%;background:linear-gradient(90deg,transparent,var(--pink),var(--cyan),transparent);opacity:.55;filter:drop-shadow(0 0 6px var(--pink));transform-origin:center;pointer-events:none}
+.beam{position:absolute;height:2px;left:-20%;right:-20%;background:linear-gradient(90deg,transparent,var(--vio),var(--cyan),transparent);opacity:.55;filter:drop-shadow(0 0 6px var(--vio));transform-origin:center;pointer-events:none}
 .beam.b1{top:22%;transform:rotate(-8deg);animation:sweep 7s ease-in-out infinite}
 .beam.b2{top:78%;transform:rotate(6deg);animation:sweep 9s ease-in-out infinite reverse;opacity:.35}
 @keyframes sweep{0%,100%{translate:-6% 0}50%{translate:6% 0}}
-.hero h1{font-size:clamp(40px,7.2vw,84px);line-height:.95;font-weight:900;margin:14px 0 18px}
-.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(255,61,212,.35))}
+.hero h1{font-size:clamp(38px,6vw,72px);line-height:.95;font-weight:900;margin:14px 0 18px}
+.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 22px rgba(124,77,255,.35))}
 .hero .lead{font-size:clamp(16px,1.7vw,19px);color:var(--tx2);max-width:560px;margin:0 0 26px}
 .hero .cta{display:flex;gap:12px;flex-wrap:wrap}
 .by{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:999px;padding:6px 14px 6px 8px;font-weight:800;font-size:13px;color:var(--tx2);background:rgba(19,13,51,.7)}
@@ -32,17 +32,27 @@
 .stats{display:flex;gap:26px;margin-top:30px;flex-wrap:wrap}
 .stats div b{display:block;font:800 26px var(--display)}
 .stats div span{color:var(--mut);font-weight:700;font-size:13px}
-.board{padding:18px 4px 6px}
+.feat{display:block;text-decoration:none;overflow:hidden;border-radius:24px;transition:transform .2s,box-shadow .2s;box-shadow:0 30px 80px rgba(124,77,255,.25)}
+.feat:hover{transform:translateY(-4px) rotate(-.3deg);box-shadow:0 34px 90px rgba(124,77,255,.28)}
+.feat .fth{aspect-ratio:16/9;background:#1b1240 center/cover no-repeat;position:relative}
+.feat .fth:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(19,13,51,.96))}
+.feat .fbd{padding:0 22px 22px;margin-top:-30px;position:relative}
+.feat h3{font-size:28px;margin:10px 0 6px}
+.feat p{margin:0 0 14px;color:var(--tx2);font-size:14.5px}
+.boardgrid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
+.board{padding:6px 4px}
+.lr .badge{display:inline-block;margin-left:8px;border-radius:999px;padding:2px 8px;font:800 10px var(--display);letter-spacing:.08em;vertical-align:2px}
+.badge.creator{background:var(--grad);color:#fff}.badge.admin{background:rgba(34,228,255,.16);color:var(--cyan);border:1px solid rgba(34,228,255,.4)}
 .board .bh{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px}
 .board .bh h3{font-size:16px}
 .board .bh a{font-weight:800;font-size:13px;color:var(--cyan);text-decoration:none}
-.mine{margin:8px 12px 10px;border-radius:14px;background:rgba(34,228,255,.07);border:1px dashed rgba(34,228,255,.35);padding:12px 14px;font-weight:700;font-size:14px;color:var(--tx2)}
+.mine{padding:22px;font-weight:700;font-size:15px;color:var(--tx2);line-height:1.6}
 .mine b{color:#fff}
 
 /* game cards */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
 .game{position:relative;display:flex;flex-direction:column;border-radius:22px;overflow:hidden;text-decoration:none;background:var(--card);border:1px solid var(--line);transition:transform .2s,border-color .2s,box-shadow .2s}
-.game:hover{transform:translateY(-5px);border-color:var(--pink);box-shadow:0 18px 50px rgba(255,61,212,.18)}
+.game:hover{transform:translateY(-5px);border-color:var(--vio);box-shadow:0 18px 50px rgba(124,77,255,.18)}
 .game .th{position:relative;aspect-ratio:16/9;background:#1b1240 center/cover no-repeat}
 .game .th:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(19,13,51,.95))}
 .game .badges{position:absolute;left:12px;top:12px;display:flex;gap:6px;z-index:1}
@@ -87,6 +97,7 @@
 @media (max-width:900px){
   .hero .wrap{grid-template-columns:1fr}
   .how{grid-template-columns:1fr}
+  .boardgrid{grid-template-columns:1fr}
   .next{grid-template-columns:auto 1fr}
   .next .btn{grid-column:1/-1}
 }
@@ -111,16 +122,12 @@
   <div class="wrap">
     <div>
       <span class="by"><i>LY</i>Original games by Lazer Yudel</span>
-      <h1>Play anything.<br><em>Climb one board.</em></h1>
-      <p class="lead">Every game in the arcade pays out Lazer Points on the same scale, so your points from a coffee tycoon and a puzzle game add up to one score. One Carzzy Apps account saves it all.</p>
-      <div class="cta"><a class="btn" id="heroPlay" href="#games">Browse games</a><a class="btn ghost" href="/arcade/leaderboard/">See the leaderboard</a></div>
-      <div class="stats"><div><b id="sGames">–</b><span>games live</span></div><div><b id="sSoon">–</b><span>in the queue</span></div><div><b id="sPlayers">–</b><span>players ranked</span></div></div>
+      <h1>Games built to<br><em>pull you back&nbsp;in.</em></h1>
+      <p class="lead">Lazer Arcade is a growing collection of original browser games: deep tycoons, sharp puzzles and skill builders, playable instantly on any device. New games ship regularly, and your Carzzy Apps account carries your progress across all of them.</p>
+      <div class="cta"><a class="btn" id="heroPlay" href="#games">Browse games</a><a class="btn ghost" href="#soon">What's coming</a></div>
+      <div class="stats"><div><b id="sGames">–</b><span>games live</span></div><div><b id="sSoon">–</b><span>in development</span></div><div><b id="sPlays">–</b><span>plays so far</span></div></div>
     </div>
-    <aside class="panel board" aria-label="Top players">
-      <div class="bh"><h3>Top players</h3><a href="/arcade/leaderboard/">Full board →</a></div>
-      <div class="rows" id="topRows"><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div></div>
-      <div class="mine" id="mine">Sign in to see your rank.</div>
-    </aside>
+    <a class="panel feat" id="feat" href="#games" aria-label="Featured game"><div class="fth"></div><div class="fbd"><span class="pill nx">FEATURED</span><h3>&nbsp;</h3><p>&nbsp;</p><span class="btn sm">Play now</span></div></a>
   </div>
 </header>
 
@@ -130,6 +137,14 @@
     <div class="grid" id="grid"></div>
   </section>
 
+  <section class="sec" id="board">
+    <div class="sh"><div><span class="kick">Leaderboard</span><h2>Top players</h2><p>Updates live as players finish their games.</p></div><a class="btn ghost sm" href="/arcade/leaderboard/">Full leaderboard</a></div>
+    <div class="boardgrid">
+      <div class="panel board"><div class="rows" id="topRows"><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div></div></div>
+      <div class="panel mine" id="mine">Sign in to see your rank.</div>
+    </div>
+  </section>
+
   <section class="sec" id="soon">
     <div class="sh"><div><span class="kick">Coming soon</span><h2>The release queue</h2><p>Live list of what's being built next. New ideas land here first.</p></div></div>
     <div id="next"></div>
@@ -137,11 +152,11 @@
   </section>
 
   <section class="sec" id="points">
-    <div class="sh"><div><span class="kick">Lazer Points</span><h2>One score for every game</h2></div></div>
+    <div class="sh"><div><span class="kick">How it works</span><h2>One account. Every game.</h2></div></div>
     <div class="how">
-      <div class="panel"><div class="n">≈100</div><h3>LP per minute of skilled play</h3><p>Every game is tuned to the same rate. A harder game doesn't pay less, and an easier one doesn't pay more.</p></div>
-      <div class="panel"><div class="n">1</div><h3>Account, every game</h3><p>Your Carzzy Apps login works here. Signed in, progress saves to your account. Not signed in, it saves in this browser until you are.</p></div>
-      <div class="panel"><div class="n">2</div><h3>Ways to rank</h3><p>The overall board ranks total LP across all games. Each game also has its own board for LP and best score.</p></div>
+      <div class="panel"><div class="n">1</div><h3>Login for everything</h3><p>Sign in with your Carzzy Apps account. Signed in anywhere on carzzyapps.com means signed in here, and the other way around.</p></div>
+      <div class="panel"><div class="n">∞</div><h3>Progress that follows you</h3><p>Signed in, your saves live in your account and pick up on any device. As a guest, they stay in this browser and move to your account when you sign in.</p></div>
+      <div class="panel"><div class="n">LP</div><h3>Lazer Points</h3><p>Every game pays about 100 LP per minute of skilled play, so points from any game add up fairly to one total.</p></div>
     </div>
   </section>
 
@@ -188,7 +203,13 @@ function grid() {
     if (nx) cards.push(`<div class="slot"><div><b>${esc(nx.name)}</b>${nx.status === "next" ? "is up next." : "is in the queue."}<br><a href="#soon" style="color:var(--cyan)">See the queue →</a></div></div>`);
   }
   $("#grid").innerHTML = cards.join("") || '<div class="empty">No games in this category yet.</div>';
-  const first = list[0]; if (first) { $("#heroPlay").textContent = "Play " + first.name; $("#heroPlay").href = first.path; }
+  const first = list[0]; if (first && filter === "all") { $("#heroPlay").textContent = "Play " + first.name; $("#heroPlay").href = first.path; feat(first); }
+}
+function feat(g) {
+  const f = $("#feat"); f.href = g.path;
+  f.querySelector(".fth").style.backgroundImage = `url('${g.thumb}')`;
+  f.querySelector("h3").textContent = g.name;
+  f.querySelector("p").textContent = g.hook;
 }
 function soon() {
   const nx = cat.upcoming.find((u) => u.status === "next");
@@ -197,13 +218,17 @@ function soon() {
   $("#queue").innerHTML = rest.map((u, i) => `<div class="panel qi"><div class="t"><h4>${esc(u.name)}</h4><span class="pill ${u.status === "idea" ? "idea" : "q"}">${u.status === "idea" ? "IDEA" : "#" + (i + 2)}</span></div><p>${esc(u.hook)}</p></div>`).join("");
   document.querySelectorAll("#next [data-feedback]").forEach((b) => (b.onclick = () => LZ.openFeedback("arcade")));
 }
-async function board() {
-  try {
-    const rows = await LZ.top("lp", 5);
-    $("#topRows").innerHTML = rows.length ? rows.map((r, i) => `<div class="lr r${i + 1} ${LZ.user && r.uid === LZ.user.uid ? "me" : ""}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.username)}</span><span class="pt">${fmt(r.lp)}<small>LP</small></span></div>`).join("")
-      : '<div class="empty">No one on the board yet. Play a round and take #1.</div>';
-  } catch (e) { $("#topRows").innerHTML = '<div class="empty">Leaderboard is warming up. Check back soon.</div>'; }
-  LZ.playerCount().then((n) => ($("#sPlayers").textContent = n == null ? "–" : fmt(n)));
+const roles = await LZ.roles();
+const badge = (u) => { const r = roles[String(u || "").toLowerCase()]; return r ? `<span class="badge ${r}">${r === "creator" ? "CREATOR" : "ADMIN"}</span>` : ""; };
+let unwatch = null;
+function board() {
+  if (unwatch) unwatch();
+  const paintRows = (rows) => {
+    $("#topRows").innerHTML = rows.length ? rows.map((r, i) => `<div class="lr r${i + 1} ${LZ.user && r.uid === LZ.user.uid ? "me" : ""}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.username)}${badge(r.username)}</span><span class="pt">${fmt(r.lp)}<small>LP</small></span></div>`).join("")
+      : '<div class="empty">No one on the board yet. Finish a game and take #1.</div>';
+  };
+  try { unwatch = LZ.watchTop("lp", 8, paintRows, () => ($("#topRows").innerHTML = '<div class="empty">The leaderboard is getting set up. Check back soon.</div>')); }
+  catch (e) { $("#topRows").innerHTML = '<div class="empty">The leaderboard is getting set up. Check back soon.</div>'; }
 }
 async function mine() {
   const el = $("#mine");
@@ -221,9 +246,9 @@ async function mine() {
 }
 
 chips(); grid(); soon();
-LZ.plays(cat.games.map((g) => g.id)).then((p) => { playsBy = p; grid(); });
+LZ.plays(cat.games.map((g) => g.id)).then((p) => { playsBy = p; grid(); const t = Object.values(p).reduce((a, b) => a + b, 0); $("#sPlays").textContent = t ? fmt(t) : "–"; });
 board();
-LZ.onChange(() => { mine(); board(); paint(); });
+LZ.onChange(() => { mine(); paint(); });
 </script>
 </body>
 </html>

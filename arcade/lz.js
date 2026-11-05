@@ -1,16 +1,11 @@
 // Lazer Arcade shared SDK: accounts, saves, Lazer Points, leaderboards, play counts and feedback.
 // Uses the same Firebase project and auth session as the rest of carzzyapps.com.
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithCustomToken,
-  createUserWithEmailAndPassword, updateProfile, setPersistence, browserLocalPersistence,
-  browserSessionPersistence, signOut, sendPasswordResetEmail, sendEmailVerification
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, runTransaction, increment, serverTimestamp, collection,
-  addDoc, query, orderBy, limit, getDocs, getCountFromServer, where
+  addDoc, query, orderBy, limit, getDocs, getCountFromServer, where, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
 
 const CONFIG = {
   apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4",
@@ -27,7 +22,6 @@ const SESSION_LP_CAP = 20000;
 const app = getApps().length ? getApp() : initializeApp(CONFIG);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const fns = getFunctions(app, "us-central1");
 
 /* ---------------- small helpers ---------------- */
 const ls = {
@@ -39,6 +33,8 @@ const ls = {
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fmt = (n) => Math.round(n || 0).toLocaleString();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Never let a slow or blocked request stall a game.
+const within = (p, ms, fallback) => Promise.race([p, sleep(ms).then(() => { if (fallback instanceof Error) throw fallback; return fallback; })]);
 
 /* ---------------- catalog ---------------- */
 let catalogP = null;
@@ -71,7 +67,8 @@ async function lookupUsername(user) {
 onAuthStateChanged(auth, async (u) => {
   if (u && !u.isAnonymous) {
     state.user = u;
-    state.username = await lookupUsername(u);
+    state.username = (u.displayName && USERNAME_RE.test(u.displayName)) ? u.displayName : "";
+    if (!state.username) state.username = (await within(lookupUsername(u), 4000, "")) || (u.email ? u.email.split("@")[0].slice(0, 20) : "Player");
   } else {
     state.user = null;
     state.username = "";
@@ -79,10 +76,11 @@ onAuthStateChanged(auth, async (u) => {
   if (!state.ready) { state.ready = true; resolveReady(); }
   state.listeners.forEach((fn) => { try { fn(state.user, state.username); } catch (e) { console.error(e); } });
 });
-setTimeout(() => { if (!state.ready) { state.ready = true; resolveReady(); } }, 6000);
+setTimeout(() => { if (!state.ready) { state.ready = true; resolveReady(); } }, 3000);
 
 function onChange(fn) { state.listeners.add(fn); if (state.ready) fn(state.user, state.username); return () => state.listeners.delete(fn); }
-function signedIn() { return !!(state.user && state.username); }
+// Any real (non-guest) Carzzy Apps session counts as signed in, even before its username has been looked up.
+function signedIn() { return !!state.user; }
 
 /* ---------------- play counts ---------------- */
 const counted = new Set();
@@ -108,7 +106,7 @@ function setPending(p) { ls.set("lz.pending", p); }
 
 async function cloudSave(id) {
   if (!signedIn()) return null;
-  try { const s = await getDoc(doc(db, "arcadeSaves", state.user.uid, "games", id)); return s.exists() ? s.data() : null; } catch (e) { console.warn("cloud load", e.code || e); return null; }
+  try { const s = await within(getDoc(doc(db, "arcadeSaves", state.user.uid, "games", id)), 4000, null); return s && s.exists() ? s.data() : null; } catch (e) { console.warn("cloud load", e.code || e); return null; }
 }
 async function writeCloud(id) {
   const g = games[id]; if (!g || !signedIn()) return false;
@@ -149,15 +147,15 @@ async function reconcile(id) {
     else if (local) g.dirty = true;
   }
   ls.set(ownerKey(id), uid);
-  if (g.dirty) await writeCloud(id);
+  if (g.dirty) await within(writeCloud(id), 4000, false);
   return { changed };
 }
 
 async function boot(id, opts) {
   games[id] = Object.assign({ localKey: id, major: 1, minor: 0, progressOf: () => 0, dirty: false, timer: null }, opts || {});
-  await Promise.race([readyP, sleep(6000)]);
+  await Promise.race([readyP, sleep(3000)]);
   countPlay(id);
-  try { await reconcile(id); } catch (e) { console.warn("reconcile", e); }
+  try { await within(reconcile(id), 6000, null); } catch (e) { console.warn("reconcile", e); }
   if (signedIn()) syncPending().catch(() => {});
   return { user: state.user, username: state.username };
 }
@@ -220,10 +218,23 @@ function stash(id, e) {
 }
 function pendingLP() { let t = 0; Object.values(pendingAll()).forEach((e) => (t += e.lp || 0)); return t; }
 
+/* ---------------- roles (creator / admin badges) ---------------- */
+let rolesP = null;
+function roles() {
+  if (!rolesP) rolesP = fetch(BASE + "roles.json", { cache: "no-cache" }).then((r) => r.json()).then((j) => {
+    const m = {}; (j.roles || []).forEach((r) => { if (r.username) m[r.username.toLowerCase()] = r.role; }); return m;
+  }).catch(() => ({}));
+  return rolesP;
+}
+
 /* ---------------- leaderboards ---------------- */
 async function top(field, n) {
   const snap = await getDocs(query(collection(db, "arcadePlayers"), orderBy(field, "desc"), limit(n || 50)));
   return snap.docs.map((d) => Object.assign({ uid: d.id }, d.data()));
+}
+function watchTop(field, n, cb, onErr) {
+  return onSnapshot(query(collection(db, "arcadePlayers"), orderBy(field, "desc"), limit(n || 50)),
+    (snap) => cb(snap.docs.map((d) => Object.assign({ uid: d.id }, d.data()))), (e) => { console.warn("leaderboard", e.code || e); if (onErr) onErr(e); });
 }
 async function me() {
   if (!signedIn()) return null;
@@ -245,50 +256,20 @@ async function sendTicket(t) {
   await addDoc(collection(db, "arcadeTickets"), d);
 }
 
-/* ---------------- account actions ---------------- */
-async function doSignIn(identifier, password, stay) {
-  await setPersistence(auth, stay ? browserLocalPersistence : browserSessionPersistence);
-  if (identifier.includes("@")) await signInWithEmailAndPassword(auth, identifier, password);
-  else {
-    const res = await httpsCallable(fns, "signInWithUsername")({ username: identifier, password });
-    await signInWithCustomToken(auth, res.data.customToken);
-  }
-  if (stay) ls.set("signIn", "true"); else ls.del("signIn");
-}
-async function doSignUp(username, email, password, stay) {
-  await setPersistence(auth, stay ? browserLocalPersistence : browserSessionPersistence);
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
-  try {
-    await updateProfile(cred.user, { displayName: username });
-    await httpsCallable(fns, "claimUsername")({ username });
-  } catch (e) {
-    try { await cred.user.delete(); } catch (x) {}
-    throw e;
-  }
-  try { await sendEmailVerification(cred.user); } catch (e) {}
-  if (stay) ls.set("signIn", "true"); else ls.del("signIn");
-}
-function authError(e) {
-  const c = (e && e.code) || "";
-  if (/invalid-credential|wrong-password|user-not-found|not-found|unauthenticated|permission-denied/.test(c)) return "Wrong username/email or password.";
-  if (/email-already-in-use/.test(c)) return "That email already has an account. Sign in instead.";
-  if (/already-exists/.test(c)) return "That username is taken. Pick another.";
-  if (/weak-password|password-does-not-meet/.test(c)) return "Use a stronger password (at least 6 characters).";
-  if (/invalid-email/.test(c)) return "Enter a valid email address.";
-  if (/network/.test(c)) return "Network error. Check your connection.";
-  if (/too-many-requests/.test(c)) return "Too many tries. Wait a minute and try again.";
-  return "Something went wrong. Please try again.";
-}
-// After signing in from inside a game: sync guest progress and points, reload the game if the account's save wins.
-async function afterSignIn() {
-  await readyP; for (let i = 0; i < 20 && !signedIn(); i++) await sleep(150);
-  let reload = false;
-  for (const id of Object.keys(games)) { try { const r = await reconcile(id); if (r.changed) reload = true; } catch (e) {} }
-  let moved = 0; try { moved = await syncPending(); } catch (e) {}
-  if (moved) toast(`${fmt(moved)} Lazer Points moved to your account`);
-  if (reload) { toast("Loading your account's progress…"); setTimeout(() => location.reload(), 900); }
-}
+/* ---------------- account actions ----------------
+   Lazer Arcade has no separate login: it uses the Carzzy Apps account system. Sign-in and sign-up happen
+   on carzzyapps.com's own pages, and the shared Firebase session carries the player straight back. */
+function here() { return location.pathname + location.search + location.hash; }
+function goSignIn() { flush(); ls.set("lz.returnTo", here()); location.href = "/auth/sign-in/?returnTo=" + encodeURIComponent(here()); }
+function goSignUp() { flush(); ls.set("lz.returnTo", here()); location.href = "/auth/sign-up/?returnTo=" + encodeURIComponent(here()); }
+let wasSignedIn = null;
+onChange(() => {
+  // Signed in from another tab or after returning: move guest progress and points to the account.
+  if (wasSignedIn === false && signedIn()) syncPending().then((n) => n && toast(`${fmt(n)} Lazer Points moved to your account`)).catch(() => {});
+  wasSignedIn = signedIn();
+});
 async function logout() { flush(); await sleep(300); ls.del("signIn"); await signOut(auth); }
+readyP.then(() => { if (signedIn()) { ls.del("lz.returnTo"); syncPending().then((n) => n && toast(`${fmt(n)} Lazer Points moved to your account`)).catch(() => {}); } });
 
 /* ================= UI (shadow DOM so it never clashes with a game's styles) ================= */
 const host = document.createElement("div");
@@ -302,20 +283,20 @@ root.innerHTML = `<style>
 @keyframes f{from{opacity:0}}
 @keyframes up{from{transform:translateY(14px);opacity:0}}
 .card{width:min(420px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#120c2e;color:#f1ecff;border-radius:22px;padding:24px 22px 20px;
-  border:1px solid rgba(255,255,255,.12);box-shadow:0 0 0 1px rgba(255,61,212,.35),0 20px 60px rgba(0,0,0,.6),0 0 60px rgba(124,77,255,.25);
+  border:1px solid rgba(255,255,255,.12);box-shadow:0 0 0 1px rgba(124,77,255,.35),0 20px 60px rgba(0,0,0,.6),0 0 60px rgba(124,77,255,.25);
   font:500 15px/1.45 "Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;animation:up .22s ease-out;position:relative}
-.card:before{content:"";position:absolute;left:22px;right:22px;top:0;height:3px;border-radius:3px;background:linear-gradient(90deg,#ff3dd4,#7c4dff,#22e4ff)}
+.card:before{content:"";position:absolute;left:22px;right:22px;top:0;height:3px;border-radius:3px;background:linear-gradient(90deg,#8b5cff,#4f7bff,#22d3ee)}
 h2{font:800 24px/1.15 "Unbounded","Manrope",system-ui,sans-serif;margin:4px 0 6px;letter-spacing:-.01em}
 .sub{color:#b9b0dc;margin:0 0 16px;font-size:14px}
-.big{font:800 40px/1 "Unbounded",system-ui,sans-serif;background:linear-gradient(90deg,#ff3dd4,#22e4ff);-webkit-background-clip:text;background-clip:text;color:transparent;margin:6px 0 4px}
+.big{font:800 40px/1 "Unbounded",system-ui,sans-serif;background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent;margin:6px 0 4px}
 label{display:block;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#a99fd6;margin:12px 0 5px}
 input,select,textarea{width:100%;background:#0a0720;color:#fff;border:1px solid #3a2f73;border-radius:12px;padding:11px 12px;font:600 15px "Manrope",system-ui,sans-serif;outline:none}
 textarea{min-height:110px;resize:vertical}
-input:focus,select:focus,textarea:focus{border-color:#ff3dd4;box-shadow:0 0 0 3px rgba(255,61,212,.25)}
+input:focus,select:focus,textarea:focus{border-color:#8b5cff;box-shadow:0 0 0 3px rgba(124,77,255,.25)}
 .row{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px;color:#cfc6f2}
 .row input{width:auto}
 .btn{display:block;width:100%;margin-top:12px;border:0;border-radius:14px;padding:13px 16px;font:800 15px "Manrope",system-ui,sans-serif;cursor:pointer;color:#fff;
-  background:linear-gradient(90deg,#ff3dd4,#7c4dff);box-shadow:0 6px 20px rgba(255,61,212,.35)}
+  background:linear-gradient(90deg,#7c4dff,#4f7bff);box-shadow:0 6px 20px rgba(124,77,255,.35)}
 .btn:hover{filter:brightness(1.08)} .btn:disabled{opacity:.6;cursor:wait}
 .btn.alt{background:#1d1545;box-shadow:none;border:1px solid #3a2f73}
 .btn.txt{background:none;box-shadow:none;color:#a99fd6;padding:8px;font-weight:700}
@@ -327,7 +308,18 @@ input:focus,select:focus,textarea:focus{border-color:#ff3dd4;box-shadow:0 0 0 3p
 .seg{display:flex;gap:6px;background:#0a0720;border-radius:12px;padding:4px;margin:10px 0 2px}
 .seg button{flex:1;border:0;border-radius:9px;padding:9px;background:none;color:#a99fd6;font:800 13px "Manrope",system-ui,sans-serif;cursor:pointer}
 .seg button.on{background:#2a1f63;color:#fff}
-.note{font-size:12.5px;color:#8f86b8;margin-top:10px}
+.note{font-size:12.5px;color:#8f86b8;margin-top:12px;text-align:center}
+.cz{display:flex;align-items:center;gap:10px;margin:0 0 16px}
+.cz svg{width:38px;height:38px;flex:none}
+.cz b{display:block;font:800 15px "Manrope",system-ui,sans-serif;color:#fff;line-height:1.1}
+.cz span{font:700 12px "Manrope",system-ui,sans-serif;color:#8f86b8;letter-spacing:.04em}
+.perks{list-style:none;padding:0;margin:0 0 6px;display:flex;flex-direction:column;gap:8px}
+.perks li{position:relative;padding-left:26px;color:#d6cff5;font-size:14px}
+.perks li:before{content:"";position:absolute;left:2px;top:4px;width:14px;height:14px;border-radius:50%;background:#00d1b2;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/100% no-repeat}
+.btn.cz-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:#0f0f0f;border:1.5px solid #00d1b2;box-shadow:0 6px 22px rgba(0,209,178,.22)}
+.btn.cz-btn svg{width:24px;height:24px}
+.btn.cz-btn:hover{background:#121a19}
 </style><div id="m"></div><div id="t"></div>`;
 const mEl = root.getElementById("m"), tEl = root.getElementById("t");
 function mount() { if (!host.isConnected) document.body.appendChild(host); }
@@ -355,58 +347,21 @@ function modal(html, bind) {
   });
 }
 
+const CZ_MARK = `<svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#0f0f0f"/><rect x=".75" y=".75" width="46.5" height="46.5" rx="12.25" fill="none" stroke="#00d1b2" stroke-opacity=".55" stroke-width="1.5"/><path d="M31.5 16.2a10.5 10.5 0 1 0 0 15.6" fill="none" stroke="#00d1b2" stroke-width="4.4" stroke-linecap="round"/></svg>`;
 function openAccount(mode, lead) {
   if (signedIn()) return accountMenu();
-  mode = mode === "signup" ? "signup" : "signin";
-  const stay = ls.raw("signIn") === "true" || !ls.raw("signIn");
+  const p = pendingLP();
   return modal(`
-    <h2>${mode === "signup" ? "Create your account" : "Sign in"}</h2>
-    <p class="sub">${esc(lead || "One Carzzy Apps account for every Lazer Arcade game. Progress saves to it and your points hit the leaderboard.")}</p>
-    <div class="seg"><button data-mode="signin" class="${mode === "signin" ? "on" : ""}">Sign in</button><button data-mode="signup" class="${mode === "signup" ? "on" : ""}">Create account</button></div>
-    <form novalidate>
-      ${mode === "signup" ? `<label for="u">Username</label><input id="u" autocomplete="username" maxlength="20" autocapitalize="none" spellcheck="false" placeholder="3–20 letters, numbers or _">
-      <label for="e">Email</label><input id="e" type="email" autocomplete="email" maxlength="254">`
-      : `<label for="e">Email or username</label><input id="e" autocomplete="username" autocapitalize="none" spellcheck="false">`}
-      <label for="p">Password</label><input id="p" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}">
-      <div class="row"><input id="s" type="checkbox" ${stay ? "checked" : ""}><label for="s" style="all:unset;cursor:pointer">Stay signed in on this device</label></div>
-      <div class="err" role="alert"></div>
-      <button class="btn" type="submit">${mode === "signup" ? "Create account" : "Sign in"}</button>
-    </form>
-    ${mode === "signin" ? `<button class="btn txt" data-forgot>Forgot password?</button>` : `<p class="note">Same account works across all of carzzyapps.com.</p>`}`,
+    <div class="cz">${CZ_MARK}<div><b>Carzzy Apps</b><span>Account</span></div></div>
+    <h2>${mode === "signup" ? "Create your Carzzy Apps account" : "Sign in with Carzzy Apps"}</h2>
+    <p class="sub">${esc(lead || "Lazer Arcade uses your Carzzy Apps account. It's the same login across carzzyapps.com, so signing in on either side signs you in on both.")}</p>
+    <ul class="perks"><li>Your game progress saves to your account and follows you to any device</li><li>Anything you've played on this device comes with you${p ? ` (${fmt(p)} LP waiting)` : ""}</li><li>Your scores count on the leaderboards</li></ul>
+    <button class="btn cz-btn" data-in>${CZ_MARK}<span>Sign in with Carzzy Apps</span></button>
+    <button class="btn alt" data-up>Create a Carzzy Apps account</button>
+    <p class="note">You'll continue on carzzyapps.com and come straight back here.</p>`,
   (card, done) => {
-    card.querySelectorAll("[data-mode]").forEach((b) => (b.onclick = () => { closeModal(); openAccount(b.dataset.mode, lead); }));
-    const err = card.querySelector(".err"), btn = card.querySelector("button[type=submit]");
-    const fg = card.querySelector("[data-forgot]");
-    if (fg) fg.onclick = async () => {
-      const em = card.querySelector("#e").value.trim();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { err.className = "err"; err.textContent = "Type your account email above first."; return; }
-      try { await sendPasswordResetEmail(auth, em); } catch (e) {}
-      err.className = "err ok"; err.textContent = "If that email has an account, a reset link is on its way.";
-    };
-    card.querySelector("form").onsubmit = async (ev) => {
-      ev.preventDefault(); err.className = "err"; err.textContent = "";
-      const e = card.querySelector("#e").value.trim(), p = card.querySelector("#p").value, s = card.querySelector("#s").checked;
-      try {
-        btn.disabled = true; btn.textContent = "One sec…";
-        if (mode === "signup") {
-          const u = card.querySelector("#u").value.trim();
-          if (!USERNAME_RE.test(u)) throw { code: "x", msg: "Username: 3–20 letters, numbers or underscores." };
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw { code: "auth/invalid-email" };
-          if (p.length < 6) throw { code: "auth/weak-password" };
-          await doSignUp(u, e, p, s);
-          state.username = u;
-        } else {
-          if (!e || !p) throw { code: "x", msg: "Enter your email/username and password." };
-          await doSignIn(e, p, s);
-        }
-        done(true);
-        toast(mode === "signup" ? "Account created. Welcome to Lazer Arcade!" : "Signed in");
-        afterSignIn();
-      } catch (x) {
-        err.textContent = x.msg || authError(x);
-        btn.disabled = false; btn.textContent = mode === "signup" ? "Create account" : "Sign in";
-      }
-    };
+    card.querySelector("[data-in]").onclick = () => { done(); goSignIn(); };
+    card.querySelector("[data-up]").onclick = () => { done(); goSignUp(); };
   });
 }
 
@@ -424,15 +379,14 @@ function accountMenu() {
 
 function promptSave(lp, waiting) {
   return modal(`
-    <h2>Nice run!</h2>
-    <div class="big">+${fmt(lp)} LP</div>
-    <p class="sub">${waiting > lp ? `${fmt(waiting)} Lazer Points are waiting on this device. ` : ""}Sign in or create a free account to save your progress and put your points on the leaderboard. Everything you've played so far comes with you.</p>
-    <button class="btn" data-up>Create free account</button>
-    <button class="btn alt" data-in>I have an account</button>
-    <button class="btn txt" data-close2>Not now (saved on this device)</button>`,
+    <h2>Keep your progress</h2>
+    <p class="sub">You're playing as a guest, so this run is only saved on this device. Sign in with your Carzzy Apps account to keep your progress safe, pick it up on any device, and count your ${fmt(waiting || lp)} Lazer Points.</p>
+    <button class="btn cz-btn" data-in>${CZ_MARK}<span>Sign in with Carzzy Apps</span></button>
+    <button class="btn alt" data-up>Create a free account</button>
+    <button class="btn txt" data-close2>Keep playing as guest</button>`,
   (card, done) => {
-    card.querySelector("[data-up]").onclick = () => { done(); openAccount("signup"); };
-    card.querySelector("[data-in]").onclick = () => { done(); openAccount("signin"); };
+    card.querySelector("[data-up]").onclick = () => { done(); goSignUp(); };
+    card.querySelector("[data-in]").onclick = () => { done(); goSignIn(); };
     card.querySelector("[data-close2]").onclick = () => done();
   });
 }
@@ -472,7 +426,7 @@ async function openFeedback(gameId) {
 const LZ = {
   ready: readyP, auth, db, catalog, gameInfo, toLP, onChange, signedIn,
   get user() { return state.user; }, get username() { return state.username; },
-  boot, save, flush, endSession, pendingLP, plays, top, me, rank, playerCount,
+  boot, save, flush, endSession, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles,
   openAccount, openFeedback, accountMenu, toast, logout, base: BASE, fmt, esc
 };
 window.LZ = LZ;

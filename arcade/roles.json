@@ -1,0 +1,4 @@
+{
+  "note": "Lazer Arcade staff. Usernames are Carzzy Apps usernames. A GitHub Action grants the matching accounts their role in Firestore (arcadeRoles) on every push of this file.",
+  "roles": []
+}

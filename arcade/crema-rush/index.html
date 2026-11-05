@@ -1661,7 +1661,7 @@ function save(){if(!G)return;G.ts=now();try{localStorage.setItem(SAVEKEY,JSON.st
 var LZR=0.04;
 function lzBoot(){return new Promise(function(res){if(!window.LZ_GAME)return res();var done=false,fin=function(){if(!done){done=true;res();}};
   var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:3,minor:0,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;});fin();},fin);};
-  if(window.LZ)go();else window.addEventListener('lz-ready',go,{once:true});setTimeout(fin,9000);});}
+  if(window.LZ)go();else window.addEventListener('lz-ready',go,{once:true});setTimeout(fin,3500);});}
 
 /* ---------- economics ---------- */
 function tierOf(loc){return distOf(loc).tier||0;}

@@ -34,6 +34,9 @@
 .you{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;margin-bottom:18px;flex-wrap:wrap}
 .you b{font-family:var(--display)}
 .list{overflow:hidden}
+.badge{display:inline-block;margin-left:8px;border-radius:999px;padding:2px 8px;font:800 10px var(--display);letter-spacing:.08em;vertical-align:2px}
+.badge.creator{background:var(--grad);color:#fff}.badge.admin{background:rgba(34,228,255,.16);color:var(--cyan);border:1px solid rgba(34,228,255,.4)}
+.pod .badge{margin:0 0 6px}
 .hdr{display:grid;grid-template-columns:44px 1fr auto;gap:12px;padding:12px 16px;font:800 11px var(--display);letter-spacing:.12em;color:var(--mut);border-bottom:1px solid var(--line)}
 @media (max-width:560px){.podium{gap:8px}.pod{padding:16px 6px 12px}.pod .av{width:42px;height:42px;font-size:17px}.pod.p1 .av{width:50px;height:50px}}
 </style>
@@ -70,7 +73,9 @@ const esc = LZ.esc, fmt = LZ.fmt;
 const cat = await LZ.catalog();
 const qs = new URLSearchParams(location.search);
 let tab = cat.games.some((g) => g.id === qs.get("game")) ? qs.get("game") : "all";
-let metric = "lp";
+let metric = "lp", unwatch = null;
+const roles = await LZ.roles();
+const badge = (u) => { const r = roles[String(u || "").toLowerCase()]; return r ? `<span class="badge ${r}">${r === "creator" ? "CREATOR" : "ADMIN"}</span>` : ""; };
 
 function field() { return tab === "all" ? "lp" : `games.${tab}.${metric}`; }
 function val(r) { return tab === "all" ? r.lp : ((r.games || {})[tab] || {})[metric] || 0; }
@@ -89,16 +94,18 @@ async function render() {
   $("#title").innerHTML = g ? `${esc(g.name)} <em>Board</em>` : `Lazer <em>Leaderboard</em>`;
   $("#desc").textContent = g ? (metric === "lp" ? `Lazer Points earned in ${g.name}. These also count toward the overall board.` : `Best single ${g.scoreLabel || "score"} in ${g.name}.`) : "Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.";
   $("#rows").innerHTML = '<div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div>';
-  let rows = [];
-  try { rows = await LZ.top(field(), 100); }
-  catch (e) { $("#rows").innerHTML = '<div class="empty">The leaderboard is warming up. Check back soon.</div>'; $("#podium").innerHTML = ""; return; }
+  if (unwatch) unwatch();
+  const fail = () => { $("#rows").innerHTML = '<div class="empty">The leaderboard is getting set up. Check back soon.</div>'; $("#podium").innerHTML = ""; };
+  try { unwatch = LZ.watchTop(field(), 100, (rows) => draw(rows, g, unit), fail); } catch (e) { fail(); }
+  you();
+}
+function draw(rows, g, unit) {
   const me = LZ.user ? LZ.user.uid : null;
   const sub = (r) => tab === "all" ? Object.keys(r.games || {}).length + " game" + (Object.keys(r.games || {}).length === 1 ? "" : "s") : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
-  $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { const r = rows[i]; return `<div class="panel pod p${i + 1}"><div class="crown">${["1ST", "2ND", "3RD"][i]}</div><div class="av">${esc((r.username || "?")[0].toUpperCase())}</div><div class="nm">${esc(r.username)}</div><div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div></div>`; }).join("") : "";
+  $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { const r = rows[i]; return `<div class="panel pod p${i + 1}"><div class="crown">${["1ST", "2ND", "3RD"][i]}</div><div class="av">${esc((r.username || "?")[0].toUpperCase())}</div><div class="nm">${esc(r.username)}</div>${badge(r.username)}<div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div></div>`; }).join("") : "";
   const list = rows.length >= 3 ? rows.slice(3) : rows, off = rows.length >= 3 ? 3 : 0;
-  $("#rows").innerHTML = rows.length ? (list.map((r, i) => `<div class="lr r${i + 1 + off} ${r.uid === me ? "me" : ""}"><span class="rk">${i + 1 + off}</span><span class="nm">${esc(r.username)}<small>${sub(r)}</small></span><span class="pt">${fmt(val(r))}<small>${esc(unit)}</small></span></div>`).join("") || '<div class="empty">That\'s everyone so far.</div>')
+  $("#rows").innerHTML = rows.length ? (list.map((r, i) => `<div class="lr r${i + 1 + off} ${r.uid === me ? "me" : ""}"><span class="rk">${i + 1 + off}</span><span class="nm">${esc(r.username)}${badge(r.username)}<small>${sub(r)}</small></span><span class="pt">${fmt(val(r))}<small>${esc(unit)}</small></span></div>`).join("") || '<div class="empty">That\'s everyone so far.</div>')
     : `<div class="empty">No scores yet. ${g ? `<a href="${esc(g.path)}" style="color:var(--cyan)">Play ${esc(g.name)}</a> and take #1.` : "Be the first."}</div>`;
-  you();
 }
 async function you() {
   const el = $("#you");
@@ -117,6 +124,7 @@ async function you() {
 }
 $("#metric").querySelectorAll("button").forEach((b) => (b.onclick = () => { metric = b.dataset.m; render(); }));
 LZ.onChange(() => { render(); paint(); });
+// live: rows update the moment any player finishes a game
 </script>
 </body>
 </html>

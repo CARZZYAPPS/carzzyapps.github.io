@@ -7,7 +7,7 @@ name: Lazer Arcade backend
 on:
   push:
     branches: [main]
-    paths: ["firestore.rules", ".github/workflows/lazer-arcade.yml"]
+    paths: ["firestore.rules", "arcade/roles.json", ".github/workflows/lazer-arcade.yml", ".github/scripts/**"]
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
@@ -40,6 +40,17 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx --yes firebase-tools@13 deploy --only firestore:rules --project carzzy-apps --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
+      - uses: actions/setup-node@v4
+        if: steps.s.outputs.ok == '1'
+        with:
+          node-version: 20
+      - name: Sync staff roles
+        if: steps.s.outputs.ok == '1'
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
+          NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-arcade-roles.js" "$GITHUB_WORKSPACE/arcade/roles.json"
 
   tickets:
     runs-on: ubuntu-latest

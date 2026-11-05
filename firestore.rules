@@ -269,6 +269,18 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/usernames/$(name.lower())).data.uid == request.auth.uid;
     }
 
+    function isArcadeAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/arcadeRoles/$(request.auth.uid))
+        && get(/databases/$(database)/documents/arcadeRoles/$(request.auth.uid)).data.role in ['creator', 'admin'];
+    }
+
+    // Staff roles (creator/admin). Public so badges can show; only the deploy workflow writes them.
+    match /arcadeRoles/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Public leaderboard rows. Each player writes only their own row; one write can add at most 20,000 LP.
     match /arcadePlayers/{uid} {
       function validPlayer(data) {
@@ -289,7 +301,11 @@ service cloud.firestore {
         && validPlayer(request.resource.data)
         && request.resource.data.lp >= resource.data.lp
         && request.resource.data.lp <= resource.data.lp + 20000;
-      allow delete: if false;
+      // Staff can correct or remove rows (cheating, offensive names).
+      allow update: if isArcadeAdmin()
+        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'updatedAt'])
+        && request.resource.data.lp is int && request.resource.data.lp >= 0;
+      allow delete: if isArcadeAdmin();
     }
 
     // Per-account game saves, private to the player.
@@ -335,7 +351,8 @@ service cloud.firestore {
           && data.createdAt == request.time;
       }
       allow create: if validTicket(request.resource.data);
-      allow read, update, delete: if false;
+      allow read: if isArcadeAdmin();
+      allow update, delete: if false;
     }
 
   }
