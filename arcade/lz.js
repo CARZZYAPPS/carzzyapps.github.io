@@ -169,6 +169,140 @@ function save(id) {
 function flush() { Object.keys(games).forEach((id) => { if (games[id].dirty && signedIn()) writeCloud(id); }); }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
 
+/* ---------------- Game of the Day, achievements, events ----------------
+   Progress (which days you played, what you played, what you've unlocked or claimed) lives locally per owner
+   and, when signed in, on your leaderboard row as "prog" so it follows the account. */
+const today = (d) => { const x = d || new Date(); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
+const dayNum = (s) => Math.round(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 864e5);
+let extrasP = null;
+function extras() {
+  if (!extrasP) extrasP = Promise.all([
+    fetch(BASE + "events.json", { cache: "no-cache" }).then((r) => r.json()).catch(() => ({ events: [] })),
+    fetch(BASE + "achievements.json", { cache: "no-cache" }).then((r) => r.json()).catch(() => ({ achievements: [] }))
+  ]).then(([e, a]) => ({ gotd: e.gameOfTheDay || { multiplier: 2 }, events: e.events || [], achievements: a.achievements || [] }));
+  return extrasP;
+}
+async function gameOfTheDay(day) {
+  day = day || today();
+  const [c, x] = await Promise.all([catalog(), extras()]);
+  const live = c.games.filter((g) => !g.released || g.released <= day);
+  if (!live.length) return null;
+  const ov = (x.gotd.override || {})[day];
+  if (ov && live.some((g) => g.id === ov)) return live.find((g) => g.id === ov);
+  const fresh = live.filter((g) => g.released && dayNum(day) - dayNum(g.released) < (x.gotd.newGameDays || 7)).sort((a, b) => b.released.localeCompare(a.released));
+  if (fresh.length) return fresh[0];
+  const sorted = live.slice().sort((a, b) => a.id.localeCompare(b.id));
+  return sorted[dayNum(day) % sorted.length];
+}
+async function multiplier(id) {
+  const [g, x] = await Promise.all([gameOfTheDay(), extras()]);
+  let m = g && g.id === id ? (x.gotd.multiplier || 2) : 1;
+  activeEvents(x).forEach((e) => { if (e.multiplier && (!e.games || e.games.includes(id))) m *= e.multiplier; });
+  return m;
+}
+function activeEvents(x, day) { day = day || today(); return x.events.filter((e) => e.start <= day && day <= e.end); }
+
+function progKey() { return "lz.prog." + (state.user ? state.user.uid : "guest"); }
+function blankProg() { return { days: {}, ach: {}, claims: {} }; }
+function getProg() { return Object.assign(blankProg(), ls.get(progKey(), {})); }
+function setProg(p) {
+  const keys = Object.keys(p.days).sort(); if (keys.length > 400) keys.slice(0, keys.length - 400).forEach((k) => delete p.days[k]);
+  ls.set(progKey(), p);
+}
+function mergeProg(a, b) {
+  const out = blankProg();
+  [a, b].forEach((p) => {
+    if (!p) return;
+    Object.entries(p.days || {}).forEach(([d, v]) => {
+      const o = out.days[d] || { g: [], n: 0, lp: 0, t: 0 };
+      out.days[d] = { g: Array.from(new Set(o.g.concat(v.g || []))), n: Math.max(o.n, v.n || 0), lp: Math.max(o.lp, v.lp || 0), t: Math.max(o.t, v.t || 0) };
+    });
+    Object.assign(out.ach, p.ach || {}); Object.assign(out.claims, p.claims || {});
+  });
+  return out;
+}
+// Pull the account's progress down (and fold in any guest progress from this device) once signed in.
+async function syncProg() {
+  if (!signedIn()) return getProg();
+  const guest = ls.get("lz.prog.guest", null);
+  let cloud = null;
+  try { const s = await within(getDoc(doc(db, "arcadePlayers", state.user.uid)), 4000, null); cloud = s && s.exists() ? s.data().prog : null; } catch (e) {}
+  const merged = mergeProg(mergeProg(getProg(), cloud), guest);
+  setProg(merged); if (guest) ls.del("lz.prog.guest");
+  return merged;
+}
+
+function measure(type, days, target, gameCount) {
+  const list = Object.entries(days).filter(([, v]) => v.n > 0);
+  switch (type) {
+    case "sessions": return list.reduce((a, [, v]) => a + v.n, 0);
+    case "daysPlayed": return list.length;
+    case "lpEarned": return list.reduce((a, [, v]) => a + v.lp, 0);
+    case "gotdDays": return list.filter(([, v]) => v.t).length;
+    case "sessionsInDay": return list.reduce((a, [, v]) => Math.max(a, v.n), 0);
+    case "lpInDay": return list.reduce((a, [, v]) => Math.max(a, v.lp), 0);
+    case "distinctGamesInDay": return list.reduce((a, [, v]) => Math.max(a, v.g.length), 0);
+    case "allGames": return new Set(list.flatMap(([, v]) => v.g)).size;
+    case "streak": {
+      const ns = list.map(([d]) => dayNum(d)).sort((a, b) => a - b); let best = 0, run = 0, prev = null;
+      ns.forEach((n) => { run = prev !== null && n === prev + 1 ? run + 1 : 1; best = Math.max(best, run); prev = n; });
+      return best;
+    }
+  }
+  return 0;
+}
+function windowDays(days, start, end) { const o = {}; Object.entries(days).forEach(([d, v]) => { if (d >= start && d <= end) o[d] = v; }); return o; }
+async function progress() {
+  const [x, c] = await Promise.all([extras(), catalog()]);
+  const p = getProg(), n = c.games.length;
+  const ach = x.achievements.map((a) => {
+    const target = a.type === "allGames" ? n : a.target, have = measure(a.type, p.days, target, n);
+    return Object.assign({}, a, { target, have: Math.min(have, target), done: !!p.ach[a.id], when: p.ach[a.id] || null });
+  });
+  const day = today();
+  const events = x.events.filter((e) => e.end >= day).map((e) => {
+    const w = windowDays(p.days, e.start, e.end);
+    return Object.assign({}, e, {
+      live: e.start <= day, daysLeft: dayNum(e.end) - dayNum(day), startsIn: dayNum(e.start) - dayNum(day),
+      missions: (e.missions || []).map((m) => ({ ...m, have: Math.min(measure(m.type, w, m.target, n), m.target), done: !!p.ach["ev:" + e.id + ":" + m.id] })),
+      doors: e.calendar ? e.calendar.doors.map((d, i) => ({ ...d, i, open: d.date <= day && day <= e.end, claimed: !!p.claims[e.id + ":" + i] })) : null
+    });
+  });
+  return { achievements: ach, events, today: p.days[day] || { g: [], n: 0, lp: 0 } };
+}
+// Record a finished session and return any newly completed achievements and missions.
+async function recordSession(id, lp, isGotd) {
+  const [x, c] = await Promise.all([extras(), catalog()]);
+  const p = getProg(), d = today(), n = c.games.length;
+  const o = p.days[d] || { g: [], n: 0, lp: 0, t: 0 };
+  p.days[d] = { g: Array.from(new Set(o.g.concat(id))), n: o.n + 1, lp: o.lp + lp, t: o.t || (isGotd ? 1 : 0) };
+  const won = [];
+  x.achievements.forEach((a) => {
+    const target = a.type === "allGames" ? n : a.target;
+    if (!p.ach[a.id] && measure(a.type, p.days, target, n) >= target) { p.ach[a.id] = d; won.push({ kind: "Achievement", name: a.name, bonus: a.bonus }); }
+  });
+  activeEvents(x, d).forEach((e) => (e.missions || []).forEach((m) => {
+    const k = "ev:" + e.id + ":" + m.id;
+    if (!p.ach[k] && measure(m.type, windowDays(p.days, e.start, e.end), m.target, n) >= m.target) { p.ach[k] = d; won.push({ kind: e.name, name: m.name, bonus: m.bonus }); }
+  }));
+  setProg(p);
+  return won;
+}
+async function claimDoor(eventId, i) {
+  const x = await extras(), e = x.events.find((v) => v.id === eventId), d = today();
+  if (!e || !e.calendar) return 0;
+  const door = e.calendar.doors[i], p = getProg(), k = eventId + ":" + i;
+  if (!door || p.claims[k] || door.date > d || d > e.end) return 0;
+  p.claims[k] = d; setProg(p);
+  await creditBonus(door.bonus);
+  return door.bonus;
+}
+async function creditBonus(lp) {
+  const entry = { bonus: { lp, best: 0, plays: 0, last: 0 } };
+  if (signedIn()) { try { await addToAccount(entry); return; } catch (e) { console.warn("bonus", e.code || e); } }
+  stash("bonus", entry.bonus);
+}
+
 /* ---------------- Lazer Points ---------------- */
 async function addToAccount(entries) {
   // entries: { gameId: { lp, best, plays, last } }
@@ -184,7 +318,7 @@ async function addToAccount(entries) {
       add += lp;
       gm[k] = { lp: o.lp + lp, best: Math.max(o.best, Math.round(e.best || 0)), plays: o.plays + (e.plays || 0), last: Math.round(e.last || o.last || 0) };
     });
-    tx.set(ref, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, updatedAt: serverTimestamp() });
+    tx.set(ref, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() });
   });
 }
 async function syncPending() {
@@ -197,10 +331,17 @@ async function syncPending() {
 
 let askedThisPage = false;
 async function endSession(id, raw, info) {
-  const lp = await toLP(id, raw);
+  const mult = await multiplier(id), base = await toLP(id, raw), lp = Math.round(base * mult);
+  const won = await recordSession(id, lp, mult > 1);
   const entry = { lp, best: raw, plays: 1, last: raw };
+  if (won.length) {
+    const b = won.reduce((a, w) => a + (w.bonus || 0), 0);
+    if (signedIn()) { try { await addToAccount({ bonus: { lp: b, best: 0, plays: 0, last: 0 } }); } catch (e) { stash("bonus", { lp: b, best: 0, plays: 0, last: 0 }); } }
+    else stash("bonus", { lp: b, best: 0, plays: 0, last: 0 });
+    setTimeout(() => won.forEach((w, i) => setTimeout(() => toast(`${w.kind} unlocked: ${w.name} · +${fmt(w.bonus)} LP`), i * 3800)), 3900);
+  }
   if (signedIn()) {
-    try { await addToAccount({ [id]: entry }); toast(`+${fmt(lp)} Lazer Points saved to the leaderboard`); }
+    try { await addToAccount({ [id]: entry }); toast(`+${fmt(lp)} Lazer Points saved${mult > 1 ? ` (${mult}× Game of the Day)` : ""}`); }
     catch (e) { console.warn("leaderboard", e.code || e); stash(id, entry); toast("Couldn't reach the leaderboard. Points are kept and will retry."); }
     flush();
   } else {
@@ -269,7 +410,7 @@ onChange(() => {
   wasSignedIn = signedIn();
 });
 async function logout() { flush(); await sleep(300); ls.del("signIn"); await signOut(auth); }
-readyP.then(() => { if (signedIn()) { ls.del("lz.returnTo"); syncPending().then((n) => n && toast(`${fmt(n)} Lazer Points moved to your account`)).catch(() => {}); } });
+readyP.then(() => { if (signedIn()) { ls.del("lz.returnTo"); syncProg(); syncPending().then((n) => n && toast(`${fmt(n)} Lazer Points moved to your account`)).catch(() => {}); } });
 
 /* ================= UI (shadow DOM so it never clashes with a game's styles) ================= */
 const host = document.createElement("div");
@@ -426,7 +567,7 @@ async function openFeedback(gameId) {
 const LZ = {
   ready: readyP, auth, db, catalog, gameInfo, toLP, onChange, signedIn,
   get user() { return state.user; }, get username() { return state.username; },
-  boot, save, flush, endSession, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles,
+  boot, save, flush, endSession, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles,
   openAccount, openFeedback, accountMenu, toast, logout, base: BASE, fmt, esc
 };
 window.LZ = LZ;

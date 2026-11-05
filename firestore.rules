@@ -285,7 +285,8 @@ service cloud.firestore {
     match /arcadePlayers/{uid} {
       function validPlayer(data) {
         return data.keys().hasAll(['username', 'lp', 'games', 'updatedAt'])
-          && data.keys().hasOnly(['username', 'lp', 'games', 'updatedAt'])
+          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'updatedAt'])
+          && (!('prog' in data) || data.prog is map)
           && ownsUsername(data.username)
           && data.lp is int
           && data.lp >= 0
@@ -303,7 +304,7 @@ service cloud.firestore {
         && request.resource.data.lp <= resource.data.lp + 20000;
       // Staff can correct or remove rows (cheating, offensive names).
       allow update: if isArcadeAdmin()
-        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'updatedAt'])
         && request.resource.data.lp is int && request.resource.data.lp >= 0;
       allow delete: if isArcadeAdmin();
     }

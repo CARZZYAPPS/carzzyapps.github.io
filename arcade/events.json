@@ -1,0 +1,49 @@
+{
+  "gameOfTheDay": {
+    "multiplier": 2,
+    "newGameDays": 7,
+    "override": {}
+  },
+  "events": [
+    {
+      "id": "launch",
+      "name": "Launch Week",
+      "tagline": "Lazer Arcade is open. Help break it in.",
+      "start": "2026-11-04",
+      "end": "2026-11-15",
+      "theme": "launch",
+      "missions": [
+        {"id": "l-days", "name": "Regular", "desc": "Play on 3 different days during Launch Week", "type": "daysPlayed", "target": 3, "bonus": 500},
+        {"id": "l-lp", "name": "Warm-up", "desc": "Earn 1,500 LP during Launch Week", "type": "lpEarned", "target": 1500, "bonus": 400},
+        {"id": "l-gotd", "name": "Daily pick", "desc": "Play the Game of the Day on 3 different days", "type": "gotdDays", "target": 3, "bonus": 300}
+      ]
+    },
+    {
+      "id": "chanukah5787",
+      "name": "Festival of Lights",
+      "tagline": "Eight nights, eight doors, extra light every night of Chanukah.",
+      "start": "2026-12-04",
+      "end": "2026-12-12",
+      "theme": "chanukah",
+      "missions": [
+        {"id": "c-nights4", "name": "Half the menorah", "desc": "Play on 4 different days of Chanukah", "type": "daysPlayed", "target": 4, "bonus": 800},
+        {"id": "c-nights8", "name": "All eight lights", "desc": "Play on all 8 days of Chanukah", "type": "daysPlayed", "target": 8, "bonus": 2500},
+        {"id": "c-lp", "name": "Oil that lasted", "desc": "Earn 2,000 LP during Chanukah", "type": "lpEarned", "target": 2000, "bonus": 600}
+      ],
+      "calendar": {
+        "title": "8 Nights of Lights",
+        "note": "A new door opens each night of Chanukah. Missed one? You can open it any time until the festival ends.",
+        "doors": [
+          {"date": "2026-12-04", "label": "Night 1", "bonus": 100},
+          {"date": "2026-12-05", "label": "Night 2", "bonus": 150},
+          {"date": "2026-12-06", "label": "Night 3", "bonus": 200},
+          {"date": "2026-12-07", "label": "Night 4", "bonus": 250},
+          {"date": "2026-12-08", "label": "Night 5", "bonus": 300},
+          {"date": "2026-12-09", "label": "Night 6", "bonus": 350},
+          {"date": "2026-12-10", "label": "Night 7", "bonus": 400},
+          {"date": "2026-12-11", "label": "Night 8", "bonus": 800}
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "achievements": [
+    {"id": "first", "name": "Clocked in", "desc": "Finish your first game", "type": "sessions", "target": 1, "bonus": 100, "icon": "play"},
+    {"id": "regular", "name": "Regular", "desc": "Play on 3 different days", "type": "daysPlayed", "target": 3, "bonus": 250, "icon": "cal"},
+    {"id": "streak7", "name": "Week streak", "desc": "Play 7 days in a row", "type": "streak", "target": 7, "bonus": 1000, "icon": "fire"},
+    {"id": "marathon", "name": "Marathon", "desc": "Finish 10 games in one day", "type": "sessionsInDay", "target": 10, "bonus": 400, "icon": "run"},
+    {"id": "bigday", "name": "Big day", "desc": "Earn 1,000 LP in one day", "type": "lpInDay", "target": 1000, "bonus": 300, "icon": "bolt"},
+    {"id": "gotd5", "name": "Daily pick", "desc": "Play the Game of the Day on 5 different days", "type": "gotdDays", "target": 5, "bonus": 500, "icon": "star"},
+    {"id": "hopper", "name": "Arcade hopper", "desc": "Play 2 different games in one day", "type": "distinctGamesInDay", "target": 2, "bonus": 300, "icon": "swap"},
+    {"id": "explorer", "name": "Explorer", "desc": "Play 5 different games in one day", "type": "distinctGamesInDay", "target": 5, "bonus": 1500, "icon": "map"},
+    {"id": "collector", "name": "Collector", "desc": "Play every game in the arcade", "type": "allGames", "target": 0, "bonus": 500, "icon": "grid"},
+    {"id": "club10k", "name": "10K club", "desc": "Earn 10,000 LP", "type": "lpEarned", "target": 10000, "bonus": 1000, "icon": "crown"}
+  ]
+}

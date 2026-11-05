@@ -1640,7 +1640,7 @@ function endShift(){
   G.best=G.best||0;s.prevBest=G.best;s.newBest=s.total>G.best&&s.total>0;if(s.newBest)G.best=s.total;
   G.stats.pts=(G.stats.pts||0)+s.total;s.life=G.stats.pts;
   var avg=s.pts/Math.max(1,s.served+s.walk);s.grade=avg>=420?'S':avg>=300?'A':avg>=200?'B':avg>=120?'C':'D';
-  s.lp=Math.round(s.total*LZR);save();sfx.bell();showSummary(s);
+  s.lp=Math.round(Math.round(s.total*LZR)*LZM);s.lzm=LZM;save();sfx.bell();showSummary(s);
   if(window.LZ_GAME&&window.LZ)LZ.endSession(LZ_GAME,s.total,{grade:s.grade,day:s.day});
 }
 
@@ -1658,9 +1658,9 @@ function load(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s
   s.locs.forEach(function(l){l.mk=l.mk||[];l.hx=l.hx||[];l.cd=l.cd||{};l.tops=l.tops||{};l.staff=Object.assign({barista:0,server:0,manager:0,finisher:0,host:0},l.staff||{});});
   if(s.act>=s.locs.length)s.act=0;return s;}}catch(e){}return null;}
 function save(){if(!G)return;G.ts=now();try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}if(window.LZ_GAME&&window.LZ)LZ.save(LZ_GAME);}
-var LZR=0.04;
+var LZR=0.04,LZM=1;
 function lzBoot(){return new Promise(function(res){if(!window.LZ_GAME)return res();var done=false,fin=function(){if(!done){done=true;res();}};
-  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:3,minor:0,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;});fin();},fin);};
+  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:3,minor:0,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
   if(window.LZ)go();else window.addEventListener('lz-ready',go,{once:true});setTimeout(fin,3500);});}
 
 /* ---------- economics ---------- */
@@ -2148,7 +2148,7 @@ function showSummary(s){
   var h='<span class="tg y">DAY '+s.day+' · '+esc(s.locName).toUpperCase()+'</span><h1>Shift over</h1>'+starRow(s.stars)+'<div class="big '+(net>=0?'pos':'neg')+'">'+(net>=0?'+':'')+fmt(net)+'</div>';
   if(s.total!=null){var P=function(n){return Math.round(n).toLocaleString();};
     h+='<div class="ptsbox"><div class="grade '+s.grade+'">'+s.grade+'</div><div><div class="pv">'+P(s.total)+' pts</div><div class="pl">Best day '+P(G.best)+' · Lifetime '+P(s.life)+'</div>'+(s.newBest?'<span class="nb">NEW BEST!</span>':'')+'</div></div>';
-    h+='<div class="kv">'+kvl('Order points',P(s.pts))+(s.perf?kvl('Perfect orders',s.perf,'pos'):'')+kvl('Star bonus ('+s.stars+'★)','+'+P(s.stars*500),s.stars?'pos':'')+(s.ptsBonus>s.stars*500?kvl('No walkouts','+1,000','pos'):'')+kvl('Shift score',P(s.total)+' pts','tot pos')+(window.LZ_GAME?kvl('Lazer Points','+'+P(s.lp||0)+' LP','pos'):'')+'</div>';}
+    h+='<div class="kv">'+kvl('Order points',P(s.pts))+(s.perf?kvl('Perfect orders',s.perf,'pos'):'')+kvl('Star bonus ('+s.stars+'★)','+'+P(s.stars*500),s.stars?'pos':'')+(s.ptsBonus>s.stars*500?kvl('No walkouts','+1,000','pos'):'')+kvl('Shift score',P(s.total)+' pts','tot pos')+(window.LZ_GAME?kvl('Lazer Points'+(s.lzm>1?' ('+s.lzm+'× Game of the Day)':''),'+'+P(s.lp||0)+' LP','pos'):'')+'</div>';}
   h+='<div class="kv">'+kvl('Sales',fmt(s.sales))+kvl('Tips',fmt(s.tips),'pos')+kvl('Ingredients','-'+fmt(s.cogs),'neg')+(s.wages?kvl('Staff wages','-'+fmt(s.wages),'neg'):'')+(s.rent>.5?kvl('Rent','-'+fmt(s.rent),'neg'):'')+(s.fine?kvl('Inspection fine','-'+fmt(s.fine),'neg'):'')+
     kvl('Daily goal '+fmtR(s.goal),s.bonus?'+'+fmt(s.bonus):'missed',s.bonus?'pos':'neg')+kvl('Profit this shift',(net>=0?'+':'')+fmt(net),'tot '+(net>=0?'pos':'neg'))+(Math.abs(s.passive)>.5?kvl('Other shops + holdings',(s.passive>=0?'+':'')+fmt(s.passive),s.passive>=0?'pos':'neg'):'')+'</div>';
   h+='<div class="kv">'+kvl('Customers served',s.served)+kvl('Walked out',s.walk,s.walk?'neg':'')+(s.turned?kvl('Turned away (no room)',s.turned,'neg'):'')+(s.waste?kvl('Wasted items',s.waste,'neg'):'')+kvl('Best streak',s.bestStreak)+kvl('Reputation',s.rep1.toFixed(2)+' ('+(dr>=0?'+':'')+dr.toFixed(2)+')',dr>=0?'pos':'neg')+'</div>';
@@ -2164,8 +2164,9 @@ function showTitle(hasSave){
     '<div class="btns">'+(hasSave?btn('Keep playing','start',{cls:'gold'})+btn('New game','new',{cls:'sec'}):btn('Open the shop','start',{cls:'gold'}))+'</div>'+arcadeTitle(),'title');
 }
 function arcadeTitle(){if(!window.LZ_GAME||!window.LZ)return '<p class="fine">Progress saves in this browser.</p>';
+  var x2=LZM>1?'<div class="lzbar" style="background:#fff3c4;border-color:#f2c94c"><span><b>Game of the Day:</b> '+LZM+'× Lazer Points on every shift today.</span></div>':'';
   var u=LZ.signedIn()?LZ.username:'';
-  return '<div class="lzbar"><span>'+(u?'Signed in as <b>'+esc(u)+'</b>. Progress saves to your account.':'Playing as guest. Progress saves in this browser.')+'</span>'+(u?'':btn('Sign in','acct',{cls:'sec'}))+'</div>'+
+  return x2+'<div class="lzbar"><span>'+(u?'Signed in as <b>'+esc(u)+'</b>. Progress saves to your account.':'Playing as guest. Progress saves in this browser.')+'</span>'+(u?'':btn('Sign in','acct',{cls:'sec'}))+'</div>'+
     '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div>'+
     '<p class="fine"><a href="#" data-a="legacy">Play the legacy version</a> if you have progress there. Legacy points don\'t carry over to v3.</p>';}
 function showPause(){openModal('<h1>Paused</h1><p class="lead">'+esc(curLoc().name)+' · Level '+G.lvl+' · '+fmt(G.cash)+'</p><div class="btns">'+btn('Resume','mclose',{cls:'gold'})+'</div><div class="btns">'+btn('Sound '+(G.mute?'off':'on'),'snd',{cls:'sec'})+btn('Music '+(G.music?'on':'off'),'mus',{cls:'sec'})+'</div><div class="btns">'+btn('Start over','new',{cls:'warn'})+'</div>'+(window.LZ_GAME?'<div class="btns">'+btn(LZ.signedIn()?esc(LZ.username):'Sign in','acct',{cls:'sec'})+btn('Leaderboard','lb',{cls:'sec'})+btn('Feedback','fb',{cls:'sec'})+'</div><div class="btns">'+btn('Back to Lazer Arcade','arcade',{cls:'sec'})+'</div>':''),'pause');}
