@@ -527,7 +527,7 @@ function modal(html, bind) {
   });
 }
 
-const CZ_MARK = `<img src="/favicon.png" style="height: 46.5px; width: 46.5px;">`;
+const CZ_MARK = `<img src="/favicon.png" style="height: 30px; width: 30;">`;
 function openAccount(mode, lead) {
   if (signedIn()) return accountMenu();
   const p = pendingLP();
