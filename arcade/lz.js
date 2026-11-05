@@ -1,3 +1,4 @@
+sessionStorage.setItem("prevPage", document.location.href); //for redirect after sign in
 // Lazer Arcade shared SDK: accounts, saves, Lazer Points, leaderboards, play counts and feedback.
 // Uses the same Firebase project and auth session as the rest of carzzyapps.com.
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -438,9 +439,9 @@ async function sendTicket(t) {
 /* ---------------- account actions ----------------
    Lazer Arcade has no separate login: it uses the Carzzy Apps account system. Sign-in and sign-up happen
    on carzzyapps.com's own pages, and the shared Firebase session carries the player straight back. */
-function here() { return location.pathname + location.search + location.hash; }
-function goSignIn() { flush(); ls.set("lz.returnTo", here()); location.href = "/auth/sign-in/?returnTo=" + encodeURIComponent(here()); }
-function goSignUp() { flush(); ls.set("lz.returnTo", here()); location.href = "/auth/sign-up/?returnTo=" + encodeURIComponent(here()); }
+
+function goSignIn() { window.location.href = "/auth/sign-in/"; }
+function goSignUp() { window.location.href = "/auth/sign-up/"; }
 let wasSignedIn = null;
 onChange(() => {
   // Signed in from another tab or after returning: move guest progress and points to the account.
