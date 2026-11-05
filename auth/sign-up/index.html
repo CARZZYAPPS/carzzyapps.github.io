@@ -98,7 +98,7 @@
     // or errors out (shows up as "internal"), claim it directly in Firestore; the usernames rules allow this.
     async function claimUsernameSafely(user, username) {
       try { await claimUsername({ username }); return; }
-      catch (err) { if (!["functions/internal", "functions/not-found", "functions/unavailable", "functions/unknown"].includes(err.code)) throw err; console.warn("claimUsername function unavailable, claiming directly.", err); }
+      catch (err) { if (err.code === "functions/already-exists" || err.code === "functions/invalid-argument") throw err; console.warn("claimUsername function failed (" + (err.code || err.message) + "), claiming directly.", err); }
       const db = getFirestore(app);
       const ref = doc(db, "usernames", username.toLowerCase());
       await runTransaction(db, async (tx) => {
