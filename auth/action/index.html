@@ -1,118 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="utf-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Account Security | Carzzy Apps</title>
-
-    <meta name="description" content="Complete a secure sign-in or account verification action for your Carzzy Apps account.">
-    <meta name="keywords" content="Carzzy Apps account security, sign-in, account verification">
-    <meta name="author" content="Avis, DeBus">
+    <title>Account Security | Carzzy Apps</title>
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#0a0a0a">
     <meta name="color-scheme" content="dark">
-    <meta name="application-name" content="Carzzy Apps">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Carzzy Apps">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:title" content="Account Security | Carzzy Apps">
-    <meta property="og:description" content="Complete a secure sign-in or account verification action for your Carzzy Apps account.">
-    <meta property="og:url" content="https://www.carzzyapps.com/auth/action/">
-    <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta property="og:image:alt" content="Carzzy Apps logo">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Account Security | Carzzy Apps">
-    <meta name="twitter:description" content="Complete a secure sign-in or account verification action for your Carzzy Apps account.">
-    <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta name="twitter:image:alt" content="Carzzy Apps logo">
-    <link rel="canonical" href="https://www.carzzyapps.com/auth/action/">
-
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0a0a0a;
-      color: #ccc;
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-    .card {
-      background: #1a1a1a;
-      padding: 2.5rem;
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-      border: 1px solid #00d1b2;
-    }
-    h2 {
-      color: #00d1b2;
-      margin-top: 0;
-      font-size: 1.6rem;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-    }
-    p {
-      color: #ccc;
-      font-size: 1rem;
-      line-height: 1.5;
-    }
-    input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 0.8rem;
-      margin: 0.6rem 0;
-      border-radius: 6px;
-      border: 1px solid #3a3a3a;
-      box-sizing: border-box;
-      font-size: 1rem;
-      background: #2a2a2a;
-      color: #ccc;
-      outline: none;
-    }
-    input:focus {
-      border-color: #00d1b2 !important;
-    }
-    .show-pwd-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 0.6rem 0 1rem;
-      font-size: 14px;
-      cursor: pointer;
-      color: #ccc;
-    }
-    .show-pwd-label input[type="checkbox"] {
-      accent-color: #00d1b2;
-      cursor: pointer;
-    }
-    button {
-      width: 100%;
-      padding: 0.8rem;
-      border-radius: 6px;
-      border: none;
-      font-size: 1rem;
-      background: #00d1b2;
-      color: #0a0a0a;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    button:hover {
-      background: #00b097;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #0a0a0a;
+        color: #ccc;
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+      .card {
+        background: #1a1a1a;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        border: 1px solid #00d1b2;
+      }
+      h2 {
+        color: #00d1b2;
+        margin-top: 0;
+        font-size: 1.6rem;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      p {
+        color: #ccc;
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+      input[type="password"] {
+        width: 100%;
+        padding: 0.8rem;
+        margin: 0.6rem 0;
+        border-radius: 6px;
+        border: 1px solid #3a3a3a;
+        box-sizing: border-box;
+        font-size: 1rem;
+        background: #2a2a2a;
+        color: #ccc;
+        outline: none;
+      }
+      input:focus {
+        border-color: #00d1b2 !important;
+      }
+      .show-pwd-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.6rem 0 1rem;
+        font-size: 14px;
+        cursor: pointer;
+        color: #ccc;
+      }
+      .show-pwd-label input[type="checkbox"] {
+        accent-color: #00d1b2;
+        cursor: pointer;
+      }
+      button {
+        width: 100%;
+        padding: 0.8rem;
+        border-radius: 6px;
+        border: none;
+        font-size: 1rem;
+        background: #00d1b2;
+        color: #0a0a0a;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      button:hover {
+        background: #00b097;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
 </head>
 <body>
-
   <script src="/nav-bar.js"></script>
   <div class="card">
     <h2 id="title">CARZZY APPS</h2>
@@ -143,6 +119,7 @@
     const params = new URLSearchParams(window.location.search);
     const mode = params.get('mode');
     const actionCode = params.get('oobCode');
+    const continueUrl = params.get('continueUrl'); // Grab return URL dynamically [1.1.2]
 
     const titleEl = document.getElementById('title');
     const statusEl = document.getElementById('status');
@@ -162,11 +139,17 @@
       titleEl.innerText = titles[mode];
     }
 
-    // Password visibility toggle logic
     showPwd.onchange = () => {
       const type = showPwd.checked ? 'text' : 'password';
       newPwdInput.type = type;
       confirmPwdInput.type = type;
+    };
+
+    // Auto-redirect helper [1.1.3]
+    const handleRedirect = () => {
+      setTimeout(() => {
+        window.location.href = continueUrl || "https://www.carzzyapps.com/";
+      }, 2000);
     };
 
     if (!actionCode) {
@@ -192,8 +175,9 @@
               }
 
               confirmPasswordReset(auth, actionCode, newPassword).then(() => {
-                statusEl.innerText = "Success! Your password is updated.";
+                statusEl.innerText = "Success! Your password is updated. Redirecting...";
                 resetForm.classList.add('hidden');
+                handleRedirect(); // Auto-redirect after password update [1.1.3]
               }).catch(err => statusEl.innerText = err.message);
             };
           }).catch(() => statusEl.innerText = "Expired or invalid reset link.");
@@ -203,14 +187,16 @@
           checkActionCode(auth, actionCode).then(info => {
             const revertedEmail = info.data.email;
             return applyActionCode(auth, actionCode).then(() => {
-              statusEl.innerText = `Email address reverted to ${revertedEmail}.`;
+              statusEl.innerText = `Email address reverted to ${revertedEmail}. Redirecting...`;
+              handleRedirect(); // Auto-redirect after email recovery [1.1.3]
             });
           }).catch(() => statusEl.innerText = "Failed to restore previous email.");
           break;
 
         case 'verifyEmail':
           applyActionCode(auth, actionCode).then(() => {
-            statusEl.innerText = "Your email address is verified!";
+            statusEl.innerText = "Your email address is verified! Redirecting...";
+            handleRedirect(); // Auto-redirect after email verification [1.1.3]
           }).catch(() => statusEl.innerText = "Invalid or expired verification link.");
           break;
 
