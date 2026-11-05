@@ -97,8 +97,6 @@
     <p>We need to verify your email address to secure your account on Carzzy Apps.</p>
     <button id="sendBtn" disabled>Send Verification Email</button>
     <div id="statusMsg" class="status"></div>
-    <a id="lzBack" href="/arcade/" style="display:none;margin-top:18px;color:#00d1b2;font-weight:700">Continue to Lazer Arcade →</a>
-    <script>try{var r=localStorage.getItem("lz.returnTo");if(typeof r==="string"&&r.indexOf("/arcade/")===0){var b=document.getElementById("lzBack");b.href=r;b.style.display="inline-block";}}catch(e){}</script>
   </div>
 
   <script type="module">
@@ -114,7 +112,10 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-
+    const actionCodeSettings = {
+      url: sessionStorage.getItem("prevPage"), 
+      handleCodeInApp: false 
+    };
     const sendBtn = document.getElementById('sendBtn');
     const statusMsg = document.getElementById('statusMsg');
     
@@ -211,7 +212,7 @@
         statusMsg.style.color = '#ccc';
         statusMsg.textContent = "Sending verification link...";
 
-        await sendEmailVerification(user);
+        await sendEmailVerification(user, actionCodeSettings);
 
         // 1. Save timestamp to localStorage
         localStorage.setItem(`lastSentVerification_${user.uid}`, Date.now().toString());
