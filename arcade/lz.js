@@ -527,7 +527,7 @@ function modal(html, bind) {
   });
 }
 
-const CZ_MARK = `<svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="13" fill="#0f0f0f"/><rect x=".75" y=".75" width="46.5" height="46.5" rx="12.25" fill="none" stroke="#00d1b2" stroke-opacity=".55" stroke-width="1.5"/><path d="M31.5 16.2a10.5 10.5 0 1 0 0 15.6" fill="none" stroke="#00d1b2" stroke-width="4.4" stroke-linecap="round"/></svg>`;
+const CZ_MARK = `<img src="/favicon.png" style="height: 46.5px; width: 46.5px;">`;
 function openAccount(mode, lead) {
   if (signedIn()) return accountMenu();
   const p = pendingLP();
