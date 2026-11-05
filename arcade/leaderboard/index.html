@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leaderboard | Lazer Arcade</title>
+<meta name="description" content="Lazer Arcade leaderboards: total Lazer Points across every game, plus a board for each game.">
+<link rel="canonical" href="https://www.carzzyapps.com/arcade/leaderboard/">
+<meta name="theme-color" content="#07051a">
+<link rel="icon" href="/arcade/img/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="/arcade/arcade.css">
+<style>
+.top{padding:48px 0 10px}
+.top h1{font-size:clamp(34px,6vw,64px);font-weight:900;line-height:1}
+.top h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.top p{color:var(--tx2);margin:12px 0 0;max-width:620px}
+.tabs{margin:26px 0 22px}
+.metric{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;width:max-content;margin-bottom:18px}
+.metric button{border:0;background:none;border-radius:9px;padding:8px 14px;font-weight:800;font-size:13px;color:var(--tx2);cursor:pointer}
+.metric button.on{background:var(--card2);color:#fff;box-shadow:inset 0 0 0 1px var(--line2)}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:14px;align-items:end;margin-bottom:18px}
+.pod{text-align:center;padding:22px 12px 18px;border-radius:20px;position:relative;overflow:hidden}
+.pod .crown{font:900 13px var(--display);letter-spacing:.14em;color:var(--mut)}
+.pod .nm{font:800 clamp(15px,2vw,20px) var(--display);margin:10px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .v{font:800 clamp(18px,2.6vw,26px) var(--display)}
+.pod .v small{display:block;font:700 12px var(--body);color:var(--mut)}
+.pod .av{width:56px;height:56px;margin:12px auto 0;border-radius:50%;display:grid;place-items:center;font:900 22px var(--display);color:#0d0a26}
+.pod.p1{padding-top:30px;border-color:rgba(255,210,63,.5);box-shadow:0 0 50px rgba(255,210,63,.12)} .pod.p1 .av{background:linear-gradient(135deg,#ffe58a,#ffb21f);width:68px;height:68px}
+.pod.p2 .av{background:linear-gradient(135deg,#eef0ff,#9aa2d8)} .pod.p3 .av{background:linear-gradient(135deg,#ffc29b,#e2703a)}
+.pod.p1 .crown{color:var(--gold)}
+.you{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;margin-bottom:18px;flex-wrap:wrap}
+.you b{font-family:var(--display)}
+.list{overflow:hidden}
+.hdr{display:grid;grid-template-columns:44px 1fr auto;gap:12px;padding:12px 16px;font:800 11px var(--display);letter-spacing:.12em;color:var(--mut);border-bottom:1px solid var(--line)}
+@media (max-width:560px){.podium{gap:8px}.pod{padding:16px 6px 12px}.pod .av{width:42px;height:42px;font-size:17px}.pod.p1 .av{width:50px;height:50px}}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <a class="logo" href="/arcade/" data-logo><b>LAZER <span>ARCADE</span></b></a>
+  <div class="links"><a href="/arcade/#games">Games</a><a href="/arcade/leaderboard/" class="on">Leaderboard</a><a href="/arcade/#soon">Coming soon</a><a href="#" data-feedback>Feedback</a></div>
+  <div class="sp"></div>
+  <a class="back" href="/">← Carzzy Apps</a>
+  <button class="acct out" id="acct" type="button">Sign in</button>
+</div></nav>
+
+<main class="wrap">
+  <header class="top">
+    <span class="kick">Leaderboard</span>
+    <h1 id="title">Lazer <em>Leaderboard</em></h1>
+    <p id="desc">Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.</p>
+  </header>
+  <div class="chips tabs" id="tabs" role="tablist"></div>
+  <div class="metric" id="metric" hidden><button data-m="lp" class="on">Lazer Points</button><button data-m="best">Best score</button></div>
+  <div class="panel you" id="you" hidden></div>
+  <div class="podium" id="podium"></div>
+  <div class="panel list"><div class="hdr"><span>#</span><span>PLAYER</span><span id="col">LP</span></div><div class="rows" id="rows"><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div></div></div>
+</main>
+
+<footer><div class="wrap"><span><b>Lazer Arcade</b> by Lazer Yudel · part of <a href="/">Carzzy Apps</a></span><span><a href="/arcade/">All games</a> · <a href="/Leaderboards/">Other Carzzy leaderboards</a></span></div></footer>
+
+<script type="module">
+import LZ, { mountShell } from "/arcade/shell.js";
+const paint = mountShell();
+const $ = (s) => document.querySelector(s);
+const esc = LZ.esc, fmt = LZ.fmt;
+const cat = await LZ.catalog();
+const qs = new URLSearchParams(location.search);
+let tab = cat.games.some((g) => g.id === qs.get("game")) ? qs.get("game") : "all";
+let metric = "lp";
+
+function field() { return tab === "all" ? "lp" : `games.${tab}.${metric}`; }
+function val(r) { return tab === "all" ? r.lp : ((r.games || {})[tab] || {})[metric] || 0; }
+function tabs() {
+  const list = [{ id: "all", name: "Overall" }].concat(cat.games.map((g) => ({ id: g.id, name: g.name })));
+  $("#tabs").innerHTML = list.map((t) => `<button class="chip ${t.id === tab ? "on" : ""}" role="tab" aria-selected="${t.id === tab}" data-t="${t.id}">${esc(t.name)}</button>`).join("");
+  $("#tabs").querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { tab = b.dataset.t; metric = "lp"; history.replaceState(null, "", tab === "all" ? location.pathname : "?game=" + tab); render(); }));
+}
+async function render() {
+  tabs();
+  const g = cat.games.find((x) => x.id === tab);
+  $("#metric").hidden = !g;
+  $("#metric").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.m === metric));
+  const unit = !g || metric === "lp" ? "LP" : (g.scoreLabel || "score");
+  $("#col").textContent = unit.toUpperCase();
+  $("#title").innerHTML = g ? `${esc(g.name)} <em>Board</em>` : `Lazer <em>Leaderboard</em>`;
+  $("#desc").textContent = g ? (metric === "lp" ? `Lazer Points earned in ${g.name}. These also count toward the overall board.` : `Best single ${g.scoreLabel || "score"} in ${g.name}.`) : "Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.";
+  $("#rows").innerHTML = '<div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div>';
+  let rows = [];
+  try { rows = await LZ.top(field(), 100); }
+  catch (e) { $("#rows").innerHTML = '<div class="empty">The leaderboard is warming up. Check back soon.</div>'; $("#podium").innerHTML = ""; return; }
+  const me = LZ.user ? LZ.user.uid : null;
+  const sub = (r) => tab === "all" ? Object.keys(r.games || {}).length + " game" + (Object.keys(r.games || {}).length === 1 ? "" : "s") : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
+  $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { const r = rows[i]; return `<div class="panel pod p${i + 1}"><div class="crown">${["1ST", "2ND", "3RD"][i]}</div><div class="av">${esc((r.username || "?")[0].toUpperCase())}</div><div class="nm">${esc(r.username)}</div><div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div></div>`; }).join("") : "";
+  const list = rows.length >= 3 ? rows.slice(3) : rows, off = rows.length >= 3 ? 3 : 0;
+  $("#rows").innerHTML = rows.length ? (list.map((r, i) => `<div class="lr r${i + 1 + off} ${r.uid === me ? "me" : ""}"><span class="rk">${i + 1 + off}</span><span class="nm">${esc(r.username)}<small>${sub(r)}</small></span><span class="pt">${fmt(val(r))}<small>${esc(unit)}</small></span></div>`).join("") || '<div class="empty">That\'s everyone so far.</div>')
+    : `<div class="empty">No scores yet. ${g ? `<a href="${esc(g.path)}" style="color:var(--cyan)">Play ${esc(g.name)}</a> and take #1.` : "Be the first."}</div>`;
+  you();
+}
+async function you() {
+  const el = $("#you");
+  if (!LZ.signedIn()) {
+    const p = LZ.pendingLP();
+    el.hidden = false;
+    el.innerHTML = `<span>${p ? `<b>${fmt(p)} LP</b> waiting on this device. ` : ""}Sign in to get on the board.</span><button class="btn sm" id="youIn">Sign in</button>`;
+    $("#youIn").onclick = () => LZ.openAccount("signin");
+    return;
+  }
+  const m = await LZ.me(); const v = m ? val(m) : 0;
+  const r = v ? await LZ.rank(field(), v) : null;
+  el.hidden = false;
+  el.innerHTML = v ? `<span>You're <b>#${r || "?"}</b> with <b>${fmt(v)}</b> ${tab === "all" || metric === "lp" ? "LP" : ""}</span><span style="color:var(--mut);font-weight:700">${esc(LZ.username)}</span>`
+    : `<span>Signed in as <b>${esc(LZ.username)}</b>. Finish a round to get on this board.</span><a class="btn sm" href="/arcade/">Play</a>`;
+}
+$("#metric").querySelectorAll("button").forEach((b) => (b.onclick = () => { metric = b.dataset.m; render(); }));
+LZ.onChange(() => { render(); paint(); });
+</script>
+</body>
+</html>

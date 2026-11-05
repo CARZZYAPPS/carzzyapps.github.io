@@ -1,0 +1,65 @@
+name: Lazer Arcade backend
+
+# Deploys Firestore rules when they change, and copies new Lazer Arcade feedback
+# tickets from Firestore into this repo's Issues (label: arcade-feedback).
+# Needs one repository secret: FIREBASE_SERVICE_ACCOUNT (service-account JSON for carzzy-apps).
+
+on:
+  push:
+    branches: [main]
+    paths: ["firestore.rules", ".github/workflows/lazer-arcade.yml"]
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: lazer-arcade-backend
+  cancel-in-progress: false
+
+jobs:
+  rules:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check secret
+        id: s
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: if [ -n "$SA" ]; then echo "ok=1" >> "$GITHUB_OUTPUT"; else echo "::warning::FIREBASE_SERVICE_ACCOUNT secret is not set; skipping rules deploy."; fi
+      - name: Deploy Firestore rules
+        if: steps.s.outputs.ok == '1'
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:rules --project carzzy-apps --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+
+  tickets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check secret
+        id: s
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: if [ -n "$SA" ]; then echo "ok=1" >> "$GITHUB_OUTPUT"; else echo "::warning::FIREBASE_SERVICE_ACCOUNT secret is not set; skipping ticket sync."; fi
+      - uses: actions/setup-node@v4
+        if: steps.s.outputs.ok == '1'
+        with:
+          node-version: 20
+      - name: Sync tickets to Issues
+        if: steps.s.outputs.ok == '1'
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
+          NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-arcade-tickets.js"

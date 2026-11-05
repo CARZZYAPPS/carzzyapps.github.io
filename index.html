@@ -277,6 +277,33 @@
     </header>
 
     <div class="container">
+        <a class="lzr-card" href="/arcade/" aria-label="Lazer Arcade: Crema Rush and more games with one leaderboard">
+            <style>
+                .lzr-card{position:relative;display:block;margin:0 0 26px;padding:2px;border-radius:18px;text-decoration:none;color:#fff;isolation:isolate;
+                    background:linear-gradient(120deg,#ff3dd4,#7c4dff,#22e4ff,#ff3dd4);background-size:300% 300%;animation:lzrFlow 6s linear infinite;
+                    box-shadow:0 0 0 1px rgba(255,61,212,.25),0 12px 40px rgba(124,77,255,.35),0 0 60px rgba(255,61,212,.18);transition:transform .25s,box-shadow .25s}
+                .lzr-card:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 0 0 1px rgba(34,228,255,.4),0 18px 50px rgba(124,77,255,.5),0 0 80px rgba(255,61,212,.3)}
+                .lzr-in{position:relative;overflow:hidden;border-radius:16px;padding:22px 22px 20px;background:radial-gradient(420px 160px at 100% 0,rgba(124,77,255,.45),transparent 70%),radial-gradient(300px 140px at 0 100%,rgba(255,61,212,.25),transparent 70%),#0b0722}
+                .lzr-in:after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-18deg);animation:lzrShine 3.6s ease-in-out infinite}
+                .lzr-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+                .lzr-badge{font:800 11px/1 system-ui,sans-serif;letter-spacing:.14em;background:#c6ff3d;color:#120c2e;border-radius:999px;padding:6px 10px}
+                .lzr-by{font:700 12px system-ui,sans-serif;color:#c4bbe8}
+                .lzr-title{display:block;font:900 clamp(26px,6vw,34px)/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.02em;margin:4px 0 8px}
+                .lzr-title span{background:linear-gradient(90deg,#ff3dd4,#22e4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+                .lzr-desc{display:block;color:#d6cff5;font-size:.95rem;line-height:1.45}
+                .lzr-cta{display:inline-block;margin-top:14px;font:800 14px system-ui,sans-serif;background:linear-gradient(90deg,#ff3dd4,#7c4dff);border-radius:10px;padding:9px 16px;box-shadow:0 6px 20px rgba(255,61,212,.4)}
+                @keyframes lzrFlow{to{background-position:300% 0}}
+                @keyframes lzrShine{0%,55%{left:-60%}100%{left:130%}}
+                @media (prefers-reduced-motion:reduce){.lzr-card,.lzr-in:after{animation:none}}
+            </style>
+            <span class="lzr-in">
+                <span class="lzr-top"><span class="lzr-badge">NEW · LAZER ARCADE</span><span class="lzr-by">by Lazer Yudel</span></span>
+                <span class="lzr-title">Lazer <span>Arcade</span></span>
+                <span class="lzr-desc">Crema Rush 3D is here, with more games on the way. One account, one points system and one leaderboard across every game.</span>
+                <span class="lzr-cta">Enter the arcade →</span>
+            </span>
+        </a>
+
         <a href="https://carzzyapps.github.io/Rhythm-Runner/" class="project-card">
             <span class="project-title">Rhythm Runner</span>
             <span class="project-desc">An Endless Runner where You Jump Spikes and Duck Drones</span><br>
@@ -293,11 +320,7 @@
 			<span class="project-desc">Play two different modes: singleplayer or multiplayer!</span>
 		</a>
 
-		<a class="project-card" href="https://www.carzzyapps.com/Crema-Rush/">
-			<span class="project-title"><strong>NEW!!!</strong> Crema-Rush</span>
-			<span class="project-desc">The morning rush is on. Brew every order, keep your customers happy, and grow your little coffee bar into a favorite stop.</span>
-			<span class="project-desc">Special thank you to Lazer Yudel for this one ;)</span>
-		</a>
+
 		
         <a href="https://carzzyapps.github.io/Metronome/" class="project-card">
             <span class="project-title">Metronome</span>

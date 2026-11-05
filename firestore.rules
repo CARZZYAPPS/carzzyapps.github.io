@@ -256,5 +256,87 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+      // ===================== Lazer Arcade =====================
+    function arcadeAccount() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function ownsUsername(name) {
+      return name is string
+        && name.matches('^[A-Za-z0-9_]{3,20}$')
+        && exists(/databases/$(database)/documents/usernames/$(name.lower()))
+        && get(/databases/$(database)/documents/usernames/$(name.lower())).data.uid == request.auth.uid;
+    }
+
+    // Public leaderboard rows. Each player writes only their own row; one write can add at most 20,000 LP.
+    match /arcadePlayers/{uid} {
+      function validPlayer(data) {
+        return data.keys().hasAll(['username', 'lp', 'games', 'updatedAt'])
+          && data.keys().hasOnly(['username', 'lp', 'games', 'updatedAt'])
+          && ownsUsername(data.username)
+          && data.lp is int
+          && data.lp >= 0
+          && data.games is map
+          && data.games.size() <= 60
+          && data.updatedAt == request.time;
+      }
+      allow read: if true;
+      allow create: if arcadeAccount() && request.auth.uid == uid
+        && validPlayer(request.resource.data)
+        && request.resource.data.lp <= 20000;
+      allow update: if arcadeAccount() && request.auth.uid == uid
+        && validPlayer(request.resource.data)
+        && request.resource.data.lp >= resource.data.lp
+        && request.resource.data.lp <= resource.data.lp + 20000;
+      allow delete: if false;
+    }
+
+    // Per-account game saves, private to the player.
+    match /arcadeSaves/{uid}/games/{gameId} {
+      allow read: if arcadeAccount() && request.auth.uid == uid;
+      allow create, update: if arcadeAccount() && request.auth.uid == uid
+        && gameId.matches('^[a-z0-9]{2,24}$')
+        && request.resource.data.keys().hasAll(['data', 'major', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['data', 'major', 'minor', 'progress', 'updatedAt'])
+        && request.resource.data.data is string
+        && request.resource.data.data.size() <= 700000
+        && request.resource.data.major is int
+        && (!('minor' in request.resource.data) || request.resource.data.minor is int)
+        && (!('progress' in request.resource.data) || request.resource.data.progress is number)
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if arcadeAccount() && request.auth.uid == uid;
+    }
+
+    // Play counters used to sort games by popularity. Anyone may add exactly one play.
+    match /arcadeStats/{gameId} {
+      allow read: if true;
+      allow create: if gameId.matches('^[a-z0-9]{2,24}$')
+        && request.resource.data.keys().hasOnly(['plays'])
+        && request.resource.data.plays == 1;
+      allow update: if request.resource.data.keys().hasOnly(['plays'])
+        && request.resource.data.plays == resource.data.plays + 1;
+      allow delete: if false;
+    }
+
+    // Feedback tickets. Write-only for players; a GitHub Action copies them into repo Issues.
+    match /arcadeTickets/{ticketId} {
+      function validTicket(data) {
+        return data.keys().hasAll(['kind', 'game', 'text', 'synced', 'createdAt'])
+          && data.keys().hasOnly(['kind', 'game', 'text', 'contact', 'uid', 'username', 'page', 'synced', 'createdAt'])
+          && data.kind in ['bug', 'idea', 'request', 'other']
+          && data.game is string && data.game.size() <= 40
+          && data.text is string && data.text.size() >= 3 && data.text.size() <= 4000
+          && (!('contact' in data) || (data.contact is string && data.contact.size() <= 200))
+          && (!('page' in data) || (data.page is string && data.page.size() <= 120))
+          && (!('uid' in data) || (request.auth != null && data.uid == request.auth.uid))
+          && (!('username' in data) || (data.username is string && data.username.size() <= 20))
+          && data.synced == false
+          && data.createdAt == request.time;
+      }
+      allow create: if validTicket(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
   }
 }
