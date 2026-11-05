@@ -63,9 +63,9 @@
     {
       "id": "harbor",
       "name": "Harbor Rush",
-      "version": "1.0",
+      "version": "2.0",
       "path": "/arcade/harbor-rush/",
-      "hook": "Unload ships before they sail, back trucks into the bays, clear customs and grow one pier into a shipping empire of fish wharves, bulk terminals and cruise ports.",
+      "hook": "You run the crane. Ships arrive stacked high and every truck wants the one container that's buried. Dig, sort, keep reefers powered and hazmat fenced, then grow into a shipping empire.",
       "categories": [
         "tycoon",
         "time",

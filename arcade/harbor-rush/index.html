@@ -533,108 +533,70 @@ function wiggle(obj){killTW(obj,'wg');var r0=obj.rotation.z;return tween({obj:ob
 
 /* ================= DATA ================= */
 var DAYLEN=150;
-function rkey(b,c){return c&&c.length?b+'+'+c.slice().sort().join('+'):b;}
 
-/* paperwork and tags you add to cargo on the yard (comps) */
-var TOPS={
-  customs:{name:'Customs clearance',col:0x2da35d,sym:'check'},
-  ice:{name:'Ice pack',col:0xbfe9ff,sym:'snow'},
-  lei:{name:'Flower lei',col:0xff7ab0,sym:'flower'},
-  fragile:{name:'Fragile tag',col:0xea4b3c,sym:'glass',box:'roll'},
-  express:{name:'Express tag',col:0xffc63d,sym:'bolt',box:'roll'},
-  hazmat:{name:'Hazmat placard',col:0xff7a1a,sym:'diamond',box:'roll'},
-  seal:{name:'Security seal',col:0x2f6fd6,sym:'lock',box:'roll'},
-  fresh:{name:'Fresh-catch stamp',col:0x21a98d,sym:'leaf',box:'roll'},
-  export:{name:'Export papers',col:0x7a5ad8,sym:'globe',box:'roll'},
-  premium:{name:'Premium grade',col:0xd9a400,sym:'star',box:'roll'},
-  priority:{name:'Priority tag',col:0xe83a6a,sym:'up',box:'roll'},
-  weighed:{name:'Weighbridge slip',col:0x5a6b7a,sym:'scale',box:'roll'},
-  certified:{name:'Quality certificate',col:0x1d7542,sym:'ribbon',box:'roll'},
-  vip:{name:'VIP tag',col:0xd9a400,sym:'crown',box:'roll'},
-  map:{name:'Island map',col:0x46a9e6,sym:'map',box:'roll'},
-  sunhat:{name:'Sun hat',col:0xf2d07a,sym:'sun',box:'roll'}
+/* cargo types: each container has one. rules: reefer needs a powered column, hazmat needs the hazmat bay */
+var CT={
+  gen:{name:'General cargo',col:0x2f7fd0,sym:'box',val:3,lvl:1},
+  toys:{name:'Toys',col:0xff8a1f,sym:'star',val:3.5,lvl:1},
+  elec:{name:'Electronics',col:0x7a5ad8,sym:'bolt',val:5,lvl:2},
+  food:{name:'Frozen food',col:0xf4f6f8,band:0x2da35d,sym:'snow',val:5.5,lvl:3,reefer:1},
+  fuel:{name:'Fuel tank',col:0xffc63d,sym:'diamond',val:6,lvl:5,hazmat:1,tank:1},
+  cars:{name:'Cars',col:0xe2553f,sym:'up',val:6.5,lvl:7},
+  fish:{name:'Fresh fish',col:0xe8f4fa,band:0x2f9fd0,sym:'fish',val:4.5,lvl:10,reefer:1},
+  crab:{name:'Crab',col:0xff6a4a,sym:'leaf',val:5,lvl:10},
+  ice:{name:'Ice blocks',col:0xbfe9ff,sym:'snow',val:3.5,lvl:10},
+  oyster:{name:'Oysters',col:0x8fa3b0,sym:'globe',val:6,lvl:12,reefer:1},
+  ore:{name:'Iron ore',col:0x8a5a44,sym:'scale',val:5,lvl:16},
+  grain:{name:'Grain',col:0xf2a33a,sym:'grain',val:5.5,lvl:16},
+  oil:{name:'Crude oil',col:0x3a3f48,sym:'drop',val:8,lvl:17,hazmat:1,tank:1},
+  steel:{name:'Steel coils',col:0x9aa6b2,sym:'ribbon',val:7,lvl:18},
+  bags:{name:'Luggage',col:0x7a5ad8,sym:'map',val:4,lvl:22},
+  gifts:{name:'Souvenirs',col:0xff79b4,sym:'flower',val:4.5,lvl:22},
+  wine:{name:'Fine wine',col:0x8a1f3a,sym:'glass',val:7,lvl:23,reefer:1},
+  vip:{name:'VIP freight',col:0xd9a400,sym:'crown',val:9,lvl:24}
 };
 
-/* cargo types (bases) */
-var BASES={
-  box:{name:'Dry container',kind:'cont',col:0x2f7fd0,sym:'box'},
-  fruit:{name:'Reefer container',kind:'reefer',col:0xf4f6f8,band:0x2da35d,sym:'fruit'},
-  fuel:{name:'Fuel tank',kind:'tank',col:0xffc63d,sym:'drop'},
-  car:{name:'New car',kind:'car',col:0xe2553f},
-  fish:{name:'Fish crates',kind:'crates',col:0x46a9e6,sym:'fish'},
-  crab:{name:'Crab pots',kind:'pots',col:0xe2553f},
-  oyster:{name:'Oyster tubs',kind:'tubs',col:0x8fa3b0},
-  grain:{name:'Grain hopper',kind:'hopper',col:0xf2a33a,sym:'grain'},
-  ore:{name:'Iron ore',kind:'ore',col:0x8a5a44},
-  oil:{name:'Oil drums',kind:'drums',col:0x3a3f48},
-  bag:{name:'Suitcases',kind:'bags',col:0x7a5ad8},
-  gift:{name:'Gift bags',kind:'gifts',col:0xff79b4}
-};
-
-/* stations: berth = a crane over a docked ship that unloads one load at a time (loads left on the quay get damaged);
-   batch = a tank/silo/booth that prepares a batch and hands it out (goes stale) */
-var STN={
-  crane:{name:'Container crane',kind:'cooker',ship:'cargo',makes:'box',time:4.4,burn:7.5,slots:[2,3,4],w:1.5,cost:0,lvl:1,spd:70,desc:'Unloads the docked cargo ship one container at a time. Move them to the yard before they sit too long.'},
-  customs:{name:'Customs office',kind:'batch',role:'comp',makes:'customs',time:3.4,serv:[3,4,5],stale:22,w:.85,cost:0,lvl:1,spd:60,desc:'Runs an inspection round, then clears several containers. Inspectors leave if you keep them waiting.'},
-  tank:{name:'Fuel pipeline',kind:'batch',role:'base',makes:'fuel',time:6,serv:[4,5,6],stale:34,w:.85,cost:90,lvl:2,spd:60,desc:'Fills a row of tank containers from the tanker line.'},
-  reefer:{name:'Reefer crane',kind:'cooker',ship:'reefer',makes:'fruit',time:5,burn:5.5,slots:[2,3,4],w:1.5,cost:240,lvl:4,spd:80,desc:'Unloads refrigerated fruit. Reefers spoil fast once they are off the ship.'},
-  roro:{name:'Car ramp',kind:'cooker',ship:'roro',makes:'car',time:6,burn:7,slots:[2,3,4],w:1.5,cost:320,lvl:5,spd:90,desc:'Drives new cars off the car carrier. Park them in the yard before they block the ramp.'},
-  trawler:{name:'Trawler berth',kind:'cooker',ship:'trawler',makes:'fish',time:4.6,burn:5.5,slots:[2,3,4],w:1.35,cost:0,lvl:10,spd:110,desc:'Hauls fish crates off the trawler. Fish goes bad quickly in the sun.'},
-  icer:{name:'Ice machine',kind:'batch',role:'comp',makes:'ice',time:3.4,serv:[3,4,5],stale:22,w:.85,cost:0,lvl:10,spd:110,desc:'Makes a batch of crushed ice for several loads. It melts if you leave it.'},
-  crabber:{name:'Crab boat berth',kind:'cooker',ship:'crabber',makes:'crab',time:5.5,burn:6,slots:[2,3,4],w:1.35,cost:420,lvl:11,spd:120,desc:'Lands crab pots from the crab boat.'},
-  oysters:{name:'Oyster tanks',kind:'batch',role:'base',makes:'oyster',time:8,serv:[4,5,6],stale:60,w:.9,cost:600,lvl:12,spd:130,desc:'Purges a batch of oysters and packs them into tubs.'},
-  grain:{name:'Grain silo',kind:'batch',role:'base',makes:'grain',time:5,serv:[4,5,6],stale:40,w:.9,cost:0,lvl:16,spd:140,desc:'Fills grain hopper containers from the silo.'},
-  ore:{name:'Ore conveyor',kind:'cooker',ship:'bulk',makes:'ore',time:5.5,burn:6.5,slots:[2,3,4],w:1.5,cost:0,lvl:16,spd:150,desc:'Unloads iron ore from the bulk carrier. Ore piles block the conveyor if left.'},
-  oil:{name:'Oil drum filler',kind:'batch',role:'base',makes:'oil',time:8,serv:[3,4,5],stale:40,w:.9,cost:900,lvl:17,spd:180,desc:'Fills pallets of oil drums.'},
-  carousel:{name:'Luggage gangway',kind:'cooker',ship:'cruise',makes:'bag',time:4.4,burn:7,slots:[2,3,4],w:1.5,cost:0,lvl:22,spd:200,desc:'Sends passenger luggage down from the cruise ship.'},
-  leis:{name:'Lei stand',kind:'batch',role:'comp',makes:'lei',time:3.6,serv:[3,4,5],stale:30,w:.85,cost:0,lvl:22,spd:200,desc:'Strings a batch of flower leis for arriving passengers.'},
-  giftshop:{name:'Gift shop',kind:'batch',role:'base',makes:'gift',time:7,serv:[4,5,6],stale:70,w:.9,cost:1800,lvl:23,spd:260,desc:'Packs a batch of souvenir gift bags.'},
-  rack:{name:'Tag board',kind:'rack',w:1,cost:0,lvl:1,desc:'Holds your tags and papers. Tap one to add it to a load in the yard.'}
-};
-
-/* terminal types (industries) */
+/* terminal types (industries): each has its own cargo mix, look and customers */
 var IND={
-  container:{name:'Container terminal',lvl:1,pm:1,cm:1,wm:1,cust:'truck',rail:true,stations:['crane','customs','tank','reefer','roro','rack'],start:['crane','customs'],
-    tops:{fragile:{lvl:3,cost:60},express:{lvl:4,cost:90},hazmat:{lvl:6,cost:130},seal:{lvl:7,cost:170}},
-    theme:{sea:0x2f8fc4,quay:0xd9d2c3,quay2:0xc7bfae,line:0xffc63d,accent:0xff7a1a,trim:0x2a3a4a,hull:0xd23a2a,hull2:0x2a3a4a,crane:0xffb000,yard:0x8f969c,stn:0x2f7fd0},hero:'box+customs+express',
-    R:[['box',[],'Dry container',3,3,'dry'],['box',['customs'],'Cleared container',4.5,4,'dry'],['box',['customs','fragile'],'Fragile goods',5.75,3,'dry fancy'],['box',['express'],'Express load',5.25,2,'dry'],
-       ['box',['customs','express'],'Priority import',6,2,'dry fancy'],['box',['customs','express','fragile'],'White-glove load',7.25,2,'dry fancy'],['fuel',[],'Fuel tank',2.5,3,'bulk'],['fuel',['customs'],'Bonded fuel',3.5,2,'bulk'],
-       ['fuel',['hazmat'],'Hazmat fuel',4,3,'bulk'],['fuel',['customs','hazmat'],'Cleared hazmat',5,2,'bulk fancy'],['fruit',[],'Reefer of fruit',4,3,'cold'],['fruit',['customs'],'Cleared produce',5,3,'cold'],['fruit',['express'],'Fresh express',6,2,'cold fancy'],
-       ['car',[],'New car',3.25,2,'car'],['car',['seal'],'Sealed car',4.25,2,'car'],['car',['customs','seal'],'Import car',5.5,2,'car fancy']]},
-  fish:{name:'Fish wharf',lvl:10,pm:1.6,cm:4,wm:1.5,cust:'van',stations:['trawler','icer','crabber','oysters','rack'],start:['trawler','icer'],
-    tops:{fresh:{lvl:10,cost:150},export:{lvl:11,cost:220},premium:{lvl:12,cost:280},priority:{lvl:13,cost:340}},
-    theme:{sea:0x2c7fa8,quay:0xb89a72,quay2:0xa3865f,line:0xf4f0e6,accent:0x21a98d,trim:0x3a4a52,hull:0x2f9fd0,hull2:0xf2f4f6,crane:0x21a98d,yard:0x9a8770,stn:0x21a98d},hero:'fish+ice+fresh',
-    R:[['fish',[],'Fish crates',3.25,3,'cold'],['fish',['ice'],'Iced fish',4.25,3,'cold'],['fish',['fresh','ice'],'Fresh catch',5.5,3,'cold fancy'],['fish',['export','ice'],'Export fish',5.75,2,'cold fancy'],
-       ['fish',['ice','premium'],'Sashimi grade',6.5,2,'cold fancy'],['crab',[],'Crab pots',4,2,'cold'],['crab',['ice'],'Iced crab',5,3,'cold'],['crab',['ice','priority'],'Crab rush order',6.25,2,'cold fancy'],
-       ['oyster',[],'Oyster tubs',4.5,2,'cold'],['oyster',['ice'],'Iced oysters',5.5,2,'cold'],['oyster',['fresh','ice','premium'],'Raw bar oysters',7.25,2,'cold fancy'],['fish',['export','fresh','ice'],'Air-freight catch',7,2,'cold fancy']]},
-  bulk:{name:'Bulk & energy terminal',lvl:16,pm:2.6,cm:14,wm:2.4,cust:'truck',rail:true,stations:['ore','grain','oil','rack'],start:['ore','grain'],
-    tops:{weighed:{lvl:16,cost:700},hazmat:{lvl:16,cost:700},seal:{lvl:17,cost:900},certified:{lvl:17,cost:1100},priority:{lvl:18,cost:1400}},
-    theme:{sea:0x3a7fa0,quay:0xb9b4aa,quay2:0xa59f93,line:0xffc63d,accent:0xff7a1a,trim:0x3a3f48,hull:0x3a3f48,hull2:0xd23a2a,crane:0xff7a1a,yard:0x8a8278,stn:0xff7a1a},hero:'grain+certified+weighed',
-    R:[['ore',[],'Iron ore',4,3,'heavy'],['ore',['weighed'],'Weighed ore',5,3,'heavy'],['ore',['priority','weighed'],'Mill rush order',6.5,2,'heavy fancy'],['grain',[],'Grain hopper',5.5,3,'food'],
-       ['grain',['weighed'],'Weighed grain',6.5,3,'food'],['grain',['certified','weighed'],'Export grain',7.25,2,'food fancy'],['grain',['seal'],'Sealed grain',6.5,2,'food'],['oil',['hazmat'],'Oil drums',7,3,'energy'],
-       ['oil',['hazmat','seal'],'Sealed oil',8,2,'energy'],['oil',['certified','hazmat','seal'],'Refinery grade',9.5,2,'energy fancy']]},
-  cruise:{name:'Cruise terminal',lvl:22,pm:4,cm:45,wm:3.6,cust:'person',stations:['carousel','leis','giftshop','rack'],start:['carousel','leis'],
-    tops:{vip:{lvl:22,cost:2500},map:{lvl:22,cost:2500},sunhat:{lvl:23,cost:3200},fragile:{lvl:24,cost:4200}},
-    theme:{sea:0x22a7c9,quay:0xf2e6cc,quay2:0xe3d3b2,line:0xffffff,accent:0xff79b4,trim:0x2a6a8a,hull:0xffffff,hull2:0x2a6a8a,crane:0x2a6a8a,yard:0xe8d9bb,stn:0xff79b4},hero:'bag+lei+vip',
-    R:[['bag',[],'Suitcases',3,3,'bags'],['bag',['lei'],'Aloha bags',4,3,'bags'],['bag',['vip'],'VIP luggage',4.5,2,'bags fancy'],['bag',['lei','vip'],'Suite arrival',5.75,2,'bags fancy'],
-       ['bag',['fragile'],'Fragile bags',4,2,'bags'],['gift',[],'Gift bag',3.5,2,'gift'],['gift',['map'],'Explorer kit',4.5,3,'gift'],['gift',['lei','sunhat'],'Beach day kit',6,2,'gift fancy'],
-       ['bag',['lei','map','sunhat'],'Shore excursion',7,2,'bags fancy'],['gift',['map','vip'],'VIP welcome',6.25,2,'gift fancy']]}
+  container:{name:'Container terminal',lvl:1,pm:1,cm:1,wm:1,cust:'truck',cargo:['gen','toys','elec','food','fuel','cars'],
+    theme:{sea:0x2f8fc4,quay:0xd9d2c3,quay2:0xc7bfae,line:0xffc63d,accent:0xff7a1a,trim:0x2a3a4a,crane:0xffb000,stn:0x2f7fd0,hull:0xd23a2a},hero:'elec'},
+  fish:{name:'Fish wharf',lvl:10,pm:1.6,cm:4,wm:1.5,cust:'van',cargo:['fish','crab','ice','oyster','gen'],
+    theme:{sea:0x2c7fa8,quay:0xb89a72,quay2:0xa3865f,line:0xf4f0e6,accent:0x21a98d,trim:0x3a4a52,crane:0x21a98d,stn:0x21a98d,hull:0x2f9fd0},hero:'fish'},
+  bulk:{name:'Bulk & energy terminal',lvl:16,pm:2.6,cm:14,wm:2.4,cust:'truck',cargo:['ore','grain','oil','steel','fuel'],
+    theme:{sea:0x3a7fa0,quay:0xb9b4aa,quay2:0xa59f93,line:0xffc63d,accent:0xff7a1a,trim:0x3a3f48,crane:0xff7a1a,stn:0xff7a1a,hull:0x3a3f48},hero:'oil'},
+  cruise:{name:'Cruise terminal',lvl:22,pm:4,cm:45,wm:3.6,cust:'person',cargo:['bags','gifts','wine','vip','food'],
+    theme:{sea:0x22a7c9,quay:0xf2e6cc,quay2:0xe3d3b2,line:0xffffff,accent:0xff79b4,trim:0x2a6a8a,crane:0x2a6a8a,stn:0xff79b4,hull:0xf2f4f6},hero:'vip'}
 };
 var IND_ORDER=['container','fish','bulk','cruise'];
-(function(){IND_ORDER.forEach(function(k){var d=IND[k];d.id=k;d.RM={};d.R=d.R.map(function(a){var r={base:a[0],comps:a[1].slice().sort(),name:a[2],price:a[3],w:a[4],tags:a[5].split(' '),ind:k};r.key=rkey(r.base,r.comps);d.RM[r.key]=r;return r;});});})();
 
-/* ports of the home coast; later coasts are generated from these */
+/* per-terminal upgrades: they reshape the yard itself */
+var UPG={
+  cols:{name:'Yard columns',desc:'One more stack in the yard. More room to sort and dig.',base:5,max:9,cost:120,g:1.9,lvl:1,icon:'cols'},
+  height:{name:'Stack height',desc:'Every yard column holds one more container.',base:3,max:5,cost:400,g:3.2,lvl:3,icon:'height'},
+  speed:{name:'Crane motors',desc:'The crane moves 12% faster per level.',base:0,max:6,cost:90,g:1.8,lvl:1,icon:'speed'},
+  cranes:{name:'Second gantry crane',desc:'Another crane works your queue at the same time.',base:1,max:2,cost:2500,g:4,lvl:8,icon:'crane'},
+  power:{name:'Reefer power',desc:'Powers one more yard column so frozen cargo keeps cold there.',base:0,max:4,cost:150,g:2,lvl:3,icon:'power'},
+  hazmat:{name:'Hazmat bay',desc:'A fenced column for fuel and oil. Hazmat can only go here.',base:0,max:2,cost:350,g:3,lvl:5,icon:'hazmat'},
+  customs:{name:'Customs lane',desc:'Containers with a customs hold get inspected here before trucks will take them.',base:0,max:3,cost:300,g:2.4,lvl:4,icon:'customs'},
+  gates:{name:'Gate lanes',desc:'One more truck lane at the gate. More trucks, more money.',base:2,max:5,cost:250,g:2.6,lvl:2,icon:'gates'},
+  berth:{name:'Second berth',desc:'Two ships at once. Twice the cargo, twice the timers.',base:1,max:2,cost:6000,g:4,lvl:9,icon:'berth'},
+  rail:{name:'Rail siding',desc:'Freight trains arrive wanting 3 to 4 containers and pay 60% more.',base:0,max:1,cost:4000,g:4,lvl:7,icon:'rail'}
+};
+var UPG_ORDER=['cols','speed','gates','power','height','customs','hazmat','rail','cranes','berth'];
+function U(loc,k){return (loc.u&&loc.u[k]!=null)?loc.u[k]:UPG[k].base;}
+
+/* ports of the home coast; later coasts are generated */
 var DIST0=[
-  {id:'main',name:'Old Harbor',lvl:1,cost:0,demand:1,pat:1,tips:1,price:1,am:1,lunch:1,pref:{},win:'harbor',twist:'Your first berth. Steady ships, steady trucks.'},
-  {id:'river',name:'River Docks',lvl:4,cost:1500,demand:1.15,pat:1.2,tips:.6,price:.85,am:.6,lunch:1.3,pref:{bulk:1.6,dry:1.2},ev:['barges'],win:'river',twist:'Barges come down the river in convoys. Patient drivers, small fees, big rushes.'},
-  {id:'ind',name:'Industrial Bay',lvl:6,cost:3500,demand:1.05,pat:.7,tips:1.7,price:1.35,am:2.2,lunch:.8,pref:{bulk:1.5,fancy:1.3,heavy:1.4},win:'industry',twist:'Factories open early. A huge morning rush of impatient drivers who pay well.'},
-  {id:'tropic',name:'Palm Cove',lvl:8,cost:7000,demand:1.2,pat:1,tips:1.1,price:1.1,am:.5,lunch:1.5,pref:{cold:2.2,bulk:.6},ev:['gull','heat'],win:'tropic',twist:'Hot days, fruit boats and seagulls that peck at your fish. Tap them away.'},
-  {id:'old',name:'Lighthouse Quay',lvl:10,cost:12000,demand:.95,pat:1.15,tips:1.2,price:1.15,am:1,lunch:1,pref:{fancy:1.4},rep:2,win:'old',twist:'Old-school shippers who talk. Reputation swings twice as hard here.'},
-  {id:'ftz',name:'Free Trade Zone',lvl:13,cost:24000,demand:1.7,pat:.55,tips:1.4,price:1.6,am:1.4,lunch:1.2,pref:{fancy:1.5},ev:['convoy'],win:'ftz',twist:'Huge volume and premium fees. Convoys of trucks arrive all at once and want it now.'},
-  {id:'arctic',name:'Frost Harbor',lvl:15,cost:45000,demand:1.1,pat:1.2,tips:1.3,price:1.4,am:.8,lunch:1.4,pref:{bulk:2.2,cold:.4,energy:2},ev:['ice'],win:'arctic',twist:'Fuel sells double. Pack ice closes the harbor, then the backlog hits all at once.'},
-  {id:'canal',name:'Canal Locks',lvl:17,cost:80000,demand:1.1,pat:.9,tips:1.1,price:1.25,am:1.6,lunch:1,pref:{dry:1.5},ev:['lock'],win:'canal',twist:'When the lock opens, every berth gets a fresh ship at once.'},
-  {id:'night',name:'Night Port',lvl:19,cost:140000,demand:1.4,pat:.9,tips:1.2,price:1.3,am:.3,lunch:.6,eve:2.4,big:1,pref:{fancy:1.5},win:'night',twist:'The rush comes after dark with big multi-load orders.'},
-  {id:'mega',name:'Megaport',lvl:21,cost:250000,demand:1.25,pat:1,tips:1.3,price:1.35,am:1,lunch:1,pref:{},ev:['fog','inspector'],win:'mega',twist:'Fog banks roll in and out: dead calm, then every truck at once. Inspectors come often.'}
+  {id:'main',name:'Old Harbor',lvl:1,cost:0,demand:1,pat:1,tips:1,price:1,am:1,lunch:1,win:'harbor',twist:'Your first berth. Steady ships, steady trucks.'},
+  {id:'river',name:'River Docks',lvl:4,cost:1500,demand:1.15,pat:1.2,tips:.6,price:.85,am:.6,lunch:1.3,ev:['barges'],win:'river',twist:'Barges come down the river in convoys. Patient drivers, small fees, big rushes.'},
+  {id:'ind',name:'Industrial Bay',lvl:6,cost:3500,demand:1.05,pat:.7,tips:1.7,price:1.35,am:2.2,lunch:.8,win:'industry',twist:'Factories open early. A huge morning rush of impatient drivers who pay well.'},
+  {id:'tropic',name:'Palm Cove',lvl:8,cost:7000,demand:1.2,pat:1,tips:1.1,price:1.1,am:.5,lunch:1.5,ev:['gull','heat'],reef:1.8,win:'tropic',twist:'Heat makes reefers spoil faster, and seagulls raid the yard. Tap them away.'},
+  {id:'old',name:'Lighthouse Quay',lvl:10,cost:12000,demand:.95,pat:1.15,tips:1.2,price:1.15,am:1,lunch:1,rep:2,win:'old',twist:'Old-school shippers who talk. Reputation swings twice as hard here.'},
+  {id:'ftz',name:'Free Trade Zone',lvl:13,cost:24000,demand:1.7,pat:.55,tips:1.4,price:1.6,am:1.4,lunch:1.2,ev:['convoy'],hold:2,win:'ftz',twist:'Huge volume and premium fees. Twice as many customs holds.'},
+  {id:'arctic',name:'Frost Harbor',lvl:15,cost:45000,demand:1.1,pat:1.2,tips:1.3,price:1.4,am:.8,lunch:1.4,ev:['ice'],reef:.4,win:'arctic',twist:'Reefers barely spoil in the cold. Pack ice closes the harbor, then the backlog hits.'},
+  {id:'canal',name:'Canal Locks',lvl:17,cost:80000,demand:1.1,pat:.9,tips:1.1,price:1.25,am:1.6,lunch:1,ev:['lock'],win:'canal',twist:'When the lock opens, every berth gets a fresh ship at once.'},
+  {id:'night',name:'Night Port',lvl:19,cost:140000,demand:1.4,pat:.9,tips:1.2,price:1.3,am:.3,lunch:.6,eve:2.4,big:1,win:'night',twist:'The rush comes after dark with double-container orders.'},
+  {id:'mega',name:'Megaport',lvl:21,cost:250000,demand:1.25,pat:1,tips:1.3,price:1.35,am:1,lunch:1,ev:['fog','inspector'],win:'mega',twist:'Mega ships and fog banks. Inspectors fine you for spoiled cargo in the yard.'}
 ];
 var CITY_NAMES=['Saltmouth','Bayport','Cape Royale','Port Azure','Iron Coast','Sunreef','Northwater','Grand Strait','Coral Bay','Stormhaven','Silver Sound','Starboard City'];
 var PREFIX=['North','East','West','New','Upper','Outer','Old','South','Grand','Little'];
@@ -656,22 +618,16 @@ function cityName(n){return n<CITY_NAMES.length?CITY_NAMES[n]:'Coast '+(n+1);}
 function cityReq(n){return {lvl:25+(n-1)*6,own:4};}
 function TM(t){t=t||0;return {pm:Math.pow(1.7,t),dm:Math.pow(1.2,t),cm:Math.pow(2.6,t)};}
 
-/* terminal sizes */
-var SIZES=[null,
-  {name:'Pier',spots:2,tray:3,stations:4,cost:0,dem:7},
-  {name:'Terminal',spots:3,tray:4,stations:5,cost:800,dem:9.5},
-  {name:'Port',spots:4,tray:5,stations:6,cost:4500,dem:12},
-  {name:'Megaterminal',spots:5,tray:6,stations:7,cost:24000,dem:15}];
-
-/* staff (internal keys kept from the shared engine) */
+/* crew (internal keys shared with the Rush engine) */
 var ROLES={
-  barista:{name:'Crane operator',lvl:3,cost:250,wage:4,act:1.9,cap:[0,1,1,2,3],col:0xff9b1a,desc:'Starts the cranes and pipelines and moves landed cargo into the yard.'},
-  server:{name:'Yard driver',lvl:5,cost:300,wage:3,act:1.4,cap:[0,1,1,2,2],col:0x2f8fd0,desc:'Drives loads from the yard onto waiting trucks.'},
-  manager:{name:'Harbor master',lvl:6,cost:700,wage:6,act:0,cap:[0,1,1,1,1],col:0x7a5ad8,desc:'Runs the terminal while you work elsewhere. With no harbor master, it earns nothing while you are away.'},
-  finisher:{name:'Customs broker',lvl:8,cost:450,wage:4,act:1.7,cap:[0,0,1,1,2],col:0x21a98d,desc:'Adds clearances and tags to loads in the yard.'},
+  barista:{name:'Crane operator',lvl:3,cost:250,wage:4,act:2.2,cap:[0,1,1,2,3],col:0xff9b1a,desc:'Unloads the ship into the yard on their own whenever your crane queue is empty, and keeps reefers and hazmat in the right columns.'},
+  server:{name:'Straddle driver',lvl:5,cost:300,wage:3,act:2.6,cap:[0,1,1,2,2],col:0x2f8fd0,desc:'Drives containers from the top of the yard straight onto waiting trucks, without the crane.'},
+  manager:{name:'Harbor master',lvl:6,cost:700,wage:6,act:0,cap:[0,1,1,1,1],col:0x7a5ad8,desc:'Runs the terminal while you work elsewhere. With no harbor master it earns nothing while you are away.'},
+  finisher:{name:'Customs officer',lvl:8,cost:450,wage:4,act:0,cap:[0,0,1,1,2],col:0x21a98d,desc:'Inspects held containers twice as fast in the customs lane.'},
   host:{name:'Dispatcher',lvl:9,cost:400,wage:3,act:0,cap:[0,0,1,1,1],col:0xd99a12,desc:'Radios the gate so every driver waits 15% longer.'}
 };
 var ROLE_ORDER=['barista','server','manager','finisher','host'];
+function staffCap(loc,r){return ROLES[r].cap[Math.min(4,Math.max(1,U(loc,'gates')-1))];}
 var FIRST=['Mia','Leo','Ava','Kai','Zoe','Sam','Ivy','Max','Ruby','Theo','Nia','Owen','Lila','Finn','Aria','Jude','Maya','Eli','Rosa','Gus','Noor','Wes','June','Omar','Bea','Raf','Tess','Hugo','Ada','Cole'];
 
 var PRICE_T=[
@@ -698,13 +654,11 @@ var RIVALS={
   bulk:['Heavy Lift Inc.','Ore-Some Logistics','Grain Train','Crude Awakening'],
   cruise:['Sunset Cruises','Wave Royale','Island Hoppers','Ocean Dream Lines']
 };
-
-/* port authority HQ: applies to every terminal */
 var HQ={
-  training:{name:'Crane academy',lvl:6,cost:400,g:1.9,max:10,col:0xff9b1a,l:'A',eff:'Staff work 6% faster per level, at every terminal.'},
+  training:{name:'Crane academy',lvl:6,cost:400,g:1.9,max:10,col:0xff9b1a,l:'A',eff:'Crew work 6% faster per level, at every terminal.'},
   offline:{name:'Night shift',lvl:7,cost:500,g:2.1,max:8,col:0x4a5aa8,l:'N',eff:'Earn more while the game is closed: +8% rate and +1 hour cap per level.'},
   loyalty:{name:'Freight app',lvl:9,cost:900,g:2,max:10,col:0x21a98d,l:'F',eff:'+6% trucks at every terminal per level.'},
-  grind:{name:'Crane R&D',lvl:11,cost:1500,g:2.1,max:6,col:0x6b6f75,l:'R',eff:'Every crane and pipeline works 5% faster per level.'},
+  grind:{name:'Crane R&D',lvl:11,cost:1500,g:2.1,max:6,col:0x6b6f75,l:'R',eff:'Every crane moves 5% faster per level.'},
   quality:{name:'Premium contracts',lvl:12,cost:2000,g:2.1,max:10,col:0xd99a12,l:'P',eff:'All fees +4% per level.'},
   ambassador:{name:'Port PR team',lvl:14,cost:3000,g:2.2,max:8,col:0xff79b4,l:'B',eff:'Fame grows 15% faster per level.'},
   security:{name:'Harbor police',lvl:15,cost:5000,g:2.3,max:5,col:0x2f3a56,l:'S',eff:'Blocks 15% of rival attacks per level.'},
@@ -712,17 +666,15 @@ var HQ={
   autolab:{name:'Automation lab',lvl:23,cost:25000,g:2.4,max:6,col:0x2f8fd0,l:'X',eff:'Terminals handle 10% more volume per level when you are away.'}
 };
 var HQ_ORDER=['training','offline','loyalty','grind','quality','ambassador','security','legal','autolab'];
-
-/* holdings in related businesses */
 var HOLD={
-  line:{name:'Shipping line',lvl:18,need:{ind:'container',n:3},cost:30000,g:2.3,max:10,inc:40,col:0xd23a2a,l:'L',eff:'Your own ships: every ship docks with 8% more cargo and stays 6% longer per level.'},
+  line:{name:'Shipping line',lvl:18,need:{ind:'container',n:3},cost:30000,g:2.3,max:10,inc:40,col:0xd23a2a,l:'L',eff:'Your own ships: every ship stays 6% longer per level.'},
   trucking:{name:'Trucking company',lvl:20,need:{locs:4},cost:45000,g:2.3,max:10,inc:55,col:0x2f8fd0,l:'T',eff:'Drivers wait 5% longer at every terminal per level.'},
-  cold:{name:'Cold storage',lvl:21,need:{ind:'fish',n:1},cost:60000,g:2.3,max:10,inc:70,col:0x7fc0e8,l:'C',eff:'Fish wharves: costs -6% and fees +3%; reefers and fish stay fresh 8% longer per level.'},
+  cold:{name:'Cold storage',lvl:21,need:{ind:'fish',n:1},cost:60000,g:2.3,max:10,inc:70,col:0x7fc0e8,l:'C',eff:'Unpowered reefers last 10% longer per level, everywhere.'},
   rail:{name:'Rail freight',lvl:22,need:{locs:5},cost:90000,g:2.4,max:10,inc:90,col:0x3f8f7a,l:'R',eff:'All handling costs -4% per level, and freight trains pay 5% more per level.'},
   adagency:{name:'Trade magazine',lvl:24,need:{locs:6},cost:140000,g:2.4,max:10,inc:110,col:0xff79b4,l:'M',eff:'Marketing 10% cheaper and 10% stronger per level.'},
-  refinery:{name:'Refinery',lvl:24,need:{ind:'bulk',n:1},cost:180000,g:2.4,max:10,inc:140,col:0x3a3f48,l:'O',eff:'Bulk terminals: costs -6% and fees +3%; silos and conveyors 6% faster per level.'},
+  refinery:{name:'Refinery',lvl:24,need:{ind:'bulk',n:1},cost:180000,g:2.4,max:10,inc:140,col:0x3a3f48,l:'O',eff:'Bulk terminals: costs -6% and fees +3% per level.'},
   realty:{name:'Waterfront real estate',lvl:26,need:{locs:7},cost:300000,g:2.5,max:10,inc:200,col:0x2f3a56,l:'E',eff:'Berth rent -10% and new terminals 5% cheaper per level.'},
-  resort:{name:'Island resort',lvl:28,need:{ind:'cruise',n:1},cost:600000,g:2.5,max:10,inc:320,col:0xff9fcf,l:'I',eff:'Cruise terminals: costs -6% and fees +3%; luggage and gift shops 6% faster per level.'}
+  resort:{name:'Island resort',lvl:28,need:{ind:'cruise',n:1},cost:600000,g:2.5,max:10,inc:320,col:0xff9fcf,l:'I',eff:'Cruise terminals: costs -6% and fees +3% per level.'}
 };
 var HOLD_ORDER=['line','trucking','cold','rail','adagency','refinery','realty','resort'];
 
@@ -873,271 +825,86 @@ function waterTex(c){return canvasTex(256,256,function(g){g.fillStyle=hexCss(c);
 function asphaltTex(){return canvasTex(256,256,function(g){g.fillStyle='#8f969c';g.fillRect(0,0,256,256);speck(g,256,256,1600,.13);for(var i=0;i<6;i++){g.strokeStyle='rgba(40,40,40,.18)';g.lineWidth=2;g.beginPath();var x=Math.random()*256;g.moveTo(x,0);g.lineTo(x+Math.random()*40-20,256);g.stroke();}},[5,4],'asphalt');}
 function concreteTex(c){return canvasTex(256,128,function(g){g.fillStyle=hexCss(c);g.fillRect(0,0,256,128);speck(g,256,128,900,.12);g.fillStyle='rgba(0,0,0,.12)';for(var x=0;x<256;x+=64)g.fillRect(x,0,2,128);g.fillRect(0,0,256,2);},[4,1],'conc|'+c);}
 
-/* ================= CARGO ================= */
-var CL=.6,CW=.28,CH=.28;
+/* ================= CONTAINERS ================= */
+var CL=.6,CW=.3,CH=.28;
 var DMG=0x6b4a33;
-function makeItem(base,comps){
-  var B=BASES[base],g=new T.Group(),inner=new T.Group();g.add(inner);
-  var it={g:g,inner:inner,base:base,comps:(comps||[]).slice(),burnt:false,top:CH,prog:1};
-  var k=B.kind,c=B.col;
-  blob(.42,.7,g,0,0,0);
-  if(k==='cont'||k==='reefer'||k==='hopper'){
-    var body=rb(CW,CH,CL,.012,toon(0xffffff,{map:ribTex(k==='reefer'?0xf4f6f8:c)}),0,CH/2,0,inner);
-    [-1,1].forEach(function(s){bx(CW+.012,CH+.012,.02,toon(shade(k==='reefer'?0xd0d6dc:c,.7)),0,CH/2,s*(CL/2-.004),inner);});
-    bx(.06,.06,.02,toon(0x2a2f34),CW/2-.05,.04,CL/2,inner);
-    if(k==='reefer'){bx(CW*.82,CH*.66,.05,toon(0x3a3f44),0,CH/2,CL/2+.02,inner);sp(.045,toon(0x8fa3b0),0,CH/2,CL/2+.05,inner,12).scale.z=.3;bx(CW+.005,.04,CL+.005,toon(B.band),0,CH*.75,0,inner);}
-    if(k==='hopper'){[-.15,.15].forEach(function(z){cy(.06,.07,.04,toon(shade(c,.7)),0,CH+.02,z,inner,14);});}
-    it.top=CH+(k==='hopper'?.04:0);
-  }else if(k==='tank'){
-    [-1,1].forEach(function(s){bx(CW,.03,.03,toon(0x2a3a4a),0,.015,s*(CL/2-.015),inner);bx(.03,CH,.03,toon(0x2a3a4a),-CW/2+.015,CH/2,s*(CL/2-.015),inner);bx(.03,CH,.03,toon(0x2a3a4a),CW/2-.015,CH/2,s*(CL/2-.015),inner);bx(CW,.03,.03,toon(0x2a3a4a),0,CH-.015,s*(CL/2-.015),inner);});
-    var tk=cy(.125,.125,CL-.08,toon(c),0,CH/2,0,inner,22);tk.rotation.x=Math.PI/2;[-1,1].forEach(function(s){var e=sp(.125,toon(c),0,CH/2,s*(CL/2-.04),inner,18);e.scale.z=.3;});
-    cy(.03,.03,.03,toon(0x2a3a4a),0,CH-.005,0,inner,10);it.top=CH;
-  }else if(k==='car'){
-    bx(CW,.03,CL,toon(0x4a5560),0,.015,0,inner);
-    var cb=rb(CW*.86,.1,CL*.78,.03,toon(c),0,.08,0,inner);rb(CW*.72,.08,CL*.4,.03,toon(c),0,.16,-.02,inner);
-    rb(CW*.74,.06,CL*.38,.02,glass(0x9fd7ff,.65),0,.165,-.02,inner);
-    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(q){var w=cy(.04,.04,.03,toon(0x1e2328),q[0]*CW*.43,.045,q[1]*CL*.27,inner,12);w.rotation.z=Math.PI/2;});
-    sp(.016,flat(0xfff3b0),-.05,.09,CL*.39,inner,6);sp(.016,flat(0xfff3b0),.05,.09,CL*.39,inner,6);it.top=.2;
-  }else if(k==='crates'){
-    for(var i=0;i<4;i++){var x=(i%2?.07:-.07),z=(i<2?-.15:.15),cr=rb(.13,.12,.26,.015,toon(c),x,.06,z,inner);bx(.11,.012,.24,toon(0xdff3ff),x,.124,z,inner);
-      var f=sp(.035,toon(0xc9d6de),x,.135,z-.04,inner,8);f.scale.set(1,.5,2.2);}
-    it.top=.14;
-  }else if(k==='pots'){
-    [-.14,.14].forEach(function(z){var p=new T.Group();p.position.set(0,0,z);inner.add(p);var m=toon(c);bx(.24,.02,.24,m,0,.01,0,p);bx(.24,.02,.24,m,0,.17,0,p);
-      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(q){bx(.02,.17,.02,m,q[0]*.11,.09,q[1]*.11,p);});bx(.2,.14,.2,toon(0x2a3a4a,{op:.35}),0,.09,0,p);sp(.04,toon(0xff5a3a),0,.06,0,p,8).scale.set(1.5,.6,1);});
-    it.top=.18;
-  }else if(k==='tubs'){
-    bx(CW,.025,CL,toon(0xb08a5a),0,.012,0,inner);
-    [-.18,0,.18].forEach(function(z){cy(.11,.09,.13,toon(c),0,.09,z,inner,16);cy(.1,.1,.01,toon(0xdde6ea),0,.155,z,inner,16);for(var j=0;j<3;j++){var o=sp(.035,toon(0x7a7f86),(j-1)*.05,.16,z+(j%2?.03:-.02),inner,8);o.scale.y=.45;}});
-    it.top=.17;
-  }else if(k==='ore'){
-    rb(CW,CH*.7,CL,.012,toon(0xffffff,{map:ribTex(c)}),0,CH*.35,0,inner);
-    for(i=0;i<9;i++){var r=sp(.05+Math.random()*.03,toon(0x5a4a44),(Math.random()-.5)*.18,CH*.68+Math.random()*.03,(Math.random()-.5)*.48,inner,7);r.scale.y=.7;}
-    it.top=CH*.78;
-  }else if(k==='drums'){
-    bx(CW,.03,CL,toon(0xb08a5a),0,.015,0,inner);
-    [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(function(q){cy(.065,.065,.2,toon(c),q[0]*.068,.13,q[1]*.14,inner,14);tor(.065,.006,toon(shade(c,1.6)),q[0]*.068,.13,q[1]*.14,inner,null,14).rotation.x=Math.PI/2;});
-    it.top=.24;
-  }else if(k==='bags'){
-    var s1=rb(.24,.24,.16,.03,toon(c),0,.13,-.12,inner),s2=rb(.2,.18,.14,.03,toon(0x2fa3c9),0,.1,.12,inner);
-    [-.12,.12].forEach(function(z,j){tor(.035,.01,toon(0x2a2f34),0,j?.2:.26,z,inner,Math.PI,8);});
-    it.top=.26;
-  }else if(k==='gifts'){
-    [-.12,.12].forEach(function(z,j){var b=rb(.18,.2,.13,.02,toon(j?0x46a9e6:c),0,.1,z,inner);tor(.04,.007,toon(0x7a4a26),0,.21,z,inner,Math.PI,8);});
-    it.top=.22;
+function makeBox(t,o){
+  o=o||{};var C=CT[t],g=new T.Group(),inner=new T.Group();g.add(inner);
+  var box={t:t,g:g,inner:inner,hold:!!o.hold,cleared:false,spoil:0,spoiled:false,res:false};
+  if(C.tank){
+    var fr=toon(0x2a3a4a);[-1,1].forEach(function(s){bx(CW,.03,.03,fr,0,.015,s*(CL/2-.015),inner);bx(CW,.03,.03,fr,0,CH-.015,s*(CL/2-.015),inner);[-1,1].forEach(function(q){bx(.03,CH,.03,fr,q*(CW/2-.015),CH/2,s*(CL/2-.015),inner);});});
+    var tk=cy(.125,.125,CL-.1,toon(C.col),0,CH/2,0,inner,20);tk.rotation.x=Math.PI/2;[-1,1].forEach(function(s){var e=sp(.125,toon(C.col),0,CH/2,s*(CL/2-.05),inner,16);e.scale.z=.3;});
+  }else{
+    rb(CW,CH,CL,.012,toon(0xffffff,{map:ribTex(C.col)}),0,CH/2,0,inner);
+    [-1,1].forEach(function(s){bx(CW+.01,CH+.01,.02,toon(shade(C.col,.72)),0,CH/2,s*(CL/2-.004),inner);});
+    if(C.reefer){bx(CW+.006,.04,CL+.006,toon(C.band),0,CH*.78,0,inner);bx(CW*.8,CH*.6,.04,toon(0x3a3f44),0,CH/2,CL/2+.02,inner);}
   }
-  // tags and paperwork sit on top, readable from above
-  var cs=it.comps.slice().sort(function(a,b){return Object.keys(TOPS).indexOf(a)-Object.keys(TOPS).indexOf(b);}),n=cs.length;
-  cs.forEach(function(cp,i){var T0=TOPS[cp];
-    if(cp==='ice'){for(var j=0;j<7;j++){var cube=bx(.045,.045,.045,toon(0xeaf8ff,{op:.85}),(Math.random()-.5)*.18,it.top+.022,(Math.random()-.5)*.44,inner);cube.rotation.set(Math.random(),Math.random(),Math.random());}}
-    if(cp==='lei'){var l=tor(.1,.022,toon(0xff7ab0),0,it.top+.02,0,inner,null,16);l.rotation.x=Math.PI/2;}
-    var z=(i-(n-1)/2)*.17,st=plane(.13,.13,toon(0xffffff,{map:symTex(T0.sym,T0.col)}),0,it.top+.012+(cp==='ice'?.04:0),z,inner);st.rotation.x=-Math.PI/2;
-  });
-  it.setProg=function(){};
-  it.setBurnt=function(){if(it.burnt)return;it.burnt=true;inner.traverse(function(m){if(m.isMesh&&m.material&&m.material.isMeshToonMaterial&&!m.material.map){m.material=toon(mix(m.material.color.getHex(),DMG,.65));}});
-    var x=plane(.16,.16,toon(0xffffff,{map:symTex('x',0xea4b3c)}),0,it.top+.03,0,inner);x.rotation.x=-Math.PI/2;};
-  return it;
+  var st=plane(.17,.17,toon(0xffffff,{map:symTex(C.sym,C.band||(C.col===0xf4f6f8?0x2f7fd0:shade(C.col,.7)))}),0,CH+.006,.1,inner);st.rotation.x=-Math.PI/2;
+  var tag=null;
+  box.setHold=function(){if(tag){inner.remove(tag);tag=null;}if(!box.hold)return;tag=plane(.17,.17,toon(0xffffff,{map:symTex(box.cleared?'check':'lock',box.cleared?0x1f9d55:0xe5484d)}),0,CH+.008,-.14,inner);tag.rotation.x=-Math.PI/2;};
+  box.setHold();
+  box.setSpoiled=function(){if(box.spoiled)return;box.spoiled=true;inner.traverse(function(m){if(m.isMesh&&m.material&&m.material.isMeshToonMaterial&&!m.material.map)m.material=toon(mix(m.material.color.getHex(),DMG,.7));});
+    var x=plane(.18,.18,toon(0xffffff,{map:symTex('x',0xe5484d)}),0,CH+.012,-.14,inner);x.rotation.x=-Math.PI/2;};
+  return box;
 }
 
-/* ================= STATIONS ================= */
-var M={};
+/* ================= GANTRY CRANE ================= */
 function lampM(){return new T.MeshToonMaterial({color:0x333333,gradientMap:grad,emissive:new T.Color(0x34d27e),emissiveIntensity:.8});}
-function setLamp(m,st,time){var c=st==='bad'?0xff3b2f:st==='ready'?0x34d27e:st==='work'?0xffb21f:0x2a2a2a;m.emissive.setHex(c);m.emissiveIntensity=st==='idle'?0:st==='bad'?(.6+.4*Math.sin(time*12)):st==='work'?(.5+.3*Math.sin(time*6)):.9;}
-function cookState(o){var s='idle';(o.slots||[]).forEach(function(q){if(q.st==='burnt')s='bad';else if(q.st==='ready'&&s!=='bad')s='ready';else if(q.st==='cook'&&s==='idle')s='work';});return s;}
-function batchState(o){return o.st==='brew'?'work':o.st==='ready'?'ready':o.st==='stale'?'bad':'idle';}
-function slotXs(n,w){var a=[],s=w/n;for(var i=0;i<n;i++)a.push((i-(n-1)/2)*s);return a;}
-function sign(text,w,col,fg){return toon(0xffffff,{map:labelTex(text,{w:384,h:96,bg:hexCss(col),fg:fg||'#ffffff',r:18})});}
-
-/* ships */
-var SHIPC={cargo:{hull:0xd23a2a,deck:0x2a3a4a,len:1,beam:.62},reefer:{hull:0x2a6a8a,deck:0xf2f4f6,len:1,beam:.62},roro:{hull:0x2a3a4a,deck:0xf2f4f6,len:1,beam:.7},
-  trawler:{hull:0x2f9fd0,deck:0xf2f4f6,len:.72,beam:.5},crabber:{hull:0xe2553f,deck:0xf2f4f6,len:.7,beam:.5},bulk:{hull:0x3a3f48,deck:0xd23a2a,len:1,beam:.66},cruise:{hull:0xffffff,deck:0x2a6a8a,len:1,beam:.7}};
-function makeShip(type,w,cargoBase){
-  var C=SHIPC[type],g=new T.Group(),L=w*1.0*C.len,B=C.beam*1.08,hullM=toon(C.hull),deckM=toon(C.deck);
-  var hull=rb(L,.34,B,.08,hullM,0,-.05,0,g);
-  bx(L*1.002,.06,B*1.01,toon(0x7a1f1a),0,-.2,0,g);
-  var bow=cy(B/2,B/2,.34,hullM,L/2,-.05,0,g,20);bow.scale.set(.9,1,1);
-  bx(L*.96,.02,B*.9,deckM,0,.125,0,g);
-  var cargo=new T.Group();g.add(cargo);var marks=[];
-  if(type==='cruise'){
-    for(var d=0;d<3;d++){var dk=rb(L*(.86-d*.12),.13,B*(.86-d*.08),.03,toon(0xffffff),-.04,.21+d*.13,0,g);bx(L*(.84-d*.12),.03,.004,toon(0x2a6a8a),-.04,.22+d*.13,B*(.43-d*.04),g);}
-    cy(.06,.08,.18,toon(0xd23a2a),-L*.15,.66,0,g,14);
-    for(var i=0;i<6;i++){var p=sp(.03,toon(0xffd04a),-L*.35+i*L*.12,.21,B*.44,g,8);p.scale.z=.3;}
-  }else if(type==='trawler'||type==='crabber'){
-    rb(.26,.2,B*.7,.04,toon(0xffffff),-L*.28,.24,0,g);bx(.2,.06,B*.5,glass(0x2a3a4a,.7),-L*.2,.28,0,g);
-    var mast=cy(.018,.018,.7,toon(0x5a6b7a),L*.05,.48,0,g,8);var boom=cy(.012,.012,.6,toon(0x5a6b7a),L*.2,.62,0,g,8);boom.rotation.z=-1.1;
-    if(type==='trawler'){[-1,1].forEach(function(s){var ob=cy(.01,.01,.5,toon(0x5a6b7a),0,.4,s*.3,g,6);ob.rotation.x=s*.9;});}
-  }else{
-    rb(.24,.38,B*.82,.04,toon(0xf2f4f6),-L*.4,.32,0,g);bx(.25,.06,B*.7,glass(0x2a3a4a,.7),-L*.4,.44,0,g);cy(.04,.05,.2,toon(0x2a2f34),-L*.44,.6,0,g,10);
-  }
-  // remaining cargo shown on deck
-  var bc=BASES[cargoBase]?BASES[cargoBase].col:0x2f7fd0;
-  if(type!=='cruise'){
-    var cols=type==='trawler'||type==='crabber'?3:6,rows=2,tiers=type==='bulk'?1:2;
-    for(var t=0;t<tiers;t++)for(var rr2=0;rr2<rows;rr2++)for(var cc=0;cc<cols;cc++){
-      var mx=(type==='trawler'||type==='crabber'?L*.12:-L*.05)+(cc-(cols-1)/2)*(type==='trawler'||type==='crabber'?.11:L*.12);
-      var col=type==='roro'?pick([0xe2553f,0xf2f4f6,0x2f7fd0,0x2a2f34,0xffc63d]):type==='bulk'?0x5a4a44:cargoBase==='box'?pick([0x2f7fd0,0xd23a2a,0x2da35d,0xffc63d,0x8a5a44]):bc;
-      var m=type==='bulk'?sp(.07,toon(col),mx,.16,(rr2-.5)*B*.4,cargo,7):rb(type==='trawler'||type==='crabber'?.09:L*.11,.09,B*.36,.01,toon(col),mx,.18+t*.095,(rr2-.5)*B*.42,cargo);
-      if(type==='bulk')m.scale.set(1.4,.7,1.4);marks.push(m);}
-  }else{for(i=0;i<10;i++){var lg=rb(.07,.07,.05,.01,toon(pick([0x7a5ad8,0xe2553f,0x2fa3c9,0xffc63d])),-L*.36+(i%5)*.13,.16,i<5?-.16:.16,cargo);marks.push(lg);}}
-  return {g:g,marks:marks,L:L,B:B,setCargo:function(n,max){var show=Math.round(marks.length*Math.min(1,n/Math.max(1,max)));marks.forEach(function(m,i){m.visible=i<show;});}};
+function makeCrane(th,zBack,zFront,top){
+  var g=new T.Group(),cm=toon(th.crane,{op:.72}),dk=toon(shade(th.crane,.62),{op:.72});cm.depthWrite=false;dk.depthWrite=false;
+  var zLeg=.7,span=zFront-zBack;
+  [-1,1].forEach(function(s){[zBack,zLeg].forEach(function(z){bx(.06,top,.06,cm,s*.33,top/2,z,g);cy(.05,.05,.05,toon(0x2a2f34),s*.33,.05,z,g,10).rotation.z=Math.PI/2;});
+    bx(.07,.06,zLeg-zBack,cm,s*.33,.1,(zBack+zLeg)/2,g);bx(.06,.08,span,cm,s*.3,top+.05,(zBack+zFront)/2,g);});
+  bx(.72,.08,.09,cm,0,top,zBack,g);bx(.72,.08,.09,cm,0,top,zLeg,g);bx(.66,.06,.06,cm,0,top+.05,zFront,g);
+  rb(.2,.15,.18,.03,toon(0xffffff),.27,top-.13,zLeg-.12,g);bx(.16,.07,.01,glass(0x2a3a4a,.7),.27,top-.11,zLeg-.025,g);
+  var lamp=sp(.04,lampM(),-.3,top+.13,zBack,g,10);
+  var trolley=new T.Group();trolley.position.set(0,top+.02,0);g.add(trolley);bx(.5,.08,.24,dk,0,0,0,trolley);
+  var cables=[-.1,.1].map(function(dx){return cy(.006,.006,1,toon(0x2a2f34),dx,0,0,trolley,6);});
+  var spreader=new T.Group();trolley.add(spreader);bx(CW+.08,.035,CL+.06,toon(0xffb000),0,0,0,spreader);
+  [-1,1].forEach(function(s){[-1,1].forEach(function(q){bx(.035,.05,.035,dk,s*(CW/2+.02),-.03,q*CL/2,spreader);});});
+  var c={g:g,trolley:trolley,spreader:spreader,lamp:lamp.material,top:top,x:0,z:0,y:top-.45,carry:null,job:null};
+  c.set=function(x,z,y){c.x=x;c.z=z;c.y=y;g.position.x=x;trolley.position.z=z;var drop=Math.max(.06,(top+.02)-y);spreader.position.y=-drop;cables.forEach(function(cb){cb.scale.y=drop;cb.position.y=-drop/2;});};
+  c.set(0,0,top-.45);
+  return c;
 }
 
-/* berth: a crane (or ramp/gangway) on the quay over a ship moored in front */
-function berth(o,th,type){
-  var d=o.d,w=d.w,g=new T.Group(),hits=[],slotP=[],n=o.slots.length,xs=slotXs(n,w*.86);
-  var craneT=type==='roro'?'ramp':type==='cruise'?'gang':'crane',craneC=type==='reefer'?0xf2f4f6:type==='bulk'?0xff7a1a:type==='trawler'||type==='crabber'?0x21a98d:th.crane;
-  var cm=toon(craneC),cdk=toon(shade(craneC,.65));
-  xs.forEach(function(x,i){slotP.push(V3(x,0,-.08));var pad=bx(w/n*.86,.012,.68,toon(0xffffff,{op:.22}),x,.006,-.08,g);hits.push(hitBox(w/n*.95,.7,.9,x,.3,-.08,g,{slot:i}));});
-  var top=type==='trawler'||type==='crabber'?1.0:1.18;
-  var trolley=new T.Group(),hook=new T.Group(),cable=null;
-  if(craneT==='crane'){
-    [-1,1].forEach(function(s){[-.42,.42].forEach(function(z){bx(.06,top,.06,cm,s*w*.47,top/2,z,g);});bx(.08,.08,.92,cm,s*w*.47,.2,0,g);
-      [[-.42,.42]].forEach(function(){var br=bx(.03,.03,1.1,cdk,s*w*.47,top*.55,0,g);br.rotation.x=.9;});
-      cy(.05,.05,.04,toon(0x2a2f34),s*w*.47,.04,-.42,g,10).rotation.z=Math.PI/2;cy(.05,.05,.04,toon(0x2a2f34),s*w*.47,.04,.42,g,10).rotation.z=Math.PI/2;});
-    bx(w*.98,.1,.12,cm,0,top,-.42,g);bx(w*.98,.1,.12,cm,0,top,.42,g);
-    var boom=bx(.14,.08,1.95,cm,0,top+.05,.55,g);bx(.1,.05,1.95,cdk,0,top+.1,.55,g);
-    var cab=rb(.22,.16,.2,.03,toon(0xffffff),w*.3,top-.14,.2,g);bx(.18,.08,.01,glass(0x2a3a4a,.7),w*.3,top-.12,.305,g);
-    var lamp=sp(.04,lampM(),-w*.38,top+.12,-.42,g,10);
-    trolley.position.set(0,top-.02,0);g.add(trolley);bx(.22,.1,.22,cdk,0,0,0,trolley);
-    cable=cy(.008,.008,1,toon(0x2a2f34),0,0,0,trolley,6);
-    hook.position.set(0,-.6,0);trolley.add(hook);bx(CW+.06,.03,CL+.04,toon(0xffb000),0,0,0,hook);
-    g.add(new T.Object3D());
-    var sg=plane(.8,.17,sign(STN[o.k].name.toUpperCase().replace(' BERTH',''),0,shade(craneC,.55)),0,top-.02,.49,g);
-    var v={g:g,hits:hits,slotP:slotP,outP:V3(0,.3,-.4),lamp:lamp.material,trolley:trolley,hook:hook,cable:cable,top:top,type:craneT};
-  }else if(craneT==='ramp'){
-    var rp=bx(w*.5,.03,1.15,toon(0x5a6b7a),0,.16,.62,g);rp.rotation.x=-.24;
-    [-1,1].forEach(function(s){bx(.04,.3,1.1,toon(0xffc63d),s*w*.25,.25,.62,g).rotation.x=-.24;});
-    var tw=bx(.1,1,.1,toon(0x2a3a4a),-w*.42,.5,-.3,g);var lamp2=sp(.05,lampM(),-w*.42,1.05,-.3,g,10);
-    var bar=bx(.5,.04,.04,toon(0xff7a1a),-w*.25,.62,-.3,g);
-    var v={g:g,hits:hits,slotP:slotP,outP:V3(0,.3,-.3),lamp:lamp2.material,type:'ramp',bar:bar};
-  }else{
-    var gw=bx(.32,.03,1.4,toon(0xf2f4f6),0,.5,.62,g);gw.rotation.x=-.62;
-    [-1,1].forEach(function(s){bx(.02,.12,1.4,toon(0x2a6a8a),s*.16,.57,.62,g).rotation.x=-.62;});
-    var aw=rb(w*.9,.06,.5,.03,toon(th.accent),0,1.1,-.25,g);[-1,1].forEach(function(s){cy(.03,.03,1.1,toon(0xffffff),s*w*.42,.55,-.45,g,8);});
-    var lamp3=sp(.045,lampM(),w*.38,1.17,-.05,g,10);
-    var v={g:g,hits:hits,slotP:slotP,outP:V3(0,.3,-.3),lamp:lamp3.material,type:'gang'};
-  }
-  hits.push(hitBox(w,2,1.2,0,1,-.1,g,{}));
-  var ship=makeShip(type,w,d.makes);ship.g.position.set(0,0,1.32);g.add(ship.g);v.ship=ship;v.shipZ=1.32;
-  hits.push(hitBox(w,.8,.9,0,.1,1.32,g,{}));
-  v.path=function(i,k,out){var sx=slotP[i].x,shipP=V3(ship.g.position.x+sx*.6,.22,1.32),dst=slotP[i];
-    if(v.type==='crane'){var hz=v.top-.5;
-      if(k<.28){var a=k/.28;out.set(shipP.x,lerp(shipP.y,hz,easeIO(a)),shipP.z);}
-      else if(k<.72){var b=(k-.28)/.44;out.set(lerp(shipP.x,dst.x,easeIO(b)),hz+Math.sin(b*Math.PI)*.05,lerp(shipP.z,dst.z,easeIO(b)));}
-      else{var c2=(k-.72)/.28;out.set(dst.x,lerp(hz,0,easeIO(c2)),dst.z);}}
-    else if(v.type==='ramp'){var p0=V3(0,.32,1.15),p1=V3(0,.02,.12);if(k<.6){var e=k/.6;out.lerpVectors(p0,p1,easeIO(e));}else{var e2=(k-.6)/.4;out.set(lerp(0,dst.x,easeIO(e2)),0,lerp(.12,dst.z,easeIO(e2)));}}
-    else{var q0=V3(0,.98,1.05),q1=V3(0,.06,.18);if(k<.65){out.lerpVectors(q0,q1,k/.65);}else{var e3=(k-.65)/.35;out.set(lerp(0,dst.x,easeIO(e3)),0,lerp(.18,dst.z,easeIO(e3)));}}
-    return out;};
-  v.upd=function(o,dt,time){setLamp(v.lamp,cookState(o),time);
-    var sh=o.ship;if(sh){ship.setCargo(sh.cargo,sh.max);var tx=sh.st==='dock'?0:sh.st==='in'?lerp(-7,0,easeOut(clamp(sh.t/1.6,0,1))):sh.st==='out'?lerp(0,8,easeIO(clamp(sh.t/1.4,0,1))):99;
-      ship.g.visible=tx<50;ship.g.position.x=tx;ship.g.position.y=Math.sin(time*1.3+o.x)*.025-.02;ship.g.rotation.z=Math.sin(time*.9+o.x)*.012;}
-    var lead=null,tmp=V3(0,0,0);
-    o.slots.forEach(function(s,i){if(s.st==='cook'&&s.it){var k=clamp(s.t/s.dur,0,1);v.path(i,k,tmp);s.it.g.position.copy(g.localToWorld(tmp.clone()));if(!lead||k>lead.k)lead={k:k,p:tmp.clone()};}});
-    if(v.type==='crane'){var tz=lead?lead.p.z:.4,tx2=lead?lead.p.x:0,hy=lead?lead.p.y-(v.top-.02)+.32:-.55;
-      trolley.position.z+=(tz-trolley.position.z)*Math.min(1,dt*8);trolley.position.x+=(tx2-trolley.position.x)*Math.min(1,dt*8);hook.position.y+=(hy-hook.position.y)*Math.min(1,dt*10);
-      cable.scale.y=Math.max(.05,-hook.position.y);cable.position.y=hook.position.y/2;}
-    if(v.type==='ramp')v.bar.rotation.z=lead?-1.2:0;
-  };
-  return v;
+/* ================= SHIPS (stacked bays) ================= */
+var SHIPC={container:{hull:0xd23a2a,deck:0x2a3a4a},fish:{hull:0x2f9fd0,deck:0xf2f4f6},bulk:{hull:0x3a3f48,deck:0xd23a2a},cruise:{hull:0xffffff,deck:0x2a6a8a}};
+function makeShipG(ind,bays,mega){
+  var C=SHIPC[ind]||SHIPC.container,g=new T.Group(),L=bays*.38+.95,B=.92,hullM=toon(C.hull);
+  rb(L,.34,B,.09,hullM,0,-.07,0,g);bx(L*1.002,.06,B*1.01,toon(0x7a1f1a),0,-.22,0,g);
+  var bow=cy(B/2,B/2,.34,hullM,L/2,-.07,0,g,22);bow.scale.set(.9,1,1);
+  bx(L*.97,.02,B*.9,toon(C.deck),0,.105,0,g);
+  if(ind==='cruise'){for(var d=0;d<2;d++)rb(.5,.13,B*.8,.03,toon(0xffffff),-L/2+.3,.2+d*.13,0,g);cy(.05,.07,.16,toon(0xd23a2a),-L/2+.3,.5,0,g,12);}
+  else{rb(.26,.42,B*.82,.04,toon(0xf2f4f6),-L/2+.2,.32,0,g);bx(.27,.07,B*.7,glass(0x2a3a4a,.7),-L/2+.2,.45,0,g);cy(.04,.05,.2,toon(0x2a2f34),-L/2+.14,.62,0,g,10);}
+  if(mega)plane(.7,.18,toon(0xffffff,{map:labelTex('MEGA SHIP',{w:320,h:80,bg:'#ffb020',fg:'#13283d',r:14})}),.1,.02,B/2+.006,g);
+  return {g:g,L:L,bayX:function(b){return -L/2+.6+b*.38;},deckY:.115};
 }
-M.crane=function(o,th){return berth(o,th,'cargo');};
-M.reefer=function(o,th){return berth(o,th,'reefer');};
-M.roro=function(o,th){return berth(o,th,'roro');};
-M.trawler=function(o,th){return berth(o,th,'trawler');};
-M.crabber=function(o,th){return berth(o,th,'crabber');};
-M.ore=function(o,th){return berth(o,th,'bulk');};
-M.carousel=function(o,th){return berth(o,th,'cruise');};
-
-/* booth: an office/stand that prepares a batch (customs, ice, leis, gift shop) */
-function booth(o,th,cfg){
-  var d=o.d,w=d.w,g=new T.Group(),hits=[],col=cfg.col;
-  blob(w*1.2,.9,g);
-  rb(w*.9,.06,.7,.02,toon(0xc7bfae),0,.03,0,g);
-  var bodyM=toon(cfg.wall||0xf2f4f6);rb(w*.86,.62,.6,.04,bodyM,0,.37,-.02,g);
-  rb(w*.96,.07,.72,.03,toon(col),0,.72,-.02,g);
-  if(cfg.awn){for(var i=0;i<5;i++){var a=bx(w*.96/5,.02,.32,toon(i%2?0xffffff:col),-w*.48+w*.96/10+i*w*.96/5,.6,.38,g);a.rotation.x=.4;}}
-  var win=bx(w*.62,.26,.01,glass(0x9fd7ff,.55),0,.47,.285,g);bx(w*.7,.03,.12,toon(shade(col,.7)),0,.32,.32,g);
-  var sgn=plane(w*.86,.18,sign(cfg.label,0,col),0,.86,.17,g);
-  var head=sp(.09,toon(0xf3c098),0,.49,.12,g,14);var hat=cy(.09,.1,.05,toon(cfg.hat||0x2a3a4a),0,.57,.12,g,14);
-  var stack=new T.Group();stack.position.set(w*.22,.35,.36);g.add(stack);var pieces=[];
-  for(i=0;i<8;i++){var pc;if(cfg.piece==='ice'){pc=bx(.06,.06,.06,toon(0xeaf8ff,{op:.9}),((i%3)-1)*.065,Math.floor(i/3)*.06,0,stack);}
-    else if(cfg.piece==='lei'){pc=tor(.05,.014,toon(pick([0xff7ab0,0xffd04a,0xff5a3a,0xb57aff])),0,i*.03,0,stack,null,12);pc.rotation.x=Math.PI/2;}
-    else if(cfg.piece==='gift'){pc=rb(.08,.09,.06,.01,toon(pick([0xff79b4,0x46a9e6,0xffc63d])),((i%3)-1)*.09,Math.floor(i/3)*.09,0,stack);}
-    else{pc=bx(.12,.012,.16,toon(i%2?0xffffff:0xf4ecd6),0,i*.014,0,stack);pc.rotation.y=(Math.random()-.5)*.3;}
-    pieces.push(pc);}
-  var stamp=null;if(cfg.piece==='paper'){stamp=new T.Group();stamp.position.set(w*.22,.62,.36);g.add(stamp);cy(.02,.02,.1,toon(0x7a4a26),0,.06,0,stamp,8);cy(.05,.05,.04,toon(0x2da35d),0,0,0,stamp,12);}
-  var lamp=sp(.045,lampM(),-w*.36,.82,.2,g,10);
-  hits.push(hitBox(w,1.1,1,0,.5,0,g,{}));
-  var v={g:g,hits:hits,outP:V3(w*.22,.5,.4),lamp:lamp.material};
-  v.upd=function(o,dt,time){setLamp(v.lamp,batchState(o),time);
-    var show=o.st==='ready'?o.serv:o.st==='brew'?Math.floor((o.t/o.dur)*o.max):0;pieces.forEach(function(p,i){p.visible=i<Math.min(pieces.length,show);});
-    if(stamp){stamp.position.y=.62+(o.st==='brew'?Math.abs(Math.sin(time*9))*.12:.1);}
-    head.position.y=.49+(o.st==='brew'?Math.sin(time*6)*.015:0);
-    if(o.st==='stale'){head.position.x=Math.sin(time*2)*.02;}};
-  return v;
-}
-M.customs=function(o,th){return booth(o,th,{col:0x2da35d,label:'CUSTOMS',piece:'paper',hat:0x1d3a5a});};
-M.icer=function(o,th){return booth(o,th,{col:0x46a9e6,label:'ICE',piece:'ice',hat:0x46a9e6});};
-M.leis=function(o,th){return booth(o,th,{col:0xff79b4,label:'LEIS',piece:'lei',awn:1,hat:0xffd04a,wall:0xfff6e8});};
-M.giftshop=function(o,th){return booth(o,th,{col:0x7a5ad8,label:'GIFTS',piece:'gift',awn:1,hat:0x7a5ad8,wall:0xfff6e8});};
-
-/* tank: a horizontal tank or silo that fills, then hands out loads */
-function tankSt(o,th,cfg){
-  var d=o.d,w=d.w,g=new T.Group(),hits=[],col=cfg.col;
-  blob(w*1.25,.9,g);
-  var fillG=new T.Group(),fill=null,glassM=glass(0xdbeeff,.3);
-  if(cfg.silo){
-    cy(.3,.3,.9,toon(col),-.08,.75,-.05,g,24);cone(.3,.25,toon(col),-.08,.18,-.05,g,24).rotation.x=Math.PI;
-    cone(.32,.18,toon(shade(col,.8)),-.08,1.29,-.05,g,24);[-1,1].forEach(function(s){bx(.04,.35,.04,toon(0x5a6b7a),-.08+s*.24,.16,-.05+.18,g);bx(.04,.35,.04,toon(0x5a6b7a),-.08+s*.24,.16,-.05-.18,g);});
-    var ch=bx(.08,.08,.36,toon(0x5a6b7a),.12,.32,.18,g);ch.rotation.x=.6;
-    bx(.07,.7,.01,glassM,-.08,.75,.255,g);fill=bx(.06,.68,.012,toon(cfg.liq),-.08,.42,.256,g);fill.geometry=geo('fillbar',function(){var q=new T.BoxGeometry(.06,.68,.012);q.translate(0,.34,0);return q;});
-  }else{
-    var tk=cy(.24,.24,w*.8,toon(col),0,.42,-.08,g,24);tk.rotation.z=Math.PI/2;[-1,1].forEach(function(s){var e=sp(.24,toon(col),s*w*.4,.42,-.08,g,18);e.scale.x=.35;bx(.08,.2,.4,toon(0x5a6b7a),s*w*.28,.1,-.08,g);});
-    var pp=cy(.04,.04,.7,toon(0x5a6b7a),-w*.3,.3,.3,g,10);pp.rotation.x=Math.PI/2;cy(.04,.04,.5,toon(0x5a6b7a),-w*.3,.55,.62,g,10);
-    bx(w*.6,.06,.012,glassM,0,.42,.163,g);fill=bx(w*.58,.05,.014,toon(cfg.liq),-w*.29,.42,.164,g);fill.geometry=geo('fillbarH',function(){var q=new T.BoxGeometry(1,.05,.014);q.translate(.5,0,0);return q;});fill.scale.x=w*.58;
-    var gauge=cy(.06,.06,.02,toon(0xffffff),w*.32,.68,.06,g,16);gauge.rotation.x=Math.PI/2;var needle=bx(.006,.05,.006,toon(0xea4b3c),w*.32,.68,.075,g);
-  }
-  var sgn=plane(.7,.17,sign(cfg.label,0,shade(col,.6)),0,cfg.silo?1.1:.78,.2,g);
-  var lamp=sp(.045,lampM(),cfg.silo?.25:w*.42,cfg.silo?.6:.78,.1,g,10);
-  hits.push(hitBox(w,1.3,1,0,.6,0,g,{}));
-  var v={g:g,hits:hits,outP:V3(cfg.silo?.16:w*.18,.0,.42),lamp:lamp.material};
-  v.upd=function(o,dt,time){setLamp(v.lamp,batchState(o),time);var lv=o.st==='brew'?o.t/o.dur:o.st==='ready'?o.serv/o.max:o.st==='stale'?.3:0;
-    if(cfg.silo)fill.scale.y=Math.max(.001,lv);else{fill.scale.x=Math.max(.001,w*.58*lv);if(needle)needle.rotation.z=1.2-lv*2.4;}
-    if(o.st==='stale')fill.material=toon(0x7a6a5a);else fill.material=toon(cfg.liq);};
-  return v;
-}
-M.tank=function(o,th){return tankSt(o,th,{col:0xf2f4f6,liq:0xffc63d,label:'FUEL'});};
-M.oil=function(o,th){return tankSt(o,th,{col:0x3a3f48,liq:0x1e2328,label:'OIL'});};
-M.grain=function(o,th){return tankSt(o,th,{col:0xe8e2d4,liq:0xf2a33a,label:'GRAIN',silo:1});};
-M.oysters=function(o,th){return tankSt(o,th,{col:0x8fd3e6,liq:0x2fa3c9,label:'OYSTERS'});};
-
-/* tag board */
-function tagRoll(t,parent,x){var g=new T.Group();g.position.set(x,0,0);parent.add(g);var T0=TOPS[t];
-  var r=cy(.07,.07,.08,toon(T0.col),0,.12,0,g,16);r.rotation.x=Math.PI/2;cy(.03,.03,.085,toon(0xffffff),0,.12,0,g,10).rotation.x=Math.PI/2;
-  var st=plane(.12,.12,toon(0xffffff,{map:symTex(T0.sym,T0.col)}),0,.27,.045,g);
-  bx(.14,.04,.12,toon(0x5a6b7a),0,.02,0,g);return g;}
-M.rack=function(o,th){
-  var tops=o.tops||[],w=.4+.32*tops.length,g=new T.Group(),hits=[],boxes={};
-  blob(w,.6,g);bx(w,.08,.36,toon(0x2a3a4a),0,.3,0,g);[-1,1].forEach(function(s){bx(.05,.3,.05,toon(0x2a3a4a),s*(w/2-.05),.15,0,g);});
-  var xs=slotXs(tops.length,w-.3);tops.forEach(function(t,i){var b=tagRoll(t,g,xs[i]);b.position.y=.34;boxes[t]=b;var h=hitBox(.3,.7,.6,xs[i],.6,0,g,{top:t});hits.push(h);});
-  var sg=plane(Math.min(w,1.2),.16,sign('TAGS',0,0x2a3a4a),0,.75,-.14,g);
-  return {g:g,hits:hits,boxes:boxes,outP:V3(0,.5,0),upd:function(){}};
-};
 
 /* ================= YARD ================= */
-function stWidth(k,loc){return k==='rack'?.4+.32*topsOf(loc).length:STN[k].w;}
-function buildTray(L,th){
-  clearGroup(trayG);var hits=[],rings=[];
-  L.tray.forEach(function(p,i){
-    var pad=plane(.4,.78,toon(0xffffff,{map:canvasTex(64,128,function(g){g.fillStyle='rgba(0,0,0,0)';g.clearRect(0,0,64,128);g.strokeStyle='#ffd23f';g.lineWidth=6;g.setLineDash([12,8]);g.strokeRect(5,5,54,118);g.fillStyle='#ffd23f';g.font='700 26px '+FD;g.textAlign='center';g.fillText(String.fromCharCode(65+i),32,110);},null,'yardpad'+i),op:.95}),p.x,.008,p.z,trayG);pad.rotation.x=-Math.PI/2;
-    var ring=tor(.32,.025,flat(0xffd23f),p.x,.03,p.z,trayG,null,28);ring.rotation.x=-Math.PI/2;ring.scale.set(1,1.5,1);ring.visible=false;rings.push(ring);
-    hits.push(hitBox(.46,.6,.86,p.x,.3,p.z,trayG,{tray:i}));
+function stWidth(){return 1;}
+function colPadTex(kind,label){return canvasTex(64,128,function(g){g.clearRect(0,0,64,128);var c=kind==='power'?'#5ee39a':kind==='hazmat'?'#ff7a1a':kind==='customs'?'#4fb3ff':'#ffd23f';
+  if(kind==='hazmat'){g.fillStyle='rgba(255,122,26,.25)';g.fillRect(5,5,54,118);g.strokeStyle='rgba(255,122,26,.7)';g.lineWidth=5;for(var y=-60;y<128;y+=20){g.beginPath();g.moveTo(5,y);g.lineTo(59,y+54);g.stroke();}}
+  if(kind==='power'){g.fillStyle='rgba(94,227,154,.2)';g.fillRect(5,5,54,118);}
+  if(kind==='customs'){g.fillStyle='rgba(79,179,255,.25)';g.fillRect(5,5,54,118);}
+  g.strokeStyle=c;g.lineWidth=6;g.setLineDash(kind==='std'?[12,8]:[]);g.strokeRect(5,5,54,118);
+  g.fillStyle=c;g.font='800 26px '+FB;g.textAlign='center';g.fillText(label,32,114);},null,'colpad|'+kind+'|'+label);}
+function buildYard(L,th){
+  clearGroup(trayG);var cols=[];
+  L.cols.forEach(function(c,i){
+    var pad=plane(.44,.8,toon(0xffffff,{map:colPadTex(c.kind,c.kind==='std'?String(i+1):c.kind==='power'?'P':c.kind==='hazmat'?'!':'C'),op:.95}),c.x,.008,c.z,trayG);pad.rotation.x=-Math.PI/2;
+    if(c.kind==='power'){var pl=bx(.08,.12,.06,toon(0x2a3a4a),c.x,.06,c.z-.44,trayG);sp(.025,flat(0x5ee39a),c.x,.13,c.z-.44,trayG,8);}
+    if(c.kind==='hazmat'){[-1,1].forEach(function(s){bx(.02,.32,.8,toon(0xff7a1a),c.x+s*.24,.16,c.z,trayG);});}
+    if(c.kind==='customs'){var bth=new T.Group();bth.position.set(c.x,0,c.z-.62);trayG.add(bth);rb(.36,.36,.26,.03,toon(0xf2f4f6),0,.18,0,bth);bx(.38,.05,.28,toon(0x2f8fd0),0,.38,0,bth);bx(.26,.12,.01,glass(0x9fd7ff,.6),0,.22,.131,bth);}
+    var ring=tor(.3,.022,flat(0xffd23f),c.x,.02,c.z,trayG,null,28);ring.rotation.x=-Math.PI/2;ring.scale.set(1,1.55,1);ring.visible=false;
+    var hit=hitBox(.48,1.7,.95,c.x,.8,c.z,trayG,{col:i});
+    cols.push({x:c.x,z:c.z,kind:c.kind,max:c.max,stack:[],inc:0,hit:hit,ring:ring,insp:0});
   });
   var tb=new T.Group();tb.position.set(L.trash.x,0,L.trash.z);trayG.add(tb);blob(.6,.8,tb);
-  var sk=rb(.42,.24,.66,.04,toon(0x5a6b7a),0,.14,0,tb);bx(.44,.04,.68,toon(0xffc63d),0,.27,0,tb);
-  var lb=plane(.36,.12,toon(0xffffff,{map:labelTex('SCRAP',{w:256,h:90,bg:'#ffc63d',fg:'#2a3a4a'})}),0,.16,.335,tb);
-  hits.push(hitBox(.6,.6,.9,L.trash.x,.3,L.trash.z,trayG,{trash:1}));
-  return {rings:rings,hits:hits,bin:tb};
+  rb(.42,.24,.66,.04,toon(0x5a6b7a),0,.14,0,tb);bx(.44,.04,.68,toon(0xffc63d),0,.27,0,tb);
+  plane(.36,.12,toon(0xffffff,{map:labelTex('SCRAP',{w:256,h:90,bg:'#ffc63d',fg:'#2a3a4a'})}),0,.16,.335,tb);
+  var bh=hitBox(.6,.7,.9,L.trash.x,.3,L.trash.z,trayG,{trash:1});
+  return {cols:cols,bin:tb,binHit:bh};
 }
 
 /* ================= DRIVERS, TRUCKS, TRAINS, PASSENGERS ================= */
@@ -1263,209 +1030,288 @@ function shotOf(obj,el,yaw){
   TR.render(TS,TC);var url='';try{url=TR.domElement.toDataURL('image/png');}catch(e){}
   holder.remove(obj);TS.remove(holder);return url;
 }
-function iconOf(base,comps){var k=rkey(base,comps||[]);if(ICON[k]!=null)return ICON[k];var it=makeItem(base,comps||[]);return ICON[k]=shotOf(it.g,1.1,-.5);}
-function iconStation(k,ind){
-  var key='st:'+k+':'+ind;if(ICON[key]!=null)return ICON[key];
-  var d=STN[k],o={k:k,d:d,kind:d.kind,slots:[{st:'empty'},{st:'empty'}],st:'ready',serv:3,max:4,t:0,dur:1,tops:Object.keys(IND[ind].tops).slice(0,3),x:0,ship:{st:'dock',cargo:6,max:8,t:0}};
-  var v=M[k](o,IND[ind].theme);try{v.upd(o,0,0);}catch(e){}
-  return ICON[key]=shotOf(v.g,.75);
-}
-function iconTop(t){var key='tp:'+t;if(ICON[key]!=null)return ICON[key];var g=new T.Group();tagRoll(t,g,0);return ICON[key]=shotOf(g,.6);}
+function iconBox(t,hold){var k='bx:'+t+(hold?'h':'');if(ICON[k]!=null)return ICON[k];var b=makeBox(t,{hold:hold});return ICON[k]=shotOf(b.g,1.15,-.5);}
+function iconOf(t){return iconBox(t);}
+function iconUpg(k){var key='up:'+k;if(ICON[key]!=null)return ICON[key];var g=new T.Group(),th=IND.container.theme;
+  if(k==='cranes'||k==='speed'){var c=makeCrane(th,-.5,.9,1);g.add(c.g);}
+  else if(k==='berth'){var sh=makeShipG('container',4);g.add(sh.g);}
+  else if(k==='rail'){var tr=makeTrain(1);g.add(tr.root);}
+  else if(k==='gates'){var tk=makeTruck(null,{});g.add(tk.root);}
+  else{var t=k==='power'?'food':k==='hazmat'?'fuel':k==='customs'?'elec':'gen';for(var i=0;i<(k==='height'?3:k==='cols'?1:1);i++){var b=makeBox(t,{hold:k==='customs'});b.g.position.y=i*CH;g.add(b.g);}
+    if(k==='cols'){var b2=makeBox('toys');b2.g.position.x=.36;g.add(b2.g);var b3=makeBox('elec');b3.g.position.x=-.36;g.add(b3.g);}}
+  return ICON[key]=shotOf(g,.75);}
 
-/* ================= SHIFT ================= */
+/* ================= SHIFT: the stacking yard ================= */
 var SH=null,paused=true,W=1,H=1;
 function curLoc(){return G.locs[G.act];}
 function distOf(loc){return district(loc.city,loc.did);}
-function topsOf(loc){return Object.keys(IND[loc.ind].tops).filter(function(t){return loc.tops[t];});}
-function stList(loc){var l=IND[loc.ind].stations.filter(function(k){return k==='rack'?topsOf(loc).length>0:!!loc.st[k];});
-  return l.filter(function(k){return STN[k].ship;}).concat(l.filter(function(k){return !STN[k].ship;}));}
-function menuOf(loc){var have={};stList(loc).forEach(function(k){if(STN[k].makes)have[STN[k].makes]=1;});topsOf(loc).forEach(function(t){have[t]=1;});
-  return IND[loc.ind].R.filter(function(r){return have[r.base]&&r.comps.every(function(c){return have[c];});});}
+function cargoTypes(loc){return IND[loc.ind].cargo.filter(function(t){var C=CT[t];return C&&G.lvl>=C.lvl&&(!C.reefer||U(loc,'power')>0)&&(!C.hazmat||U(loc,'hazmat')>0);});}
+function avgVal(loc){var l=cargoTypes(loc);if(!l.length)return 3;var s=0;l.forEach(function(t){s+=CT[t].val;});return s/l.length;}
 
-/* layout: trucks back into bays at the back, the yard in the middle, berths and ships on the quay in front */
+/* layout: truck lanes at the back, the stacking yard in the middle, ships moored in front; gantries span it all */
 function layout(loc,aspect){
-  var sz=SIZES[loc.size],portrait=aspect<.95,rowMax=portrait?3.7:9.4,keys=stList(loc),rows=[[]],acc=0;
-  keys.forEach(function(k){var w=stWidth(k,loc);if(rows[rows.length-1].length&&acc+w>rowMax){rows.push([]);acc=0;}rows[rows.length-1].push(k);acc+=w+.42;});
-  var st=[],maxW=0,rowZ=[],rowW=[],rowX=[];
-  rows.forEach(function(r,ri){var tw=r.reduce(function(s,k){return s+stWidth(k,loc);},0)+.42*(r.length-1);maxW=Math.max(maxW,tw);var x=-tw/2,z=.35+ri*2.25;rowZ.push(z);rowW.push(tw);rowX.push(0);
-    r.forEach(function(k){var w=stWidth(k,loc);st.push({k:k,x:x+w/2,z:z,row:ri});x+=w+.42;});});
-  var nT=sz.tray,tg=.52,tray=[],tz=-1.45;
-  for(var i=0;i<nT;i++)tray.push({x:-(nT*tg)/2+tg/2+i*tg-.3,z:tz});
-  var trash={x:tray[nT-1].x+.72,z:tz};
-  var nS=sz.spots,bayW=1.05,sgap=Math.min(1.25,(portrait?4.4:8.8)/nS),spots=[],dspots=[];
-  for(i=0;i<nS;i++)spots.push({x:(i-(nS-1)/2)*sgap,z:-2.75});
-  var rail=IND[loc.ind].rail&&loc.size>=3;if(rail)dspots.push({x:0,z:-4.95});
-  var hw=Math.max(maxW/2,(trash.x-tray[0].x)/2+.6,(nS-1)/2*sgap+.7,portrait?2.3:3)+.4;
-  return {st:st,tray:tray,trash:trash,spots:spots,dspots:dspots,tables:[],express:null,rx:hw+3.2,hw:hw,zF:tz+.5,rows:rows.length,rowZ:rowZ,rowW:rowW,rowX:rowX,
-    portrait:portrait,qEdge:.95,roadZ:-3.9,railZ:-4.95,backZ:rail?-5.9:-5.1,bayW:Math.min(1,sgap*.9)};
+  var portrait=aspect<.95,H0=U(loc,'height'),nStd=U(loc,'cols'),nPow=Math.min(U(loc,'power'),nStd),nHz=U(loc,'hazmat'),nCu=U(loc,'customs');
+  var kinds=[],i;for(i=0;i<nStd;i++)kinds.push(i<nPow?'power':'std');for(i=0;i<nHz;i++)kinds.push('hazmat');for(i=0;i<nCu;i++)kinds.push('customs');
+  var gap=.52,perRow=portrait?7:99,rows=Math.ceil(kinds.length/perRow),cols=[];
+  kinds.forEach(function(k,i){var r=Math.floor(i/perRow),inRow=Math.min(perRow,kinds.length-r*perRow),ci=i-r*perRow;cols.push({x:(ci-(inRow-1)/2)*gap-.3,z:-1.35+r*.95,kind:k,max:k==='customs'?1:H0});});
+  var lz=cols[cols.length-1].z,lastRow=cols.filter(function(c){return c.z===lz;}),trash={x:Math.max.apply(null,lastRow.map(function(c){return c.x;}))+.62,z:lz};
+  var nG=U(loc,'gates'),sgap=Math.min(1.2,(portrait?4.4:8.8)/nG),spots=[],dspots=[];
+  for(i=0;i<nG;i++)spots.push({x:(i-(nG-1)/2)*sgap,z:-2.75});
+  var rail=U(loc,'rail')>0;if(rail)dspots.push({x:0,z:-5.25});
+  var nB=U(loc,'berth'),shipL=6*.38+.95,berths=[];for(i=0;i<nB;i++)berths.push(portrait?{x:0,z:1.25+(rows-1)*.95+i*1.15}:{x:nB===1?0:(i?1:-1)*(shipL/2+.2),z:1.25+(rows-1)*.95});
+  var yW=Math.max.apply(null,cols.map(function(c){return Math.abs(c.x);}))+.6;
+  var hw=Math.max(yW,trash.x+.4,(nG-1)/2*sgap+.7,(portrait?1:nB)*shipL/2+.2,portrait?2.3:3)+.3;
+  return {cols:cols,trash:trash,spots:spots,dspots:dspots,berths:berths,tray:[{x:0,z:-1.35}],tables:[],rows:1,rowZ:[.35],rowW:[0],rowX:[0],
+    rx:hw+3.2,hw:hw,portrait:portrait,qEdge:.6+(rows-1)*.95,roadZ:-3.95,railZ:-5.25,backZ:rail?-6.2:-5.2,bayW:Math.min(1,sgap*.9),zBack:-3.2,zFront:1.7+(rows-1)*.95+(portrait&&nB>1?1.15:0),craneTop:Math.max(1.6,(H0+1)*CH+.6),yardRows:rows};
 }
 
-function stTime(o){var lv=(SH.loc.st[o.k]||{s:0}).s;return o.d.time*Math.pow(.86,lv)*Math.pow(.95,G.hq.grind||0)*holdSpeed(o.k)*(SH&&SH.slow>0?1.35:1);}
-function burnTime(o){return o.d.burn*(['reefer','trawler','crabber'].indexOf(o.k)>=0?Math.pow(1.08,holdLv('cold')):1);}
-function mkStation(k,x,z,loc,th){
-  var d=STN[k],lv=loc.st[k]||{s:0,c:0},o={k:k,d:d,kind:d.kind,x:x,z:z,claim:null};
-  if(d.kind==='cooker'){o.slots=[];var n=d.slots[Math.min(lv.c,d.slots.length-1)];for(var i=0;i<n;i++)o.slots.push({st:'empty',t:0,dur:1,it:null,claim:null});
-    if(d.ship)o.ship={st:'in',t:rnd(0,.8),cargo:0,max:1,dep:1,depMax:1,mega:false};}
-  if(d.kind==='batch'){o.st='empty';o.t=0;o.dur=1;o.serv=0;o.max=d.serv[Math.min(lv.c,d.serv.length-1)];}
-  if(d.kind==='rack')o.tops=topsOf(loc);
-  if(o.ship)loadShip(o);
-  o.v=M[k](o,th);o.v.g.position.set(x,0,z);stG.add(o.v.g);o.v.g.updateMatrixWorld(true);
-  o.v.hits.forEach(function(h){h.userData.st=o;});
-  return o;
+/* ---------- ships ---------- */
+function pickType(loc){var l=cargoTypes(loc);if(!l.length)return 'gen';var w=l.map(function(t){return CT[t].hazmat?.45:CT[t].reefer?.8:1;}),tot=w.reduce(function(a,b){return a+b;},0),r=Math.random()*tot;for(var i=0;i<l.length;i++){r-=w[i];if(r<=0)return l[i];}return l[0];}
+function moveTime(dist){return (.95+dist*.16)*Math.pow(.88,U(SH.loc,'speed'))*Math.pow(.95,G.hq.grind||0)*(SH.slow>0?1.3:1);}
+function newShip(bi,mega){
+  var loc=SH.loc,D=SH.D,b=SH.L.berths[bi],bays=Math.min(6,2+U(loc,'gates')+Math.floor(loc.days/4)),tiers=Math.min(U(loc,'height')+1,3+(loc.days>=5?1:0));
+  var sh={bi:bi,st:'in',t:0,bays:[],mega:!!mega,x:b.x,z:b.z};
+  var shp=makeShipG(loc.ind,6,mega);shp.g.position.set(b.x-8,0,b.z);stG.add(shp.g);sh.v=shp;
+  var n=0,hp=U(loc,'customs')>0?.16*(D.hold||1):0;
+  for(var i=0;i<6;i++){sh.bays.push([]);if(i>=bays&&!mega)continue;var h=mega?tiers:Math.max(1,Math.round(rnd(tiers*.45,tiers)));
+    for(var k=0;k<h;k++){var bo=makeBox(pickType(loc),{hold:Math.random()<hp});shp.g.add(bo.g);bo.g.position.set(shp.bayX(i),shp.deckY+k*CH,0);sh.bays[i].push(bo);n++;}}
+  sh.max=n;sh.hits=sh.bays.map(function(_,i){return hitBox(.38,1.4,.9,shp.bayX(i),.6,0,shp.g,{ship:sh,bay:i});});
+  sh.dep=sh.depMax=(22+n*moveTime(2.6)*1.75)*Math.pow(1.06,holdLv('line'))*(1+Math.max(0,.25-.04*loc.days))*(mega?1.25:1);
+  return sh;
 }
-function slotW(o,i){return o.v.g.localToWorld(o.v.slotP[i].clone());}
-function outW(o){return o.v.g.localToWorld(o.v.outP.clone());}
-function trayW(i){var p=SH.L.tray[i];return V3(p.x,0,p.z);}
-function freeTray(){for(var i=0;i<SH.tray.length;i++)if(!SH.tray[i])return i;return -1;}
+function shipCount(sh){var n=0;sh.bays.forEach(function(b){n+=b.length;});return n;}
+function shipLeave(sh,turned){
+  if(sh.st!=='dock')return;sh.st='out';sh.t=0;var pm=priceMult(SH.loc),left=shipCount(sh);
+  if(turned){var b=avgVal(SH.loc)*pm*sh.max*.25*(sh.mega?2:1);G.cash+=b;SH.loc.earned+=b;SH.s.bonusShip+=b;SH.s.ships++;var p=Math.round(sh.max*8*(sh.mega?2:1)/5)*5;SH.s.pts+=p;
+    var wp=sh.v.g.position.clone().add(V3(0,1.2,0));popWorld(wp,'Turnaround! +'+fmt(b)+'<small>+'+p+' pts</small>','tip');coinsFrom(wp,4);addXP(b*.4/xpScale(SH.loc));repAdd(SH.loc,.02);sfx.horn();}
+  else if(left>0){var f=avgVal(SH.loc)*pm*left*.15;G.cash-=f;SH.s.fine+=f;SH.s.missed++;repAdd(SH.loc,-Math.min(.12,.015*left));toast('Ship sailed with '+left+' aboard · demurrage -'+fmt(f),'bad');sfx.horn();shakeCam(.05);
+    sh.bays.forEach(function(bay){bay.forEach(function(bo){bo.res=false;});});}
+  SH.queue=SH.queue.filter(function(j){if(j.from.k==='ship'&&j.from.s===sh&&!j.grabbed){cancelJob(j);return false;}return true;});
+  if(SH.sel&&SH.sel.k==='ship'&&SH.sel.s===sh)SH.sel=null;
+}
+function updShips(dt,time){
+  SH.ships.forEach(function(sh,i){
+    sh.t+=dt;var g=sh.v.g,bx0=SH.L.berths[sh.bi].x;
+    if(sh.st==='in'){g.position.x=lerp(bx0-8,bx0,easeOut(clamp(sh.t/1.8,0,1)));if(sh.t>=1.8){sh.st='dock';sh.t=0;sfx.horn();}}
+    else if(sh.st==='dock'){g.position.x=bx0;if(!(SH.ice>0))sh.dep-=dt;var busy=SH.cranes.some(function(c){return c.job&&c.job.from.k==='ship'&&c.job.from.s===sh&&!c.job.grabbed;});
+      if(shipCount(sh)===0&&!busy)shipLeave(sh,true);else if(sh.dep<=0&&!busy)shipLeave(sh,false);}
+    else if(sh.st==='out'){g.position.x=lerp(bx0,bx0+9,easeIO(clamp(sh.t/1.4,0,1)));if(sh.t>=1.4){sh.st='away';sh.t=0;sh.away=rnd(7,12)*(SH.loc.days<1?.8:1);g.visible=false;}}
+    else if(sh.st==='away'){if(SH.ice>0||SH.phase!=='open')return;if(sh.t>=sh.away){stG.remove(g);var mega=SH.megaNext===i;if(mega){SH.megaNext=null;banner('Mega ship!','Empty it in time for a huge bonus','hot');}SH.ships[i]=newShip(sh.bi,mega);}}
+    if(sh.st!=='away'){g.position.y=Math.sin(time*1.2+i)*.025-.02;g.rotation.z=Math.sin(time*.9+i)*.01;}
+  });
+}
 
-/* ---------- ships: dock with a load of cargo, sail on a timer, turnaround bonus if you empty them ---------- */
-function loadShip(o,mega){
-  var loc=(SH&&SH.loc)||curLoc(),lv=(loc.st[o.k]||{c:0}).c,line=Math.pow(1.08,holdLv('line'));
-  var n=Math.round((8+lv*2+Math.min(4,Math.floor(loc.days*.3)))*line*(mega?2:1));
-  var per=o.d.time*Math.pow(.86,(loc.st[o.k]||{s:0}).s)/Math.max(1,o.slots.length);
-  var dep=(14+n*(per+2.4)*1.45)*Math.pow(1.06,holdLv('line'))*(mega?1.8:1);
-  o.ship.cargo=o.ship.max=n;o.ship.dep=o.ship.depMax=dep;o.ship.mega=!!mega;
-}
-function shipLeave(o,turned){
-  var sh=o.ship;if(sh.st!=='dock')return;sh.st='out';sh.t=0;
-  if(turned){var b=avgPrice(SH.loc)*priceMult(SH.loc)*sh.max*.22*(sh.mega?2.5:1);G.cash+=b;SH.loc.earned+=b;SH.s.bonusShip+=b;SH.s.ships++;
-    var p=Math.round(sh.max*25*(sh.mega?2:1)/5)*5;SH.s.pts+=p;var wp=o.v.g.localToWorld(V3(0,1.1,1.3));popWorld(wp,'Turnaround! +'+fmt(b)+'<small>+'+p+' pts</small>','tip');coinsFrom(wp,4);
-    addXP(b*.4/xpScale(SH.loc));repAdd(SH.loc,.02);sfx.horn();}
-  else if(sh.cargo>0){SH.s.missed++;toast('Ship sailed with '+sh.cargo+' load'+(sh.cargo>1?'s':'')+' aboard','bad');sfx.horn();}
-}
-function updShip(o,dt){
-  var sh=o.ship;if(!sh)return;sh.t+=dt;
-  if(sh.st==='in'){if(sh.t>=1.6){sh.st='dock';sh.t=0;sfx.horn();}}
-  else if(sh.st==='dock'){
-    if(!(SH.ice>0))sh.dep-=dt;
-    var busy=o.slots.some(function(s){return s.st==='cook';});
-    if(sh.cargo<=0&&!busy)shipLeave(o,true);else if(sh.dep<=0&&!busy)shipLeave(o,false);
-  }
-  else if(sh.st==='out'){if(sh.t>=1.4){sh.st='away';sh.t=0;sh.away=SH.ice>0?99:rnd(1.2,2.2);}}
-  else if(sh.st==='away'){if(SH.ice>0)return;if(sh.t>=sh.away&&SH.phase==='open'){var mega=SH.megaNext===o;if(mega)SH.megaNext=null;loadShip(o,mega);sh.st='in';sh.t=0;if(mega)banner('Mega ship!','Empty it in time for a huge bonus','hot');}}
-}
-function shipReady(o){return !o.ship||(o.ship.st==='dock'&&o.ship.cargo>0);}
-
+/* ---------- start / teardown ---------- */
 function startShift(){
   var loc=curLoc();
   if(SH)teardown();
   var L=layout(loc,W/H),D=distOf(loc),th=IND[loc.ind].theme;
-  SH={loc:loc,D:D,L:L,th:th,t:0,len:DAYLEN,phase:'open',cust:[],spots:L.spots.map(function(){return null;}),dspots:L.dspots.map(function(){return null;}),st:[],tray:L.tray.map(function(){return null;}),sel:-1,next:2.2,pend:[],bots:[],
-    menu:menuOf(loc),streak:0,bestStreak:0,cid:1,gull:null,ev:{},boost:1,burst:0,burstT:0,heat:false,storm:0,slow:0,ice:0,megaNext:null,
-    s:{sales:0,tips:0,cogs:0,wages:0,rent:0,served:0,items:0,walk:0,turned:0,waste:0,xp:0,fame:0,pts:0,perf:0,rep0:loc.rep,vip:0,goal:dayGoal(loc),fine:0,passive:0,ships:0,missed:0,bonusShip:0,trains:0,day:loc.days+1,locName:loc.name}};
+  SH={loc:loc,D:D,L:L,th:th,t:0,len:DAYLEN,phase:'open',cust:[],spots:L.spots.map(function(){return null;}),dspots:L.dspots.map(function(){return null;}),
+    ships:[],cranes:[],queue:[],sel:null,next:2.6,pend:[],bots:[],streak:0,bestStreak:0,cid:1,gull:null,ev:{},boost:1,burst:0,burstT:0,heat:false,storm:0,slow:0,ice:0,megaNext:null,
+    s:{sales:0,tips:0,cogs:0,wages:0,rent:0,served:0,items:0,walk:0,turned:0,waste:0,xp:0,fame:0,pts:0,perf:0,rep0:loc.rep,vip:0,goal:dayGoal(loc),fine:0,passive:0,ships:0,missed:0,bonusShip:0,trains:0,moves:0,spoiled:0,day:loc.days+1,locName:loc.name}};
   buildShop(loc,L);clearGroup(stG);
-  L.st.forEach(function(p){SH.st.push(mkStation(p.k,p.x,p.z,loc,th));});
-  SH.tv=buildTray(L,th);SH.tables=[];
-  mkBots();initEvents();
-  fitCamera();
+  var y=buildYard(L,th);SH.cols=y.cols;SH.bin=y.bin;SH.binHit=y.binHit;
+  for(var i=0;i<U(loc,'cranes');i++){var c=makeCrane(th,L.zBack,L.zFront,L.craneTop);c.set(i?1.2:-.6,0,L.craneTop-.45);stG.add(c.g);SH.cranes.push(c);}
+  L.berths.forEach(function(b,bi){var sh=newShip(bi);sh.t=-bi*.6;SH.ships.push(sh);});
+  SH.selMesh=new THREE.Mesh(new THREE.BoxGeometry(CW+.08,CH+.08,CL+.08),new THREE.MeshBasicMaterial({color:0xffd23f,transparent:true,opacity:.42,depthWrite:false}));itemG.add(SH.selMesh);SH.selMesh.visible=false;
+  mkBots();initEvents();fitCamera();
   paused=false;G.rebuild=false;
   banner('Day '+(loc.days+1),D.name+' · '+IND[loc.ind].name,'good');
-  if(SH.heat)setTimeout(function(){if(SH&&SH.heat)banner('Heatwave','Everyone wants it cold today','hot');},2600);
+  if(SH.heat)setTimeout(function(){if(SH&&SH.heat)banner('Heatwave','Reefers spoil twice as fast today','hot');},2600);
   sfx.bell();uiReset();
 }
-function teardown(){clearGroup(itemG);clearGroup(custG);TW.length=0;}
-function shiftHits(){var a=[];SH.st.forEach(function(o){a=a.concat(o.v.hits);});a=a.concat(SH.tv.hits);if(SH.gull)a.push(SH.gull.hit);return a;}
+function teardown(){clearGroup(itemG);clearGroup(custG);clearGroup(stG);TW.length=0;}
+function shiftHits(){var a=SH.cols.map(function(c){return c.hit;});SH.ships.forEach(function(sh){if(sh.st==='dock')a=a.concat(sh.hits);});SH.cust.forEach(function(c){if(c.hit&&c.state==='wait')a.push(c.hit);});a.push(SH.binHit);if(SH.gull)a.push(SH.gull.hit);return a;}
 
-/* ---------- orders and patience ---------- */
-function dayGoal(loc){var D=distOf(loc);return Math.round(SIZES[loc.size].dem*DAYLEN/60*.95*avgPrice(loc)*priceMult(loc)*(D.demand||1)*TM(D.tier).dm*(1+Math.min(1.6,loc.days*.06)));}
-function diff(){return Math.max(.55,1-.014*SH.loc.days-.006*(G.lvl-1));}
-function prefW(r){var w=r.w,D=SH.D,pf=D.pref||{};r.tags.forEach(function(t){w*=(pf[t]||1);if(SH.heat){if(t==='cold')w*=2.5;if(t==='bulk')w*=.6;}});return w;}
-function makeOrder(rail){
-  var D=SH.D,loc=SH.loc,menu=SH.menu,n=1,r=Math.random();
-  var multi=.28+Math.min(.28,loc.days*.02)+(D.big?.25:0);
-  if(r<multi)n=2;if(r<multi*.4)n=3;if(r<multi*.12)n=4;
-  if(loc.days<1&&G.lvl<3)n=Math.min(n,2);
-  if(rail)n=Math.min(4,3+(Math.random()<.4?1:0));
-  n=Math.min(n,rail?4:3,SH.tray.length+1);
-  var out=[];for(var i=0;i<n;i++){out.push(wpick(menu,function(x){return prefW(x)*(out.indexOf(x)>=0?.45:1);}));}
-  return out;
-}
-function patienceFor(order,c){
-  var loc=SH.loc,D=SH.D,n=order.length,comps=0;order.forEach(function(r){comps+=r.comps.length;});
-  return (1+Math.max(0,.16-.032*loc.days))*(13+6.5*n+2.2*comps)*(D.pat||1)*(1+.06*loc.decor)*(loc.staff.host?1.15:1)*Math.pow(1.05,holdLv('trucking'))*diff()*PRICE_T[loc.price+1].pat*(c.vip?.8:1);
-}
+/* ---------- goals and patience ---------- */
+function gatesDem(loc){return 4.6+2.4*U(loc,'gates');}
+function dayGoal(loc){var D=distOf(loc);return Math.round(gatesDem(loc)*DAYLEN/60*1.3*avgVal(loc)*priceMult(loc)*(D.demand||1)*TM(D.tier).dm*(1+Math.min(2,loc.days*.1))*(loc.days<2?.78:1));}
+function diff(){return Math.max(.6,1-.012*SH.loc.days-.005*(G.lvl-1));}
+function patienceFor(n,c){var loc=SH.loc,D=SH.D;
+  return (1+Math.max(0,.2-.04*loc.days))*(24+11*(n-1))*(D.pat||1)*(1+.05*loc.decor)*(loc.staff.host?1.15:1)*Math.pow(1.05,holdLv('trucking'))*diff()*PRICE_T[loc.price+1].pat*(c.vip?.8:1);}
 
-/* ---------- trucks, trains and passengers ---------- */
+/* ---------- where things sit ---------- */
+function colTopY(c,extra){return (c.stack.length+(extra||0))*CH;}
+function boxWorld(b){return b.g.getWorldPosition(V3(0,0,0));}
+function deliverable(b){return !b.spoiled&&(!b.hold||b.cleared);}
+function topFree(stack){for(var i=stack.length-1;i>=0;i--){if(!stack[i].res)return {b:stack[i],depth:stack.length-1-i};}return null;}
+function openWants(){var w={};SH.cust.forEach(function(c){if(c.state!=='wait'&&c.state!=='in')return;c.items.forEach(function(x){if(!x.done&&!x.inc)w[x.t]=(w[x.t]||0)+1;});});return w;}
+function available(){var a={};SH.cols.forEach(function(c){c.stack.forEach(function(b){if(!b.res&&!b.spoiled)a[b.t]=(a[b.t]||0)+1;});});SH.ships.forEach(function(sh){if(sh.st!=='dock'&&sh.st!=='in')return;sh.bays.forEach(function(bay){bay.forEach(function(b){if(!b.res)a[b.t]=(a[b.t]||0)+1;});});});return a;}
+
+/* ---------- crane jobs ---------- */
+function canPlace(b,c){if(b.spoiled)return 'Spoiled cargo can only go in the scrap skip.';
+  if(c.stack.length+c.inc>=c.max)return 'That column is full.';
+  if(CT[b.t].hazmat&&c.kind!=='hazmat')return 'Hazmat only goes in the hazmat bay.';
+  if(!CT[b.t].hazmat&&c.kind==='hazmat')return 'The hazmat bay is for fuel and oil only.';
+  if(c.kind==='customs'&&!(b.hold&&!b.cleared))return 'The customs lane is for containers on hold.';
+  return '';}
+function enqueue(from,to,box,silent){
+  if(SH.queue.length>=6){if(!silent){toast('The crane queue is full.','bad');sfx.nope();}return false;}
+  var j={from:from,to:to,box:box};box.res=true;
+  if(to.k==='col')SH.cols[to.i].inc++;if(to.k==='truck')to.c.items[to.j].inc=true;
+  SH.queue.push(j);if(!silent){sfx.sel();tutNote('queue');}return true;}
+function cancelJob(j){j.box.res=false;if(j.to.k==='col')SH.cols[j.to.i].inc=Math.max(0,SH.cols[j.to.i].inc-1);if(j.to.k==='truck'&&j.to.c.items[j.to.j])j.to.c.items[j.to.j].inc=false;}
+function srcStack(f){return f.k==='col'?SH.cols[f.i].stack:f.s.bays[f.b];}
+function jobReady(j){var st=srcStack(j.from);if(st[st.length-1]!==j.box)return false;if(j.from.k==='ship'&&j.from.s.st!=='dock')return false;if(j.to.k==='truck'&&(j.to.c.state!=='wait'||j.to.c.paid))return false;return true;}
+function jobDead(j){var st=srcStack(j.from);if(st.indexOf(j.box)<0)return true;if(j.to.k==='truck'&&(j.to.c.state==='out'||j.to.c.paid))return true;if(j.from.k==='ship'&&j.from.s.st!=='dock'&&j.from.s.st!=='in')return true;return false;}
+function dstPos(to){if(to.k==='col'){var c=SH.cols[to.i];return V3(c.x,colTopY(c),c.z);}
+  if(to.k==='truck'){var cu=to.c;if(cu.kind==='train')return cu.v.carOf(to.j).localToWorld(V3(0,.29,0));var lp=cu.v.loadPos(to.j,cu.items.length);return (cu.v.bed||cu.v.body||cu.v.root).localToWorld(lp.clone());}
+  return SH.bin.position.clone().add(V3(0,.3,0));}
+function updCranes(dt){
+  SH.queue=SH.queue.filter(function(j){if(!j.taken&&jobDead(j)){cancelJob(j);return false;}return true;});
+  SH.cranes.forEach(function(cr){
+    if(!cr.job){var j=null;for(var i=0;i<SH.queue.length;i++){var q=SH.queue[i];if(q.taken||!jobReady(q))continue;
+        if(SH.cranes.length>1){var other=SH.cranes.filter(function(o){return o!==cr&&o.job;})[0];if(other){var qx=boxWorld(q.box).x;if(Math.abs(qx-other.x)<.9)continue;}}
+        j=q;break;}
+      if(!j){cr.lamp.emissive.setHex(0x222222);cr.idle=(cr.idle||0)+dt;if(cr.idle>.8){var ci=SH.cranes.indexOf(cr),xs=SH.cols.map(function(c){return c.x;}),px=ci?SH.L.trash.x+.55:Math.min.apply(null,xs)-.6,k0=Math.min(1,dt*2.5);cr.set(lerp(cr.x,px,k0),lerp(cr.z,SH.L.cols[0].z-.9,k0),lerp(cr.y,SH.L.craneTop-.45,k0));}return;}
+      cr.idle=0;
+      j.taken=true;cr.job=j;j.t=0;var sp0=boxWorld(j.box),dp=dstPos(j.to);j.src=sp0;j.dst=dp;j.c0={x:cr.x,z:cr.z,y:cr.y};
+      j.dur=moveTime(Math.abs(cr.x-sp0.x)+Math.abs(cr.z-sp0.z)*.6)*.55+moveTime(Math.abs(sp0.x-dp.x)+Math.abs(sp0.z-dp.z)*.6);j.grabbed=false;cr.lamp.emissive.setHex(0xffb21f);}
+    var j2=cr.job;j2.t+=dt;var k=clamp(j2.t/j2.dur,0,1),Hs=SH.L.craneTop-.35,s=j2.src,d=j2.dst,c0=j2.c0;
+    if(j2.grabbed&&j2.to.k==='truck'&&j2.to.c.state==='wait'){d=j2.dst=dstPos(j2.to);}
+    if(k<.24){var a=easeIO(k/.24);cr.set(lerp(c0.x,s.x,a),lerp(c0.z,s.z,a),lerp(c0.y,Hs,Math.min(1,a*2)));}
+    else if(k<.36){cr.set(s.x,s.z,lerp(Hs,s.y+CH+.02,easeIO((k-.24)/.12)));}
+    else if(k<.48){if(!j2.grabbed)grab(cr,j2);cr.set(s.x,s.z,lerp(s.y+CH+.02,Hs,easeIO((k-.36)/.12)));}
+    else if(k<.82){var b2=easeIO((k-.48)/.34);cr.set(lerp(s.x,d.x,b2),lerp(s.z,d.z,b2),Hs);}
+    else if(k<.95){cr.set(d.x,d.z,lerp(Hs,d.y+CH+.02,easeIO((k-.82)/.13)));}
+    else{if(!j2.done)release(cr,j2);cr.set(d.x,d.z,lerp(d.y+CH+.02,d.y+CH+.4,(k-.95)/.05));}
+    if(k>=1){cr.job=null;var qi=SH.queue.indexOf(j2);if(qi>=0)SH.queue.splice(qi,1);}
+  });
+}
+function grab(cr,j){j.grabbed=true;var st=srcStack(j.from),i=st.indexOf(j.box);if(i>=0)st.splice(i,1);var b=j.box;cr.spreader.add(b.g);b.g.position.set(0,-CH-.02,0);b.g.rotation.set(0,0,0);b.g.scale.setScalar(1);sfx.clunk();
+  if(SH.sel&&SH.sel.b===b)SH.sel=null;}
+function release(cr,j){j.done=true;var b=j.box,t=j.to;cr.spreader.remove(b.g);SH.s.moves++;b.res=false;
+  if(t.k==='col'){var c=SH.cols[t.i];c.inc=Math.max(0,c.inc-1);if(c.stack.length>=c.max){scrapBox(b);toast('No room — container scrapped','bad');return;}itemG.add(b.g);b.g.position.set(c.x,c.stack.length*CH,c.z);c.stack.push(b);squash(b.g);sfx.clunk();if(c.kind==='customs')c.insp=0;}
+  else if(t.k==='truck')loadOnto(t.c,t.j,b);
+  else scrapBox(b);}
+function scrapBox(b){itemG.add(b.g);b.g.position.copy(SH.bin.position).add(V3(0,.5,0));fly(b.g,SH.bin.position.clone().add(V3(0,.05,0)),.25,0,function(){itemG.remove(b.g);squash(SH.bin);});
+  var c=b.spoiled?CT[b.t].val*priceMult(SH.loc)*.2:CT[b.t].val*priceMult(SH.loc)*.4;G.cash-=c;SH.s.cogs+=c;SH.s.waste++;SH.s.pts=Math.max(0,SH.s.pts-(b.spoiled?3:10));sfx.bin();}
+function loadOnto(c,j,b){var x=c.items[j];x.inc=false;if(c.state!=='wait'||c.paid){scrapBox(b);return;}
+  if(c.kind==='train'){var car=c.v.carOf(j);car.add(b.g);b.g.position.set(0,.29,0);b.g.rotation.set(0,Math.PI/2,0);}
+  else{var h=c.v.bed||c.v.body||c.v.root;h.add(b.g);b.g.position.copy(c.v.loadPos(j,c.items.length));b.g.rotation.set(0,0,0);if(c.kind==='person')b.g.scale.setScalar(.55);}
+  x.done=true;c.dirty=true;SH.s.items++;if(c.v.hop)c.v.hop();sfx.serve();tutNote('serve');
+  if(c.items.every(function(q){return q.done;}))payFull(c);}
+
+/* ---------- player input ---------- */
+function selectFrom(ref){var st=srcStack(ref),tf=topFree(st);if(!tf||tf.depth>0){if(st.length&&st[st.length-1].res)toast('That one is already queued.');sfx.nope();return;}
+  SH.sel={k:ref.k,i:ref.i,s:ref.s,bay:ref.b,b:tf.b};sfx.sel();tutNote('sel');}
+function selRef(){var s=SH.sel;return s.k==='col'?{k:'col',i:s.i}:{k:'ship',s:s.s,b:s.bay};}
+function tapCol(i){
+  var c=SH.cols[i];
+  if(SH.sel){if(SH.sel.k==='col'&&SH.sel.i===i){SH.sel=null;sfx.sel();return;}
+    var b=SH.sel.b,why=canPlace(b,c);if(why){toast(why,'bad');sfx.nope();return;}
+    if(enqueue(selRef(),{k:'col',i:i},b))SH.sel=null;return;}
+  if(!c.stack.length){toast('Empty column. Pick a container from the ship first.');return;}
+  selectFrom({k:'col',i:i});
+}
+function tapShip(sh,bay){
+  if(sh.st!=='dock'){toast('That ship is still mooring.');return;}
+  if(SH.sel&&SH.sel.k==='ship'&&SH.sel.s===sh&&SH.sel.bay===bay){SH.sel=null;sfx.sel();return;}
+  if(!sh.bays[bay].length){if(SH.sel)toast('You can\'t load containers back onto the ship.');return;}
+  selectFrom({k:'ship',s:sh,b:bay});
+}
+function wantIndex(c,b){for(var j=0;j<c.items.length;j++){var x=c.items[j];if(!x.done&&!x.inc&&x.t===b.t)return j;}return -1;}
+function wantNames(c){return c.items.filter(function(x){return !x.done;}).map(function(x){return CT[x.t].name.toLowerCase();}).join(' + ');}
+function tapCust(c){
+  if(c.state!=='wait'||c.paid)return;
+  if(SH.sel){var b=SH.sel.b,j=wantIndex(c,b);
+    if(j<0){toast('This driver wants '+wantNames(c)+'.');sfx.nope();if(c.v.shake)c.v.shake();return;}
+    if(!deliverable(b)){toast(b.spoiled?'That one is spoiled. Scrap it.':'On customs hold. Drop it in the customs lane first.','bad');sfx.nope();return;}
+    if(enqueue(selRef(),{k:'truck',c:c,j:j},b))SH.sel=null;return;}
+  var best=findMatch(c);
+  if(best){enqueue(best.from,{k:'truck',c:c,j:best.j},best.b);return;}
+  toast('Nothing on top matches '+wantNames(c)+'. Dig it out first.');sfx.nope();
+}
+function findMatch(c,yardOnly){var best=null;
+  c.items.forEach(function(x,j){if(x.done||x.inc||best)return;
+    SH.cols.forEach(function(col,ci){if(best)return;var t=col.stack[col.stack.length-1];if(t&&!t.res&&t.t===x.t&&deliverable(t))best={from:{k:'col',i:ci},b:t,j:j,col:col};});
+    if(yardOnly)return;
+    SH.ships.forEach(function(sh){if(best||sh.st!=='dock')return;sh.bays.forEach(function(bay,bi){if(best)return;var t=bay[bay.length-1];if(t&&!t.res&&t.t===x.t&&deliverable(t))best={from:{k:'ship',s:sh,b:bi},b:t,j:j};});});});
+  return best;}
+function tapBin(){if(!SH.sel){toast('Pick a container first, then tap the scrap skip.');return;}var b=SH.sel.b;if(enqueue(selRef(),{k:'scrap'},b))SH.sel=null;}
+
+/* ---------- trucks, trains, passengers ---------- */
 function spawnCust(opt){
   opt=opt||{};var rail=!!opt.courier,arr=rail?SH.dspots:SH.spots,free=[];arr.forEach(function(s,i){if(!s)free.push(i);});if(!free.length)return false;
-  var si=pick(free),p=(rail?SH.L.dspots:SH.L.spots)[si],side=Math.random()<.5?-1:1,D=SH.D,L=SH.L,ct=IND[SH.loc.ind].cust;
-  var vip=!rail&&(!!opt.vip||(!opt.insp&&SH.loc.days>=2&&Math.random()<.06));
-  var order=makeOrder(rail);
-  var c={id:SH.cid++,spot:si,courier:rail,x:p.x,z:p.z,state:'in',vip:vip,insp:!!opt.insp,board:!!opt.board,speed:rail?2.4:ct==='person'?rnd(2.3,2.9):rnd(3,3.6),yaw:0,yawT:0,dirty:true,say:null,sayT:0,moving:true,rev:0,kind:ct};
-  if(rail){c.pos=V3(-(L.rx+7),0,p.z);c.path=[V3(p.x+.9+(order.length-1)*.41,0,p.z)];c.yawFix=-Math.PI/2;c.kind='train';}
+  var av=available(),w=openWants(),pool=[];Object.keys(av).forEach(function(t){var n=av[t]-(w[t]||0);for(var i=0;i<n;i++)pool.push(t);});
+  var D=SH.D,loc=SH.loc,n=rail?(3+(Math.random()<.4?1:0)):(Math.random()<Math.min(.45,.12+loc.days*.04+(D.big?.25:0))?2:1);
+  if(loc.days<1&&G.lvl<3)n=Math.min(n,1);
+  if(opt.insp)n=1;
+  if(pool.length<n)return false;
+  var items=[];for(var i=0;i<n;i++){var k=Math.floor(Math.random()*pool.length);items.push({t:pool[k],done:false,inc:false});pool.splice(k,1);}
+  var si=pick(free),p=(rail?SH.L.dspots:SH.L.spots)[si],side=Math.random()<.5?-1:1,L=SH.L,ct=IND[loc.ind].cust;
+  var vip=!rail&&!opt.insp&&(!!opt.vip||(loc.days>=2&&Math.random()<.06));
+  var c={id:SH.cid++,spot:si,courier:rail,x:p.x,z:p.z,state:'in',vip:vip,insp:!!opt.insp,board:false,speed:rail?2.4:ct==='person'?rnd(2.3,2.9):rnd(3,3.6),yaw:0,yawT:0,dirty:true,say:null,sayT:0,moving:true,rev:0,kind:rail?'train':ct,items:items};
+  if(rail){c.pos=V3(-(L.rx+7),0,p.z);c.path=[V3(p.x,0,p.z)];c.yawFix=-Math.PI/2;}
   else if(ct==='person'){c.pos=V3(side*(L.rx-.4),0,L.roadZ+.3);c.path=[V3(p.x+side*.25,0,L.roadZ+.3),V3(p.x,0,p.z+.2)];}
   else{c.pos=V3(side*(L.rx+4),0,L.roadZ);c.path=[V3(p.x,0,L.roadZ),V3(p.x,0,p.z)];}
-  c.v=makeCustomer(D,{vip:vip,insp:c.insp,rail:rail,n:order.length});
-  c.items=order.map(function(r){return {r:r,key:r.key,done:false,inc:false};});
-  c.max=c.pat=patienceFor(order,c)*(rail?1.5:1);
-  arr[si]=c;SH.cust.push(c);custG.add(c.v.root);c.v.root.scale.setScalar(ct==='person'&&!rail?1.1:1);c.v.root.position.copy(c.pos);
+  c.v=makeCustomer(D,{vip:vip,insp:c.insp,rail:rail,n:n});
+  c.max=c.pat=patienceFor(n,c)*(rail?1.45:1);
+  c.hit=hitBox(rail?n*.82+1:.9,1.3,rail?.7:1.5,0,.6,0,c.v.root,{cust:c});
+  arr[si]=c;SH.cust.push(c);custG.add(c.v.root);c.v.root.position.copy(c.pos);
   c.yaw=Math.atan2(c.path[0].x-c.pos.x,c.path[0].z-c.pos.z)+(c.yawFix||0);c.v.root.rotation.y=c.yaw;
-  if(rail){SH.s.trains++;banner('Freight train','Fill every car for a big payout','hot');sfx.train();}
-  if(vip){SH.s.vip++;banner('Shipping magnate',"Triple fees. Triple the stakes.",'hot');}
-  if(c.insp)banner('Port inspector','Keep damaged cargo off the quay','cool');
-  if(opt.board)c.dirty=true;
+  if(rail){SH.s.trains++;banner('Freight train','Fill every car for a big payout','hot');sfx.train&&sfx.train();}
+  if(vip){SH.s.vip++;banner('Shipping magnate','Triple fees. Triple the stakes.','hot');}
+  if(c.insp)banner('Port inspector','No spoiled cargo in the yard!','cool');
   return true;
 }
 function say(c,text,kind,dur){c.say={text:text,kind:kind||''};c.sayT=dur||2;c.dirty=true;}
 function freeSpot(c){var arr=c.courier?SH.dspots:SH.spots;if(arr[c.spot]===c)arr[c.spot]=null;}
 function custLeave(c,happy){
   c.state='out';freeSpot(c);var L=SH.L,side=c.x<0?-1:1;
-  if(c.kind==='train'){c.path=[V3(L.rx+8+(c.items.length*.82),0,c.z)];}
-  else if(c.kind==='person'){c.path=[V3(c.x,0,L.roadZ+.3),V3(side*(L.rx-.3),0,L.roadZ+.3)];}
+  if(c.kind==='train')c.path=[V3(L.rx+8+c.items.length*.82,0,c.z)];
+  else if(c.kind==='person')c.path=[V3(c.x,0,L.roadZ+.3),V3(side*(L.rx-.3),0,L.roadZ+.3)];
   else{c.rev=1;c.path=[V3(c.x,0,L.roadZ),V3(side*(L.rx+5),0,L.roadZ)];}
-  c.v.setMood(happy?'happy':'angry');c.dirty=true;if(!happy&&c.kind!=='person')sfx.honk();
+  if(c.v.setMood)c.v.setMood(happy?'happy':'angry');c.dirty=true;if(!happy&&c.kind!=='person')sfx.honk&&sfx.honk();
+  SH.queue=SH.queue.filter(function(j){if(j.to.k==='truck'&&j.to.c===c&&!j.taken){cancelJob(j);return false;}return true;});
 }
 var HAPPY=['Thanks!','Perfect!','Right on time.','Smooth!','You rock!','Nice work!'];
 function streakMult(){return 1+.06*Math.min(SH.streak,12);}
+function comboMult(){return 1+.1*Math.min(SH.streak,20);}
 function payFull(c){
-  var loc=SH.loc,pm=priceMult(loc),base=0;c.items.forEach(function(x){base+=x.r.price;});base*=pm*(c.courier?Math.pow(1.05,holdLv('rail')):1);
-  var mood=clamp(c.pat/c.max,0,1),tip=base*(.04+.32*mood)*(SH.D.tips||1)*(1+.05*loc.decor)*streakMult()*(c.vip?3:1)*(c.board?2:1)*(c.courier?1.6:1);
+  var loc=SH.loc,base=0;c.items.forEach(function(x){base+=CT[x.t].val;});base*=priceMult(loc)*(c.courier?1.6*Math.pow(1.05,holdLv('rail')):1);
+  var mood=clamp(c.pat/c.max,0,1),tip=base*(.04+.3*mood)*(SH.D.tips||1)*(1+.05*loc.decor)*streakMult()*(c.vip?3:1)*(c.board?2:1);
   earn(base,tip,c);scorePts(c,mood);SH.streak++;SH.bestStreak=Math.max(SH.bestStreak,SH.streak);
   repAdd(loc,(.004+.01*mood)*(c.vip?3:1));addFame((.06+.06*mood)*(c.vip?4:1));
-  if(c.insp&&!c.fined){repAdd(loc,.25);addFame(2);say(c,'Spotless quay. Well done.','good',2.2);}
+  if(c.insp&&!c.fined){repAdd(loc,.25);addFame(2);say(c,'Clean yard. Well done.','good',2.2);}
   else say(c,c.vip?pick(['Impressive operation.','I will send more ships.','First class.']):pick(HAPPY),'good',1.8);
-  c.v.hop();sparkle(custTop(c).add(V3(0,.2,0)),c.vip?16:8);
+  sparkle(custTop(c).add(V3(0,.2,0)),c.vip?16:8);
   if([3,5,8,12,20].indexOf(SH.streak)>=0)banner(SH.streak+' combo!','Points ×'+comboMult().toFixed(1)+' · Fees ×'+streakMult().toFixed(2),'good');
-  if(c.kind!=='person')sfx.horn2();
-  c.paid=true;c.leaveT=.35;sfx.cash();
+  c.paid=true;c.leaveT=.5;sfx.cash();
 }
-function custTop(c){var y=c.kind==='train'?1.3:c.kind==='person'?2.1:1.35;var x=c.kind==='train'?c.pos.x+.95:c.pos.x;return V3(x,y,c.pos.z);}
-function comboMult(){return 1+.1*Math.min(SH.streak,20);}
+function custTop(c){var y=c.kind==='train'?1.3:c.kind==='person'?2.1:1.35;return V3(c.pos.x,y,c.pos.z);}
 function scorePts(c,mood){
-  var n=c.items.length,base=100*n+(n>1?50*(n-1):0),spd=1+mood,perf=mood>=.7;
+  var n=c.items.length,base=30*n+(n>1?16*(n-1):0),spd=1+mood,perf=mood>=.7;
   var p=Math.round(base*spd*comboMult()*(c.vip?3:1)*(c.courier?1.2:1)*(perf?1.25:1)/5)*5;
-  SH.s.pts=(SH.s.pts||0)+p;if(perf)SH.s.perf=(SH.s.perf||0)+1;
+  SH.s.pts+=p;SH.s.opts=(SH.s.opts||0)+p;if(perf)SH.s.perf++;
   popWorld(custTop(c).add(V3(0,.75,0)),(perf?'<i>PERFECT</i>':'')+'+'+p.toLocaleString()+' pts'+(SH.streak>=2?'<small>x'+comboMult().toFixed(1)+'</small>':''),'pts');
-  var el=$('#pts');if(el&&el.animate)el.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:220});
 }
-function payPartial(c){var loc=SH.loc,pm=priceMult(loc),base=0,n=0;c.items.forEach(function(x){if(x.done){base+=x.r.price;n++;}});if(n)earn(base*pm,0,c);}
 function earn(base,tip,c){
   var loc=SH.loc,cogs=base*costRate(loc);
   G.cash+=base+tip-cogs;loc.earned+=base+tip-cogs;G.stats.earned+=base+tip-cogs;
   SH.s.sales+=base;SH.s.tips+=tip;SH.s.cogs+=cogs;SH.s.served++;
-  var xp=(base+tip)*1.1/Math.max(1,IND[loc.ind].pm*TM(distOf(loc).tier).pm*.6);addXP(xp);SH.s.xp+=xp;
-  G.stats.served++;
+  var xp=(base+tip)*1.1/Math.max(1,xpScale(loc));addXP(xp);SH.s.xp+=xp;G.stats.served++;
   var p=custTop(c).add(V3(0,.3,0));popWorld(p,'+'+fmt(base)+(tip>=.01?'<small>+'+fmt(tip)+'</small>':''),'');coinsFrom(p,Math.min(6,2+Math.round(tip)));
 }
 function walkout(c){
-  var loc=SH.loc;payPartial(c);
-  var hit=c.vip?.35:.09;repAdd(loc,-hit);addFame(c.vip?-6:-.3);
-  if(SH.streak>=3)toast('Combo lost','bad');SH.streak=0;SH.s.walk++;SH.s.pts=Math.max(0,(SH.s.pts||0)-150);popWorld(custTop(c).add(V3(0,.6,0)),'-150 pts','bad');
-  c.items.forEach(function(x){x.inc=false;});
-  say(c,pick(['Forget it.','Too slow!','I\'m out.','Ugh.','Never mind.','Not waiting.']),'bad',2);c.v.shake();shakeCam(.06);sfx.bad();
+  var loc=SH.loc,base=0;c.items.forEach(function(x){if(x.done)base+=CT[x.t].val;});if(base)earn(base*priceMult(loc),0,c);
+  repAdd(loc,-(c.vip?.35:.09));addFame(c.vip?-6:-.3);
+  if(SH.streak>=3)toast('Combo lost','bad');SH.streak=0;SH.s.walk++;SH.s.pts=Math.max(0,SH.s.pts-40);popWorld(custTop(c).add(V3(0,.6,0)),'-40 pts','bad');
+  say(c,pick(['Forget it.','Too slow!','I\'m out.','Ugh.','Not waiting.']),'bad',2);if(c.v.shake)c.v.shake();shakeCam(.05);sfx.bad();
   custLeave(c,false);
 }
 function updCust(dt,time){
   SH.cust.slice().forEach(function(c){
     if(c.path.length){var tg=c.path[0],dx=tg.x-c.pos.x,dz=tg.z-c.pos.z,d=Math.hypot(dx,dz),stp=c.speed*dt*(c.kind==='train'&&c.state==='in'?clamp(d/1.5,.25,1):1);
-      if(d<=stp){c.pos.x=tg.x;c.pos.z=tg.z;c.path.shift();if(c.rev)c.rev=0;}else{c.pos.x+=dx/d*stp;c.pos.z+=dz/d*stp;}
-      if(d>.01)c.yawT=Math.atan2(c.rev?-dx:dx,c.rev?-dz:dz)+(c.yawFix||0);c.moving=true;c.v.rev=!!c.rev;}else c.moving=false;
-    if(c.state==='in'&&!c.path.length){c.state='wait';c.dirty=true;c.v.hop();sfx.pop();if(c.kind!=='person'&&c.kind!=='train')c.yawT=0;}
+      if(d<=stp){c.pos.x=tg.x;c.pos.z=tg.z;c.path.shift();if(c.rev&&!c.path.length)c.rev=0;}else{c.pos.x+=dx/d*stp;c.pos.z+=dz/d*stp;}
+      if(d>.01)c.yawT=Math.atan2(c.rev?-dx:dx,c.rev?-dz:dz)+(c.yawFix||0);c.moving=true;}else c.moving=false;
+    if(c.state==='in'&&!c.path.length){c.state='wait';c.dirty=true;if(c.v.hop)c.v.hop();sfx.pop();}
     else if(c.state==='wait'&&c.paid){c.leaveT-=dt;if(c.leaveT<=0)custLeave(c,true);}
     else if(c.state==='wait'){
-      c.pat-=dt*(c.board?2.1:1);
-      var f=c.pat/c.max;c.v.setMood(f>.66?'ok':f>.33?'meh':'angry');
-      if(c.insp&&!c.fined&&dirtyStations()){c.fined=true;var fine=Math.round(40*TM(SH.D.tier).pm*IND[SH.loc.ind].pm);G.cash-=fine;SH.s.fine+=fine;repAdd(SH.loc,-.3);say(c,'Damaged cargo on the quay! Fined '+fmt(fine)+'.','bad',3);sfx.bad();shakeCam(.08);}
+      var busy=SH.queue.some(function(j){return j.to.k==='truck'&&j.to.c===c&&j.taken;})||SH.bots.some(function(b){return b.task&&b.task.c===c;});
+      c.pat-=dt*(c.board?2.1:1)*(busy?.25:1);
+      var f=c.pat/c.max;if(c.v.setMood)c.v.setMood(f>.66?'ok':f>.33?'meh':'angry');
+      if(c.insp&&!c.fined&&SH.cols.some(function(cl){return cl.stack.some(function(b){return b.spoiled;});})){c.fined=true;var fine=Math.round(40*TM(SH.D.tier).pm*IND[SH.loc.ind].pm);G.cash-=fine;SH.s.fine+=fine;repAdd(SH.loc,-.3);say(c,'Spoiled cargo in the yard! Fined '+fmt(fine)+'.','bad',3);sfx.bad();shakeCam(.08);}
       if(c.pat<=0)walkout(c);
     }
     else if(c.state==='out'&&!c.path.length){custG.remove(c.v.root);SH.cust.splice(SH.cust.indexOf(c),1);return;}
@@ -1474,176 +1320,57 @@ function updCust(dt,time){
     c.v.root.position.set(c.pos.x,0,c.pos.z);c.v.root.rotation.y=c.yaw;animCust(c.v,dt,time,c.moving);
   });
 }
-function dirtyStations(){return SH.st.some(function(o){return (o.slots&&o.slots.some(function(s){return s.st==='burnt';}))||o.st==='stale';});}
-function findCust(key){var best=null,bf=9;SH.cust.forEach(function(c){if(c.state!=='wait')return;c.items.forEach(function(x,j){if(!x.done&&!x.inc&&x.key===key){var f=c.pat/c.max;if(f<bf){bf=f;best={c:c,j:j};}}});});return best;}
-function freeTable(){return null;}
-function updTables(){}
-function updExpress(){}
 
-/* ---------- station actions (shared by player and staff) ---------- */
-function newItemAt(base,pos){var it=makeItem(base,[]);itemG.add(it.g);it.g.position.copy(pos);return it;}
-function cookStart(o,i){
-  var s=o.slots[i];if(!s||s.st!=='empty')return false;
-  if(o.ship&&!shipReady(o))return false;
-  if(o.ship)o.ship.cargo--;
-  s.st='cook';s.t=0;s.dur=stTime(o);s.it=newItemAt(o.d.makes,slotW(o,i));
-  squash(o.v.g);sfx.load();tutNote('cook');return true;
-}
-function cookTake(o,i){
-  var s=o.slots[i];if(!s)return false;
-  if(s.st==='ready'){var ti=freeTray();if(ti<0){trayFull();return false;}var it=s.it;s.st='empty';s.it=null;s.claim=null;
-    putTray(ti,{base:o.d.makes,comps:[],it:it,fly:false,claim:null});sfx.pick();return true;}
-  if(s.st==='burnt'){toBin(s.it.g);s.st='empty';s.it=null;s.claim=null;wasteCost(o.d.makes);return true;}
-  return false;
-}
-function putTray(ti,e){SH.tray[ti]=e;e.fly=true;fly(e.it.g,trayW(ti),.42,.55,function(){e.fly=false;squash(e.it.g);});tutNote('tray');}
-function batchTap(o){
-  if(o.st==='empty'||o.st==='stale'){if(o.st==='stale')wasteCost(o.d.makes);o.st='brew';o.t=0;o.dur=stTime(o);o.serv=0;squash(o.v.g);sfx.load();tutNote('brew');return true;}
-  if(o.st==='brew'){wiggle(o.v.g);sfx.nope();return false;}
-  if(o.st==='ready'){
-    if(o.d.role==='base'){var ti=freeTray();if(ti<0){trayFull();return false;}var it=newItemAt(o.d.makes,outW(o));popIn(it.g,.4);putTray(ti,{base:o.d.makes,comps:[],it:it,fly:false,claim:null});}
-    else{var t2=compTarget(o.d.makes);if(t2<0){noTarget(o.d.makes);return false;}applyComp(t2,o.d.makes,outW(o));}
-    o.serv--;if(o.serv<=0){o.st='empty';o.serv=0;}squash(o.v.g);sfx.pick();return true;
-  }
-  return false;
-}
-function topTap(o,t){var ti=compTarget(t);if(ti<0){noTarget(t);return false;}var b=o.v.boxes&&o.v.boxes[t];if(b)squash(b);applyComp(ti,t,b?b.getWorldPosition(V3(0,0,0)).add(V3(0,.3,0)):outW(o));sfx.pick();return true;}
-function accepts(e,c){if(e.comps.indexOf(c)>=0)return false;return SH.menu.some(function(r){return r.base===e.base&&r.comps.indexOf(c)>=0&&e.comps.every(function(x){return r.comps.indexOf(x)>=0;});});}
-function wanted(e,c){return SH.cust.some(function(cu){return cu.state==='wait'&&cu.items.some(function(x){return !x.done&&!x.inc&&x.r.base===e.base&&x.r.comps.indexOf(c)>=0&&e.comps.every(function(q){return x.r.comps.indexOf(q)>=0;});});});}
-function compTarget(c){
-  var best=-1,bs=-1;
-  SH.tray.forEach(function(e,i){if(!e||e.fly||!accepts(e,c))return;var s=(i===SH.sel?100:0)+(wanted(e,c)?10:0)+(e.comps.length?1:0);if(s>bs){bs=s;best=i;}});
-  return best;
-}
-function applyComp(ti,c,from){
-  var e=SH.tray[ti];e.comps.push(c);e.comps.sort();
-  var dot=plane(.14,.14,toon(0xffffff,{map:symTex(TOPS[c].sym,TOPS[c].col)}),from.x,from.y,from.z,fxG);dot.rotation.x=-Math.PI/2;
-  fly(dot,trayW(ti).add(V3(0,.45,0)),.28,.3,function(){fxG.remove(dot);if(SH&&SH.tray[ti]===e)rebuildItem(e);});
-  tutNote('comp');
-}
-function rebuildItem(e){var p=e.it.g.position.clone();itemG.remove(e.it.g);e.it=makeItem(e.base,e.comps);e.it.g.position.copy(p);itemG.add(e.it.g);popIn(e.it.g,.7);sparkle(p.clone().add(V3(0,.35,0)),4,0xffffff);}
-function trayTap(i){
-  var e=SH.tray[i];if(!e||e.fly)return;
-  var m=findCust(rkey(e.base,e.comps));
-  if(m){serve(i,m.c,m.j);return;}
-  SH.sel=SH.sel===i?-1:i;sfx.sel();
-  if(SH.sel===i){var any=false;for(var t in TOPS)if(accepts(e,t)){any=true;break;}if(!any&&!SH.cust.some(function(cu){return cu.state==='wait'&&cu.items.some(function(x){return !x.done&&x.r.base===e.base;});}))toast('No one needs this right now. Tap the scrap skip to toss it.');}
-}
-function serve(i,c,j){
-  var e=SH.tray[i];SH.tray[i]=null;if(SH.sel===i)SH.sel=-1;c.items[j].inc=true;e.fly=true;var g=e.it.g;
-  var lp=c.v.loadPos(j,c.items.length),holder=c.kind==='train'?c.v.root:(c.v.bed||c.v.body),dest=holder.localToWorld(lp.clone());
-  fly(g,dest,.5,.7,function(){var x=c.items[j];x.inc=false;if(c.state!=='wait'){itemG.remove(g);return;}x.done=true;c.dirty=true;SH.s.items++;
-    itemG.remove(g);g.children.forEach(function(ch){if(ch.material===blobMat)ch.visible=false;});
-    if(c.kind==='train'){var car=c.v.carOf(j);car.add(g);g.position.set(0,.29,0);g.rotation.y=Math.PI/2;}
-    else{holder.add(g);g.position.copy(lp);if(c.kind==='person'){g.scale.setScalar(.8);g.rotation.y=Math.PI/2;}}
-    c.v.hop();sfx.serve();tutNote('serve');if(c.items.every(function(q){return q.done;}))payFull(c);});
-}
-function binTap(){
-  if(SH.sel<0||!SH.tray[SH.sel]){toast('Tap a load in the yard first, then the scrap skip.');return;}
-  var e=SH.tray[SH.sel];SH.tray[SH.sel]=null;SH.sel=-1;toBin(e.it.g);wasteCost(e.base);
-}
-function toBin(g){var to=SH.tv.bin.position.clone().add(V3(0,.5,0));fly(g,to,.35,.5,function(){itemG.remove(g);squash(SH.tv.bin);});sfx.bin();}
-function wasteCost(base){var c=avgPrice(SH.loc)*priceMult(SH.loc)*costRate(SH.loc)*.6;G.cash-=c;SH.s.cogs+=c;SH.s.waste++;SH.s.pts=Math.max(0,(SH.s.pts||0)-25);}
-function trayFull(){toast('The yard is full. Load a truck or scrap something.','bad');sfx.nope();wiggle(SH.tv.bin);}
-function noTarget(c){toast('Nothing in the yard takes '+TOPS[c].name.toLowerCase()+'.');sfx.nope();}
-
-function tapStation(o,ud){
-  if(o.kind==='cooker'){
-    if(ud.slot!=null){var s=o.slots[ud.slot];if(s.st==='empty'){if(!cookStart(o,ud.slot))shipNope(o);}else if(s.st==='ready'||s.st==='burnt')cookTake(o,ud.slot);else{wiggle(o.v.g);sfx.nope();}return;}
-    var ri=-1;o.slots.forEach(function(s,i){if(ri<0&&(s.st==='ready'||s.st==='burnt'))ri=i;});if(ri>=0){cookTake(o,ri);return;}
-    var ei=-1;o.slots.forEach(function(s,i){if(ei<0&&s.st==='empty')ei=i;});if(ei>=0){if(!cookStart(o,ei))shipNope(o);return;}
-    wiggle(o.v.g);sfx.nope();return;
-  }
-  if(o.kind==='batch'){batchTap(o);return;}
-  if(o.kind==='rack'&&ud.top){topTap(o,ud.top);}
-}
-function shipNope(o){wiggle(o.v.g);sfx.nope();var sh=o.ship;if(!sh)return;toast(sh.st==='dock'?'That ship is empty. The next one is on its way.':sh.st==='in'?'The ship is still mooring.':'No ship at this berth yet.');}
-
-/* ---------- station timers ---------- */
-function updStations(dt,time){
-  SH.st.forEach(function(o){
-    if(o.kind==='cooker')o.slots.forEach(function(s){
-      if(s.st==='cook'){s.t+=dt;if(s.t>=s.dur){s.st='ready';s.t=0;squash(s.it.g);puff(s.it.g.position.clone().add(V3(0,.05,0)),{color:0xcfc6b8,a:.5,s1:.35,up:.3});sfx.clunk();}}
-      else if(s.st==='ready'){s.t+=dt;if(s.t>burnTime(o)){s.st='burnt';s.t=0;s.it.setBurnt();sfx.burn();for(var i=0;i<3;i++)puff(s.it.g.position.clone().add(V3(0,.3,0)),{color:0x6a5a4a,a:.6,s1:.35,up:rnd(.3,.5)});}}
-      else if(s.st==='burnt'){if(Math.random()<dt*2)puff(s.it.g.position.clone().add(V3(0,.32,0)),{color:0x6a5a4a,a:.45,s1:.28});}
-    });
-    if(o.ship)updShip(o,dt);
-    if(o.kind==='batch'){
-      if(o.st==='brew'){o.t+=dt;if(o.t>=o.dur){o.st='ready';o.t=0;o.serv=o.max;sfx.ding();squash(o.v.g);}}
-      else if(o.st==='ready'){o.t+=dt;if(o.t>o.d.stale){o.st='stale';o.serv=0;o.t=0;sfx.burn();}}
-    }
-    o.v.upd(o,dt,time);
+/* ---------- yard life: reefers spoil without power, customs inspects holds ---------- */
+function reefTime(){return 26*Math.pow(1.1,holdLv('cold'))/(SH.D.reef||1)/(SH.heat?2:1);}
+function updYard(dt,time){
+  var rt=reefTime();
+  SH.cols.forEach(function(c){
+    c.stack.forEach(function(b){if(CT[b.t].reefer&&!b.spoiled&&c.kind!=='power'){b.spoil+=dt/rt;if(b.spoil>=1){b.setSpoiled();SH.s.spoiled++;toast(CT[b.t].name+' spoiled! Scrap it.','bad');sfx.burn&&sfx.burn();puff(boxWorld(b).add(V3(0,.35,0)),{color:0x6a5a4a,a:.6,s1:.35});}}
+      else if(c.kind==='power'&&b.spoil>0)b.spoil=Math.max(0,b.spoil-dt/20);});
+    if(c.kind==='customs'){var b=c.stack[0];if(b&&b.hold&&!b.cleared){c.insp+=dt*(SH.loc.staff.finisher?2:1);if(c.insp>=5){b.cleared=true;b.setHold();sfx.ding&&sfx.ding();sparkle(boxWorld(b).add(V3(0,.35,0)),6,0x5ee39a);}}}
   });
+  SH.cols.forEach(function(c){c.ring.visible=!!(SH.sel&&canPlace(SH.sel.b,c)==='');});
+  var s=SH.sel;if(s&&s.b&&!s.b.res){SH.selMesh.position.copy(boxWorld(s.b)).add(V3(0,CH/2,0));SH.selMesh.visible=true;SH.selMesh.scale.setScalar(1+Math.sin(time*8)*.04);}else{SH.selMesh.visible=false;if(s&&s.b&&s.b.res)SH.sel=null;}
 }
 
-/* ---------- staff ---------- */
-function mkBots(){var loc=SH.loc;SH.bots=[];['barista','finisher','server'].forEach(function(r){for(var i=0;i<(loc.staff[r]||0);i++)SH.bots.push({role:r,name:staffName(loc,r,i),t:0,dur:1,idle:0,task:null,act:'Waiting'});});}
+/* ---------- crew ---------- */
+function mkBots(){var loc=SH.loc;SH.bots=[];['barista','server'].forEach(function(r){for(var i=0;i<(loc.staff[r]||0);i++)SH.bots.push({role:r,name:staffName(loc,r,i),t:0,dur:1,idle:rnd(0,1),task:null,act:'Waiting'});});}
 function staffName(loc,r,i){return FIRST[(loc.id*7+ROLE_ORDER.indexOf(r)*5+i*3)%FIRST.length];}
 function botDur(b){return ROLES[b.role].act*Math.pow(.94,G.hq.training||0)*(SH.loc.staff.manager?.92:1);}
-function demandBase(base){var n=0;SH.cust.forEach(function(c){if(c.state==='wait')c.items.forEach(function(x){if(!x.done&&!x.inc&&x.r.base===base)n++;});});return n;}
-function supplyBase(base){var n=0;SH.st.forEach(function(o){if(o.d.makes!==base)return;if(o.slots)o.slots.forEach(function(s){if(s.st==='cook'||s.st==='ready')n++;});if(o.kind==='batch'&&o.st==='ready')n+=o.serv;if(o.kind==='batch'&&o.st==='brew')n+=o.max;});SH.tray.forEach(function(e){if(e&&e.base===base)n++;});return n;}
-function demandComp(c){var n=0;SH.cust.forEach(function(cu){if(cu.state==='wait')cu.items.forEach(function(x){if(!x.done&&!x.inc&&x.r.comps.indexOf(c)>=0)n++;});});SH.tray.forEach(function(e){if(e&&e.comps.indexOf(c)>=0)n--;});return n;}
-function trayFreeCount(){var n=0;SH.tray.forEach(function(e){if(!e)n++;});SH.bots.forEach(function(b){if(b.task&&(b.task.type==='take'||b.task.type==='pour'))n--;});return n;}
-function findTask(b){
-  var t=null;
-  if(b.role==='barista'){
-    SH.st.forEach(function(o){if(t||o.kind!=='cooker')return;o.slots.forEach(function(s,i){if(!t&&s.st==='ready'&&!s.claim&&trayFreeCount()>0)t={type:'take',o:o,i:i};if(!t&&s.st==='burnt'&&!s.claim)t={type:'take',o:o,i:i};});});
-    if(t)return t;
-    SH.st.forEach(function(o){if(t||o.kind!=='batch'||o.claim)return;if((o.st==='empty'||o.st==='stale')&&(o.d.role==='base'?demandBase(o.d.makes)>supplyBase(o.d.makes):demandComp(o.d.makes)>0))t={type:'brew',o:o};});
-    if(t)return t;
-    SH.st.forEach(function(o){if(t||o.kind!=='cooker'||!shipReady(o))return;if(demandBase(o.d.makes)>supplyBase(o.d.makes))o.slots.forEach(function(s,i){if(!t&&s.st==='empty'&&!s.claim)t={type:'cook',o:o,i:i};});});
-    if(t)return t;
-    SH.st.forEach(function(o){if(t||o.kind!=='batch'||o.d.role!=='base'||o.claim||o.st!=='ready')return;var need=demandBase(o.d.makes),have=0;SH.tray.forEach(function(e){if(e&&e.base===o.d.makes)have++;});if(need>have&&trayFreeCount()>0)t={type:'pour',o:o};});
-    if(t)return t;
-    return finTask(true);
-  }
-  if(b.role==='finisher')return finTask(false);
-  if(b.role==='server'){SH.tray.forEach(function(e,i){if(t||!e||e.fly||e.claim)return;if(findCust(rkey(e.base,e.comps)))t={type:'serve',ti:i,e:e};});return t;}
-  return null;
-}
-function finTask(batchOnly){var t=null;
-  SH.tray.forEach(function(e,i){if(t||!e||e.fly||e.claim)return;
-    SH.cust.forEach(function(cu){if(t||cu.state!=='wait')return;cu.items.forEach(function(x){if(t||x.done||x.inc||x.r.base!==e.base||x.key===rkey(e.base,e.comps))return;if(!e.comps.every(function(q){return x.r.comps.indexOf(q)>=0;}))return;
-      x.r.comps.forEach(function(c){if(t||e.comps.indexOf(c)>=0)return;var src=compSource(c);if(src&&(!batchOnly||src.kind==='batch'))t={type:'comp',ti:i,e:e,c:c,o:src};});});});});
-  return t;}
-function compSource(c){var r=null;SH.st.forEach(function(o){if(r)return;if(o.kind==='rack'&&o.tops.indexOf(c)>=0)r=o;if(o.kind==='batch'&&o.d.makes===c&&o.st==='ready'&&o.serv>0)r=o;});return r;}
-function taskValid(t){
-  if(t.type==='take')return t.o.slots[t.i].st==='ready'||t.o.slots[t.i].st==='burnt';
-  if(t.type==='cook')return t.o.slots[t.i].st==='empty'&&shipReady(t.o);
-  if(t.type==='brew')return t.o.st==='empty'||t.o.st==='stale';
-  if(t.type==='pour')return t.o.st==='ready'&&freeTray()>=0;
-  if(t.type==='comp')return SH.tray[t.ti]===t.e&&!t.e.fly&&accepts(t.e,t.c)&&(t.o.kind==='rack'||(t.o.st==='ready'&&t.o.serv>0));
-  if(t.type==='serve')return SH.tray[t.ti]===t.e&&!t.e.fly&&!!findCust(rkey(t.e.base,t.e.comps));
-  return false;
-}
-function claimT(b,t,on){var v=on?b:null;if(t.type==='take'||t.type==='cook')t.o.slots[t.i].claim=v;else if(t.type==='brew'||t.type==='pour')t.o.claim=v;else if(t.e)t.e.claim=v;}
-var ACT_TXT={take:'Moving to yard',cook:'Unloading',brew:'Running',pour:'Loading out',comp:'Adding',serve:'Driving to truck'};
-function botWhere(t){if(t.type==='comp'||t.type==='serve')return trayW(t.ti).add(V3(0,.7,0));var o=t.o;if(t.i!=null)return slotW(o,t.i).add(V3(0,.8,0));return o.v.g.position.clone().add(V3(0,1.3,0));}
+function bestCol(b){var w=openWants(),best=-1,bs=-1e9;
+  SH.cols.forEach(function(c,i){if(canPlace(b,c))return;var top=c.stack[c.stack.length-1],s=-(c.stack.length+c.inc)*1.2;
+    if(CT[b.t].reefer)s+=c.kind==='power'?8:-6;if(b.hold&&!b.cleared)s+=c.kind==='customs'?9:-2;if(c.kind==='power'&&!CT[b.t].reefer)s-=3;
+    if(top&&w[top.t])s-=4;if(s>bs){bs=s;best=i;}});return best;}
 function updBots(dt){
   SH.bots.forEach(function(b){
-    if(b.task){if(!taskValid(b.task)){claimT(b,b.task,false);b.task=null;b.act='Waiting';return;}
-      b.t+=dt;if(b.t>=b.dur){var t=b.task;claimT(b,t,false);b.task=null;b.act='Waiting';
-        if(t.type==='take')cookTake(t.o,t.i);else if(t.type==='cook')cookStart(t.o,t.i);else if(t.type==='brew'||t.type==='pour')batchTap(t.o);
-        else if(t.type==='comp'){if(t.o.kind==='rack')topTapTo(t.o,t.c,t.ti);else{applyComp(t.ti,t.c,outW(t.o));t.o.serv--;if(t.o.serv<=0){t.o.st='empty';t.o.serv=0;}}}
-        else if(t.type==='serve'){var m=findCust(rkey(t.e.base,t.e.comps));if(m)serve(t.ti,m.c,m.j);}
-      }
-      return;}
-    if(SH.phase==='done')return;
-    b.idle+=dt;if(b.idle<.2)return;b.idle=0;
-    var t2=findTask(b);if(t2){b.task=t2;claimT(b,t2,true);b.t=0;b.dur=botDur(b);b.act=ACT_TXT[t2.type]+(t2.type==='comp'?' '+TOPS[t2.c].name.toLowerCase():t2.o?' · '+STN[t2.o.k].name.toLowerCase():'');}
+    if(b.task){b.t+=dt;if(b.t>=b.dur){var t=b.task;b.task=null;b.act='Waiting';straddleDone(t);}return;}
+    if(SH.phase==='done')return;b.idle+=dt;if(b.idle<botDur(b)*.5)return;b.idle=0;
+    if(b.role==='barista'){if(SH.queue.length>1)return;
+      var w=openWants(),ps=null;SH.ships.forEach(function(sh){if(sh.st!=='dock')return;sh.bays.forEach(function(bay,bi){var t=bay[bay.length-1];if(!t||t.res)return;var sc=(w[t.t]?2:0)+bay.length*.1;if(!ps||sc>ps.sc)ps={sc:sc,sh:sh,bi:bi,b:t};});});
+      if(!ps)return;var to=null;
+      if(w[ps.b.t]&&deliverable(ps.b))SH.cust.forEach(function(c){if(!to&&c.state==='wait'&&!c.paid){var j=wantIndex(c,ps.b);if(j>=0)to={k:'truck',c:c,j:j};}});
+      if(!to){var ci=bestCol(ps.b);if(ci<0)return;to={k:'col',i:ci};}
+      enqueue({k:'ship',s:ps.sh,b:ps.bi},to,ps.b,true);b.act='Queued a lift';
+    }
+    if(b.role==='server'){var found=null;
+      SH.cust.forEach(function(c){if(found||c.state!=='wait'||c.paid)return;var m=findMatch(c,true);if(m)found={c:c,j:m.j,col:m.col,b:m.b};});
+      if(!found)return;found.b.res=true;found.c.items[found.j].inc=true;b.task={c:found.c,j:found.j,col:found.col,b:found.b};b.t=0;b.dur=botDur(b);b.act='Driving to a truck';
+    }
   });
 }
-function topTapTo(o,c,ti){var b=o.v.boxes&&o.v.boxes[c];if(b)squash(b);applyComp(ti,c,b?b.getWorldPosition(V3(0,0,0)).add(V3(0,.3,0)):outW(o));}
+function straddleDone(t){var col=t.col,b=t.b,i=col.stack.indexOf(b);if(i!==col.stack.length-1||t.c.state!=='wait'||t.c.paid){b.res=false;t.c.items[t.j].inc=false;return;}
+  col.stack.pop();var dest=dstPos({k:'truck',c:t.c,j:t.j});fly(b.g,dest,.5,.6,function(){b.res=false;itemG.remove(b.g);loadOnto(t.c,t.j,b);});}
 
 /* ---------- port events ---------- */
 function initEvents(){
   var E=SH.D.ev||[],ev=SH.ev;
-  if(E.indexOf('gull')>=0)ev.gull=rnd(16,26);
+  if(E.indexOf('gull')>=0)ev.gull=rnd(18,28);
   if(E.indexOf('barges')>=0)ev.barges=rnd(22,32);
   if(E.indexOf('convoy')>=0)ev.convoy=rnd(18,28);
   if(E.indexOf('heat')>=0&&Math.random()<.6)SH.heat=true;
-  if(E.indexOf('ice')>=0)ev.ice=rnd(25,45);
-  if(E.indexOf('lock')>=0)ev.lock=rnd(30,40);
+  if(E.indexOf('ice')>=0)ev.ice=rnd(30,50);
+  if(E.indexOf('lock')>=0)ev.lock=rnd(35,45);
   if(E.indexOf('fog')>=0){ev.fog=rnd(12,20);SH.fogOn=false;}
   var ip=E.indexOf('inspector')>=0?.6:.18;if(SH.loc.days>=3&&Math.random()<ip)ev.insp=rnd(30,SH.len-30);
   if(SH.D.big)ev.group=rnd(30,45);
@@ -1653,88 +1380,85 @@ function initEvents(){
 function updEvents(dt){
   var ev=SH.ev;if(SH.slow>0)SH.slow-=dt;if(SH.phase!=='open')return;
   for(var k in ev){ev[k]-=dt;if(ev[k]>0)continue;
-    if(k==='gull'){if(!SH.gull&&SH.tray.some(function(e){return e&&!e.fly;}))gullStart();ev.gull=rnd(20,34);}
+    if(k==='gull'){if(!SH.gull&&SH.cols.some(function(c){return c.stack.length;}))gullStart();ev.gull=rnd(22,34);}
     else if(k==='barges'){SH.burst+=3;banner('Barge convoy!','Here come the trucks','hot');ev.barges=rnd(32,46);}
     else if(k==='group'){SH.burst+=3;banner('Night rush','A line of trucks at the gate','hot');ev.group=rnd(35,50);}
-    else if(k==='convoy'){var w=SH.cust.filter(function(c){return c.state==='wait'&&!c.board&&!c.courier;});w.slice(0,2).forEach(function(c){c.board=true;c.dirty=true;});if(w.length)banner('Convoy deadline','Rush them for double fees','hot');ev.convoy=rnd(24,36);}
+    else if(k==='convoy'){var w=SH.cust.filter(function(c){return c.state==='wait'&&!c.board&&!c.courier&&!c.paid;});w.slice(0,2).forEach(function(c){c.board=true;c.dirty=true;});if(w.length)banner('Convoy deadline','Rush them for double fees','hot');ev.convoy=rnd(24,36);}
     else if(k==='ice'){SH.ice=16;SH.boost=.25;banner('Pack ice','The harbor is frozen in','cool');ev.ice=rnd(45,65);}
-    else if(k==='lock'){SH.st.forEach(function(o){if(!o.ship)return;if(o.ship.st==='dock')shipLeave(o,o.ship.cargo<=0);o.ship.st='away';o.ship.t=0;o.ship.away=.8;});banner('Lock opens!','Fresh ships at every berth','hot');ev.lock=rnd(40,55);}
+    else if(k==='lock'){SH.ships.forEach(function(sh){if(sh.st==='away')sh.away=0;});banner('Lock opens!','The next ships come straight in','hot');ev.lock=rnd(40,55);}
     else if(k==='fog'){SH.fogOn=!SH.fogOn;SH.boost=SH.fogOn?.3:2.3;if(SH.fogOn)banner('Fog rolls in','Dead quiet for a bit','cool');else banner('Fog lifts','Every truck at once!','hot');ev.fog=SH.fogOn?rnd(14,20):rnd(12,16);}
     else if(k==='insp'){spawnCust({insp:true});delete ev.insp;}
-    else if(k==='mega'){var b=SH.st.filter(function(o){return o.ship;});if(b.length){SH.megaNext=pick(b);toast('A mega ship is next in line','good');}delete ev.mega;}
-    else if(k==='squall'){SH.slow=14;banner('Squall','Cranes slow down in the wind','cool');delete ev.squall;}
+    else if(k==='mega'){SH.megaNext=Math.floor(Math.random()*SH.ships.length);toast('A mega ship is next in line','good');delete ev.mega;}
+    else if(k==='squall'){SH.slow=14;banner('Squall','The crane slows down in the wind','cool');delete ev.squall;}
   }
-  if(SH.ice>0){SH.ice-=dt;if(SH.ice<=0){SH.ice=0;SH.boost=2.2;SH.storm=-12;banner('Ice breaks','Ships and trucks pour in','hot');SH.st.forEach(function(o){if(o.ship&&o.ship.st==='away')o.ship.away=0;});}}
+  if(SH.ice>0){SH.ice-=dt;if(SH.ice<=0){SH.ice=0;SH.boost=2.2;SH.storm=-12;banner('Ice breaks','Ships and trucks pour in','hot');}}
   else if(SH.storm<0){SH.storm+=dt;if(SH.storm>=0){SH.storm=0;SH.boost=1;}}
 }
 function gullStart(){
-  var items=[];SH.tray.forEach(function(e,i){if(e&&!e.fly)items.push(i);});if(!items.length)return;
-  var ti=pick(items),m=makeGull(),side=Math.random()<.5?-1:1;custG.add(m.g);
-  var from=V3(side*(SH.L.rx-.5),3,-1),to=trayW(ti).add(V3(0,.5,0));m.g.position.copy(from);m.g.rotation.y=side>0?Math.PI:0;
-  var hit=hitBox(.9,.7,.9,0,0,0,m.g,{gull:1});
-  SH.gull={m:m,ti:ti,e:SH.tray[ti],t:0,dur:2.6,from:from,to:to,side:side,hit:hit,phase:'in'};
-  sfx.gull();banner('Seagull!','Tap it before it raids the yard','hot');
+  var cs=SH.cols.filter(function(c){var t=c.stack[c.stack.length-1];return t&&!t.res&&!t.spoiled;});if(!cs.length)return;
+  var col=pick(cs),m=makeGull(),side=Math.random()<.5?-1:1;custG.add(m.g);
+  var from=V3(side*(SH.L.rx-.5),3,-1),to=V3(col.x,colTopY(col)+.3,col.z);m.g.position.copy(from);m.g.rotation.y=side>0?Math.PI:0;
+  var hit=hitBox(.9,.7,.9,0,0,0,m.g,{gull:1});SH.gull={m:m,col:col,b:col.stack[col.stack.length-1],t:0,dur:2.6,from:from,to:to,side:side,hit:hit,phase:'in'};
+  sfx.gull&&sfx.gull();banner('Seagull!','Tap it before it wrecks a container','hot');
 }
 function updGull(dt,time){
-  var g=SH.gull;if(!g)return;g.t+=dt;
-  g.m.wings.forEach(function(w,i){w.rotation.x=(i?1:-1)*Math.sin(time*18)*.7;});
-  if(g.phase==='in'){var k=Math.min(1,g.t/g.dur),e=easeIO(k);g.m.g.position.lerpVectors(g.from,g.to,e);g.m.g.position.y+=Math.sin(k*Math.PI)*.6;
-    if(k>=1){var en=SH.tray[g.ti];if(en&&en===g.e&&!en.fly){SH.tray[g.ti]=null;if(SH.sel===g.ti)SH.sel=-1;itemG.remove(en.it.g);wasteCost(en.base);toast('The seagull wrecked a load!','bad');sfx.gull();for(var i=0;i<5;i++)puff(g.to,{color:0xffffff,a:.7,s1:.3});}
+  var g=SH.gull;if(!g)return;g.t+=dt;if(g.m.wings)g.m.wings.forEach(function(w,i){w.rotation.x=(i?1:-1)*Math.sin(time*18)*.7;});
+  if(g.phase==='in'){var k=Math.min(1,g.t/g.dur);g.m.g.position.lerpVectors(g.from,g.to,easeIO(k));g.m.g.position.y+=Math.sin(k*Math.PI)*.6;
+    if(k>=1){var top=g.col.stack[g.col.stack.length-1];if(top&&top===g.b&&!top.res){top.setSpoiled();toast('The seagull wrecked a container!','bad');for(var i=0;i<5;i++)puff(g.to,{color:0xffffff,a:.7,s1:.3});}
       g.phase='out';g.t=0;g.from=g.m.g.position.clone();g.to=V3(-g.side*(SH.L.hw+4),4,-2);g.m.g.rotation.y+=Math.PI;}}
   else{var k2=Math.min(1,g.t/1.6);g.m.g.position.lerpVectors(g.from,g.to,easeIO(k2));if(k2>=1){custG.remove(g.m.g);SH.gull=null;}}
 }
-function shooGull(){var g=SH.gull;if(!g||g.phase!=='in')return;g.phase='out';g.t=0;g.from=g.m.g.position.clone();g.to=V3(-g.side*(SH.L.hw+4),4.5,-2);g.m.g.rotation.y+=Math.PI;sparkle(g.from,8,0xffffff);addXP(5);sfx.gull();toast('Shoo!','good');}
+function shooGull(){var g=SH.gull;if(!g||g.phase!=='in')return;g.phase='out';g.t=0;g.from=g.m.g.position.clone();g.to=V3(-g.side*(SH.L.hw+4),4.5,-2);g.m.g.rotation.y+=Math.PI;sparkle(g.from,8,0xffffff);addXP(5);toast('Shoo!','good');}
 
 /* ---------- spawning + main update ---------- */
 function spawnRate(){
   var f=SH.t/SH.len,D=SH.D;
   var cur=.55+(D.am||1)*.85*Math.exp(-Math.pow((f-.16)/.08,2))+(D.lunch||1)*.8*Math.exp(-Math.pow((f-.52)/.09,2))+(D.eve||.5)*.8*Math.exp(-Math.pow((f-.86)/.09,2));
-  return demandMin(SH.loc,true)/60*cur*SH.boost*(SH.loc.days<2?.9:1);
+  return demandMin(SH.loc,true)/60*cur*SH.boost*(SH.loc.days<2?.85:1);
 }
 function updShift(dt,time){
   SH.t+=dt;var loc=SH.loc;
   var wg=wageMin(loc)/60*dt,rt=rentMin(loc)/60*dt;G.cash-=wg+rt;SH.s.wages+=wg;SH.s.rent+=rt;
   if(SH.phase==='open'){
     SH.next-=dt;
-    if(SH.burst>0){SH.burstT-=dt;if(SH.burstT<=0){SH.burstT=.7;SH.burst--;if(!spawnCust())SH.pend.push(SH.t);}}
-    if(SH.next<=0){if(!(SH.dspots.length&&!SH.dspots[0]&&Math.random()<.16&&spawnCust({courier:true}))&&!spawnCust())SH.pend.push(SH.t);var r=spawnRate();SH.next=clamp(-Math.log(1-Math.random()*.98)/Math.max(.02,r),.6,16);}
-    if(SH.pend.length&&SH.spots.some(function(s){return !s;})){SH.pend.shift();spawnCust();}
-    SH.pend=SH.pend.filter(function(t0){if(SH.t-t0>8){SH.s.turned++;return false;}return true;});
+    if(SH.burst>0){SH.burstT-=dt;if(SH.burstT<=0){SH.burstT=.8;SH.burst--;if(!spawnCust())SH.pend.push(SH.t);}}
+    if(SH.next<=0){var ok=SH.dspots.length&&!SH.dspots[0]&&Math.random()<.16&&spawnCust({courier:true});if(!ok&&!spawnCust())SH.pend.push(SH.t);var r=spawnRate();SH.next=clamp(-Math.log(1-Math.random()*.98)/Math.max(.02,r),.8,16);}
+    if(SH.pend.length&&SH.spots.some(function(s){return !s;})){if(spawnCust())SH.pend.shift();}
+    SH.pend=SH.pend.filter(function(t0){if(SH.t-t0>9){SH.s.turned++;return false;}return true;});
     if(SH.t>=SH.len){SH.phase='closing';SH.s.turned+=SH.pend.length;SH.pend=[];banner('Gate closing','Load whoever is still here','cool');sfx.bell();}
-  }else if(SH.phase==='closing'){if(!SH.cust.length)endShift();}
-  updEvents(dt);updStations(dt,time);updBots(dt);updCust(dt,time);updGull(dt,time);
-  SH.tv.rings.forEach(function(r,i){r.visible=SH.sel===i&&!!SH.tray[i];if(r.visible)r.rotation.z+=dt*2;});
+  }else if(SH.phase==='closing'){if(!SH.cust.length&&!SH.cranes.some(function(c){return c.job;}))endShift();}
+  updEvents(dt);updShips(dt,time);updCranes(dt);updYard(dt,time);updBots(dt);updCust(dt,time);updGull(dt,time);
 }
 function endShift(){
   SH.phase='done';paused=true;var loc=SH.loc,s=SH.s;
   loc.days++;G.day++;s.rep1=loc.rep;s.bestStreak=SH.bestStreak;
   var rev=s.sales+s.tips;s.stars=rev>=s.goal*1.35?3:rev>=s.goal?2:rev>=s.goal*.6?1:0;
   s.bonus=0;if(rev>=s.goal){s.bonus=Math.round(s.goal*(.15+.08*s.stars));G.cash+=s.bonus;addFame(3*s.stars);addXP(s.goal*.25);}
-  s.pts=s.pts||0;s.ptsBonus=s.stars*500+(s.walk===0&&s.served>=5?1000:0);s.total=s.pts+s.ptsBonus;
+  s.ptsBonus=s.stars*150+(s.walk===0&&s.served>=5?300:0);s.total=s.pts+s.ptsBonus;
   G.best=G.best||0;s.prevBest=G.best;s.newBest=s.total>G.best&&s.total>0;if(s.newBest)G.best=s.total;
   G.stats.pts=(G.stats.pts||0)+s.total;s.life=G.stats.pts;
-  var avg=s.pts/Math.max(1,s.served+s.walk);s.grade=avg>=420?'S':avg>=300?'A':avg>=200?'B':avg>=120?'C':'D';
+  var avg=(s.opts||0)/Math.max(1,s.served+s.walk);s.grade=avg>=170?'S':avg>=130?'A':avg>=95?'B':avg>=60?'C':'D';
   s.lp=Math.round(Math.round(s.total*LZR)*LZM);s.lzm=LZM;s.ea=!!window.LZ_EA;save();sfx.bell();showSummary(s);
   if(window.LZ_GAME&&window.LZ)LZ.endSession(LZ_GAME,s.total,{grade:s.grade,day:s.day});
 }
 
 /* ================= EMPIRE ================= */
-var G=null,SAVEKEY='harbor-rush-v1',LVQ=[];
+var G=null,SAVEKEY='harbor-rush-v2',LVQ=[];
 function newLoc(city,did,ind){
-  var D=district(city,did),st={};IND[ind].start.forEach(function(k){st[k]={s:0,c:0};});
-  var loc={id:G.nid++,city:city,did:did,ind:ind,name:D.name,size:1,st:st,tops:{},staff:{barista:0,server:0,manager:0,finisher:0,host:0},decor:0,price:0,rep:3,days:0,comp:null,mk:[],hx:[],cd:{},earned:0};
+  var D=district(city,did);
+  var loc={id:G.nid++,city:city,did:did,ind:ind,name:D.name,u:{},staff:{barista:0,server:0,manager:0,finisher:0,host:0},decor:0,price:0,rep:3,days:0,comp:null,mk:[],hx:[],cd:{},earned:0};
   if(city>0)loc.comp=newRival(loc);
   return loc;
 }
-function freshG(){G={v:3,cash:60,xp:0,lvl:1,fame:0,day:1,cities:1,act:0,nid:1,locs:[],hq:{},hold:{},news:[],ts:now(),stats:{earned:0,served:0,passive:0},hostT:150,tvcd:0,mute:false,music:true,rebuild:false,started:false};G.locs.push(newLoc(0,'main','container'));return G;}
-function load(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s&&s.v===3&&s.locs&&s.locs.length){
+function freshG(){G={v:4,cash:60,xp:0,lvl:1,fame:0,day:1,cities:1,act:0,nid:1,locs:[],hq:{},hold:{},news:[],ts:now(),stats:{earned:0,served:0,passive:0},hostT:150,tvcd:0,mute:false,music:true,rebuild:false,started:false};G.locs.push(newLoc(0,'main','container'));return G;}
+function load(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s&&s.v===4&&s.locs&&s.locs.length){
   s.hq=s.hq||{};s.hold=s.hold||{};s.news=s.news||[];s.stats=Object.assign({earned:0,served:0,passive:0},s.stats||{});
-  s.locs.forEach(function(l){l.mk=l.mk||[];l.hx=l.hx||[];l.cd=l.cd||{};l.tops=l.tops||{};l.staff=Object.assign({barista:0,server:0,manager:0,finisher:0,host:0},l.staff||{});});
+  s.locs.forEach(function(l){l.mk=l.mk||[];l.hx=l.hx||[];l.cd=l.cd||{};l.u=l.u||{};l.staff=Object.assign({barista:0,server:0,manager:0,finisher:0,host:0},l.staff||{});});
   if(s.act>=s.locs.length)s.act=0;return s;}}catch(e){}return null;}
 function save(){if(!G)return;G.ts=now();try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}if(window.LZ_GAME&&window.LZ)LZ.save(LZ_GAME);}
 var LZR=0.04,LZM=1;
 function lzBoot(){return new Promise(function(res){if(!window.LZ_GAME)return res();var done=false,fin=function(){if(!done){done=true;res();}};
-  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:1,minor:0,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;window.LZ_EA=!!(g.released&&LZ.today&&LZ.today()<g.released);}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
+  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:2,minor:0,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;window.LZ_EA=!!(g.released&&LZ.today&&LZ.today()<g.released);}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
   if(window.LZ)go();else window.addEventListener('lz-ready',go,{once:true});setTimeout(fin,3500);});}
 
 /* ---------- economics ---------- */
@@ -1743,9 +1467,8 @@ function holdLv(k){return (G&&G.hold[k])||0;}
 var IND_HOLD={container:'line',fish:'cold',bulk:'refinery',cruise:'resort'};
 function holdPrice(ind){return 1+(ind==='container'?0:.03*holdLv(IND_HOLD[ind]));}
 function costRate(loc){return Math.max(.08,.3*(loc.ind==='container'?1:1-.06*holdLv(IND_HOLD[loc.ind]))*(1-.04*holdLv('rail')));}
-function holdSpeed(k){var m=1;if(k==='grain'||k==='ore'||k==='oil')m*=Math.pow(.94,holdLv('refinery'));if(k==='carousel'||k==='leis'||k==='giftshop')m*=Math.pow(.94,holdLv('resort'));return m;}
+function lsz(loc){return Math.max(1,Math.min(4,U(loc,'gates')-1));}
 function priceMult(loc){return IND[loc.ind].pm*TM(tierOf(loc)).pm*PRICE_T[loc.price+1].m*(1+.04*(G.hq.quality||0))*holdPrice(loc.ind);}
-function avgPrice(loc){var m=menuOf(loc);if(!m.length)return 3;var s=0,w=0;m.forEach(function(r){s+=r.price*r.w;w+=r.w;});return s/w;}
 function repMult(loc){return .55+.15*loc.rep;}
 function famMult(){return 1+Math.min(1.5,G.fame/800);}
 function loyMult(){return 1+.06*(G.hq.loyalty||0);}
@@ -1754,22 +1477,20 @@ function hxMult(loc){var t=now(),m=1;loc.hx=loc.hx.filter(function(h){return h.u
 function priceDemand(loc){return Math.pow(PRICE_T[loc.price+1].dem,1/(distOf(loc).price||1));}
 function attract(loc){return 40*(.6+.1*loc.rep)*famMult()*(1+mktAdd(loc))*loyMult()*(1+.04*loc.decor)*priceDemand(loc)*hxMult(loc);}
 function share(loc){if(!loc.comp)return 1;var A=attract(loc);return .3+.7*A/(A+loc.comp.S);}
-function demandMin(loc,active){var D=distOf(loc),sz=SIZES[loc.size];return sz.dem*(active?1:1.35)*(D.demand||1)*repMult(loc)*share(loc)*(1+mktAdd(loc))*priceDemand(loc)*famMult()*loyMult()*(1+.03*loc.decor)*TM(D.tier).dm*hxMult(loc);}
+function demandMin(loc,active){var D=distOf(loc);return gatesDem(loc)*(active?1:1.35)*(D.demand||1)*repMult(loc)*share(loc)*(1+mktAdd(loc))*priceDemand(loc)*famMult()*loyMult()*(1+.03*loc.decor)*TM(D.tier).dm*hxMult(loc);}
 function wageMin(loc){var s=0;ROLE_ORDER.forEach(function(r){s+=(loc.staff[r]||0)*ROLES[r].wage;});return s*IND[loc.ind].wm*TM(tierOf(loc)).pm;}
-function rentMin(loc){return .35*loc.size*loc.size*IND[loc.ind].wm*TM(tierOf(loc)).pm*(distOf(loc).price||1)*Math.pow(.9,holdLv('realty'));}
+function rentMin(loc){return .35*lsz(loc)*lsz(loc)*IND[loc.ind].wm*TM(tierOf(loc)).pm*(distOf(loc).price||1)*Math.pow(.9,holdLv('realty'));}
 function trainMult(){return Math.pow(.94,G.hq.training||0);}
 function xpScale(loc){return Math.max(1,IND[loc.ind].pm*TM(tierOf(loc)).pm*.6);}
 function locEcon(loc){
-  var s=loc.staff,menu=menuOf(loc),dem=demandMin(loc,false),cs=0,tw=0;
-  menu.forEach(function(r){tw+=r.w;if(r.comps.some(function(c){return c!=='milk';}))cs+=r.w;});cs=tw?cs/tw:0;
-  var lv=0,n=0;Object.keys(loc.st).forEach(function(k){lv+=loc.st[k].s;n++;});var spF=1+.1*(n?lv/n:0);
-  var B=s.barista*60/(ROLES.barista.act*trainMult())*.8*spF,Sv=s.server*60/(ROLES.server.act*trainMult())*.9,F=s.finisher?s.finisher*60/(ROLES.finisher.act*trainMult())*.8/Math.max(.25,cs):1e9;
-  var open=s.manager>0&&s.barista>0&&s.server>0,cap=0,bott='';
-  if(open){if(!s.finisher)dem*=(1-cs*.85);cap=Math.min(B,Sv,F)*(1+.1*(G.hq.autolab||0));bott=cap===B?'crane operators':cap===Sv?'yard drivers':'customs brokers';}
-  else bott=!s.manager?'a harbor master':!s.barista?'a crane operator':'a yard driver';
-  var items=open?Math.min(dem,cap):0,price=avgPrice(loc)*priceMult(loc)*1.12;
+  var s=loc.staff,dem=demandMin(loc,false)*1.25,sp=Math.pow(1.12,U(loc,'speed'))*Math.pow(1.05,G.hq.grind||0)/trainMult();
+  var open=s.manager>0&&s.barista>0,cap=0,bott='';
+  var Cr=s.barista*16*sp*Math.pow(U(loc,'cranes'),.7),Dr=s.server*9/trainMult()+Cr*.35;
+  if(open){cap=Math.min(Cr,Dr+Cr*.5)*(1+.1*(G.hq.autolab||0));bott=Cr<=Dr+Cr*.5?'crane operators':'straddle drivers';}
+  else bott=!s.manager?'a harbor master':'a crane operator';
+  var items=open?Math.min(dem,cap):0,price=avgVal(loc)*priceMult(loc)*1.1;
   var rev=items*price,cogs=rev*costRate(loc),wages=open?wageMin(loc):0,rent=open?rentMin(loc):0;
-  return {open:open,dem:dem,cap:cap,items:items,rev:rev,cogs:cogs,wages:wages,rent:rent,net:rev-cogs-wages-rent,bott:open?(items<dem*.97?bott:''):bott,noFin:open&&!s.finisher&&cs>.05,util:cap?dem/cap:0};
+  return {open:open,dem:dem,cap:cap,items:items,rev:rev,cogs:cogs,wages:wages,rent:rent,net:rev-cogs-wages-rent,bott:open?(items<dem*.97?bott:''):bott,util:cap?dem/cap:0};
 }
 function totalRate(){var t=0;G.locs.forEach(function(l){if(SH&&SH.loc===l&&SH.phase!=='done')return;t+=locEcon(l).net;});return t+holdIncome();}
 
@@ -1778,12 +1499,12 @@ function xpNeed(l){return Math.round(110*Math.pow(1.3,l-1));}
 function addXP(x){if(!(x>0))return;G.xp+=x;while(G.xp>=xpNeed(G.lvl)){G.xp-=xpNeed(G.lvl);G.lvl++;LVQ.push(G.lvl);onLevel(G.lvl);}}
 function addFame(f){G.fame=Math.max(0,G.fame+f*(f>0?1+.15*(G.hq.ambassador||0):1));}
 function repAdd(loc,d){loc.rep=clamp(loc.rep+d*(distOf(loc).rep||1),.5,5);}
-function heroIcon(ik){var p=IND[ik].hero.split('+');return iconOf(p[0],p.slice(1));}
+function heroIcon(ik){return iconOf(IND[ik].hero);}
 function unlocksAt(l){
   var u=[];
   IND_ORDER.forEach(function(ik){var I=IND[ik];if(I.lvl===l)u.push({t:'New industry: '+I.name,ic:heroIcon(ik)});
-    I.stations.forEach(function(k){if(k!=='rack'&&STN[k].lvl===l&&I.start.indexOf(k)<0&&(ik==='container'||STN[k].lvl>I.lvl))u.push({t:STN[k].name+' for '+I.name.toLowerCase()+'s',ic:iconStation(k,ik)});});
-    Object.keys(I.tops).forEach(function(t){if(I.tops[t].lvl===l)u.push({t:TOPS[t].name+' for '+I.name.toLowerCase()+'s',ic:iconTop(t)});});});
+    I.cargo.forEach(function(t){if(CT[t].lvl===l&&CT[t].lvl>I.lvl)u.push({t:'New cargo at '+I.name.toLowerCase()+'s: '+CT[t].name,ic:iconOf(t)});});});
+  UPG_ORDER.forEach(function(k){if(UPG[k].lvl===l&&l>1)u.push({t:'Upgrade: '+UPG[k].name,ic:iconUpg(k)});});
   ROLE_ORDER.forEach(function(r){if(ROLES[r].lvl===l)u.push({t:'Hire '+ROLES[r].name.toLowerCase()+'s',ic:''});});
   DIST0.forEach(function(d){if(d.lvl===l&&l>1)u.push({t:'New port: '+d.name,ic:distPic(d.win)});});
   HQ_ORDER.forEach(function(k){if(HQ[k].lvl===l)u.push({t:'HQ: '+HQ[k].name,ic:''});});
@@ -1816,25 +1537,21 @@ function hostile(loc){
     else{loc.comp.S+=12;news(cn+' expanded right next to '+loc.name+'.','bad',loc);}}
   else{loc.comp.S+=15;news(cn+' opened a bigger terminal near '+loc.name+'.','bad',loc);}
 }
-function resetBots(){SH.st.forEach(function(o){o.claim=null;(o.slots||[]).forEach(function(s){s.claim=null;});});SH.tray.forEach(function(e){if(e)e.claim=null;});mkBots();}
+function resetBots(){SH.bots.forEach(function(b){if(b.task){b.task.b.res=false;if(b.task.c.items[b.task.j])b.task.c.items[b.task.j].inc=false;}});mkBots();}
 
 /* ---------- actions ---------- */
 function cmul(loc){return IND[loc.ind].cm*TM(tierOf(loc)).cm;}
-function stBuyCost(loc,k){return Math.round(STN[k].cost*cmul(loc));}
-function stSpdCost(loc,k){return Math.round(STN[k].spd*Math.pow(1.85,(loc.st[k]||{s:0}).s)*cmul(loc));}
-function stCapCost(loc,k){return Math.round(STN[k].spd*3*Math.pow(2.6,(loc.st[k]||{c:0}).c)*cmul(loc));}
-function topCost(loc,t){return Math.round(IND[loc.ind].tops[t].cost*TM(tierOf(loc)).cm);}
+function upCost(loc,k){var d=UPG[k];return Math.round(d.cost*Math.pow(d.g,U(loc,k)-d.base)*cmul(loc));}
 function hireCost(loc,r){return Math.round(ROLES[r].cost*(1+.7*(loc.staff[r]||0))*IND[loc.ind].wm*TM(tierOf(loc)).cm);}
-function sizeCost(loc){var n=loc.size+1;return n>4?0:Math.round(SIZES[n].cost*cmul(loc)*(distOf(loc).price||1));}
 function decorCost(loc){return Math.round(150*Math.pow(2.3,loc.decor)*IND[loc.ind].wm*TM(tierOf(loc)).cm);}
 function hqCost(k){return Math.round(HQ[k].cost*Math.pow(HQ[k].g,G.hq[k]||0));}
 function holdCostOf(k){return Math.round(HOLD[k].cost*Math.pow(HOLD[k].g,G.hold[k]||0));}
 function locCost(city,did,ind){var D=district(city,did);return Math.round(D.cost*(ind==='container'?1:1.5)*Math.pow(.95,holdLv('realty')));}
 function holdIncome(){var s=0;HOLD_ORDER.forEach(function(k){var l=G.hold[k]||0;if(l)s+=HOLD[k].inc*l*Math.pow(1.25,l);});return s;}
-function holdReq(k){var d=HOLD[k];if(G.lvl<d.lvl)return 'Level '+d.lvl;if(d.need.locs&&G.locs.length<d.need.locs)return 'Own '+d.need.locs+' shops';
+function holdReq(k){var d=HOLD[k];if(G.lvl<d.lvl)return 'Level '+d.lvl;if(d.need.locs&&G.locs.length<d.need.locs)return 'Own '+d.need.locs+' terminals';
   if(d.need.ind){var n=G.locs.filter(function(l){return l.ind===d.need.ind;}).length;if(n<d.need.n)return 'Own '+d.need.n+' '+IND[d.need.ind].name.toLowerCase()+(d.need.n>1?'s':'');}return '';}
-function mktCost(loc,k){return Math.round(MKT[k].cost*(1+.6*(loc.size-1))*TM(tierOf(loc)).pm*IND[loc.ind].wm*Math.pow(.9,holdLv('adagency')));}
-function sabCost(loc,k){return Math.round(SAB[k].cost*(1+.5*(loc.size-1))*TM(tierOf(loc)).pm*IND[loc.ind].wm);}
+function mktCost(loc,k){return Math.round(MKT[k].cost*(1+.6*(lsz(loc)-1))*TM(tierOf(loc)).pm*IND[loc.ind].wm*Math.pow(.9,holdLv('adagency')));}
+function sabCost(loc,k){return Math.round(SAB[k].cost*(1+.5*(lsz(loc)-1))*TM(tierOf(loc)).pm*IND[loc.ind].wm);}
 function tvCost(){var t=0;G.locs.forEach(function(l){t+=Math.max(0,locEcon(l).rev);});return Math.max(4000,Math.round(t*10));}
 function spend(c){if(G.cash<c)return false;G.cash-=c;return true;}
 function inShiftAt(loc){return SH&&SH.loc===loc&&SH.phase!=='done';}
@@ -1842,13 +1559,9 @@ function inShiftAt(loc){return SH&&SH.loc===loc&&SH.phase!=='done';}
 function act(kind,arg,loc){
   var c,r='ok';
   switch(kind){
-    case 'st':if(IND[loc.ind].stations.indexOf(arg)<0||arg==='rack'||loc.st[arg])return 'bad';if(G.lvl<Math.max(STN[arg].lvl,IND[loc.ind].lvl))return 'req';if(stList(loc).length>=SIZES[loc.size].stations)return 'room';c=stBuyCost(loc,arg);if(!spend(c))return 'cash';loc.st[arg]={s:0,c:0};G.rebuild=true;break;
-    case 'spd':if(!loc.st[arg])return 'bad';if(loc.st[arg].s>=5)return 'max';c=stSpdCost(loc,arg);if(!spend(c))return 'cash';loc.st[arg].s++;break;
-    case 'cap':if(!loc.st[arg])return 'bad';if(loc.st[arg].c>=2)return 'max';c=stCapCost(loc,arg);if(!spend(c))return 'cash';loc.st[arg].c++;G.rebuild=true;break;
-    case 'top':if(!IND[loc.ind].tops[arg]||loc.tops[arg])return 'bad';if(G.lvl<IND[loc.ind].tops[arg].lvl)return 'req';if(!topsOf(loc).length&&stList(loc).length>=SIZES[loc.size].stations)return 'room';if(topsOf(loc).length>=5)return 'rackfull';c=topCost(loc,arg);if(!spend(c))return 'cash';loc.tops[arg]=true;G.rebuild=true;break;
-    case 'hire':if(!ROLES[arg])return 'bad';if(G.lvl<ROLES[arg].lvl)return 'req';if((loc.staff[arg]||0)>=ROLES[arg].cap[loc.size])return 'max';c=hireCost(loc,arg);if(!spend(c))return 'cash';loc.staff[arg]=(loc.staff[arg]||0)+1;if(inShiftAt(loc))resetBots();break;
+    case 'up':var ud=UPG[arg];if(!ud)return 'bad';if(G.lvl<ud.lvl)return 'req';if(U(loc,arg)>=ud.max)return 'max';c=upCost(loc,arg);if(!spend(c))return 'cash';loc.u[arg]=U(loc,arg)+1;G.rebuild=true;break;
+    case 'hire':if(!ROLES[arg])return 'bad';if(G.lvl<ROLES[arg].lvl)return 'req';if((loc.staff[arg]||0)>=staffCap(loc,arg))return 'max';c=hireCost(loc,arg);if(!spend(c))return 'cash';loc.staff[arg]=(loc.staff[arg]||0)+1;if(inShiftAt(loc))resetBots();break;
     case 'fire':if(!loc.staff[arg])return 'max';loc.staff[arg]--;if(inShiftAt(loc))resetBots();break;
-    case 'size':if(loc.size>=4)return 'max';c=sizeCost(loc);if(!spend(c))return 'cash';loc.size++;G.rebuild=true;break;
     case 'decor':if(loc.decor>=5)return 'max';c=decorCost(loc);if(!spend(c))return 'cash';loc.decor++;G.rebuild=true;break;
     case 'price':loc.price=clamp(+arg,-1,2);G.rebuild=true;break;
     case 'mkt':var d=MKT[arg];if(!d)return 'bad';if(G.lvl<d.lvl)return 'req';if((loc.cd[arg]||0)>now())return 'cd';c=mktCost(loc,arg);if(!spend(c))return 'cash';
@@ -1856,7 +1569,7 @@ function act(kind,arg,loc){
     case 'sab':var s=SAB[arg];if(!s)return 'bad';if(G.lvl<s.lvl)return 'req';if(!loc.comp)return 'none';if((loc.cd['s_'+arg]||0)>now())return 'cd';if(s.req&&!holdLv(s.req))return 'req';c=sabCost(loc,arg);if(!spend(c))return 'cash';
       loc.cd['s_'+arg]=now()+180000;
       if(Math.random()<s.risk*Math.pow(.88,G.hq.legal||0)){var fine=Math.round(c*2*(1-.1*(G.hq.legal||0)));G.cash-=fine;repAdd(loc,-.5);G.fame*=.9;loc.comp.S+=10;news('Scandal! You got caught trying to '+s.name.toLowerCase()+'. Fined '+fmt(fine)+'.','bad',loc);r='caught';}
-      else{loc.comp.S=Math.max(5,loc.comp.S-s.hit);if(s.gift&&loc.staff.barista<ROLES.barista.cap[loc.size]){loc.staff.barista++;if(inShiftAt(loc))resetBots();}news('It worked. '+loc.comp.name+' is reeling.','good',loc);}
+      else{loc.comp.S=Math.max(5,loc.comp.S-s.hit);if(s.gift&&loc.staff.barista<staffCap(loc,'barista')){loc.staff.barista++;if(inShiftAt(loc))resetBots();}news('It worked. '+loc.comp.name+' is reeling.','good',loc);}
       break;
     case 'hq':if(!HQ[arg])return 'bad';if(G.lvl<HQ[arg].lvl)return 'req';if((G.hq[arg]||0)>=HQ[arg].max)return 'max';c=hqCost(arg);if(!spend(c))return 'cash';G.hq[arg]=(G.hq[arg]||0)+1;break;
     case 'hold':if(!HOLD[arg])return 'bad';if((G.hold[arg]||0)>=HOLD[arg].max)return 'max';if(holdReq(arg))return 'req';c=holdCostOf(arg);if(!spend(c))return 'cash';G.hold[arg]=(G.hold[arg]||0)+1;news('Your '+HOLD[arg].name.toLowerCase()+' is now level '+G.hold[arg]+'.','good');break;
@@ -1959,7 +1672,7 @@ function renderHud(){
   setText('cash',fmt(G.cash));
   if(frameNo%20===0){var r=totalRate(),rt=Math.abs(r)<.005?' ':(r>0?'+':'')+fmt(r)+'/min elsewhere';var el=$('#rate');if(hudC.rate!==rt){el.textContent=rt;el.className=r>0?'pos':r<0?'neg':'';hudC.rate=rt;}}
   setText('dayl',SH?'Day '+SH.s.day:'Day '+(loc.days+1));
-  var f=SH?SH.t/SH.len:0;setText('clock',SH?(SH.phase==='open'?clockStr(f):'Closing'):'');
+  var f=SH?SH.t/SH.len:0;setText('clock',SH?(SH.phase==='open'?clockStr(f):SH.phase==='closing'?'Closing':''):'');
   $('#dbar i').style.transform='scaleX('+clamp(f,0,1).toFixed(3)+')';var cl=!!(SH&&SH.phase!=='open');if(hudC.cl!==cl){$('#dbar').classList.toggle('close',cl);hudC.cl=cl;}
   if(SH){var rev=SH.s.sales+SH.s.tips,gt='Goal '+fmtR(rev)+' / '+fmtR(SH.s.goal);setText('goal',gt);var ok=rev>=SH.s.goal;if(hudC.gok!==ok){$('#goal').classList.toggle('ok',ok);hudC.gok=ok;}}
   var pv=SH&&SH.s?(SH.s.pts||0):0;setText('ptsn',pv.toLocaleString());
@@ -1970,6 +1683,7 @@ function renderHud(){
     var h='<span class="chip mpts">'+(SH&&SH.s?(SH.s.pts||0):0).toLocaleString()+' pts</span><span class="chip">'+esc(loc.name)+' '+stars(loc.rep)+'</span>';
     if(loc.comp){var sh=share(loc);h+='<span class="chip">vs '+esc(loc.comp.name)+' <span class="share"><i style="width:'+(sh*100).toFixed(0)+'%"></i></span> '+(sh*100).toFixed(0)+'%</span>';}
     if(SH&&SH.streak>=2)h+='<span class="chip gold">Combo '+SH.streak+' · pts ×'+comboMult().toFixed(1)+' · tips ×'+streakMult().toFixed(2)+'</span>';
+    if(SH&&SH.phase!=='done'){var qn=SH.queue.length;h+='<span class="chip'+(qn>=6?' hot':'')+'">Crane queue '+qn+'/6</span>';}
     if(SH&&SH.heat)h+='<span class="chip hot">Heatwave</span>';
     if(SH&&SH.boost>1.2)h+='<span class="chip hot">Rush</span>';else if(SH&&SH.boost<.8)h+='<span class="chip cool">Quiet spell</span>';
     var mk=mktAdd(loc);if(mk>0)h+='<span class="chip good">Marketing +'+Math.round(mk*100)+'%</span>';
@@ -2001,18 +1715,19 @@ function popWorld(pos,html,cls){var el=document.createElement('div');el.classNam
 function coinsFrom(pos,n){var s=proj(pos),tgt=$('#cash').getBoundingClientRect(),tx=tgt.left+tgt.width/2,ty=tgt.top+tgt.height/2;
   for(var i=0;i<n;i++)(function(i){var c=document.createElement('div');c.className='coin';var sx=s.x+rnd(-24,24),sy=s.y+rnd(-14,14);c.style.transform='translate('+sx+'px,'+sy+'px)';document.body.appendChild(c);
     setTimeout(function(){c.style.transform='translate('+tx+'px,'+ty+'px) scale(.6)';c.style.opacity='0';},40+i*70);setTimeout(function(){c.remove();var cp=$('.cash');if(cp){cp.animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:180});}},760+i*70);})(i);}
-function itemsHtml(c){return c.items.map(function(x){return '<span class="it'+(x.done?' done':'')+'"><img alt="" src="'+iconOf(x.r.base,x.r.comps)+'"></span>';}).join('');}
+function itemsHtml(c){return c.items.map(function(x){return '<span class="it'+(x.done?' done':x.inc?' inc':'')+'"><img alt="" src="'+iconBox(x.t)+'"></span>';}).join('');}
+var TUT={sel:0,queue:0,serve:0};
+function tutNote(k){TUT[k]=(TUT[k]||0)+1;}
+function shipTopW(){var r=null;SH.ships.forEach(function(sh){if(r||sh.st!=='dock')return;sh.bays.forEach(function(b){if(!r&&b.length&&!b[b.length-1].res)r=boxWorld(b[b.length-1]).add(V3(0,.75,0));});});return r;}
 function tutHint(){
-  if(!SH||SH.phase!=='open'||G.stats.served>=3||G.locs.length>1||SH.loc.ind!=='container')return null;
-  if(!SH.cust.some(function(c){return c.state==='wait';}))return null;
-  var i,e;for(i=0;i<SH.tray.length;i++){e=SH.tray[i];if(e&&!e.fly&&findCust(rkey(e.base,e.comps)))return {t:'Tap the container to load the truck',p:trayW(i).add(V3(0,.75,0))};}
-  var cus=SH.st.filter(function(o){return o.k==='customs';})[0],cr=SH.st.filter(function(o){return o.k==='crane';})[0];
-  for(i=0;i<SH.tray.length;i++){e=SH.tray[i];if(e&&!e.fly&&cus&&accepts(e,'customs')&&wanted(e,'customs')){
-    if(cus.st==='ready')return {t:'Tap Customs to clear it',p:outW(cus).add(V3(0,.75,0))};
-    if(cus.st!=='brew')return {t:'Tap Customs to start an inspection',p:outW(cus).add(V3(0,.75,0))};return null;}}
-  if(cr){for(i=0;i<cr.slots.length;i++){if(cr.slots[i].st==='ready')return {t:'Tap the container to move it to the yard',p:slotW(cr,i).add(V3(0,.8,0))};}
-    if(demandBase('box')>supplyBase('box')&&shipReady(cr))return {t:'Tap the crane to unload',p:cr.v.g.position.clone().add(V3(0,1.9,.3))};
-    if(cus&&cus.st==='empty'&&demandComp('customs')>0)return {t:'While it unloads, start a customs inspection',p:outW(cus).add(V3(0,.75,0))};}
+  if(!SH||SH.phase!=='open'||G.stats.served>=4||G.locs.length>1||SH.loc.days>1)return null;
+  var w=SH.cust.filter(function(c){return c.state==='wait'&&!c.paid;});
+  if(SH.sel){var b=SH.sel.b,c=w.filter(function(c){return wantIndex(c,b)>=0&&deliverable(b);})[0];
+    if(c)return {t:'Tap the truck to load it',p:custTop(c).add(V3(0,.9,0))};
+    var col=SH.cols.filter(function(cl){return canPlace(b,cl)==='';})[0];if(col)return {t:'Tap a yard column to drop it',p:V3(col.x,colTopY(col)+.7,col.z)};return null;}
+  if(SH.queue.length)return null;
+  for(var i=0;i<w.length;i++){if(findMatch(w[i]))return {t:'Tap the truck: the crane grabs a match',p:custTop(w[i]).add(V3(0,.9,0))};}
+  var p=shipTopW();if(p)return {t:TUT.queue?'Dig: move the top containers to the yard':'Tap the ship to pick up a container',p:p};
   return null;
 }
 function renderTags(dt){
@@ -2028,27 +1743,20 @@ function renderTags(dt){
       if(t.bar){var fr=clamp(c.pat/c.max,0,1);t.bar.style.transform='scaleX('+fr.toFixed(3)+')';var cl='pat'+(fr<.3?' low':fr<.6?' mid':'');if(t.patEl.className!==cl)t.patEl.className=cl;}
       if(key)place(t,custTop(c).add(V3(0,.15,0)));else if(!t.hid){t.el.style.display='none';t.hid=true;}
     });
-    SH.st.forEach(function(o,si){
-      if(o.kind==='cooker')o.slots.forEach(function(s,i){var t=tagFor('s'+si+'_'+i),key='',html='',k=0;
-        if(s.st==='cook'){key='ck';html=ringSvg();k=s.t/s.dur;}
-        else if(s.st==='ready'){var b=s.t/o.d.burn;key='rd'+(b>.6?'w':'');html=ringSvg(b>.6?'warn':'rd');k=1-b;}
-        else if(s.st==='burnt'){key='bt';html='<div class="cnt bad">Damaged! Tap to scrap</div>';}
-        setTag(t,key,html);setRing(t,k);if(key)place(t,s.st==='cook'&&s.it?s.it.g.position.clone().add(V3(0,.55,0)):slotW(o,i).add(V3(0,.62,0)));else if(!t.hid){t.el.style.display='none';t.hid=true;}});
-      if(o.ship){var ts=tagFor('sh'+si),sh=o.ship,sk='',shh='';
-        if(sh.st==='dock'){var lf=clamp(sh.dep/sh.depMax,0,1),low=lf<.25;sk='d'+sh.cargo+(low?'L':'')+(sh.mega?'M':'');shh='<div class="shipt'+(low?' low':'')+(sh.mega?' mega':'')+'"><b>'+(sh.cargo>0?sh.cargo+' to unload':'Empty')+'</b><span class="pat"><i></i></span></div>';}
-        else if(sh.st==='in'){sk='in';shh='<div class="shipt dim"><b>Ship mooring…</b></div>';}
-        else if(sh.st==='away'&&SH.phase!=='done'){sk='aw'+(SH.ice>0?'i':'');shh='<div class="shipt dim"><b>'+(SH.ice>0?'Iced in':'Next ship soon')+'</b></div>';}
-        setTag(ts,sk,shh);if(sh.st==='dock'&&ts.bar){ts.bar.style.transform='scaleX('+clamp(sh.dep/sh.depMax,0,1).toFixed(3)+')';}
-        if(sk)place(ts,o.v.g.localToWorld(V3(o.v.ship.g.position.x*.0,.75,1.32)));else if(!ts.hid){ts.el.style.display='none';ts.hid=true;}}
-      if(o.kind==='batch'){var t=tagFor('b'+si),key='',html='',k=0,p=o.v.g.position.clone().add(V3(0,1.05,.1));
-        if(o.st==='brew'){key='br';html=ringSvg();k=o.t/o.dur;}
-        else if(o.st==='ready'){var st=o.t/o.d.stale;key='r'+o.serv+(st>.7?'w':'');html='<div class="cnt '+(st>.7?'bad':'rd')+'">×'+o.serv+' '+(o.d.role==='comp'?'ready':'left')+'</div>';}
-        else if(o.st==='stale'){key='st';html='<div class="cnt bad">'+(o.d.role==='comp'?'Expired. Tap to redo':'Spoiled. Tap to redo')+'</div>';}
-        else{key='e';html='<div class="cnt dim">'+({customs:'Tap to inspect',icer:'Tap to make ice',leis:'Tap to string leis',giftshop:'Tap to pack gifts'}[o.k]||'Tap to fill')+'</div>';}
-        setTag(t,key,html);setRing(t,k);place(t,p);}
-    });
+    SH.ships.forEach(function(sh,si){var ts=tagFor('sh'+si),sk='',shh='',n=shipCount(sh);
+      if(sh.st==='dock'){var lf=clamp(sh.dep/sh.depMax,0,1),low=lf<.25;sk='d'+n+(low?'L':'')+(sh.mega?'M':'');shh='<div class="shipt'+(low?' low':'')+(sh.mega?' mega':'')+'"><b>'+(n>0?n+' to unload':'Empty')+'</b><span class="pat"><i></i></span></div>';}
+      else if(sh.st==='in'&&sh.t>=0){sk='in';shh='<div class="shipt dim"><b>Ship mooring…</b></div>';}
+      else if(sh.st==='away'&&SH.phase==='open'){sk='aw'+(SH.ice>0?'i':'');shh='<div class="shipt dim"><b>'+(SH.ice>0?'Iced in':'Next ship soon')+'</b></div>';}
+      setTag(ts,sk,shh);if(sh.st==='dock'&&ts.bar){ts.bar.style.transform='scaleX('+clamp(sh.dep/sh.depMax,0,1).toFixed(3)+')';}
+      if(sk)place(ts,V3(SH.L.berths[sh.bi].x,.25,SH.L.berths[sh.bi].z+.75));else if(!ts.hid){ts.el.style.display='none';ts.hid=true;}});
+    if(SH.phase!=='done')SH.cols.forEach(function(c,ci){var t=tagFor('col'+ci),key='',html='',k=0,top=c.stack[c.stack.length-1],y=colTopY(c)+.55;
+      if(c.kind==='customs'&&top&&top.hold&&!top.cleared){key='cu';html=ringSvg();k=c.insp/5;}
+      else if(top&&top.spoiled){key='sp';html='<div class="cnt bad">Spoiled · scrap it</div>';}
+      else{var worst=null;c.stack.forEach(function(b){if(CT[b.t].reefer&&!b.spoiled&&c.kind!=='power'&&b.spoil>.35&&(!worst||b.spoil>worst.spoil))worst=b;});
+        if(worst){key='rf'+(worst.spoil>.7?'w':'');html=ringSvg('warn');k=1-worst.spoil;}}
+      setTag(t,key,html);setRing(t,k);if(key)place(t,V3(c.x,y,c.z));else if(!t.hid){t.el.style.display='none';t.hid=true;}});
     SH.bots.forEach(function(b,i){var t=tagFor('bot'+i);if(!b.task){if(!t.hid){t.el.style.display='none';t.hid=true;}t.k=null;return;}
-      setTag(t,'w'+b.name,'<div class="bot work"><span class="av" style="background:'+hexCss(ROLES[b.role].col)+'">'+b.name[0]+'</span></div>');place(t,botWhere(b.task).add(V3(.28,0,0)));});
+      setTag(t,'w'+b.name,'<div class="bot work"><span class="av" style="background:'+hexCss(ROLES[b.role].col)+'">'+b.name[0]+'</span></div>');place(t,V3(b.task.col.x+.25,colTopY(b.task.col)+.4,b.task.col.z));});
     if(SH.pend.length){var tp=tagFor('pend');setTag(tp,'p'+SH.pend.length,'<div class="wait">+'+SH.pend.length+' waiting at the gate</div>');place(tp,V3(SH.L.rx-1.2,1.2,SH.L.roadZ));}
     if(SH.gull&&SH.gull.phase==='in'){var tg=tagFor('gull');setTag(tg,'g','<div class="cnt bad">Tap!</div>');place(tg,SH.gull.m.g.position.clone().add(V3(0,.4,0)));}
     var hn=tutHint();if(hn){var th=tagFor('hint');setTag(th,'h'+hn.t,'<div class="hint">'+esc(hn.t)+'</div>');place(th,hn.p);}
@@ -2068,30 +1776,20 @@ function img(u){return u?'<img alt="" src="'+u+'">':'';}
 function letterIc(l,col){return '<span style="background:'+hexCss(col)+';width:100%;height:100%;display:grid;place-items:center;font:700 24px var(--display);color:#fff">'+l+'</span>';}
 function rowHtml(r){return '<div class="row'+(r.lock?' lock':'')+(r.on?' on':'')+'"><div class="ic">'+(r.ic||'')+'</div><div class="tx"><b>'+r.title+'</b>'+(r.desc?'<small>'+r.desc+'</small>':'')+(r.tags&&r.tags.length?'<div class="meta">'+r.tags.map(function(t){return '<span class="tg '+(t.c||'')+'">'+t.t+'</span>';}).join('')+'</div>':'')+'</div><div class="ac">'+(r.lock?'<span class="lk">'+r.lock+'</span>':(r.btns||[]).join(''))+'</div></div>';}
 function mmss(ms){var s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+('0'+s%60).slice(-2);}
-function recipesUsing(ind,t){return IND[ind].R.filter(function(r){return r.comps.indexOf(t)>=0;}).slice(0,3).map(function(r){return r.name;}).join(', ');}
 
 function shopRows(loc,tab){
-  var li=G.locs.indexOf(loc),I=IND[loc.ind],rows=[],used=stList(loc).length,max=SIZES[loc.size].stations;
+  var li=G.locs.indexOf(loc),I=IND[loc.ind],rows=[];
   if(tab==='equip'){
-    I.stations.forEach(function(k){if(k==='rack')return;var d=STN[k],own=loc.st[k],r={ic:img(iconStation(k,loc.ind)),title:d.name,desc:d.desc};
-      if(own){r.on=true;r.tags=[{t:'Speed '+own.s+'/5'},{t:d.kind==='cooker'?d.slots[own.c]+' landing bays':d.serv[own.c]+' per batch'}];r.btns=[];
-        if(own.s<5){r.cost=stSpdCost(loc,k);r.btns.push(costBtn(r.cost,'spd',k,li,'Faster'));}else r.btns.push(btn('Max speed','x',{dis:1}));
-        if(own.c<2)r.btns.push(costBtn(stCapCost(loc,k),'cap',k,li,d.kind==='cooker'?'+1 bay':'Bigger batch'));}
-      else if(G.lvl<Math.max(d.lvl,I.lvl)){r.lock='Level '+Math.max(d.lvl,I.lvl);r.dis=1;}
-      else if(used>=max){r.btns=[btn('No space','x',{dis:1})];r.tags=[{t:'Expand the terminal for more quay space',c:'r'}];r.dis=1;}
-      else{r.cost=stBuyCost(loc,k);r.btns=[costBtn(r.cost,'st',k,li,'Buy')];r.tags=[{t:'New cargo types',c:'g'}];}
-      rows.push(r);});
-    Object.keys(I.tops).forEach(function(t){var d=I.tops[t],r={ic:img(iconTop(t)),title:TOPS[t].name,desc:'Needed for: '+recipesUsing(loc.ind,t)+'.',grp:'tops'};
-      if(loc.tops[t]){r.on=true;r.tags=[{t:'On the board',c:'g'}];r.btns=[];}
+    UPG_ORDER.forEach(function(k){var d=UPG[k],v=U(loc,k),r={ic:img(iconUpg(k)),title:d.name+(d.max-d.base>1?' <span class="tg">'+(v-d.base)+'/'+(d.max-d.base)+'</span>':''),desc:d.desc};
+      if(v>=d.max){r.on=true;r.btns=[btn(d.max-d.base>1?'Maxed':'Built','x',{dis:1})];}
       else if(G.lvl<d.lvl){r.lock='Level '+d.lvl;r.dis=1;}
-      else if(!topsOf(loc).length&&used>=max){r.btns=[btn('No space','x',{dis:1})];r.tags=[{t:'The tag board needs quay space',c:'r'}];r.dis=1;}
-      else{r.cost=topCost(loc,t);r.btns=[costBtn(r.cost,'top',t,li,'Buy')];}
+      else{r.cost=upCost(loc,k);r.btns=[costBtn(r.cost,'up',k,li,v>d.base?'Upgrade':'Build')];if(v>d.base)r.on=true;}
       rows.push(r);});
   }
   if(tab==='staff'){
-    ROLE_ORDER.forEach(function(rk){var d=ROLES[rk],n=loc.staff[rk]||0,cap=d.cap[loc.size];
+    ROLE_ORDER.forEach(function(rk){var d=ROLES[rk],n=loc.staff[rk]||0,cap=staffCap(loc,rk);
       var r={ic:letterIc(d.name[0],d.col),title:d.name+(n?' ×'+n:''),desc:d.desc,tags:[{t:'Wage '+fmt(d.wage*IND[loc.ind].wm*TM(tierOf(loc)).pm)+'/min each'},{t:n+' of '+cap+' hired',c:n?'g':''}]};
-      if(cap<d.cap[4])r.tags.push({t:'Expand the terminal for more',c:'b'});
+      if(cap<d.cap[4])r.tags.push({t:'More gate lanes allow more',c:'b'});
       if(G.lvl<d.lvl){r.lock='Level '+d.lvl;r.dis=1;}
       else{r.btns=[];if(n<cap){r.cost=hireCost(loc,rk);r.btns.push(costBtn(r.cost,'hire',rk,li,'Hire'));}else{r.btns.push(btn('Full','x',{dis:1}));r.dis=1;}if(n)r.btns.push(btn('Let go','act',{k:'fire',p:rk,l:li,cls:'sec'}));}
       rows.push(r);});
@@ -2102,25 +1800,22 @@ function groupRows(rows){var h='',g=null;rows.forEach(function(r){var gg=r.grp||
 
 function shopBody(loc,tab){
   var li=G.locs.indexOf(loc),D=distOf(loc),h='',e=locEcon(loc);
-  if(tab==='equip'){h+='<div class="kv"><span>Quay space</span><span>'+stList(loc).length+' of '+SIZES[loc.size].stations+' spots</span><span>Cargo you handle</span><span>'+menuOf(loc).length+' load types</span></div>';
-    if(G.rebuild&&inShiftAt(loc))h+='<p class="fine">New equipment is installed at the start of your next shift.</p>';
-    h+='<div class="grp">Berths & equipment</div>'+groupRows(shopRows(loc,'equip'));}
+  if(tab==='equip'){h+='<div class="kv"><span>Yard</span><span>'+U(loc,'cols')+' columns × '+U(loc,'height')+' high</span><span>Cargo types</span><span>'+cargoTypes(loc).map(function(t){return CT[t].name;}).join(', ')+'</span></div>';
+    var lockd=IND[loc.ind].cargo.filter(function(t){return cargoTypes(loc).indexOf(t)<0;});if(lockd.length)h+='<p class="fine">Locked cargo: '+lockd.map(function(t){var C=CT[t];return C.name+' ('+(G.lvl<C.lvl?'level '+C.lvl:C.reefer?'needs reefer power':'needs a hazmat bay')+')';}).join(', ')+'.</p>';
+    if(G.rebuild&&inShiftAt(loc))h+='<p class="fine">New yard layout is built at the start of your next day. Crane motors work right away.</p>';
+    h+='<div class="grp">Yard & equipment</div>'+groupRows(shopRows(loc,'equip'));}
   if(tab==='staff'){
     h+='<div class="kv"><span>While you work elsewhere</span><span>'+(e.open?'Open':'Closed')+'</span>';
     if(e.open){h+='<span>Trucks that want in</span><span>'+e.dem.toFixed(1)+' loads/min</span><span>Your crew can handle</span><span>'+e.cap.toFixed(1)+' loads/min</span><span>Wages and rent</span><span class="neg">-'+fmt(e.wages+e.rent)+'/min</span><span class="tot">Profit</span><span class="tot '+(e.net>=0?'pos':'neg')+'">'+(e.net>=0?'+':'')+fmt(e.net)+'/min</span>';}
     h+='</div>';
-    if(!e.open)h+='<p class="fine">To earn while you are away this terminal needs '+e.bott+'. It needs a harbor master, a crane operator and a yard driver at minimum.</p>';
+    if(!e.open)h+='<p class="fine">To earn while you are away this terminal needs '+e.bott+'. It needs a harbor master and a crane operator at minimum.</p>';
     else if(e.bott)h+='<p class="fine">Bottleneck: '+e.bott+'. Trucks are leaving because your crew cannot keep up.</p>';
-    else if(e.cap>e.dem*1.3)h+='<p class="fine">Your crew has spare time. Marketing or a bigger terminal would bring more trucks.</p>';
-    if(e.noFin)h+='<p class="fine">No customs broker: away from you, this terminal only handles plain loads.</p>';
+    else if(e.cap>e.dem*1.3)h+='<p class="fine">Your crew has spare time. Marketing or more gate lanes would bring more trucks.</p>';
     h+='<p class="fine">Your crew also works beside you during your shift.</p>'+groupRows(shopRows(loc,'staff'));}
   if(tab==='store'){
-    var nx=loc.size+1,r1={ic:img(distPic(D.win)),title:nx<=4?'Expand to a '+SIZES[nx].name:SIZES[loc.size].name+' (fully expanded)'};
-    if(nx<=4){r1.desc=['','',' More truck bays and a longer yard.',(IND[loc.ind].rail?' Adds a rail siding: freight trains bring big multi-load orders and pay 60% more.':' Busier quay with room for another berth.'),' The full megaterminal: more bays, more yard and room for seven berths and machines.'][nx]+' '+SIZES[nx].spots+' truck bays, '+SIZES[nx].tray+' yard slots, room for '+SIZES[nx].stations+'.';r1.btns=[costBtn(sizeCost(loc),'size',0,li,'Grow')];}
-    else{r1.desc='Five truck bays and room for seven berths and machines.';r1.on=true;}
     var r2={ic:letterIc('D',IND[loc.ind].theme.accent),title:'Decor level '+loc.decor+' of 5',desc:'Each level: drivers wait 6% longer, pay 5% more and traffic +3%.'+(loc.decor<5?' Next: '+DECOR_NEXT[loc.decor]+'.':'')};
     r2.btns=loc.decor<5?[costBtn(decorCost(loc),'decor',0,li,'Decorate')]:[btn('Maxed','x',{dis:1})];
-    h+='<div class="grp">Terminal</div>'+rowHtml(r1)+rowHtml(r2);
+    h+='<div class="grp">Terminal</div>'+rowHtml(r2);
     h+='<div class="grp">Fees</div><div class="row"><div class="tx"><b>'+PRICE_T[loc.price+1].name+' fees</b><small>Higher fees earn more per load but bring fewer, less patient drivers. '+esc(D.name)+(D.price>=1.3?' happily pays premium fees.':D.price<.95?' is very price sensitive.':' is about average.')+'</small><div class="seg" style="margin-top:8px">'+
       PRICE_T.map(function(p,i){return '<button type="button" data-a="act" data-k="price" data-p="'+(i-1)+'" data-l="'+li+'" aria-pressed="'+(loc.price===i-1)+'">'+p.name+' ×'+p.m+'</button>';}).join('')+'</div></div></div>';
     h+='<div class="grp">About this terminal</div><div class="kv"><span>Port</span><span>'+esc(D.name)+'</span><span>Days open</span><span>'+loc.days+'</span><span>Reputation</span><span>'+loc.rep.toFixed(2)+' / 5</span><span>Lifetime profit</span><span class="'+(loc.earned>=0?'pos':'neg')+'">'+fmt(loc.earned)+'</span></div><p class="fine">'+esc(D.twist)+'</p>';
@@ -2152,7 +1847,7 @@ function empBody(tab){
     cityDistricts(c).forEach(function(D){
       var li=-1;G.locs.forEach(function(l,i){if(l.city===c&&l.did===D.id)li=i;});
       if(li>=0){var loc=G.locs[li],e=locEcon(loc),here=li===G.act;
-        h+='<div class="loc'+(here?' act':'')+'"><div class="lh"><div class="pic">'+img(distPic(D.win))+'</div><div class="tx"><b>'+esc(loc.name)+'</b><small>'+IND[loc.ind].name+' · '+SIZES[loc.size].name+' · '+loc.days+' days</small>'+stars(loc.rep)+'</div>'+
+        h+='<div class="loc'+(here?' act':'')+'"><div class="lh"><div class="pic">'+img(distPic(D.win))+'</div><div class="tx"><b>'+esc(loc.name)+'</b><small>'+IND[loc.ind].name+' · '+U(loc,'gates')+' gates · '+loc.days+' days</small>'+stars(loc.rep)+'</div>'+
           '<div class="net '+(here&&inShiftAt(loc)?'off':e.open?(e.net>=0?'pos':'neg'):'off')+'">'+(here&&inShiftAt(loc)?'You are here':e.open?(e.net>=0?'+':'')+fmt(e.net)+'/min':'Closed')+'</div></div><div class="meta">'+
           (loc.comp?'<span class="tg r">vs '+esc(loc.comp.name)+' · '+(share(loc)*100).toFixed(0)+'% share</span>':'')+
           (!e.open?'<span class="tg">Needs '+e.bott+' to run without you</span>':e.bott?'<span class="tg y">Short on '+e.bott+'</span>':'')+
@@ -2190,7 +1885,7 @@ function empBody(tab){
 function renderSheet(){
   if(!SHEET)return;var el=$('#sheet'),old=el.querySelector('.sh-b'),sc=old?old.scrollTop:0,h,tabs;
   if(SHEET.kind==='shop'){var loc=G.locs[SHEET.li],D=distOf(loc);tabs=[['equip','Equipment'],['staff','Crew'],['store','Terminal'],['market','Marketing']];
-    h='<div class="sh"><div class="sh-h"><div class="ti"><h2>'+esc(loc.name)+'</h2><p>'+IND[loc.ind].name+' · '+SIZES[loc.size].name+' · '+esc(cityName(loc.city))+'</p></div><div class="cashb">'+fmt(G.cash)+'</div><button class="x" type="button" data-a="close" aria-label="Close">✕</button></div>';
+    h='<div class="sh"><div class="sh-h"><div class="ti"><h2>'+esc(loc.name)+'</h2><p>'+IND[loc.ind].name+' · '+U(loc,'gates')+' gates · '+esc(cityName(loc.city))+'</p></div><div class="cashb">'+fmt(G.cash)+'</div><button class="x" type="button" data-a="close" aria-label="Close">✕</button></div>';
     h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-a="tab" data-p="'+t[0]+'" aria-selected="'+(SHEET.tab===t[0])+'">'+t[1]+'</button>';}).join('')+'</div>';
     h+='<div class="sh-b">'+shopBody(loc,SHEET.tab)+'</div></div>';}
   else{tabs=[['shops','Terminals'],['hq','Port authority'],['hold','Holdings'],['news','News']];
@@ -2230,19 +1925,19 @@ function showSummary(s){
   var h='<span class="tg y">DAY '+s.day+' · '+esc(s.locName).toUpperCase()+'</span><h1>Shift over</h1>'+starRow(s.stars)+'<div class="big '+(net>=0?'pos':'neg')+'">'+(net>=0?'+':'')+fmt(net)+'</div>';
   if(s.total!=null){var P=function(n){return Math.round(n).toLocaleString();};
     h+='<div class="ptsbox"><div class="grade '+s.grade+'">'+s.grade+'</div><div><div class="pv">'+P(s.total)+' pts</div><div class="pl">Best day '+P(G.best)+' · Lifetime '+P(s.life)+'</div>'+(s.newBest?'<span class="nb">NEW BEST!</span>':'')+'</div></div>';
-    h+='<div class="kv">'+kvl('Order points',P(s.pts))+(s.perf?kvl('Perfect orders',s.perf,'pos'):'')+kvl('Star bonus ('+s.stars+'★)','+'+P(s.stars*500),s.stars?'pos':'')+(s.ptsBonus>s.stars*500?kvl('No walkouts','+1,000','pos'):'')+kvl('Shift score',P(s.total)+' pts','tot pos')+(window.LZ_GAME?kvl('Lazer Points'+(s.ea?' (held for launch, paid 1.5×)':s.lzm>1?' ('+s.lzm+'× Game of the Day)':''),'+'+P(s.ea?Math.round((s.lp||0)*1.5):(s.lp||0))+' LP','pos'):'')+'</div>';}
-  h+='<div class="kv">'+kvl('Sales',fmt(s.sales))+kvl('Tips',fmt(s.tips),'pos')+kvl('Handling costs','-'+fmt(s.cogs),'neg')+(s.wages?kvl('Crew wages','-'+fmt(s.wages),'neg'):'')+(s.bonusShip?kvl('Turnaround bonuses','+'+fmt(s.bonusShip),'pos'):'')+(s.rent>.5?kvl('Berth rent','-'+fmt(s.rent),'neg'):'')+(s.fine?kvl('Inspection fine','-'+fmt(s.fine),'neg'):'')+
+    h+='<div class="kv">'+kvl('Truck points',P(s.opts||0))+(s.pts>(s.opts||0)+1?kvl('Turnaround points','+'+P(s.pts-(s.opts||0)),'pos'):'')+(s.perf?kvl('Perfect orders',s.perf,'pos'):'')+kvl('Star bonus ('+s.stars+'★)','+'+P(s.stars*150),s.stars?'pos':'')+(s.ptsBonus>s.stars*150?kvl('No walkouts','+300','pos'):'')+kvl('Shift score',P(s.total)+' pts','tot pos')+(window.LZ_GAME?kvl('Lazer Points'+(s.ea?' (held for launch, paid 1.5×)':s.lzm>1?' ('+s.lzm+'× Game of the Day)':''),'+'+P(s.ea?Math.round((s.lp||0)*1.5):(s.lp||0))+' LP','pos'):'')+'</div>';}
+  h+='<div class="kv">'+kvl('Sales',fmt(s.sales))+kvl('Tips',fmt(s.tips),'pos')+kvl('Handling costs','-'+fmt(s.cogs),'neg')+(s.wages?kvl('Crew wages','-'+fmt(s.wages),'neg'):'')+(s.bonusShip?kvl('Turnaround bonuses','+'+fmt(s.bonusShip),'pos'):'')+(s.rent>.5?kvl('Berth rent','-'+fmt(s.rent),'neg'):'')+(s.fine?kvl('Fines & demurrage','-'+fmt(s.fine),'neg'):'')+
     kvl('Daily goal '+fmtR(s.goal),s.bonus?'+'+fmt(s.bonus):'missed',s.bonus?'pos':'neg')+kvl('Profit this shift',(net>=0?'+':'')+fmt(net),'tot '+(net>=0?'pos':'neg'))+(Math.abs(s.passive)>.5?kvl('Other terminals + holdings',(s.passive>=0?'+':'')+fmt(s.passive),s.passive>=0?'pos':'neg'):'')+'</div>';
-  h+='<div class="kv">'+kvl('Trucks loaded',s.served)+(s.trains?kvl('Freight trains',s.trains):'')+kvl('Ships turned around',s.ships||0,(s.ships?'pos':''))+(s.missed?kvl('Ships sailed early',s.missed,'neg'):'')+kvl('Drove off empty',s.walk,s.walk?'neg':'')+(s.turned?kvl('Turned away at the gate',s.turned,'neg'):'')+(s.waste?kvl('Scrapped loads',s.waste,'neg'):'')+kvl('Best streak',s.bestStreak)+kvl('Reputation',s.rep1.toFixed(2)+' ('+(dr>=0?'+':'')+dr.toFixed(2)+')',dr>=0?'pos':'neg')+'</div>';
+  h+='<div class="kv">'+kvl('Trucks loaded',s.served)+kvl('Crane moves',s.moves||0)+(s.trains?kvl('Freight trains',s.trains):'')+kvl('Ships turned around',s.ships||0,(s.ships?'pos':''))+(s.missed?kvl('Ships sailed early',s.missed,'neg'):'')+kvl('Drove off empty',s.walk,s.walk?'neg':'')+(s.turned?kvl('Turned away at the gate',s.turned,'neg'):'')+(s.spoiled?kvl('Reefers spoiled',s.spoiled,'neg'):'')+(s.waste?kvl('Containers scrapped',s.waste,'neg'):'')+kvl('Best streak',s.bestStreak)+kvl('Reputation',s.rep1.toFixed(2)+' ('+(dr>=0?'+':'')+dr.toFixed(2)+')',dr>=0?'pos':'neg')+'</div>';
   h+=lvlList();
-  h+='<div class="btns">'+btn('Shop','shop',{cls:'sec'})+btn('Empire','emp',{cls:'sec'})+btn('Next day','next',{cls:'gold'})+'</div>';
+  h+='<div class="btns">'+btn('Port','shop',{cls:'sec'})+btn('Empire','emp',{cls:'sec'})+btn('Next day','next',{cls:'gold'})+'</div>';
   openModal(h,'sum');
 }
 function onLevel(l){sfx.lvl();if(SH&&SH.phase!=='done'){var u=unlocksAt(l);banner('Level '+l,u.length?u.length+' new unlock'+(u.length>1?'s':'')+'. See them after the shift.':'Bigger crowds ahead','good');}
   else if(!MODAL){setTimeout(function(){if(!MODAL&&LVQ.length)openModal('<h1>Level up!</h1>'+lvlList()+'<div class="btns">'+btn('Nice','mclose',{cls:'gold'})+'</div>','lvl');},300);}}
 function showTitle(hasSave){
-  openModal('<div class="ttl"><span class="kick">LAZER ARCADE</span><h1>Harbor <span>Rush</span></h1></div><p class="lead">Ships dock, trucks line up at the gate, and the clock is ticking. Run the quay, then build a shipping empire across fish wharves, bulk terminals and cruise ports.</p>'+
-    '<ol><li><b>Unload:</b> tap a crane to lift a container off the ship. Ships sail on a timer, so empty them for a turnaround bonus.</li><li><b>Stage:</b> tap a landed container to move it to the yard before it gets damaged on the quay.</li><li><b>Process:</b> tap Customs or a tag to add paperwork to a yard load.</li><li><b>Ship it:</b> tap a finished load to put it on the truck that wants it.</li></ol>'+
+  openModal('<div class="ttl"><span class="kick">LAZER ARCADE</span><h1>Harbor <span>Rush</span></h1></div><p class="lead">You run the crane. Ships arrive stacked high, trucks want specific containers, and nothing is ever on top when you need it.</p>'+
+    '<ol><li><b>Pick:</b> tap a stack on the ship or in the yard to grab its top container.</li><li><b>Drop:</b> tap a yard column to stack it there, or a truck that wants it to load it.</li><li><b>Dig:</b> the one you need is buried? Shuffle the boxes above it to other columns.</li><li><b>Mind the rules:</b> frozen cargo spoils outside powered columns, hazmat lives in the hazmat bay, and held boxes clear in the customs lane.</li></ol><p class="fine" style="text-align:left">Tip: tap a truck with nothing picked and the crane grabs a matching container from the top of any stack. Empty a ship before it sails for a turnaround bonus.</p>'+
     '<div class="btns">'+(hasSave?btn('Keep playing','start',{cls:'gold'})+btn('New game','new',{cls:'sec'}):btn('Open the port','start',{cls:'gold'}))+'</div>'+arcadeTitle(),'title');
 }
 function arcadeTitle(){if(!window.LZ_GAME||!window.LZ)return '<p class="fine">Progress saves in this browser.</p>';
@@ -2275,7 +1970,7 @@ document.addEventListener('click',function(e){
   if(a==='manage'){openShop(+b.dataset.l,'equip');return;}
   if(a==='work'){var i=+b.dataset.l;lastSum=null;closeModal();SHEET=null;$('#sheet').hidden=true;if(SH&&SH.phase!=='done')SH.phase='done';G.act=i;save();startShift();toast('Now working at '+G.locs[i].name,'good');return;}
   if(a==='open'){chooser(+b.dataset.c,p);return;}
-  if(a==='buyloc'){var res=buyLoc(+b.dataset.c,p,k);if(typeof res==='number'){sfx.buy();openModal('<h1>Grand opening!</h1><p class="lead">Your '+esc(IND[k].name.toLowerCase())+' at '+esc(G.locs[res].name)+' is ready. Hire a harbor master, a crane operator and a yard driver there so it earns while you work elsewhere.</p><div class="btns">'+btn('Stay here','mclose',{cls:'sec'})+btn('Go work there','work',{l:res,cls:'gold'})+'</div>','opened');if(SHEET)renderSheet();}
+  if(a==='buyloc'){var res=buyLoc(+b.dataset.c,p,k);if(typeof res==='number'){sfx.buy();openModal('<h1>Grand opening!</h1><p class="lead">Your '+esc(IND[k].name.toLowerCase())+' at '+esc(G.locs[res].name)+' is ready. Hire a harbor master and a crane operator there so it earns while you work elsewhere.</p><div class="btns">'+btn('Stay here','mclose',{cls:'sec'})+btn('Go work there','work',{l:res,cls:'gold'})+'</div>','opened');if(SHEET)renderSheet();}
     else{sfx.nope();toast(REASON[res]||'Not available','bad');}return;}
   if(a==='mclose'){closeModal();if(SH&&SH.phase==='done'&&lastSum&&!SHEET)showSummary(lastSum);return;}
   if(a==='next'){closeModal();lastSum=null;startShift();return;}
@@ -2300,10 +1995,11 @@ var camBase={pos:V3(0,6,7),tgt:V3(0,1,0)};
 function fitCamera(){
   if(!SH)return;var L=SH.L,portrait=W/H<.95;
   var dir=(portrait?V3(0,.86,.52):V3(0,.76,.65)).normalize();
-  var pts=[];L.spots.forEach(function(s){pts.push(V3(s.x,2.25,s.z),V3(s.x,.1,s.z-.95));});
-  pts.push(V3(L.trash.x+.35,.6,L.trash.z+.45),V3(L.tray[0].x-.3,.6,L.tray[0].z+.45));
-  L.dspots.forEach(function(s){pts.push(V3(s.x-2.2,1.6,s.z),V3(s.x+2.2,1.6,s.z));});
-  SH.st.forEach(function(o){var w=stWidth(o.k,SH.loc)/2;pts.push(V3(o.x-w,o.ship?1.85:1.2,o.z),V3(o.x+w,o.ship?1.85:1.2,o.z),V3(o.x,.1,o.z+(o.ship?1.75:.5)));});
+  var pts=[];L.spots.forEach(function(s){pts.push(V3(s.x,1.2,s.z),V3(s.x,.1,s.z-.5));});
+  L.cols.forEach(function(c){pts.push(V3(c.x,c.max*CH+.35,c.z),V3(c.x,0,c.z+.45));});
+  pts.push(V3(L.trash.x+.3,.5,L.trash.z+.4));
+  L.dspots.forEach(function(s){pts.push(V3(s.x-1.6,1.2,s.z),V3(s.x+1.6,1.2,s.z));});
+  L.berths.forEach(function(b){var hl=(6*.38+.95)/2+.45;pts.push(V3(b.x-hl,1.2,b.z),V3(b.x+hl,1.2,b.z),V3(b.x,0,b.z+.5));});
   var zs=pts.map(function(p){return p.z;}),tgt=V3(0,.6,(Math.min.apply(null,zs)+Math.max.apply(null,zs))/2);
   var topEl=$('#top').getBoundingClientRect(),topPx=(topEl.bottom||90)+(portrait?62:72),botPx=58;
   var yTop=1-2*topPx/H,yBot=-1+2*botPx/H,xLim=.95;
@@ -2325,14 +2021,14 @@ cvs.addEventListener('pointerup',function(e){if(!down||down.id!==e.pointerId)ret
 cvs.addEventListener('pointercancel',function(){down=null;});
 function tapAt(x,y){
   audioOn();if(!SH||paused||SH.phase==='done')return;
-  var r=cvs.getBoundingClientRect();ndc.set((x-r.left)/r.width*2-1,-((y-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);
+  var r=cvs.getBoundingClientRect();ndc.set((x-r.left)/r.width*2-1,-((y-r.top)/r.height)*2+1);scene.updateMatrixWorld();ray.setFromCamera(ndc,camera);
   var hits=ray.intersectObjects(shiftHits(),false);if(!hits.length)return;
   for(var i=0;i<hits.length;i++)if(hits[i].object.userData.gull){shooGull();return;}
   var h=hits[0].object.userData;
-  if(h.st&&h.slot==null&&!h.top){for(var j=1;j<hits.length;j++){var u=hits[j].object.userData;if(u.st===h.st&&(u.slot!=null||u.top)){h=u;break;}}}
-  if(h.tray!=null){trayTap(h.tray);return;}
-  if(h.trash){binTap();return;}
-  if(h.st)tapStation(h.st,h);
+  if(h.trash){tapBin();return;}
+  if(h.col!=null){tapCol(h.col);return;}
+  if(h.ship){tapShip(h.ship,h.bay);return;}
+  if(h.cust){tapCust(h.cust);return;}
 }
 window.addEventListener('keydown',function(e){
   if(e.key==='Escape'){if(SHEET){closeSheet();return;}if(MODAL==='pause'){closeModal();return;}if($('#modal').hidden)showPause();}
@@ -2349,7 +2045,7 @@ function tick(ts){
   var rn=Date.now(),rdt=Math.min(5,Math.max(0,(rn-lastReal)/1000));lastReal=rn;
   empTick(rdt);
   if(SH&&!paused&&SH.phase!=='done'){simT+=dt;updShift(dt,simT);}
-  else if(SH&&SH.phase==='done'){SH.st.forEach(function(o){o.v.upd(o,dt,ts/1000);});}
+  else if(SH&&SH.phase==='done'&&SH.ships){var tt=ts/1000;SH.ships.forEach(function(sh,i){if(sh.v&&sh.st!=='away'){sh.v.g.position.y=Math.sin(tt*1.2+i)*.025-.02;sh.v.g.rotation.z=Math.sin(tt*.9+i)*.01;}});}
   if(!paused)updTW(dt);
   updPuffs(dt);updEnv(dt,ts/1000);
   if(SH){camera.position.copy(camBase.pos);if(shakeAmt>.002){camera.position.x+=rnd(-1,1)*shakeAmt;camera.position.y+=rnd(-1,1)*shakeAmt;shakeAmt*=Math.exp(-dt*9);}}
@@ -2363,10 +2059,11 @@ function tick(ts){
 function previewShop(){
   var loc=curLoc(),L=layout(loc,W/H),th=IND[loc.ind].theme;
   buildShop(loc,L);clearGroup(stG);
-  SH={loc:loc,D:distOf(loc),L:L,th:th,t:0,len:DAYLEN,phase:'done',cust:[],spots:[],st:[],tray:L.tray.map(function(){return null;}),sel:-1,pend:[],bots:[],menu:menuOf(loc),streak:0,s:{day:loc.days+1,goal:0,sales:0,tips:0},ev:{},boost:1,slow:0,ice:0};
-  L.st.forEach(function(p){SH.st.push(mkStation(p.k,p.x,p.z,loc,th));});
-  SH.st.forEach(function(o){if(o.ship){o.ship.st='dock';o.ship.t=0;}});
-  SH.tv=buildTray(L,th);SH.tables=[];SH.dspots=[];fitCamera();
+  SH={loc:loc,D:distOf(loc),L:L,th:th,t:0,len:DAYLEN,phase:'done',cust:[],spots:[],dspots:[],ships:[],cranes:[],queue:[],sel:null,pend:[],bots:[],streak:0,s:{day:loc.days+1,goal:0,sales:0,tips:0,pts:0},ev:{},boost:1,slow:0,ice:0,gull:null};
+  var y=buildYard(L,th);SH.cols=y.cols;SH.bin=y.bin;SH.binHit=y.binHit;
+  for(var i=0;i<U(loc,'cranes');i++){var c=makeCrane(th,L.zBack,L.zFront,L.craneTop);c.set(i?1.2:-.6,0,L.craneTop-.45);stG.add(c.g);SH.cranes.push(c);}
+  L.berths.forEach(function(b,bi){var sh=newShip(bi);sh.st='dock';sh.v.g.position.x=b.x;SH.ships.push(sh);});
+  fitCamera();
 }
 function init(){
   thumbInit();
