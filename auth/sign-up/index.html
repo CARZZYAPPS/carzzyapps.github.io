@@ -90,9 +90,23 @@
       updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+    import { getFirestore, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
     const auth = getAuth(app); const claimUsername = httpsCallable(getFunctions(app, "us-central1"), "claimUsername");
+    // Claims the username with the Cloud Function when it's available. If the function isn't deployed
+    // or errors out (shows up as "internal"), claim it directly in Firestore; the usernames rules allow this.
+    async function claimUsernameSafely(user, username) {
+      try { await claimUsername({ username }); return; }
+      catch (err) { if (!["functions/internal", "functions/not-found", "functions/unavailable", "functions/unknown"].includes(err.code)) throw err; console.warn("claimUsername function unavailable, claiming directly.", err); }
+      const db = getFirestore(app);
+      const ref = doc(db, "usernames", username.toLowerCase());
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (snap.exists() && snap.data().uid !== user.uid) { const e = new Error("taken"); e.code = "functions/already-exists"; throw e; }
+        tx.set(ref, { uid: user.uid, guest: false, username });
+      });
+    }
 
     // Toggle Password Visibility
     const showPasswordCheckbox = document.getElementById("show-password");
@@ -126,7 +140,7 @@
         await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);
         cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: username });
-        await claimUsername({ username });
+        await claimUsernameSafely(cred.user, username);
         if (staySignedIn) {
           localStorage.setItem("signIn", "true");
         } else {

@@ -160,7 +160,7 @@
         }
       } catch (error) {
         console.error("Sign-in failed.", error);
-        msg.style.color = "#f00"; msg.textContent = "Incorrect username/email or password";
+        msg.style.color = "#f00"; msg.textContent = ["functions/internal", "functions/not-found", "functions/unavailable", "functions/unknown"].includes(error.code) ? "Username sign-in is unavailable right now. Please sign in with your email address." : "Incorrect username/email or password";
       }
     });
   </script>
