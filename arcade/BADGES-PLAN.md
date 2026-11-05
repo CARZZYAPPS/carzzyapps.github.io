@@ -17,12 +17,18 @@ Staff roles (`creator`, `admin`, from `roles.json`) stay separate and always dis
 
 | Tier | LP needed | Perk unlocked |
 |------|-----------|---------------|
-| Bronze | 5,000 | Badge + name color on leaderboards |
-| Silver | 10,000 | Pin up to 3 achievement badges |
-| Gold | 25,000 | Vote on which queued game ships next |
-| Platinum | 50,000 | **Early access** to every new game (see below) |
-| Diamond | 100,000 | Beta access to unreleased builds + name in a credits wall |
-| Legend | 250,000 | All of the above + permanent "Founding Player" frame |
+| Bronze | 25,000 | Badge + name color on leaderboards |
+| Silver | 50,000 | Pin up to 3 achievement badges |
+| Gold | 100,000 | Vote on which queued game ships next |
+| Platinum | 250,000 | **Early access** to every new game (see below) |
+| Diamond | 500,000 | Beta access to unreleased builds + name on the credits wall |
+| Legend | 1,000,000 | All of the above + permanent "Founding Player" frame |
+
+Pacing check: at about 100 LP per minute of skilled play, Platinum (250K) is roughly 40 hours of play and Legend (1M) roughly 170 hours.
+
+## Credits wall
+
+A page in the arcade (`arcade/credits/`) styled like end-of-game credits: a slowly scrolling list of every Diamond and Legend player's username, Legend names first. It's the permanent public thanks for the most dedicated players. Names come from `arcadePlayers` where lifetime LP is at or above the Diamond threshold. Players can opt out of being listed.
 
 Thresholds live in one config file (`arcade/tiers.json`), so they can be tuned without touching code. Tiers are never lost, since lifetime LP only goes up.
 
@@ -35,7 +41,7 @@ Thresholds live in one config file (`arcade/tiers.json`), so they can be tuned w
 
 ## Where it plugs into the existing code
 
-- `arcade/tiers.json`: new, holds the ladder above.
+- `arcade/tiers.json`: new, holds the ladder above. `arcade/credits/`: new credits wall page.
 - `arcade/lz.js`: add `tierOf(lp)` and a `perks(uid)` helper next to the existing `roles` section; reuse the cached `arcadePlayers` read.
 - `arcade/achievements.json`: add a `badge` field (icon + color) per achievement.
 - `arcade/leaderboard/index.html` and `arcade/index.html`: render tier and pinned badges next to usernames (reuse the `.badge` styles).
