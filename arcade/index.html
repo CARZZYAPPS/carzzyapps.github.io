@@ -74,6 +74,13 @@
 .next:before{content:"";position:absolute;inset:0;background:radial-gradient(500px 200px at 0 0,rgba(198,255,61,.12),transparent 70%);pointer-events:none}
 .next .ico{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--lime),var(--cyan));display:grid;place-items:center;font:900 26px var(--display);color:#0d0a26}
 .next h3{font-size:22px} .next p{margin:4px 0 0;color:var(--tx2)}
+.next .nact{display:flex;flex-direction:column;gap:8px;align-self:center}
+.count{display:flex;gap:10px;margin-top:16px}
+.count span{min-width:74px;text-align:center;background:rgba(7,5,26,.6);border:1px solid var(--line2);border-radius:14px;padding:10px 6px 8px;box-shadow:inset 0 0 20px rgba(124,77,255,.12)}
+.count b{display:block;font:800 30px/1 var(--display);font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#fff,#b9c4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.count small{display:block;margin-top:6px;font:800 10.5px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.count .live{font:800 26px var(--display);color:var(--lime)}
+.launchd{font-size:13px!important;color:var(--mut)!important;margin-top:10px!important}
 .pill{display:inline-block;border-radius:999px;padding:4px 10px;font:800 11px var(--display);letter-spacing:.08em}
 .pill.nx{background:var(--lime);color:#14102e}
 .pill.q{background:rgba(124,77,255,.2);color:#d9ccff}
@@ -155,7 +162,8 @@
   .today{grid-template-columns:1fr}
   .doors{grid-template-columns:repeat(4,1fr)}
   .next{grid-template-columns:auto 1fr}
-  .next .btn{grid-column:1/-1}
+  .next .nact{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
+  .count{gap:6px}.count span{min-width:0;flex:1}.count b{font-size:24px}
 }
 @media (max-width:520px){
   .hero{padding-top:40px}
@@ -281,7 +289,18 @@ function feat(g) {
 function soon() {
   const nx = cat.upcoming.find((u) => u.status === "next");
   const rest = cat.upcoming.filter((u) => u !== nx);
-  $("#next").innerHTML = nx ? `<div class="panel next"><div class="ico">${esc(nx.name[0])}</div><div><span class="pill nx">UP NEXT</span><h3 style="margin-top:8px">${esc(nx.name)}</h3><p>${esc(nx.hook)}</p></div><button class="btn ghost sm" data-feedback="arcade">Suggest a feature</button></div>` : "";
+  const launch = nx && nx.launch ? new Date(nx.launch) : null;
+  $("#next").innerHTML = nx ? `<div class="panel next${launch ? " cd" : ""}"><div class="ico">${esc(nx.name[0])}</div><div><span class="pill nx">UP NEXT</span><h3 style="margin-top:8px">${esc(nx.name)}</h3><p>${esc(nx.hook)}</p>${launch ? `<div class="count" id="count" aria-label="Time until launch"></div><p class="launchd">Launches ${launch.toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>` : ""}</div><div class="nact">${nx.earlyAccess ? `<button class="btn sm" id="eaBtn">Request early access</button>` : ""}<button class="btn ghost sm" data-feedback="arcade">Suggest a feature</button></div></div>` : "";
+  if (launch) {
+    const tick = () => {
+      const ms = launch - Date.now(), el = $("#count"); if (!el) return;
+      if (ms <= 0) { el.innerHTML = `<b class="live">Out now</b>`; return; }
+      const d = Math.floor(ms / 864e5), hh = Math.floor(ms / 36e5) % 24, mm = Math.floor(ms / 6e4) % 60, ss = Math.floor(ms / 1e3) % 60;
+      el.innerHTML = [[d, "days"], [hh, "hours"], [mm, "min"], [ss, "sec"]].map(([v, l]) => `<span><b>${String(v).padStart(2, "0")}</b><small>${l}</small></span>`).join("");
+    };
+    tick(); setInterval(tick, 1000);
+  }
+  const ea = $("#eaBtn"); if (ea) ea.onclick = () => LZ.requestAccess(nx.name);
   $("#queue").innerHTML = rest.map((u, i) => `<div class="panel qi"><div class="t"><h4>${esc(u.name)}</h4><span class="pill ${u.status === "idea" ? "idea" : "q"}">${u.status === "idea" ? "IDEA" : "#" + (i + 2)}</span></div><p>${esc(u.hook)}</p></div>`).join("");
   document.querySelectorAll("#next [data-feedback]").forEach((b) => (b.onclick = () => LZ.openFeedback("arcade")));
 }

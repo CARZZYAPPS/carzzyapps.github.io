@@ -1,21 +1,164 @@
 {
   "items": [
-    {"name": "Harbor Rush", "status": "next", "hook": "Run a chaotic cartoon port: work the cranes, sort cargo onto trucks and trains, and beat the ship before it sails. Grows into a global shipping empire.", "categories": ["tycoon", "time", "3d"]},
-    {"name": "Heist Planner", "status": "queued", "hook": "Draw every crew member's moves on a blueprint timeline, hit play, and watch the heist unfold. Tweak and rerun until it's flawless.", "categories": ["puzzle", "strategy"]},
-    {"name": "Food Truck Wars", "status": "queued", "hook": "Drive a truck around a living city, pick the hungriest corner for the hour, serve fast, and fight rivals for the best spots.", "categories": ["tycoon", "time", "strategy"]},
-    {"name": "Castle Crushers", "status": "queued", "hook": "A physics siege puzzle where fire burns wood, ice cracks stone and one perfect shot brings the whole castle down.", "categories": ["puzzle", "brain", "3d"]},
-    {"name": "Clockwork Heart", "status": "queued", "hook": "Place gears, belts and pulleys so a single crank powers every machine on the board.", "categories": ["puzzle", "brain"]},
-    {"name": "Mirror Vault", "status": "queued", "hook": "Bend lasers through mirrors, splitters and prisms. Mix colors, time moving mirrors, crack the safe.", "categories": ["puzzle", "brain"]},
-    {"name": "Gravity Box", "status": "queued", "hook": "Tilt a 3D room to roll marbles home, but every tilt moves everything at once.", "categories": ["puzzle", "brain", "3d"]},
-    {"name": "Dungeon Drop", "status": "queued", "hook": "Five-minute roguelike runs: draft a card every room, break the game with a combo, unlock more each death.", "categories": ["strategy", "arcade"]},
-    {"name": "Merge Kingdom", "status": "queued", "hook": "Merge matching pieces into better ones until huts become villages, then castles, then an empire.", "categories": ["idle", "puzzle"]},
-    {"name": "Idle Planet", "status": "queued", "hook": "Start with one rock. Automate mining, factories, terraforming and whole solar systems. Earns while you're away.", "categories": ["idle", "tycoon"]},
-    {"name": "One Tap Golf", "status": "queued", "hook": "Physics mini-golf on wild procedural courses where one tap sets power and angle.", "categories": ["arcade"]},
-    {"name": "Word Forge", "status": "queued", "hook": "Swipe letters into words that become weapons. Longer, rarer words hit harder.", "categories": ["brain", "arcade"]},
-    {"name": "Startup Sim", "status": "queued", "hook": "Take a garage idea to IPO and walk away actually understanding pricing, burn, runway, fundraising and cap tables.", "categories": ["tycoon", "strategy", "learn"]},
-    {"name": "Code Quest", "status": "queued", "hook": "Program your dungeon hero with real code. Levels and boss fights teach loops, conditions and functions for real.", "categories": ["learn", "puzzle", "brain"]},
-    {"name": "Negotiator", "status": "queued", "hook": "Haggle with landlords, contractors, investors and dealers who each hide a breaking point. Learn anchoring and leverage.", "categories": ["learn", "strategy"]},
-    {"name": "Typing Blitz", "status": "queued", "hook": "Type falling words before they hit. A real WPM and accuracy trainer that keeps getting faster.", "categories": ["learn", "arcade"]},
-    {"name": "Mental Math Arena", "status": "queued", "hook": "Speed-math duels with tutorials that teach real tricks until you're a human calculator.", "categories": ["learn", "brain"]}
+    {
+      "name": "Harbor Rush",
+      "status": "next",
+      "hook": "Run a chaotic cartoon port: unload ships before they sail, juggle trucks at the gate, clear customs and grow into a shipping empire.",
+      "categories": [
+        "tycoon",
+        "time",
+        "3d"
+      ],
+      "launch": "2026-11-12T12:00:00-05:00",
+      "earlyAccess": true
+    },
+    {
+      "name": "Heist Planner",
+      "status": "queued",
+      "hook": "Draw every crew member's moves on a blueprint timeline, hit play, and watch the heist unfold. Tweak and rerun until it's flawless.",
+      "categories": [
+        "puzzle",
+        "strategy"
+      ]
+    },
+    {
+      "name": "Food Truck Wars",
+      "status": "queued",
+      "hook": "Drive a truck around a living city, pick the hungriest corner for the hour, serve fast, and fight rivals for the best spots.",
+      "categories": [
+        "tycoon",
+        "time",
+        "strategy"
+      ]
+    },
+    {
+      "name": "Castle Crushers",
+      "status": "queued",
+      "hook": "A physics siege puzzle where fire burns wood, ice cracks stone and one perfect shot brings the whole castle down.",
+      "categories": [
+        "puzzle",
+        "brain",
+        "3d"
+      ]
+    },
+    {
+      "name": "Clockwork Heart",
+      "status": "queued",
+      "hook": "Place gears, belts and pulleys so a single crank powers every machine on the board.",
+      "categories": [
+        "puzzle",
+        "brain"
+      ]
+    },
+    {
+      "name": "Mirror Vault",
+      "status": "queued",
+      "hook": "Bend lasers through mirrors, splitters and prisms. Mix colors, time moving mirrors, crack the safe.",
+      "categories": [
+        "puzzle",
+        "brain"
+      ]
+    },
+    {
+      "name": "Gravity Box",
+      "status": "queued",
+      "hook": "Tilt a 3D room to roll marbles home, but every tilt moves everything at once.",
+      "categories": [
+        "puzzle",
+        "brain",
+        "3d"
+      ]
+    },
+    {
+      "name": "Dungeon Drop",
+      "status": "queued",
+      "hook": "Five-minute roguelike runs: draft a card every room, break the game with a combo, unlock more each death.",
+      "categories": [
+        "strategy",
+        "arcade"
+      ]
+    },
+    {
+      "name": "Merge Kingdom",
+      "status": "queued",
+      "hook": "Merge matching pieces into better ones until huts become villages, then castles, then an empire.",
+      "categories": [
+        "idle",
+        "puzzle"
+      ]
+    },
+    {
+      "name": "Idle Planet",
+      "status": "queued",
+      "hook": "Start with one rock. Automate mining, factories, terraforming and whole solar systems. Earns while you're away.",
+      "categories": [
+        "idle",
+        "tycoon"
+      ]
+    },
+    {
+      "name": "One Tap Golf",
+      "status": "queued",
+      "hook": "Physics mini-golf on wild procedural courses where one tap sets power and angle.",
+      "categories": [
+        "arcade"
+      ]
+    },
+    {
+      "name": "Word Forge",
+      "status": "queued",
+      "hook": "Swipe letters into words that become weapons. Longer, rarer words hit harder.",
+      "categories": [
+        "brain",
+        "arcade"
+      ]
+    },
+    {
+      "name": "Startup Sim",
+      "status": "queued",
+      "hook": "Take a garage idea to IPO and walk away actually understanding pricing, burn, runway, fundraising and cap tables.",
+      "categories": [
+        "tycoon",
+        "strategy",
+        "learn"
+      ]
+    },
+    {
+      "name": "Code Quest",
+      "status": "queued",
+      "hook": "Program your dungeon hero with real code. Levels and boss fights teach loops, conditions and functions for real.",
+      "categories": [
+        "learn",
+        "puzzle",
+        "brain"
+      ]
+    },
+    {
+      "name": "Negotiator",
+      "status": "queued",
+      "hook": "Haggle with landlords, contractors, investors and dealers who each hide a breaking point. Learn anchoring and leverage.",
+      "categories": [
+        "learn",
+        "strategy"
+      ]
+    },
+    {
+      "name": "Typing Blitz",
+      "status": "queued",
+      "hook": "Type falling words before they hit. A real WPM and accuracy trainer that keeps getting faster.",
+      "categories": [
+        "learn",
+        "arcade"
+      ]
+    },
+    {
+      "name": "Mental Math Arena",
+      "status": "queued",
+      "hook": "Speed-math duels with tutorials that teach real tricks until you're a human calculator.",
+      "categories": [
+        "learn",
+        "brain"
+      ]
+    }
   ]
 }

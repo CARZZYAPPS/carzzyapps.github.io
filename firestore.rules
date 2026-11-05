@@ -341,7 +341,7 @@ service cloud.firestore {
       function validTicket(data) {
         return data.keys().hasAll(['kind', 'game', 'text', 'synced', 'createdAt'])
           && data.keys().hasOnly(['kind', 'game', 'text', 'contact', 'uid', 'username', 'page', 'synced', 'createdAt'])
-          && data.kind in ['bug', 'idea', 'request', 'other']
+          && data.kind in ['bug', 'idea', 'request', 'other', 'access']
           && data.game is string && data.game.size() <= 40
           && data.text is string && data.text.size() >= 3 && data.text.size() <= 4000
           && (!('contact' in data) || (data.contact is string && data.contact.size() <= 200))

@@ -532,6 +532,36 @@ function promptSave(lp, waiting) {
   });
 }
 
+// Early-access request for an upcoming game. Lands with the feedback tickets (kind "access").
+function requestAccess(gameName) {
+  const key = "lz.ea." + gameName;
+  if (ls.raw(key)) { toast(`You're already on the ${gameName} early-access list`); return Promise.resolve(false); }
+  return modal(`
+    <h2>Early access: ${esc(gameName)}</h2>
+    <p class="sub">Play it before it launches. Points you earn in early access are boosted 1.5× and count on the leaderboard once it goes live.</p>
+    <form novalidate>
+      <label for="ea">${signedIn() ? "Contact (optional)" : "Email or Carzzy Apps username"}</label>
+      <input id="ea" maxlength="200" autocomplete="email" placeholder="${signedIn() ? esc(state.username) : "you@example.com"}" value="${signedIn() ? esc(state.username) : ""}">
+      <label for="why">Anything you want to tell us? (optional)</label>
+      <textarea id="why" maxlength="600" style="min-height:70px" placeholder="What games you love, what device you play on…"></textarea>
+      <div class="err" role="alert"></div>
+      <button class="btn" type="submit">Request early access</button>
+    </form>
+    <p class="note">You'll get the private link once you're approved.</p>`,
+  (card, done) => {
+    const err = card.querySelector(".err"), btn = card.querySelector("button[type=submit]");
+    card.querySelector("form").onsubmit = async (ev) => {
+      ev.preventDefault();
+      const who = card.querySelector("#ea").value.trim();
+      if (!signedIn() && who.length < 3) { err.textContent = "Add an email or username so we can send you the link."; return; }
+      btn.disabled = true; btn.textContent = "Sending…";
+      try {
+        await sendTicket({ kind: "access", game: gameName.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 40), text: ("Early access request for " + gameName + ". " + card.querySelector("#why").value.trim()).slice(0, 4000), contact: who });
+        ls.set(key, today()); done(true); toast("You're on the list. Watch for your link!");
+      } catch (e) { err.textContent = "Couldn't send right now. Try again in a moment."; btn.disabled = false; btn.textContent = "Request early access"; }
+    };
+  });
+}
 async function openFeedback(gameId) {
   const c = await catalog();
   const opts = [`<option value="arcade">Lazer Arcade in general</option>`].concat(c.games.map((g) => `<option value="${esc(g.id)}" ${g.id === gameId ? "selected" : ""}>${esc(g.name)}</option>`));
@@ -568,7 +598,7 @@ const LZ = {
   ready: readyP, auth, db, catalog, gameInfo, toLP, onChange, signedIn,
   get user() { return state.user; }, get username() { return state.username; },
   boot, save, flush, endSession, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles,
-  openAccount, openFeedback, accountMenu, toast, logout, base: BASE, fmt, esc
+  openAccount, openFeedback, requestAccess, accountMenu, toast, logout, base: BASE, fmt, esc
 };
 window.LZ = LZ;
 window.dispatchEvent(new CustomEvent("lz-ready"));
