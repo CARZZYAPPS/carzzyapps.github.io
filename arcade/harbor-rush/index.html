@@ -897,7 +897,7 @@ function buildYard(L,th){
     if(c.kind==='hazmat'){[-1,1].forEach(function(s){bx(.02,.32,.8,toon(0xff7a1a),c.x+s*.24,.16,c.z,trayG);});}
     if(c.kind==='customs'){var bth=new T.Group();bth.position.set(c.x,0,c.z-.62);trayG.add(bth);rb(.36,.36,.26,.03,toon(0xf2f4f6),0,.18,0,bth);bx(.38,.05,.28,toon(0x2f8fd0),0,.38,0,bth);bx(.26,.12,.01,glass(0x9fd7ff,.6),0,.22,.131,bth);}
     var ring=tor(.3,.022,flat(0xffd23f),c.x,.02,c.z,trayG,null,28);ring.rotation.x=-Math.PI/2;ring.scale.set(1,1.55,1);ring.visible=false;
-    var hit=hitBox(.48,1.7,.95,c.x,.8,c.z,trayG,{col:i});
+    var hit=hitBox(.48,c.max*CH+.3,.95,c.x,(c.max*CH+.3)/2,c.z,trayG,{col:i});
     cols.push({x:c.x,z:c.z,kind:c.kind,max:c.max,stack:[],inc:0,hit:hit,ring:ring,insp:0});
   });
   var tb=new T.Group();tb.position.set(L.trash.x,0,L.trash.z);trayG.add(tb);blob(.6,.8,tb);
@@ -2024,6 +2024,7 @@ function tapAt(x,y){
   var r=cvs.getBoundingClientRect();ndc.set((x-r.left)/r.width*2-1,-((y-r.top)/r.height)*2+1);scene.updateMatrixWorld();ray.setFromCamera(ndc,camera);
   var hits=ray.intersectObjects(shiftHits(),false);if(!hits.length)return;
   for(var i=0;i<hits.length;i++)if(hits[i].object.userData.gull){shooGull();return;}
+  for(i=0;i<hits.length;i++)if(hits[i].object.userData.cust){tapCust(hits[i].object.userData.cust);return;}
   var h=hits[0].object.userData;
   if(h.trash){tapBin();return;}
   if(h.col!=null){tapCol(h.col);return;}
