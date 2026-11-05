@@ -154,10 +154,8 @@
           localStorage.removeItem("signIn");
         }
         msg.style.color = "#00d1b2"; msg.textContent = "Logged in successfully!";
-        const returnTo = new URLSearchParams(window.location.search).get("returnTo");
-        if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
-          window.location.assign(returnTo);
-        }
+        const returnTo = sessionStorage.getItem("prevPage");
+        window.location.href = returnTo;
       } catch (error) {
         console.error("Sign-in failed.", error);
         msg.style.color = "#f00"; msg.textContent = ["functions/internal", "functions/not-found", "functions/unavailable", "functions/unknown"].includes(error.code) ? "Username sign-in is unavailable right now. Please sign in with your email address." : "Incorrect username/email or password";
