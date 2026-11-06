@@ -42,7 +42,7 @@
     {
       "id": "chanukah5787",
       "name": "Festival of Lights",
-      "tagline": "Eight nights, eight doors, extra light every night of Chanukah.",
+      "tagline": "Eight nights, eight doors, and a brand-new game every day of Chanukah (except Shabbos).",
       "start": "2026-12-04",
       "end": "2026-12-12",
       "theme": "chanukah",
@@ -74,7 +74,7 @@
       ],
       "calendar": {
         "title": "8 Nights of Lights",
-        "note": "A new door opens each night of Chanukah. Missed one? You can open it any time until the festival ends.",
+        "note": "A new door opens each night of Chanukah. Six new games launch Sunday to Friday, December 6 to 11, one a day, with no launches on Shabbos. Missed a door? Open it any time until the festival ends.",
         "doors": [
           {
             "date": "2026-12-04",

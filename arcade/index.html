@@ -288,7 +288,8 @@ function feat(g) {
 }
 function soon() {
   const live = new Set(cat.games.map((g) => g.name)), items = cat.upcoming.filter((u) => !live.has(u.name));
-  const nx = items.find((u) => u.status === "next") || items[0];
+  const soonest = items.filter((u) => u.launch && new Date(u.launch) > Date.now()).sort((a, b) => new Date(a.launch) - new Date(b.launch))[0];
+  const nx = soonest || items.find((u) => u.status === "next") || items[0];
   const rest = items.filter((u) => u !== nx);
   const launch = nx && nx.launch ? new Date(nx.launch) : null;
   $("#next").innerHTML = nx ? `<div class="panel next${launch ? " cd" : ""}"><div class="ico">${esc(nx.name[0])}</div><div><span class="pill nx">UP NEXT</span><h3 style="margin-top:8px">${esc(nx.name)}</h3><p>${esc(nx.hook)}</p>${launch ? `<div class="count" id="count" aria-label="Time until launch"></div><p class="launchd">Launches ${launch.toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })}</p>` : ""}</div><div class="nact">${nx.earlyAccess ? `<button class="btn sm" id="eaBtn">Request early access</button>` : ""}<button class="btn ghost sm" data-feedback="arcade">Suggest a feature</button></div></div>` : "";
@@ -302,7 +303,7 @@ function soon() {
     tick(); setInterval(tick, 1000);
   }
   const ea = $("#eaBtn"); if (ea) ea.onclick = () => LZ.requestAccess(nx.name);
-  $("#queue").innerHTML = rest.map((u, i) => `<div class="panel qi"><div class="t"><h4>${esc(u.name)}</h4><span class="pill ${u.status === "idea" ? "idea" : "q"}">${u.status === "idea" ? "IDEA" : "#" + (i + 2)}</span></div><p>${esc(u.hook)}</p></div>`).join("");
+  $("#queue").innerHTML = rest.map((u, i) => `<div class="panel qi"><div class="t"><h4>${esc(u.name)}</h4><span class="pill ${u.status === "idea" ? "idea" : "q"}">${u.status === "idea" ? "IDEA" : u.launch ? new Date(u.launch).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "#" + (i + 2)}</span></div>${u.tag ? `<span class="pill" style="background:rgba(255,210,63,.15);color:var(--gold);margin-bottom:6px;display:inline-block;width:fit-content;align-self:flex-start">🕎 ${esc(u.tag)}</span>` : ""}<p>${esc(u.hook)}</p></div>`).join("");
   document.querySelectorAll("#next [data-feedback]").forEach((b) => (b.onclick = () => LZ.openFeedback("arcade")));
 }
 const roles = await LZ.roles();
