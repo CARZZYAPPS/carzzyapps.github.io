@@ -42,7 +42,7 @@
     {
       "id": "crema",
       "name": "Crema Rush",
-      "version": "3.0",
+      "version": "3.1",
       "path": "/arcade/crema-rush/",
       "hook": "Run the counter, juggle orders and machines, then grow one coffee shop into a caf\u00e9 empire with bakeries, juice bars and ice cream.",
       "categories": [

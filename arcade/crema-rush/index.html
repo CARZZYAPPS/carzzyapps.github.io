@@ -1194,6 +1194,10 @@ function iconStation(k,ind){
   var v=M[k](o,IND[ind].theme);try{v.upd(o,0,0);}catch(e){}
   return ICON[key]=shotOf(v.g,.7);
 }
+function iconTray(){if(ICON.tray!=null)return ICON.tray;var g=new T.Group();
+  [-.3,.3].forEach(function(x){cy(.25,.22,.03,toon(0xffffff),x,0,0,g,26);var r=tor(.245,.012,toon(0xe2553f),x,.017,0,g,null,28);r.rotation.x=-Math.PI/2;});
+  var p=cy(.06,.06,.36,toon(0x3ddc84),0,.1,0,g,12);p.rotation.z=Math.PI/2;var q=cy(.06,.06,.36,toon(0x3ddc84),0,.1,0,g,12);q.rotation.x=Math.PI/2;
+  return ICON.tray=shotOf(g,.6);}
 function iconTop(t){var key='tp:'+t;if(ICON[key]!=null)return ICON[key];var g=new T.Group();toppingBox(t,g,0);return ICON[key]=shotOf(g,.6);}
 
 /* ================= SEATING ================= */
@@ -1228,7 +1232,7 @@ function layout(loc,aspect){
   keys.forEach(function(k){var w=stWidth(k,loc);if(rows[rows.length-1].length&&acc+w>rowMax){rows.push([]);acc=0;}rows[rows.length-1].push(k);acc+=w+.22;});
   var st=[],maxW=0;
   rows.forEach(function(r,ri){var tw=r.reduce(function(s,k){return s+stWidth(k,loc);},0)+.22*(r.length-1);maxW=Math.max(maxW,tw);var x=-tw/2;r.forEach(function(k){var w=stWidth(k,loc);st.push({k:k,x:x+w/2,z:-.3+ri*1.15});x+=w+.22;});});
-  var nT=sz.tray,tg=portrait?.6:.64,tray=[],tz=-.3+rows.length*1.15-.05;
+  var nT=sz.tray+(loc.trayx||0),tg=portrait?.6:.64,tray=[],tz=-.3+rows.length*1.15-.05;
   for(var i=0;i<nT;i++)tray.push({x:-(nT*tg)/2+tg/2+i*tg-.32,z:tz});
   var trash={x:tray[nT-1].x+.78,z:tz};
   var nD=[0,0,0,1,2][loc.size],nTab=[0,0,2,3,4][loc.size];
@@ -1648,7 +1652,7 @@ function endShift(){
 var G=null,SAVEKEY='crema-tycoon-v3',LVQ=[];
 function newLoc(city,did,ind){
   var D=district(city,did),st={};IND[ind].start.forEach(function(k){st[k]={s:0,c:0};});
-  var loc={id:G.nid++,city:city,did:did,ind:ind,name:D.name,size:1,st:st,tops:{},staff:{barista:0,server:0,manager:0,finisher:0,host:0},decor:0,price:0,rep:3,days:0,comp:null,mk:[],hx:[],cd:{},earned:0};
+  var loc={id:G.nid++,city:city,did:did,ind:ind,name:D.name,size:1,trayx:0,st:st,tops:{},staff:{barista:0,server:0,manager:0,finisher:0,host:0},decor:0,price:0,rep:3,days:0,comp:null,mk:[],hx:[],cd:{},earned:0};
   if(city>0)loc.comp=newRival(loc);
   return loc;
 }
@@ -1660,7 +1664,7 @@ function load(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s
 function save(){if(!G)return;G.ts=now();try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}if(window.LZ_GAME&&window.LZ)LZ.save(LZ_GAME);}
 var LZR=0.04,LZM=1;
 function lzBoot(){return new Promise(function(res){if(!window.LZ_GAME)return res();var done=false,fin=function(){if(!done){done=true;res();}};
-  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:3,minor:0,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
+  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:3,minor:1,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
   if(window.LZ)go();else window.addEventListener('lz-ready',go,{once:true});setTimeout(fin,3500);});}
 
 /* ---------- economics ---------- */
@@ -1751,6 +1755,7 @@ function stSpdCost(loc,k){return Math.round(STN[k].spd*Math.pow(1.85,(loc.st[k]|
 function stCapCost(loc,k){return Math.round(STN[k].spd*3*Math.pow(2.6,(loc.st[k]||{c:0}).c)*cmul(loc));}
 function topCost(loc,t){return Math.round(IND[loc.ind].tops[t].cost*TM(tierOf(loc)).cm);}
 function hireCost(loc,r){return Math.round(ROLES[r].cost*(1+.7*(loc.staff[r]||0))*IND[loc.ind].wm*TM(tierOf(loc)).cm);}
+var TRAYX_COST=[150,600,2400];function trayxCost(loc){var n=loc.trayx||0;return n>=3?0:Math.round(TRAYX_COST[n]*cmul(loc));}
 function sizeCost(loc){var n=loc.size+1;return n>4?0:Math.round(SIZES[n].cost*cmul(loc)*(distOf(loc).price||1));}
 function decorCost(loc){return Math.round(150*Math.pow(2.3,loc.decor)*IND[loc.ind].wm*TM(tierOf(loc)).cm);}
 function hqCost(k){return Math.round(HQ[k].cost*Math.pow(HQ[k].g,G.hq[k]||0));}
@@ -1774,6 +1779,7 @@ function act(kind,arg,loc){
     case 'top':if(!IND[loc.ind].tops[arg]||loc.tops[arg])return 'bad';if(G.lvl<IND[loc.ind].tops[arg].lvl)return 'req';if(!topsOf(loc).length&&stList(loc).length>=SIZES[loc.size].stations)return 'room';if(topsOf(loc).length>=5)return 'rackfull';c=topCost(loc,arg);if(!spend(c))return 'cash';loc.tops[arg]=true;G.rebuild=true;break;
     case 'hire':if(!ROLES[arg])return 'bad';if(G.lvl<ROLES[arg].lvl)return 'req';if((loc.staff[arg]||0)>=ROLES[arg].cap[loc.size])return 'max';c=hireCost(loc,arg);if(!spend(c))return 'cash';loc.staff[arg]=(loc.staff[arg]||0)+1;if(inShiftAt(loc))resetBots();break;
     case 'fire':if(!loc.staff[arg])return 'max';loc.staff[arg]--;if(inShiftAt(loc))resetBots();break;
+    case 'trayx':if((loc.trayx||0)>=3)return 'max';c=trayxCost(loc);if(!spend(c))return 'cash';loc.trayx=(loc.trayx||0)+1;G.rebuild=true;break;
     case 'size':if(loc.size>=4)return 'max';c=sizeCost(loc);if(!spend(c))return 'cash';loc.size++;G.rebuild=true;break;
     case 'decor':if(loc.decor>=5)return 'max';c=decorCost(loc);if(!spend(c))return 'cash';loc.decor++;G.rebuild=true;break;
     case 'price':loc.price=clamp(+arg,-1,2);G.rebuild=true;break;
@@ -1991,6 +1997,9 @@ function recipesUsing(ind,t){return IND[ind].R.filter(function(r){return r.comps
 function shopRows(loc,tab){
   var li=G.locs.indexOf(loc),I=IND[loc.ind],rows=[],used=stList(loc).length,max=SIZES[loc.size].stations;
   if(tab==='equip'){
+    var tx=loc.trayx||0,tn=SIZES[loc.size].tray+tx,rt={ic:img(iconTray()),title:'Tray extension'+(tx?' <span class="tg">'+tx+'/3</span>':''),desc:'Adds one more tray plate so you can hold more finished items. You have '+tn+' plates.'};
+    if(tx>=3){rt.on=true;rt.btns=[btn('Maxed','x',{dis:1})];}else{rt.cost=trayxCost(loc);rt.btns=[costBtn(rt.cost,'trayx',0,li,'+1 plate')];if(tx)rt.on=true;}
+    rows.push(rt);
     I.stations.forEach(function(k){if(k==='rack')return;var d=STN[k],own=loc.st[k],r={ic:img(iconStation(k,loc.ind)),title:d.name,desc:d.desc};
       if(own){r.on=true;r.tags=[{t:'Speed '+own.s+'/5'},{t:d.kind==='cooker'?d.slots[own.c]+' slots':d.serv[own.c]+' per batch'}];r.btns=[];
         if(own.s<5){r.cost=stSpdCost(loc,k);r.btns.push(costBtn(r.cost,'spd',k,li,'Faster'));}else r.btns.push(btn('Max speed','x',{dis:1}));
@@ -2034,7 +2043,7 @@ function shopBody(loc,tab){
     h+='<p class="fine">Staff also work beside you during your shift.</p>'+groupRows(shopRows(loc,'staff'));}
   if(tab==='store'){
     var nx=loc.size+1,r1={ic:img(distPic(D.win)),title:nx<=4?'Grow to '+SIZES[nx].name:SIZES[loc.size].name+' (fully grown)'};
-    if(nx<=4){r1.desc=['','',' Opens a seating area: diners stay, then leave tips on the table for you to clear.',' Adds a delivery pickup counter with impatient couriers who tip well.',' Doubles the dining room, adds a second delivery spot and an express bar your baristas run.'][nx]+' '+SIZES[nx].spots+' customer spots, '+SIZES[nx].tray+' tray plates, room for '+SIZES[nx].stations+' stations.';r1.btns=[costBtn(sizeCost(loc),'size',0,li,'Grow')];}
+    if(nx<=4){r1.desc=['','',' Opens a seating area: diners stay, then leave tips on the table for you to clear.',' Adds a delivery pickup counter with impatient couriers who tip well.',' Doubles the dining room, adds a second delivery spot and an express bar your baristas run.'][nx]+' '+SIZES[nx].spots+' customer spots, '+(SIZES[nx].tray+(loc.trayx||0))+' tray plates, room for '+SIZES[nx].stations+' stations.';r1.btns=[costBtn(sizeCost(loc),'size',0,li,'Grow')];}
     else{r1.desc='Five customer spots and room for seven stations.';r1.on=true;}
     var r2={ic:letterIc('D',IND[loc.ind].theme.accent),title:'Decor level '+loc.decor+' of 5',desc:'Each level: customers wait 6% longer, tip 5% more and foot traffic +3%.'+(loc.decor<5?' Next: '+DECOR_NEXT[loc.decor]+'.':'')};
     r2.btns=loc.decor<5?[costBtn(decorCost(loc),'decor',0,li,'Decorate')]:[btn('Maxed','x',{dis:1})];
@@ -2168,6 +2177,7 @@ function arcadeTitle(){if(!window.LZ_GAME||!window.LZ)return '<p class="fine">Pr
   var u=LZ.signedIn()?LZ.username:'';
   return x2+'<div class="lzbar"><span>'+(u?'Signed in as <b>'+esc(u)+'</b>. Progress saves to your account.':'Playing as guest. Progress saves in this browser.')+'</span>'+(u?'':btn('Sign in','acct',{cls:'sec'}))+'</div>'+
     '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div>'+
+    '<p class="fine"><b>New in v3.1:</b> extra tray plates. Shop → Equipment → Tray extension.</p>'+
     '<p class="fine"><a href="#" data-a="legacy">Play the legacy version</a> if you have progress there. Legacy points don\'t carry over to v3.</p>';}
 function showPause(){openModal('<h1>Paused</h1><p class="lead">'+esc(curLoc().name)+' · Level '+G.lvl+' · '+fmt(G.cash)+'</p><div class="btns">'+btn('Resume','mclose',{cls:'gold'})+'</div><div class="btns">'+btn('Sound '+(G.mute?'off':'on'),'snd',{cls:'sec'})+btn('Music '+(G.music?'on':'off'),'mus',{cls:'sec'})+'</div><div class="btns">'+btn('Start over','new',{cls:'warn'})+'</div>'+(window.LZ_GAME?'<div class="btns">'+btn(LZ.signedIn()?esc(LZ.username):'Sign in','acct',{cls:'sec'})+btn('Leaderboard','lb',{cls:'sec'})+btn('Feedback','fb',{cls:'sec'})+'</div><div class="btns">'+btn('Back to Lazer Arcade','arcade',{cls:'sec'})+'</div>':''),'pause');}
 function chooser(city,did){
