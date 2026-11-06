@@ -93,7 +93,7 @@ if (!g || (["hidden", "pending", "rejected"].includes(g.status) && !isStaff() &&
     const c = cover(`<div class="card"><h2>${r.won ? "You win!" : "Game over"}</h2><div class="big">${fmt(r.score)}</div><p>${line}</p><div style="display:flex;gap:8px;justify-content:center;margin-top:14px"><button class="btn sm" data-again>Play again</button><a class="btn sm ghost" href="/arcade/community/">More games</a></div></div>`);
     c.querySelector("[data-again]").onclick = start; const si = c.querySelector("#si"); if (si) si.onclick = (e) => { e.preventDefault(); LZ.openAccount("signin"); };
   }
-  cover(`<img alt="" src="${esc(g.thumb || "")}"><h2>${esc(g.title)}</h2><p>${esc(g.desc || "")}</p><button class="btn" id="play">▶ Play</button><p style="font-size:13px;color:var(--tx2)">${matchMedia("(pointer:coarse)").matches ? "On-screen buttons appear when you play." : "Arrows / WASD to move · Space to jump · X to fire"}</p>`);
+  cover(`<img alt="" src="${esc(g.thumb || "")}"><h2>${esc(g.title)}</h2><p>${esc(g.desc || "")}</p><button class="btn" id="play">▶ Play</button><p style="font-size:13px;color:var(--tx2)">${g.engine === "studio2d" ? (matchMedia("(pointer:coarse)").matches ? "On-screen buttons appear when you play." : "Arrows / WASD to move · Space to jump · X to fire") : "Tap or click to play."}</p>`);
   $("#play").onclick = start;
   $("#fs").onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else stage.requestFullscreen && stage.requestFullscreen().catch(() => {}); };
   // likes
