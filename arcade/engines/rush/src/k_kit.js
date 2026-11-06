@@ -18,7 +18,7 @@ function applyPack(P){
   (k.stations||[]).forEach(function(s,i){
     var id=s.id||('k_st'+i),look=s.look||s.model,arch=s.kind||(STN[look]&&STN[look].kind)||'cooker';if(ids.indexOf(id)>=0)id=id+'_'+i;
     var base=STN[look]||(arch==='batch'?STN.drip:STN.espresso);
-    var o=Object.assign({},base,{name:s.name||base.name,kind:arch,makes:s.makes,time:+s.time||base.time||5,lvl:+s.lvl||1,cost:+s.cost||0,desc:s.desc||base.desc||'',w:+s.w||(s.custom?1.2:base.w||1),spd:+s.spd||base.spd||80,look:look,custom:(k.models||{})[look]?look:null,kitId:id});
+    var o=Object.assign({},base,{name:s.name||base.name,kind:arch,makes:s.makes,time:+s.time||base.time||5,lvl:+s.lvl||1,cost:+s.cost||0,desc:s.desc||base.desc||'',w:+s.w||(s.custom?1.2:base.w||1),spd:+s.spd||base.spd||80,look:look,custom:(k.models||{})[look]?look:null,kitId:id,verb:s.verb||''});
     if(arch==='cooker'){o.burn=+s.burn||base.burn||6;o.slots=s.slots?[+s.slots,+s.slots+1,+s.slots+2]:(base.slots||[2,3,4]);delete o.role;}
     else{o.serv=s.serv?[+s.serv,+s.serv+1,+s.serv+2]:(base.serv||[4,5,6]);o.stale=+s.stale||base.stale||30;o.role=TOPS[s.makes]&&!BASES[s.makes]?'comp':'base';delete o.slots;}
     STN[id]=o;ids.push(id);

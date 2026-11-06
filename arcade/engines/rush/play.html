@@ -1,4 +1,4 @@
-<title>Rush engine | Lazer Studio</title>
+<meta charset="utf-8"><title>Rush engine | Lazer Studio</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap">
@@ -766,7 +766,7 @@ function applyPack(P){
   (k.stations||[]).forEach(function(s,i){
     var id=s.id||('k_st'+i),look=s.look||s.model,arch=s.kind||(STN[look]&&STN[look].kind)||'cooker';if(ids.indexOf(id)>=0)id=id+'_'+i;
     var base=STN[look]||(arch==='batch'?STN.drip:STN.espresso);
-    var o=Object.assign({},base,{name:s.name||base.name,kind:arch,makes:s.makes,time:+s.time||base.time||5,lvl:+s.lvl||1,cost:+s.cost||0,desc:s.desc||base.desc||'',w:+s.w||(s.custom?1.2:base.w||1),spd:+s.spd||base.spd||80,look:look,custom:(k.models||{})[look]?look:null,kitId:id});
+    var o=Object.assign({},base,{name:s.name||base.name,kind:arch,makes:s.makes,time:+s.time||base.time||5,lvl:+s.lvl||1,cost:+s.cost||0,desc:s.desc||base.desc||'',w:+s.w||(s.custom?1.2:base.w||1),spd:+s.spd||base.spd||80,look:look,custom:(k.models||{})[look]?look:null,kitId:id,verb:s.verb||''});
     if(arch==='cooker'){o.burn=+s.burn||base.burn||6;o.slots=s.slots?[+s.slots,+s.slots+1,+s.slots+2]:(base.slots||[2,3,4]);delete o.role;}
     else{o.serv=s.serv?[+s.serv,+s.serv+1,+s.serv+2]:(base.serv||[4,5,6]);o.stale=+s.stale||base.stale||30;o.role=TOPS[s.makes]&&!BASES[s.makes]?'comp':'base';delete o.slots;}
     STN[id]=o;ids.push(id);
@@ -1784,8 +1784,8 @@ function endShift(){
   G.best=G.best||0;s.prevBest=G.best;s.newBest=s.total>G.best&&s.total>0;if(s.newBest)G.best=s.total;
   G.stats.pts=(G.stats.pts||0)+s.total;s.life=G.stats.pts;
   var avg=s.pts/Math.max(1,s.served+s.walk);s.grade=avg>=420?'S':avg>=300?'A':avg>=200?'B':avg>=120?'C':'D';
-  s.lp=Math.round(Math.round(s.total*LZR)*LZM);s.lzm=LZM;save();sfx.bell();showSummary(s);
-  kitScore(s.total);
+  s.lp=Math.round(Math.round(s.total*LZR)*LZM);s.lzm=LZM;save();kitScore(s.total);sfx.bell();showSummary(s);
+  
 }
 
 /* ================= EMPIRE ================= */
@@ -2105,7 +2105,7 @@ function renderTags(dt){
         if(o.st==='brew'){key='br';html=ringSvg();k=o.t/o.dur;}
         else if(o.st==='ready'){var st=o.t/o.d.stale;key='r'+o.serv+(st>.7?'w':'');html='<div class="cnt '+(st>.7?'bad':'rd')+'">×'+o.serv+' '+(o.d.role==='comp'?'ready':'left')+'</div>';}
         else if(o.st==='stale'){key='st';html='<div class="cnt bad">Gone cold. Tap to redo</div>';}
-        else{key='e';html='<div class="cnt dim">Tap to '+(o.d.role==='comp'?'steam':'brew')+'</div>';}
+        else{key='e';html='<div class="cnt dim">'+esc(txtT(o.d.verb||((KIT.kit&&KIT.kit.stations&&KIT.kit.stations.length)?'Tap to start':'Tap to '+(o.d.role==='comp'?'steam':'brew'))))+'</div>';}
         setTag(t,key,html);setRing(t,k);place(t,p);}
     });
     SH.bots.forEach(function(b,i){var t=tagFor('bot'+i);if(!b.task){if(!t.hid){t.el.style.display='none';t.hid=true;}t.k=null;return;}
@@ -2569,8 +2569,8 @@ function waterTex2(c){return canvasTex(256,256,function(g){g.fillStyle=hexCss(c)
 var _fitCamera=fitCamera;
 fitCamera=function(){_fitCamera();var C=(KX.scene||{}).camera;if(!SH||!C)return;var tgt=camBase.tgt,z=+C.zoom||1,tilt=(+C.tilt||0)*Math.PI/180;
   if(tilt){var v=camera.position.clone().sub(tgt),r=v.length(),a=Math.atan2(v.y,v.z)+tilt;v.set(v.x,Math.sin(a)*r,Math.cos(a)*r);camera.position.copy(tgt).add(v);camera.lookAt(tgt);}
-  if(z!==1){camera.position.copy(tgt).add(camera.position.clone().sub(tgt).multiplyScalar(1/z));camera.lookAt(tgt);}
-  camera.updateMatrixWorld(true);camBase.pos.copy(camera.position);};
+  if(z!==1){var off=camera.position.clone().sub(tgt).multiplyScalar(1/z);camera.position.copy(tgt).add(off);camera.lookAt(tgt);}
+  var pz=+C.pan||0;if(pz){camera.position.z+=pz;tgt.z+=pz;camera.lookAt(tgt);}camera.updateMatrixWorld(true);camBase.pos.copy(camera.position);};
 
 /* ---------- modifiers (rules change demand, prices, patience, machine speed) ---------- */
 function modVal(kind,id){var m=1,now=SH?SH.t:0;KX.mods=KX.mods.filter(function(x){return x.until>now;});KX.mods.forEach(function(x){if(x.kind===kind&&(!x.id||x.id===id))m*=x.mult;});return m;}
@@ -2628,7 +2628,7 @@ function kitEmit(ev,data){
     if(!kitCond(r.if))return;kitDo(r.do,data,i);});
   try{(KX.hooks[ev]||[]).forEach(function(f){f(data);});(KX.hooks['*']||[]).forEach(function(f){f(ev,data);});}catch(e){scriptErr(e);}
 }
-function kitDo(acts,data){(acts||[]).forEach(function(a){var n=+a.n||0,sec=+a.sec||15;try{switch(a.t){
+function kitDo(acts,data){(acts||[]).forEach(function(a){var n=+a.n||0,sec=+a.sec||15;if(+a.delay>0&&SH){(KX.later=KX.later||[]).push({at:SH.t+ +a.delay,a:Object.assign({},a,{delay:0}),d:data});return;}try{switch(a.t){
   case 'banner':banner(txtT(a.big||''),txtT(a.small||''),a.kind||'hot');break;
   case 'toast':toast(txtT(a.text||''),a.kind||'');break;
   case 'spawn':for(var i=0;i<(+a.n||1);i++){if(a.type){KX.nextType=(KX.customers||[]).filter(function(c){return c.id===a.type;})[0]||null;}if(a.variant==='vip')spawnCust({vip:true});else if(a.variant==='insp')spawnCust({insp:true});else if(!spawnCust())SH.pend.push(SH.t);}break;
@@ -2650,6 +2650,7 @@ function kitDo(acts,data){(acts||[]).forEach(function(a){var n=+a.n||0,sec=+a.se
 }}catch(e){console.warn('rule action',a.t,e);}});}
 function kitTick(dt){
   if(!SH||SH.phase!=='open')return;
+  if(KX.later&&KX.later.length){var due=KX.later.filter(function(x){return SH.t>=x.at;});KX.later=KX.later.filter(function(x){return SH.t<x.at;});due.forEach(function(x){kitDo([x.a],x.d);});}
   (KX.rules||[]).forEach(function(r,i){var w=r.when||{};
     if(w.t==='every'){KX.every[i]=(KX.every[i]||0)+dt;var p=Math.max(1,+w.sec||30);if(KX.every[i]>=p){KX.every[i]-=p;if(kitCond(r.if))kitDo(r.do,{},i);}}
     else if(w.t==='random'){if(Math.random()<dt*(+w.per||1)/60&&kitCond(r.if))kitDo(r.do,{},i);}
@@ -2659,7 +2660,7 @@ function kitTick(dt){
   SH.st.forEach(function(o){var prev=KX.stPrev[o.k]||{},cur=o.kind==='cooker'?o.slots.map(function(s){return s.st;}):[o.st];
     cur.forEach(function(s,j){var p=prev[j];if(p!==s){if(s==='ready')kitEmit('done',{station:STN[o.k].kitId||o.k});if(s==='burnt'||s==='stale')kitEmit('burnt',{station:STN[o.k].kitId||o.k});}});KX.stPrev[o.k]=cur;});
 }
-var _startShift=startShift;startShift=function(){KX.mods=[];KX.fired={};KX.every={};KX.stPrev={};KX.hz=[];_startShift();kitEmit('start',{day:SH.s.day});};
+var _startShift=startShift;startShift=function(){KX.mods=[];KX.later=[];KX.fired={};KX.every={};KX.stPrev={};KX.hz=[];_startShift();kitEmit('start',{day:SH.s.day});};
 var _endShift=endShift;endShift=function(){kitEmit('end',{day:SH.s.day});KX.hz.forEach(function(h){custG.remove(h.g);});KX.hz=[];_endShift();};
 var _updShift=updShift;updShift=function(dt,time){_updShift(dt,time);if(!SH)return;kitTick(dt);updHazards(dt,time);KX.props.forEach(function(m){m.upd(dt,time);});if(KX.water&&KX.water.material.map)KX.water.material.map.offset.x+=dt*.01;
   try{(KX.hooks.tick||[]).forEach(function(f){f(dt);});}catch(e){scriptErr(e);}};
@@ -2711,6 +2712,6 @@ function kitApi(){
 function kitRunScript(code){if(!code||!String(code).trim())return;try{var api=kitApi();(new Function('api','"use strict";\n'+code))(api);}catch(e){scriptErr(e);}}
 window.__KITAPI=function(){return kitApi();};
 
-window.__KIT={G:function(){return G;},SH:function(){return SH;},end:function(){if(SH)SH.t=SH.len;},start:function(){startShift();},close:function(){closeModal();}};
+window.__KIT={G:function(){return G;},SH:function(){return SH;},end:function(){if(SH)SH.t=SH.len;},start:function(){startShift();},close:function(){closeModal();},cam:function(){return JSON.stringify([camera.position,camBase.pos,camBase.tgt,SH&&SH.L.zF]);}};
 })();
 </script>

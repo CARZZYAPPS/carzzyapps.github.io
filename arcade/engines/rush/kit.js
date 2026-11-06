@@ -20,6 +20,8 @@ export const TAGS = ["hot", "cold", "food", "fancy", "healthy"];
 
 function mk(name, desc, kit) { return { v: 1, engine: "rush", title: name, desc, kit: Object.assign({ dayLen: 150, cash: 60 }, kit) }; }
 export const STARTERS = {
+  harbor: { name: "Harbor Rush Classic", blurb: "The original Harbor Rush, rebuilt on the Rush engine with custom 3D models, scene, rules and text. Remix the whole thing.", img: "/arcade/community/games/harbor-rush-classic/thumb.jpg",
+    async make() { const r = await fetch("/arcade/engines/rush/packs/harbor-classic.json"); const p = await r.json(); p.v = 2; return p; } },
   boba: { name: "Boba Bar", blurb: "Milk teas, fruit teas and toppings. A full shop to remix.", img: "", make() { return mk("Boba Bar", "Shake milk teas, add pearls and jelly, and grow a boba empire.", {
     name: "Boba bar", theme: { wall: "#f6c6d8", wall2: "#e79ab8", accent: "#7ad3c6", counter: "#ffd7a8", top: "#fffaf5", trim: "#a25b7a", flA: "#fff4ea", flB: "#f1d0de", stn: "#7ad3c6" },
     bases: { k_milktea: { name: "Milk tea", vessel: "clear", liq: "#c99a6b" }, k_fruittea: { name: "Fruit tea", vessel: "tall", liq: "#ff8a5c" }, k_matcha: { name: "Matcha", vessel: "clear", liq: "#7fbf5a" } },

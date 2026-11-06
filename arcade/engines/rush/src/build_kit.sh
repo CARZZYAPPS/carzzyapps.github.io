@@ -8,10 +8,12 @@ def R(a,b):
     global s
     assert a in s, a[:60]
     s=s.replace(a,b)
-R('<title>Crema Tycoon</title>','<title>Rush engine | Lazer Studio</title>')
 R("Promise.all([fontsReady,lzBoot()]).then(init,init);","""window.addEventListener('message',function(e){if(!e.data||e.data.type!=='rush-pack'||window.__kitBooted)return;window.__kitBooted=1;var d=e.data;KX.persist=!!d.persist;if(d.save)KX.store.rushkit=String(d.save);try{applyPack(d.project);}catch(err){console.error(err);}if(d.allowScript)kitRunScript(d.project.script);fontsReady.then(function(){init();kitTextStart();},function(){init();kitTextStart();});});
 if(parent!==window)parent.postMessage({type:'rush-ready'},'*');else document.body.insertAdjacentHTML('beforeend','<p style="position:fixed;inset:40% 0 auto;text-align:center;font:700 16px system-ui;color:#fff">This page runs Lazer Studio Rush games. Open one from the Community.</p>');""")
-R("if(window.LZ_GAME&&window.LZ)LZ.endSession(LZ_GAME,s.total,{grade:s.grade,day:s.day});","kitScore(s.total);")
+R("if(window.LZ_GAME&&window.LZ)LZ.endSession(LZ_GAME,s.total,{grade:s.grade,day:s.day});","")
+R("save();sfx.bell();showSummary(s);","save();kitScore(s.total);sfx.bell();showSummary(s);")
+R("""<div class="cnt dim">Tap to '+(o.d.role==='comp'?'steam':'brew')+'</div>'""","""<div class="cnt dim">'+esc(txtT(o.d.verb||((KIT.kit&&KIT.kit.stations&&KIT.kit.stations.length)?'Tap to start':'Tap to '+(o.d.role==='comp'?'steam':'brew'))))+'</div>'""")
+R('<title>Crema Tycoon</title>','<meta charset="utf-8"><title>Rush engine | Lazer Studio</title>')
 R("""'<h1>Crema <span>Rush</span></h1><p class="lead">Run the counter, then build a coffee empire. Bakeries, juice bars and ice cream parlors open up as you grow.</p>'""","""'<h1>'+esc(KIT.title||'Rush')+'</h1><p class="lead">'+esc(KIT.desc||'Run the counter, then grow your shop into an empire.')+'</p><p class="fine">Made with Lazer Studio on the Rush engine (the engine behind Crema Rush and Harbor Rush).</p>'""")
 R("cash:60,","cash:(KIT.kit&&+KIT.kit.cash||60),")
 R("tops:{},staff","tops:kitStartTops(ind),staff")

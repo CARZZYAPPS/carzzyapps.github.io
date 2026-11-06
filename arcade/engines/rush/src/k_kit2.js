@@ -176,7 +176,7 @@ function kitEmit(ev,data){
     if(!kitCond(r.if))return;kitDo(r.do,data,i);});
   try{(KX.hooks[ev]||[]).forEach(function(f){f(data);});(KX.hooks['*']||[]).forEach(function(f){f(ev,data);});}catch(e){scriptErr(e);}
 }
-function kitDo(acts,data){(acts||[]).forEach(function(a){var n=+a.n||0,sec=+a.sec||15;try{switch(a.t){
+function kitDo(acts,data){(acts||[]).forEach(function(a){var n=+a.n||0,sec=+a.sec||15;if(+a.delay>0&&SH){(KX.later=KX.later||[]).push({at:SH.t+ +a.delay,a:Object.assign({},a,{delay:0}),d:data});return;}try{switch(a.t){
   case 'banner':banner(txtT(a.big||''),txtT(a.small||''),a.kind||'hot');break;
   case 'toast':toast(txtT(a.text||''),a.kind||'');break;
   case 'spawn':for(var i=0;i<(+a.n||1);i++){if(a.type){KX.nextType=(KX.customers||[]).filter(function(c){return c.id===a.type;})[0]||null;}if(a.variant==='vip')spawnCust({vip:true});else if(a.variant==='insp')spawnCust({insp:true});else if(!spawnCust())SH.pend.push(SH.t);}break;
@@ -198,6 +198,7 @@ function kitDo(acts,data){(acts||[]).forEach(function(a){var n=+a.n||0,sec=+a.se
 }}catch(e){console.warn('rule action',a.t,e);}});}
 function kitTick(dt){
   if(!SH||SH.phase!=='open')return;
+  if(KX.later&&KX.later.length){var due=KX.later.filter(function(x){return SH.t>=x.at;});KX.later=KX.later.filter(function(x){return SH.t<x.at;});due.forEach(function(x){kitDo([x.a],x.d);});}
   (KX.rules||[]).forEach(function(r,i){var w=r.when||{};
     if(w.t==='every'){KX.every[i]=(KX.every[i]||0)+dt;var p=Math.max(1,+w.sec||30);if(KX.every[i]>=p){KX.every[i]-=p;if(kitCond(r.if))kitDo(r.do,{},i);}}
     else if(w.t==='random'){if(Math.random()<dt*(+w.per||1)/60&&kitCond(r.if))kitDo(r.do,{},i);}
@@ -207,7 +208,7 @@ function kitTick(dt){
   SH.st.forEach(function(o){var prev=KX.stPrev[o.k]||{},cur=o.kind==='cooker'?o.slots.map(function(s){return s.st;}):[o.st];
     cur.forEach(function(s,j){var p=prev[j];if(p!==s){if(s==='ready')kitEmit('done',{station:STN[o.k].kitId||o.k});if(s==='burnt'||s==='stale')kitEmit('burnt',{station:STN[o.k].kitId||o.k});}});KX.stPrev[o.k]=cur;});
 }
-var _startShift=startShift;startShift=function(){KX.mods=[];KX.fired={};KX.every={};KX.stPrev={};KX.hz=[];_startShift();kitEmit('start',{day:SH.s.day});};
+var _startShift=startShift;startShift=function(){KX.mods=[];KX.later=[];KX.fired={};KX.every={};KX.stPrev={};KX.hz=[];_startShift();kitEmit('start',{day:SH.s.day});};
 var _endShift=endShift;endShift=function(){kitEmit('end',{day:SH.s.day});KX.hz.forEach(function(h){custG.remove(h.g);});KX.hz=[];_endShift();};
 var _updShift=updShift;updShift=function(dt,time){_updShift(dt,time);if(!SH)return;kitTick(dt);updHazards(dt,time);KX.props.forEach(function(m){m.upd(dt,time);});if(KX.water&&KX.water.material.map)KX.water.material.map.offset.x+=dt*.01;
   try{(KX.hooks.tick||[]).forEach(function(f){f(dt);});}catch(e){scriptErr(e);}};
