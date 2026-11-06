@@ -32,6 +32,7 @@
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
 .gc{display:block;text-decoration:none;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(180deg,var(--card2),var(--card));transition:transform .15s,border-color .15s}
 .gc:hover{transform:translateY(-3px);border-color:var(--cyan)}
+.gc img.logo{object-fit:contain;padding:12% 0;background:radial-gradient(circle at 50% 40%,#2a1a5a,#0b0820)}
 .gc img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000;image-rendering:pixelated}
 .gc .b{padding:12px 14px}
 .gc b{font:800 16px var(--display);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -73,17 +74,26 @@ import LZ, { mountShell } from "/arcade/shell.js";
 import * as C from "/arcade/community/cloud.js";
 mountShell();
 const $ = (s) => document.querySelector(s), esc = LZ.esc, fmt = LZ.fmt;
-let sort = "popular", games = [], loading = false;
+let sort = "popular", games = [], loading = false, sitePlays = 0;
+const ts = (x) => { const c = x.createdAt; return !c ? 0 : typeof c.toMillis === "function" ? c.toMillis() : c.seconds ? c.seconds * 1000 : +c || 0; };
 async function load() {
   loading = true; $("#grid").innerHTML = '<div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div>';
-  try { games = await C.listGames(sort, 90); } catch (e) { console.warn(e); games = null; }
+  let classic = null;
+  try { [games, classic] = await Promise.all([C.listGames(sort, 90), C.getGame("harborclassic").catch(() => null)]); } catch (e) { console.warn(e); games = null; }
+  if (games) { // the two staff games also sit in the normal grid (listGames already leaves out the Classic doc, so no duplicates)
+    games = games.filter((x) => x.id !== "harborclassic");
+    games.push(Object.assign({}, C.BUILTIN.harborclassic, classic || {}, { id: "harborclassic" }));
+    games.push({ id: "__arcade", href: "/arcade/", title: "Lazer Arcade", ownerName: "LazerYudel", thumb: "/arcade/img/icon.svg", logo: true, plays: sitePlays, likes: 0, createdAt: 0 });
+    const key = sort === "new" ? ts : sort === "liked" ? (x) => +x.likes || 0 : (x) => +x.plays || 0;
+    games.sort((a, b) => key(b) - key(a));
+  }
   loading = false; draw();
 }
 function draw() {
   const q = $("#q").value.trim().toLowerCase(), g = $("#grid");
   if (games === null) { g.innerHTML = '<div class="empty">Couldn\'t reach the community right now. Try again in a moment.</div>'; return; }
   const list = games.filter((x) => !q || (x.title || "").toLowerCase().includes(q) || (x.ownerName || "").toLowerCase().includes(q));
-  g.innerHTML = list.length ? list.map((x) => `<a class="gc" href="/arcade/community/play/?id=${encodeURIComponent(x.id)}"><img alt="" loading="lazy" src="${esc(x.thumb || "")}"><div class="b"><b>${esc(x.title)}</b><small>by ${esc(x.ownerName || "player")}</small><div class="m"><span>▶ ${fmt(x.plays)}</span><span>♥ ${fmt(x.likes)}</span>${x.remixOf ? "<span>↻ remix</span>" : ""}</div></div></a>`).join("")
+  g.innerHTML = list.length ? list.map((x) => `<a class="gc" href="${x.href || "/arcade/community/play/?id=" + encodeURIComponent(x.id)}"><img alt="" loading="lazy" src="${esc(x.thumb || "")}"${x.logo ? ' class="logo"' : ""}><div class="b"><b>${esc(x.title)}</b><small>by ${esc(x.ownerName || "player")}</small><div class="m"><span>▶ ${fmt(x.plays)}</span>${x.id === "__arcade" ? "<span>Every game</span>" : `<span>♥ ${fmt(x.likes)}</span>`}${x.remixOf ? "<span>↻ remix</span>" : ""}</div></div></a>`).join("")
     : `<div class="empty">${q ? "No games match that search." : "No community games yet. Be the first: <a href=\"/arcade/studio/\">make one</a>."}</div>`;
 }
 document.querySelectorAll("#sort [data-s]").forEach((b) => (b.onclick = () => { sort = b.dataset.s; document.querySelectorAll("#sort [data-s]").forEach((x) => x.classList.toggle("on", x === b)); load(); }));
@@ -96,7 +106,7 @@ C.isStaff().then((st) => { if (st) document.querySelector(".links").insertAdjace
   const creatorName = Object.keys(roles).find((k) => roles[k] === "creator");
   let rows = cs.slice();
   if (!rows.length) { // until the backend job has run, rank by what's loaded
-    const m = {}; (games || []).forEach((g) => { const k = g.ownerUid; m[k] = m[k] || { username: g.ownerName, lp: 0, games: 0 }; m[k].lp += (g.plays || 0) * 5 + (g.likes || 0) * 20; m[k].games++; }); rows = Object.values(m).sort((a, b) => b.lp - a.lp);
+    const m = {}; (games || []).filter((g) => g.id !== "__arcade").forEach((g) => { const k = g.ownerUid; m[k] = m[k] || { username: g.ownerName, lp: 0, games: 0 }; m[k].lp += (g.plays || 0) * 5 + (g.likes || 0) * 20; m[k].games++; }); rows = Object.values(m).sort((a, b) => b.lp - a.lp);
   }
   const fallback = !cs.length;
   const top = rows.findIndex((r) => (r.username || "").toLowerCase() === creatorName); if (top > 0) rows.unshift(rows.splice(top, 1)[0]);
@@ -104,7 +114,7 @@ C.isStaff().then((st) => { if (st) document.querySelector(".links").insertAdjace
   if (fallback && rows[0] && (rows[0].username || "").toLowerCase() === creatorName) { rows[0].note = "Lazer Arcade" + (rows[0].games ? " + " + rows[0].games + " game" + (rows[0].games > 1 ? "s" : "") : ""); rows[0].lp = null; }
   $("#creators").innerHTML = rows.slice(0, 10).map((r, i) => `<div class="lr r${i + 1}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.username)}${(r.username || "").toLowerCase() === creatorName ? ' <span class="badge">CREATOR</span>' : ""}<small>${r.note || (r.games ? r.games + " game" + (r.games > 1 ? "s" : "") : "Lazer Arcade")}</small></span><span class="pt">${r.lp == null ? "∞" : fmt(r.lp)}<small>${r.lp == null ? "" : "creator LP"}</small></span></div>`).join("");
 })();
-LZ.plays(["crema", "harbor"]).then((p) => { const t = Object.values(p).reduce((a, b) => a + b, 0); $("#pinPlays").textContent = "▶ " + (t ? fmt(t) : "–") + " plays"; }).catch(() => {});
+LZ.plays(["crema", "harbor"]).then((p) => { const t = Object.values(p).reduce((a, b) => a + b, 0); $("#pinPlays").textContent = "▶ " + (t ? fmt(t) : "–") + " plays"; sitePlays = t; const a = (games || []).find((x) => x.id === "__arcade"); if (a) { a.plays = t; if (sort === "popular") games.sort((x, y) => (+y.plays || 0) - (+x.plays || 0)); draw(); } }).catch(() => {});
 </script>
 </body>
 </html>
