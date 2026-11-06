@@ -233,7 +233,21 @@ function load(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s
 function save(){if(!G)return;try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}if(window.LZ_GAME&&window.LZ)try{LZ.save(LZ_GAME);}catch(e){}}
 function starsTotal(){var t=0;for(var k in G.stars)t+=G.stars[k];return t;}
 function portStars(pi){var t=0;for(var i=0;i<6;i++)t+=G.stars[pi+'-'+i]||0;return t;}
-function portOpen(pi){return starsTotal()>=PORTS[pi].need;}
+/* After the four hand-built ports the harbor never ends: new ports are generated forever, each one harder. */
+var GEN_NAMES=['Storm Reach','Iron Bay','Coral Docks','Polar Gate','Neon Pier','Rust Harbor','Typhoon Quay','Sunset Wharf','Fog Island','Megaport'],PCACHE={};
+var RULE_TXT={wind:'gusts',reefer:'reefers',hazmat:'hazmat',night:'night shift'};
+function port(pi){
+  if(pi<PORTS.length)return PORTS[pi];if(PCACHE[pi])return PCACHE[pi];
+  var g=pi-PORTS.length,R=mulberry(pi*7919+13),base=PORTS[(g+1)%PORTS.length],d0=g+1;
+  var pool=['wind','reefer','hazmat','night'],rules=[];pool.forEach(function(r){if(R()<.5)rules.push(r);});
+  while(rules.length<2){var x=pool[Math.floor(R()*pool.length)];if(rules.indexOf(x)<0)rules.push(x);}
+  var th=Object.assign({},base.th);if(rules.indexOf('night')>=0)th=Object.assign({},PORTS[3].th);else delete th.night;
+  var lv=[];for(var i=0;i<6;i++){var d=d0+i/5,n=Math.min(30,13+Math.round(d*1.4)+i),p={c:Math.min(8,6+Math.floor((i+d0)/4)),h:5,f:.62,y:4,l:Math.min(3,2+(i>=3?1:0)),n:n,p:Math.max(10,Math.round(46*Math.pow(.95,d))),k:6,par:Math.round(30+n*Math.max(8,14.5*Math.pow(.97,d)))};
+    if(rules.indexOf('wind')>=0)p.w=Math.min(4,1.3+d*.15);if(rules.indexOf('reefer')>=0){p.r=Math.min(.45,.25+d*.025);p.pw=2;}if(rules.indexOf('hazmat')>=0)p.z=Math.min(.38,.22+d*.02);lv.push(p);}
+  return PCACHE[pi]={id:'gen'+pi,name:GEN_NAMES[g%GEN_NAMES.length]+(g>=GEN_NAMES.length?' '+(Math.floor(g/GEN_NAMES.length)+1):''),
+    tag:'Port '+(pi+1)+': '+rules.map(function(r){return RULE_TXT[r];}).join(', ')+'. Faster trucks, taller ships, no breaks.',need:56+g*14,th:th,rules:rules.indexOf('night')>=0?['night']:[],lv:lv};
+}
+function portOpen(pi){return starsTotal()>=port(pi).need;}
 function lvOpen(pi,li){return portOpen(pi)&&(li===0||G.stars[pi+'-'+(li-1)]>0);}
 function endlessOpen(){return (G.stars['0-5']||0)>0;}
 
@@ -263,7 +277,7 @@ function topY(s){return baseY(s)+s.stack.length*CH;}
 function mkBox(t){return {t:t,thaw:null,id:Math.random()};}
 
 function startLevel(pi,li,endless){
-  var P=PORTS[pi],p=Object.assign({},endless?endlessParams():P.lv[li]),L=layout(p),R=mulberry(endless?Math.floor(Math.random()*1e9):pi*977+li*131+7);
+  var P=port(pi),p=Object.assign({},endless?endlessParams():P.lv[li]),L=layout(p),R=mulberry(endless?Math.floor(Math.random()*1e9):pi*977+li*131+7);
   var rules={};(endless?endlessRules():P.rules).forEach(function(r){rules[r]=1;});if(p.w)rules.wind=1;if(p.r)rules.reefer=1;if(p.z)rules.hazmat=1;
   LV={pi:pi,li:li,endless:!!endless,P:P,p:p,L:L,rules:rules,R:R,t:0,score:0,combo:0,best:0,hearts:3,served:0,missed:0,spawned:0,trucks:[],next:1.2,
       perf:0,bumps:0,clangs:0,lost:0,phase:'play',wind:0,windT:rnd(6,10),gust:0,gustDir:1,tutStep:p.tut?0:-1,shipT:0,ships:1,endT:0,
@@ -709,17 +723,18 @@ function showMap(){
   LV=null;gameUI(false);PAUSED=true;var st=starsTotal(),h='';
   h+='<div class="top"><button class="btn sec" data-a="title" aria-label="Back">◀</button><div class="sp"></div><div class="coins">★ '+st+'</div><div class="coins">⛁ '+fmt(G.coins)+'</div><button class="btn sec" data-a="shop">Workshop</button></div>';
   h+='<h1>Ports</h1>';
-  PORTS.forEach(function(P,pi){var open=portOpen(pi),bg='linear-gradient(160deg,'+P.th.sky[0]+' 0%,'+P.th.sea[0]+' 70%,'+P.th.sea[1]+' 100%)';
+  var shown=PORTS.length;while(portOpen(shown-1))shown++;
+  for(var pp=0;pp<shown;pp++)(function(P,pi){var open=portOpen(pi),bg='linear-gradient(160deg,'+P.th.sky[0]+' 0%,'+P.th.sea[0]+' 70%,'+P.th.sea[1]+' 100%)';
     h+='<div class="port" style="background:'+bg+'"><div class="stc">'+portStars(pi)+'/18 ★</div><h3>'+esc(P.name)+'</h3><div class="tg">'+esc(P.tag)+'</div><div class="lvls">';
     for(var li=0;li<6;li++){var s=G.stars[pi+'-'+li]||0,ok=lvOpen(pi,li),nx=ok&&!s;h+='<button class="lv'+(nx?' next':'')+'" data-a="lv" data-p="'+pi+'" data-l="'+li+'"'+(ok?'':' disabled')+'>'+(li+1)+'<small>'+(s?starsStr(s):ok?'':'🔒')+'</small></button>';}
-    h+='</div>'+(open?'':'<div class="lock">🔒 '+P.need+' ★ to unlock<br>(you have '+st+')</div>')+'</div>';});
+    h+='</div>'+(open?'':'<div class="lock">🔒 '+P.need+' ★ to unlock<br>(you have '+st+')</div>')+'</div>';})(port(pp),pp);
   var eo=endlessOpen();
   h+='<div class="mode"><button class="btn'+(eo?' grn':' sec')+'" data-a="endless"'+(eo?'':' disabled')+'>Rush Hour'+(eo?' · best '+fmt(G.endless):' · clear 1-6')+'</button></div>';
   h+='<div class="mode"><button class="btn sec" data-a="mute">Sound: '+(G.mute?'off':'on')+'</button></div>';
   show(h,'','map');
 }
 function showIntro(pi,li){
-  var P=PORTS[pi],p=P.lv[li],rules=P.rules.slice();if(p.w&&rules.indexOf('wind')<0)rules.push('wind');if(p.r&&rules.indexOf('reefer')<0)rules.push('reefer');if(p.z&&rules.indexOf('hazmat')<0)rules.push('hazmat');
+  var P=port(pi),p=P.lv[li],rules=P.rules.slice();if(p.w&&rules.indexOf('wind')<0)rules.push('wind');if(p.r&&rules.indexOf('reefer')<0)rules.push('reefer');if(p.z&&rules.indexOf('hazmat')<0)rules.push('hazmat');
   var R={wind:['💨','Wind gusts push the hanging load. Wait for it to settle.'],reefer:['❄','Reefers thaw off the ship. Ship them or park them on a ⚡ powered slot.'],hazmat:['☢','Hazmat: a clang costs a heart, a bump costs 100 points. Land it clean.'],night:['🌙','Night shift: only the lights show what\'s what.']};
   var g='<div class="goal"><div><i>🚚</i>Load '+p.n+' trucks</div><div><i>⏱</i>Par time '+mmss(p.par)+' with all 3 hearts for ★★★</div>';
   rules.forEach(function(r){g+='<div><i>'+R[r][0]+'</i>'+R[r][1]+'</div>';});g+='</div>';
@@ -762,7 +777,7 @@ function showResults(r){
   h+='<span class="t">Score</span><span class="t">'+P(r.total)+'</span><span>Coins</span><span class="gold">+'+P(r.coins)+' ⛁</span>';
   if(window.LZ_GAME)h+='<span>Lazer Points'+(r.ea?' (held, paid 1.5× at launch)':LZM>1?' ('+LZM+'× today)':'')+'</span><span class="pos">+'+P(r.ea?Math.round(r.lp*1.5):r.lp)+' LP</span>';
   h+='</div>';
-  var nx=!r.endless&&r.win&&LV&&LV.li<5?[LV.pi,LV.li+1]:!r.endless&&r.win&&LV&&LV.pi<PORTS.length-1&&portOpen(LV.pi+1)?[LV.pi+1,0]:null;
+  var nx=!r.endless&&r.win&&LV&&LV.li<5?[LV.pi,LV.li+1]:!r.endless&&r.win&&LV&&portOpen(LV.pi+1)?[LV.pi+1,0]:null;
   h+='<div class="row"><button class="btn sec" data-a="map">Ports</button><button class="btn sec" data-a="retry">Retry</button>'+(nx?'<button class="btn" data-a="lv" data-p="'+nx[0]+'" data-l="'+nx[1]+'">Next</button>':'')+'</div></div>';
   show(h,'glass','res');
   if(!r.endless)$('#scr .stars').querySelectorAll('svg').forEach(function(s,i){if(i<r.stars)setTimeout(function(){s.classList.add('in');SFX.star(i);},250+i*300);else{s.style.color='rgba(255,255,255,.15)';setTimeout(function(){s.classList.add('in');},250+i*300);}});
