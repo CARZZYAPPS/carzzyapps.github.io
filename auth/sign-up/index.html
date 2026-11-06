@@ -124,4 +124,19 @@
           try { await cred.user.delete(); } catch (delErr) { console.error("Cleanup failed:", delErr); }
         }
         msg.style.color = "#f00";
-        let friendly
+        let friendlyMessage = "An unexpected error occurred. Please try again.";
+        switch (err.code) {
+          case "auth/email-already-in-use": friendlyMessage = "This email address is already registered."; break;
+          case "already-exists": friendlyMessage = "That username is already taken."; break;
+          case "auth/invalid-email": friendlyMessage = "Please enter a valid email address."; break;
+          case "auth/weak-password": friendlyMessage = "Your password is too weak."; break;
+          case "auth/network-request-failed": friendlyMessage = "Network error. Check connection."; break;
+          case "permission-denied": friendlyMessage = "Username registration failed."; break;
+          default: friendlyMessage = err.message;
+        }
+        msg.textContent = friendlyMessage;
+      }
+    });
+  </script>
+</body>
+</html>
