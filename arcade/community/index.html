@@ -89,6 +89,7 @@ function draw() {
 document.querySelectorAll("#sort [data-s]").forEach((b) => (b.onclick = () => { sort = b.dataset.s; document.querySelectorAll("#sort [data-s]").forEach((x) => x.classList.toggle("on", x === b)); load(); }));
 $("#q").oninput = draw;
 load();
+C.isStaff().then((st) => { if (st) document.querySelector(".links").insertAdjacentHTML("beforeend", '<a href="/arcade/community/staff/">Staff</a>'); });
 // top creators: LazerYudel (Lazer Arcade) is pinned first, then creators ranked by creator LP
 (async () => {
   const [cs, roles] = await Promise.all([C.topCreators(10), LZ.roles()]);

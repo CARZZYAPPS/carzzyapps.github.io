@@ -68,13 +68,36 @@ export function thumb(P) {
   return c.toDataURL("image/jpeg", 0.85);
 }
 
+const API = `api.on("start" | "end" | "served" | "walkout" | "arrive"
+       | "done" | "burnt" | "levelup" | "hazardHit" | "hazardClear", (data) => {})
+api.onTick((dt) => {})             api.onEvent((name, data) => {})
+api.action("name", (data) => {})   // call from a rule: Run script action
+api.money / api.addMoney(n)        api.score / api.addScore(n)
+api.day  api.level  api.time (0..1 of the day)  api.reputation / api.addRep(n)
+api.banner("Big", "small")         api.toast("text")    api.ui("text overlay")
+api.spawn("customerTypeId", n)     api.burst(n)        api.hazard("hazardId")
+api.demand(mult, sec)  api.prices(mult, sec)  api.patience(mult, sec)
+api.machineSpeed("machineId", mult, sec)
+api.customers  // [{type, patience, items, rush()}]
+api.machines   // [{id, name, state}]
+api.getVar(k) / api.setVar(k, v)   api.sound("bell")   api.random()`;
+const EXAMPLE = `// Happy hour: at the middle of every day, prices go up 30% for 20 seconds.
+api.on("start", () => api.setVar("hh", 0));
+api.onTick(() => {
+  if (api.time > 0.5 && !api.getVar("hh")) {
+    api.setVar("hh", 1);
+    api.banner("Happy hour!", "Prices +30% for 20s");
+    api.prices(1.3, 20);
+  }
+});`;
+
 /* ---------------- editor ---------------- */
 export function editor(app, P, hooks) {
   let tab = "shop";
   const k = P.kit = P.kit || {}; ["bases", "toppings"].forEach((f) => (k[f] = k[f] || {})); ["stations", "recipes", "districts"].forEach((f) => (k[f] = k[f] || [])); k.theme = k.theme || {};
   document.body.classList.add("ed");
   app.innerHTML = `<div class="ed-wrap"><div class="ed-top"><a class="ib sm" href="/arcade/studio/" title="Back">◀</a><input class="ttl" id="ttl" maxlength="60" value="${esc(P.title)}" aria-label="Game title"><span class="stat" id="stat">Saved</span><button class="ib go" id="test">▶ Test</button><button class="ib pri" id="pub">Publish</button></div>
-    <div class="tabs2" id="tabs">${[["shop", "Shop"], ["products", "Products"], ["toppings", "Toppings"], ["machines", "Machines"], ["menu", "Menu"], ["districts", "Districts"]].map(([a, n]) => `<button data-t="${a}" class="${a === tab ? "on" : ""}">${n}</button>`).join("")}</div><div class="ed-body"><div class="pane" id="pane"></div></div></div>`;
+    <div class="tabs2" id="tabs">${[["shop", "Shop"], ["products", "Products"], ["toppings", "Toppings"], ["machines", "Machines"], ["menu", "Menu"], ["districts", "Districts"], ["script", "Script"]].map(([a, n]) => `<button data-t="${a}" class="${a === tab ? "on" : ""}">${n}</button>`).join("")}</div><div class="ed-body"><div class="pane" id="pane"></div></div></div>`;
   $("#ttl").oninput = (e) => hooks.setTitle(e.target.value || "Untitled");
   $("#test").onclick = hooks.test; $("#pub").onclick = hooks.publish;
   $$("#tabs [data-t]").forEach((b) => (b.onclick = () => { tab = b.dataset.t; $$("#tabs [data-t]").forEach((x) => x.classList.toggle("on", x === b)); render(); }));
@@ -122,7 +145,14 @@ export function editor(app, P, hooks) {
         <div class="row2" style="gap:14px;margin-top:6px"><span class="fl">Loves</span>${TAGS.map((t) => `<label class="sl" style="margin:0"><input type="checkbox" data-dp="${i}:${t}" ${(d.pref || {})[t] ? "checked" : ""}> ${t}</label>`).join("")}</div>
         ${txt(`districts.${i}.twist`, d.twist, "Description", 140)}</div>`).join("") + `<button class="ib pri" id="addD">+ District</button>`;
     }
+    else if (tab === "script") {
+      h = `<div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(240px,380px)"><div class="card2"><h3>Script</h3><p class="hint">Optional JavaScript that runs inside your game. Games with a script are reviewed by staff before they go public, and scripts run in a locked-down sandbox.</p>
+        <textarea id="code" spellcheck="false" style="width:100%;min-height:380px;font:500 13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#0c0921;color:#e9e4ff;border:1px solid var(--line2);border-radius:12px;padding:12px">${esc(P.script || "")}</textarea>
+        <div class="row2" style="margin-top:10px"><button class="ib sm" id="ex">Insert example</button><span class="hint" style="margin:0;align-self:center">${(P.script || "").trim() ? "Publishing will send this game for review." : "No script: publishes instantly."}</span></div></div>
+        <div class="card2"><h3>API</h3><pre style="white-space:pre-wrap;font:500 12px/1.5 ui-monospace,monospace;color:var(--tx2);margin:0">${esc(API)}</pre></div></div>`;
+    }
     p.innerHTML = h; wire(p);
+    const code = $("#code", p); if (code) { code.oninput = () => { P.script = code.value; save(); }; $("#ex", p).onclick = () => { code.value += (code.value ? "\n" : "") + EXAMPLE; P.script = code.value; save(); render(); }; }
     const desc = $("#desc", p); if (desc) desc.oninput = (e) => { P.desc = e.target.value; save(); };
     const on = (id, fn) => { const b = $(id, p); if (b) b.onclick = () => { fn(); save(); render(); }; };
     on("#addB", () => (k.bases[nid("b")] = { name: "New product", vessel: "cup", liq: "#8a4b2a" }));

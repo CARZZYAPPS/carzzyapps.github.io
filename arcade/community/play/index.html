@@ -66,12 +66,14 @@ await LZ.ready;
 const g = id ? await C.getGame(id).catch(() => (C.BUILTIN[id] ? Object.assign({}, C.BUILTIN[id]) : null)) : null;
 const roles = await LZ.roles();
 const isStaff = () => LZ.signedIn() && !!roles[(LZ.username || "").toLowerCase()];
-if (!g || (g.status === "hidden" && !isStaff())) {
-  $("#main").innerHTML = `<div class="panel" style="padding:30px;text-align:center;margin-top:30px"><h1 style="font-size:28px">${g ? "This game was taken down" : "Game not found"}</h1><p style="color:var(--tx2)">${g ? "It was hidden after a report." : "The link may be wrong, or the game was removed."}</p><a class="btn" href="/arcade/community/">Browse community games</a></div>`;
+const isOwner = () => LZ.signedIn() && g && LZ.user && g.ownerUid === LZ.user.uid;
+if (!g || (["hidden", "pending", "rejected"].includes(g.status) && !isStaff() && !isOwner())) {
+  $("#main").innerHTML = `<div class="panel" style="padding:30px;text-align:center;margin-top:30px"><h1 style="font-size:28px">${!g ? "Game not found" : g.status === "hidden" ? "This game was taken down" : "This game is waiting for review"}</h1><p style="color:var(--tx2)">${!g ? "The link may be wrong, or the game was removed." : g.status === "hidden" ? "It was hidden after a report." : "Games with code are checked by staff before they go public. Check back soon."}</p><a class="btn" href="/arcade/community/">Browse community games</a></div>`;
 } else {
   const project = JSON.parse(g.data), eng = ENGINES[g.engine || project.engine || "studio2d"] || ENGINES.studio2d;
   document.title = g.title + " | Lazer Arcade Community";
-  $("#title").textContent = g.title; $("#by").innerHTML = `by <b>${esc(g.ownerName || "player")}</b> · ${esc(eng.name)} · ▶ <span id="plays">${fmt(g.plays)}</span> plays${g.remixOf ? ` · remix of <a href="?id=${encodeURIComponent(g.remixOf)}">this game</a>` : ""}${g.status === "hidden" ? ' · <b style="color:#ff8a9a">HIDDEN</b>' : ""}`;
+  $("#title").textContent = g.title; $("#by").innerHTML = `by <b>${esc(g.ownerName || "player")}</b> · ${esc(eng.name)} · ▶ <span id="plays">${fmt(g.plays)}</span> plays${g.remixOf ? ` · remix of <a href="?id=${encodeURIComponent(g.remixOf)}">this game</a>` : ""}${g.status !== "live" ? ` · <b style="color:#ff8a9a">${esc(String(g.status).toUpperCase())}</b>` : ""}${g.hasCode ? " · has code" : ""} · <span id="lpr"></span>`;
+  const cfg = await C.getConfig(), ratio = C.ratioFor(g, cfg); $("#lpr").textContent = ratio > 0 ? `Earns ${(ratio * 1000).toLocaleString(undefined, { maximumFractionDigits: 2 })} LP per 1,000 pts` : "No LP yet";
   $("#desc").textContent = g.desc || ""; $("#likes").textContent = fmt(g.likes); $("#remix").href = "/arcade/studio/?remix=" + encodeURIComponent(g.id); if (eng.id === "html") $("#remix").hidden = true;
   if (eng.id === "rush" || eng.id === "html") $("#stage").classList.add("rush");
   const stage = $("#stage"); let game = null, counted = false, likedNow = false;
@@ -79,13 +81,15 @@ if (!g || (g.status === "hidden" && !isStaff())) {
   const start = () => {
     audio(); stage.querySelectorAll(".cover").forEach((c) => c.remove()); if (game) game.destroy();
     if (!counted) { counted = true; C.countPlay(g.id).catch(() => {}).then(() => { $("#plays").textContent = fmt((g.plays || 0) + 1); }); }
-    game = eng.play(stage, JSON.parse(g.data), { onEnd: ended, gameId: g.id });
+    game = eng.play(stage, JSON.parse(g.data), { onEnd: ended, gameId: g.id, allowScript: !!g.hasCode && (g.status === "live" || isStaff() || isOwner()) });
   };
   async function ended(r) {
     let line = "";
-    if (LZ.signedIn()) { try { const s = await C.submitScore(g.id, r.score); line = s.improved ? "New personal best!" : "Your best: " + fmt(s.best); if (s.improved) watch(); } catch (e) { line = "Couldn't save your score right now."; } }
+    let lp = 0;
+    if (LZ.signedIn()) { try { const s = await C.submitScore(g.id, r.score); line = s.improved ? "New personal best!" : "Your best: " + fmt(s.best); if (s.improved) watch(); } catch (e) { line = "Couldn't save your score right now."; }
+      try { lp = await C.awardLP(g, r.score); } catch (e) { console.warn("lp", e); } if (lp) line += ` · +${fmt(lp)} LP`; }
     else line = '<a href="#" id="si" style="color:var(--cyan)">Sign in</a> to put your score on the board.';
-    if (r.ongoing) { LZ.toast("Score saved: " + fmt(r.score)); return; }
+    if (r.ongoing) { LZ.toast("Score saved: " + fmt(r.score) + (lp ? ` · +${fmt(lp)} LP` : "")); return; }
     const c = cover(`<div class="card"><h2>${r.won ? "You win!" : "Game over"}</h2><div class="big">${fmt(r.score)}</div><p>${line}</p><div style="display:flex;gap:8px;justify-content:center;margin-top:14px"><button class="btn sm" data-again>Play again</button><a class="btn sm ghost" href="/arcade/community/">More games</a></div></div>`);
     c.querySelector("[data-again]").onclick = start; const si = c.querySelector("#si"); if (si) si.onclick = (e) => { e.preventDefault(); LZ.openAccount("signin"); };
   }

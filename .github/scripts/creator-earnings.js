@@ -22,6 +22,12 @@ async function uidOf(name) {
 }
 
 (async () => {
+  // Staff-set rates (arcadeConfig/community) override creators.json.
+  try { const c = (await db.collection("arcadeConfig").doc("community").get()).data() || {};
+    cfg.community = Object.assign({ perPlay: 5, perLike: 20, topCreators: 3 }, cfg.community || {});
+    ["perPlay", "perLike", "topCreators"].forEach((k) => { if (typeof c[k] === "number") cfg.community[k] = c[k]; });
+    if (typeof c.topCreatorMultiplier === "number") cfg.topCreatorMultiplier = c.topCreatorMultiplier;
+    console.log("Rates", JSON.stringify(cfg.community), "x" + cfg.topCreatorMultiplier); } catch (e) { console.log("No staff config, using creators.json"); }
   const creators = [];
   for (const r of roles) if (r.role === "creator") { const uid = await uidOf(r.username); if (uid) creators.push({ uid, username: r.username }); else console.log("No account for", r.username); }
   if (!creators.length) { console.log("No creator accounts found."); return; }
@@ -69,7 +75,7 @@ async function communityEarnings(staff) {
   const cc = cfg.community || { perPlay: 5, perLike: 20, topCreators: 3 };
   const games = await db.collection("communityGames").get();
   const by = {};
-  games.forEach((d) => { const g = d.data(); if (!g.ownerUid || g.status === "hidden") return; const o = by[g.ownerUid] = by[g.ownerUid] || { username: g.ownerName, plays: 0, likes: 0, games: 0 }; o.plays += g.plays || 0; o.likes += g.likes || 0; o.games++; o.username = g.ownerName || o.username; });
+  games.forEach((d) => { const g = d.data(); if (!g.ownerUid || (g.status || "live") !== "live") return; const o = by[g.ownerUid] = by[g.ownerUid] || { username: g.ownerName, plays: 0, likes: 0, games: 0 }; o.plays += g.plays || 0; o.likes += g.likes || 0; o.games++; o.username = g.ownerName || o.username; });
   const stRef = db.collection("arcadeAdmin").doc("communityEarnings");
   const st = (await stRef.get()).data() || { owners: {} };
   const owners = st.owners || {};

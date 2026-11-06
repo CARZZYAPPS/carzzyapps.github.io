@@ -131,6 +131,8 @@ export function createGame(host, proj, opts) {
   const cv = document.createElement("canvas"); cv.className = "lzg-canvas"; cv.style.cssText = "display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated";
   host.style.position = host.style.position || "relative"; host.appendChild(cv);
   const x = cv.getContext("2d");
+  const HK = {}; const hook = (ev, ...a) => { (HK[ev] || []).forEach((f) => { try { f(...a); } catch (e) { scriptErr(e); } }); };
+  let errShown = false; function scriptErr(e) { console.warn("script", e); if (!errShown) { errShown = true; flashText("Script error: " + String(e && e.message || e).slice(0, 60), 4); } }
   const G = { li: opts.level || 0, score: 0, lives: S.lives || 3, vars: {}, ended: false, won: false, t: 0, lt: 0, timer: 0, ents: [], grid: null, pairs: new Set(), pops: [], shake: 0, msg: null, every: {}, fired: {}, startCount: {}, paused: false, id: 0 };
   const inp = { left: 0, right: 0, up: 0, down: 0, a: 0, b: 0, pa: 0, pb: 0, taps: [] }, prev = {};
   let raf = 0, last = 0, W = 0, H = 0, z = 2, camX = 0, camY = 0, vw = 0, vh = 0, dpr = 1;
@@ -148,7 +150,7 @@ export function createGame(host, proj, opts) {
     for (const e of G.ents) G.startCount[e.o] = (G.startCount[e.o] || 0) + 1;
     resize(); const p = player(); if (p) { camX = p.x - vw / 2; camY = p.y - vh / 2; } clampCam();
     flashText(L.name || "Level " + (i + 1), 1.4);
-    rules("start", {});
+    rules("start", {}); hook("start", G.li + 1);
   }
   function spawn(id, px, py, vx, vy) {
     const o = O[id]; if (!o) return null; const small = o.kind === "projectile";
@@ -165,9 +167,9 @@ export function createGame(host, proj, opts) {
     if (dy) { e.y += dy; const ys = dy > 0 ? e.y + e.h - 0.01 : e.y; for (let xx = e.x + 1; xx < e.x + e.w; xx += 6) { const s = solidAt(Math.min(xx, e.x + e.w - 1), ys); if (s && s !== "__edge") { hits.add(s); if (dy > 0) { e.y = Math.floor(ys / T) * T - e.h; e.ground = true; } else e.y = Math.floor(ys / T) * T + T; e.vy = 0; e.hitY = true; break; } } }
   }
   function update(dt) {
-    G.t += dt; G.lt += dt; const L = proj.levels[G.li];
+    G.t += dt; G.lt += dt; const L = proj.levels[G.li]; hook("tick", dt);
     if (G.timer > 0) { G.timer -= dt; if (G.timer <= 0) { G.timer = 0; if (!rules("timer", {})) lose(); } }
-    for (const k in proj.rules) { const r = proj.rules[k]; if (r.when.t === "every") { const n = Math.max(0.2, +r.when.sec || 3); G.every[k] = (G.every[k] || 0) + dt; if (G.every[k] >= n) { G.every[k] -= n; doActions(r.do, {}); } } }
+    for (const k in proj.rules) { const r = proj.rules[k]; if (r.when.t === "every") { const n = Math.max(0.2, +r.when.sec || 3); G.every[k] = (G.every[k] || 0) + dt; if (G.every[k] >= n) { G.every[k] -= n; runRule(r, {}); } } }
     const pl = player();
     for (const e of G.ents) {
       if (!e.alive) continue; e.t += dt; if (e.inv > 0) e.inv -= dt; if (e.cd > 0) e.cd -= dt;
@@ -206,12 +208,12 @@ export function createGame(host, proj, opts) {
     G.ents = G.ents.filter((e) => e.alive);
     // conditions
     for (const k in proj.rules) { const r = proj.rules[k], w = r.when;
-      if (w.t === "score" && !G.fired[k] && G.score >= (+w.n || 0)) { G.fired[k] = 1; doActions(r.do, {}); }
-      if (w.t === "count" && !G.fired[k] && G.startCount[w.a] && !G.ents.some((e) => e.o === w.a)) { G.fired[k] = 1; doActions(r.do, {}); }
-      if (w.t === "vars" && !G.fired[k] && (G.vars[w.v] || 0) >= (+w.n || 0)) { G.fired[k] = 1; doActions(r.do, {}); }
-      if (w.t === "key" && inp["p" + (w.k || "a")]) doActions(r.do, { a: player() });
+      if (w.t === "score" && !G.fired[k] && G.score >= (+w.n || 0)) { G.fired[k] = 1; runRule(r, {}); }
+      if (w.t === "count" && !G.fired[k] && G.startCount[w.a] && !G.ents.some((e) => e.o === w.a)) { G.fired[k] = 1; runRule(r, {}); }
+      if (w.t === "vars" && !G.fired[k] && (G.vars[w.v] || 0) >= (+w.n || 0)) { G.fired[k] = 1; runRule(r, {}); }
+      if (w.t === "key" && inp["p" + (w.k || "a")]) runRule(r, { a: player() });
     }
-    for (const tp of inp.taps) { let hit = null; for (const e of G.ents) if (tp.x >= e.x - 4 && tp.x <= e.x + e.w + 4 && tp.y >= e.y - 4 && tp.y <= e.y + e.h + 4) hit = e; for (const k in proj.rules) { const r = proj.rules[k]; if (r.when.t === "tap" && (r.when.a === "screen" || (hit && hit.o === r.when.a))) doActions(r.do, { a: hit, b: hit }); } }
+    for (const tp of inp.taps) { let hit = null; for (const e of G.ents) if (tp.x >= e.x - 4 && tp.x <= e.x + e.w + 4 && tp.y >= e.y - 4 && tp.y <= e.y + e.h + 4) hit = e; for (const k in proj.rules) { const r = proj.rules[k]; if (r.when.t === "tap" && (r.when.a === "screen" || (hit && hit.o === r.when.a))) runRule(r, { a: hit, b: hit }); } }
     inp.taps = []; inp.pa = inp.pb = inp.pup = inp.tapAny = 0;
     // camera
     const p2 = player(); if (p2) { const tx = p2.x + p2.w / 2 - vw / 2 + (p2.vx || 0) * 0.25, ty = p2.y - vh / 2; camX += (tx - camX) * Math.min(1, dt * 6); camY += (ty - camY) * Math.min(1, dt * 5); } clampCam();
@@ -226,11 +228,16 @@ export function createGame(host, proj, opts) {
     const b = spawn(bullet, e.x + e.w / 2 - T / 2 + dx * 8, e.y + e.h / 2 - T / 2 + dy * 8, dx * sp, dy * sp); if (b) { b.src = e.id; b.dir = Math.sign(dx) || 1; } playSound(O[bullet].sound || "shoot");
   }
   function touchEvent(a, b) {
+    if (HK.touch) hook("touch", wrapE(a), wrapE(b));
     if (a.src != null && a.src === b.id) return; if (b.src != null && b.src === a.id) return;
     for (const k in proj.rules) { const r = proj.rules[k], w = r.when; if (w.t !== "touch") continue;
-      if (a.o === w.a && b.o === w.b) doActions(r.do, { a, b }); else if (b.o === w.a && a.o === w.b) doActions(r.do, { a: b, b: a }); }
+      if (a.o === w.a && b.o === w.b) runRule(r, { a, b }); else if (b.o === w.a && a.o === w.b) runRule(r, { a: b, b: a }); }
   }
-  function rules(t, ctx) { let any = false; for (const k in proj.rules) { const r = proj.rules[k]; if (r.when.t === t) { any = true; doActions(r.do, ctx); } } return any; }
+  function rules(t, ctx) { let any = false; for (const k in proj.rules) { const r = proj.rules[k]; if (r.when.t === t && condOk(r.if)) { any = true; doActions(r.do, ctx); } } return any; }
+  function condOk(cs) { return (cs || []).every((c) => { let v = 0; const n = +c.n || 0;
+    if (c.v === "score") v = G.score; else if (c.v === "lives") v = G.lives; else if (c.v === "level") v = G.li + 1; else if (c.v === "time") v = G.lt; else if (c.v === "timer") v = G.timer; else if (c.v === "count") v = G.ents.filter((e) => e.o === c.o).length; else if (c.v === "chance") return Math.random() * 100 < n; else v = G.vars[c.v] || 0;
+    switch (c.op) { case ">": return v > n; case "<": return v < n; case "<=": return v <= n; case "==": return v == n; case "!=": return v != n; default: return v >= n; } }); }
+  function runRule(r, ctx) { if (!condOk(r.if)) return false; doActions(r.do, ctx); return true; }
   function who(w, ctx) { if (w === "player") return player(); return ctx[w || "b"] || null; }
   function doActions(list, ctx) {
     for (const a of list || []) {
@@ -261,7 +268,7 @@ export function createGame(host, proj, opts) {
   function flashText(t, sec) { G.msg = { txt: t, t: sec || 2 }; }
   function win() { if (G.ended) return; G.ended = true; G.won = true; stopMusic(); playSound("win"); finish(); }
   function lose() { if (G.ended) return; G.ended = true; G.won = false; stopMusic(); playSound("lose"); finish(); }
-  function finish() { const res = { score: G.score, won: G.won, time: G.t, level: G.li }; setTimeout(() => opts.onEnd && opts.onEnd(res), 700); }
+  function finish() { const res = { score: G.score, won: G.won, time: G.t, level: G.li }; hook("end", res); setTimeout(() => opts.onEnd && opts.onEnd(res), 700); }
 
   function draw() {
     x.setTransform(dpr, 0, 0, dpr, 0, 0); x.imageSmoothingEnabled = false;
@@ -318,6 +325,23 @@ export function createGame(host, proj, opts) {
     pad.innerHTML = h; pad.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:3";
     pad.querySelectorAll("button").forEach((b) => { b.style.pointerEvents = "auto"; const k = b.dataset.k; b.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); audio(); press(k, true); }); ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => b.addEventListener(ev, () => press(k, false))); });
     host.appendChild(pad);
+  }
+  function wrapE(e) { if (!e) return null; if (e.tile) return { id: e.o, name: O[e.o] ? O[e.o].name : e.o, tile: true, x: e.x / T, y: e.y / T, destroy() { breakTile(e); } };
+    return { id: e.o, name: e.d.name, kind: e.d.kind, get x() { return e.x / T; }, get y() { return e.y / T; }, set x(v) { e.x = v * T; }, set y(v) { e.y = v * T; }, get vx() { return e.vx; }, get vy() { return e.vy; },
+      setVel(vx, vy) { e.vx = +vx || 0; e.vy = +vy || 0; }, destroy() { e.alive = false; }, get alive() { return e.alive; } }; }
+  if (opts.script && String(opts.script).trim()) {
+    const api = {
+      on(ev, f) { (HK[ev] = HK[ev] || []).push(f); }, onTick(f) { this.on("tick", f); },
+      get score() { return G.score; }, addScore(n) { G.score = Math.max(0, G.score + (+n || 0)); }, setScore(n) { G.score = Math.max(0, +n || 0); },
+      get lives() { return G.lives; }, addLives(n) { G.lives += +n || 0; if (G.lives <= 0) { G.lives = 0; if (!rules("lives", {})) lose(); } },
+      get level() { return G.li + 1; }, nextLevel() { doActions([{ t: "next" }], {}); }, win() { win(); }, lose() { lose(); },
+      text(t, sec) { flashText(String(t), +sec || 2); }, sound(n) { playSound(n); }, shake(n) { G.shake = Math.max(G.shake, +n || 4); },
+      spawn(id, x, y, vx, vy) { const o = Object.keys(O).find((k) => k === id || O[k].name === id); if (!o) return null; return wrapE(spawn(o, (+x || 0) * T, (+y || 0) * T, vx, vy)); },
+      objects(id) { return G.ents.filter((e) => e.alive && (!id || e.o === id || e.d.name === id)).map(wrapE); }, player() { return wrapE(player()); },
+      getVar(k) { return G.vars[k] || 0; }, setVar(k, v) { G.vars[k] = v; }, key(k) { return !!inp[k]; }, random: Math.random,
+      get time() { return G.lt; }
+    };
+    try { (new Function("api", '"use strict";\n' + opts.script))(api); } catch (e) { scriptErr(e); }
   }
   const ro = new ResizeObserver(() => resize()); ro.observe(host);
   loadLevel(G.li); if (S.music && S.music !== "none" && opts.music !== false) playMusic(S.music);

@@ -33,6 +33,8 @@ async function home() {
   </main>`;
   const starts = () => {
     const box = $("#starts");
+    if (engine === "custom") { box.innerHTML = Object.keys(CUSTOM_STARTERS).map((k) => `<button class="start" data-cs="${k}"><img alt="" src="${CUSTOM_STARTERS[k].img}"><div><b>${esc(CUSTOM_STARTERS[k].name)}</b><small>${esc(CUSTOM_STARTERS[k].blurb)}</small></div></button>`).join("");
+      $$("[data-cs]", box).forEach((b) => (b.onclick = () => newProject(CUSTOM_STARTERS[b.dataset.cs].make()))); return; }
     if (engine === "rush") { import("/arcade/engines/rush/kit.js").then((K) => { box.innerHTML = Object.keys(K.STARTERS).map((k) => `<button class="start" data-rs="${k}"><img alt="" src="${K.thumb(K.STARTERS[k].make())}"><div><b>${esc(K.STARTERS[k].name)}</b><small>${esc(K.STARTERS[k].blurb)}</small></div></button>`).join("");
       $$("[data-rs]", box).forEach((b) => (b.onclick = () => newProject(K.STARTERS[b.dataset.rs].make()))); }).catch(() => { box.innerHTML = '<p class="hint">The Rush kit is still loading. Try again in a moment.</p>'; }); return; }
     box.innerHTML = Object.keys(STARTERS).map((k) => `<button class="start" data-s="${k}"><img alt="" data-k="${k}"><div><b>${esc(STARTERS[k].name)}</b><small>${esc(STARTERS[k].blurb)}</small></div></button>`).join("");
@@ -48,6 +50,21 @@ async function home() {
   };
   list(); LZ.onChange(() => list());
 }
+const CUSTOM_TEMPLATE = `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;height:100%;background:#111;color:#fff;font:700 18px system-ui;display:grid;place-items:center;touch-action:manipulation}button{font:900 28px system-ui;padding:24px 40px;border-radius:20px;border:0;background:#7c4dff;color:#fff}</style>
+</head><body>
+<div style="text-align:center"><p id="t">Tap as fast as you can for 10 seconds!</p><button id="b">TAP</button><p id="s">0</p></div>
+<script>
+// LZScore(points) saves a score to this game's leaderboard. LZEnd(points, won) also shows the end screen.
+var n=0,go=false;
+document.getElementById('b').onclick=function(){if(!go&&n===0){go=true;setTimeout(function(){go=false;document.getElementById('t').textContent='Done! '+n+' taps';LZEnd(n*10,true);},10000);}if(go){n++;document.getElementById('s').textContent=n;}};
+<\/script>
+</body></html>`;
+const CUSTOM_STARTERS = {
+  tapper: { name: "Starter: Tap game", blurb: "A tiny complete HTML game to edit. Uses LZScore / LZEnd.", img: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="#111"/><rect x="100" y="60" width="120" height="60" rx="16" fill="#7c4dff"/><text x="160" y="98" font-family="system-ui" font-weight="900" font-size="26" text-anchor="middle" fill="#fff">TAP</text></svg>'), make() { return { v: 1, engine: "custom", title: "Tap Frenzy", desc: "Tap as fast as you can.", html: CUSTOM_TEMPLATE }; } },
+  upload: { name: "Upload your own HTML", blurb: "Start empty and paste or upload a complete .html game file.", img: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="#1a1240"/><text x="160" y="104" font-family="monospace" font-weight="900" font-size="40" text-anchor="middle" fill="#22e4ff">&lt;/&gt;</text></svg>'), make() { return { v: 1, engine: "custom", title: "My HTML game", desc: "", html: "" }; } }
+};
 async function newProject(p, remixOf) { const id = C.newId(); if (remixOf) { p.remixOf = remixOf; p.title = (p.title || "Game") + " (remix)"; delete p.pubId; } await C.saveProject(id, p); location.href = "?p=" + encodeURIComponent(id); }
 
 /* ================= EDITOR ================= */
@@ -55,12 +72,13 @@ async function editor(id) {
   P = await C.loadProject(id); PID = id;
   if (!P) { app.innerHTML = `<main class="wrap st-home"><h1>Project not found</h1><p class="hint">It may have been saved in another browser. Sign in to load your cloud projects.</p><a class="btn" href="/arcade/studio/">Back to Studio</a></main>`; return; }
   ensureArr();
+  if (P.engine === "custom") { window.addEventListener("beforeunload", () => { if (dirty) flush(); }); return customEditor(); }
   if (P.engine === "rush") { const K = await import("/arcade/engines/rush/kit.js"); window.addEventListener("beforeunload", () => { if (dirty) flush(); }); return K.editor(app, P, { save: () => mark(), test: () => testPlay(), publish: () => doPublish(), back: () => (location.href = "/arcade/studio/"), setTitle: (t) => { P.title = t; mark(); } }); }
   document.body.classList.add("ed");
   app.innerHTML = `<div class="ed-wrap">
     <div class="ed-top"><a class="ib sm" href="/arcade/studio/" title="Back">◀</a><input class="ttl" id="ttl" maxlength="60" value="${esc(P.title)}" aria-label="Game title"><span class="stat" id="stat">Saved</span>
       <button class="ib sm" id="undo" title="Undo">↶</button><button class="ib sm" id="redo" title="Redo">↷</button><button class="ib go" id="test">▶ Test</button><button class="ib pri" id="pub">Publish</button></div>
-    <div class="tabs2" id="tabs">${[["level", "Level"], ["objects", "Objects"], ["rules", "Rules"], ["art", "Art"], ["sound", "Sound"], ["settings", "Settings"]].map(([k, n]) => `<button data-t="${k}" class="${k === tab ? "on" : ""}">${n}</button>`).join("")}</div>
+    <div class="tabs2" id="tabs">${[["level", "Level"], ["objects", "Objects"], ["rules", "Rules"], ["art", "Art"], ["sound", "Sound"], ["settings", "Settings"], ["script", "Script"]].map(([k, n]) => `<button data-t="${k}" class="${k === tab ? "on" : ""}">${n}</button>`).join("")}</div>
     <div class="ed-body" id="body"></div></div>`;
   $("#ttl").oninput = (e) => { P.title = e.target.value || "Untitled"; mark(); };
   $$("#tabs [data-t]").forEach((b) => (b.onclick = () => { tab = b.dataset.t; $$("#tabs [data-t]").forEach((x) => x.classList.toggle("on", x === b)); render(); }));
@@ -78,7 +96,7 @@ async function flush() { clearTimeout(saveT); dirty = false; const r = await C.s
 function edit(fn, opt) { if (!opt || !opt.noHist) snapshot(); fn(); mark(); if (!opt || !opt.noRender) render(); }
 let rq = false;
 function render() { if (rq) return; rq = true; setTimeout(() => { rq = false; renderNow(); }, 0); }
-function renderNow() { const b = $("#body"); if (!b) return; if (LVV && tab !== "level") { LVV.off(); LVV = null; } ({ level: rLevel, objects: rObjects, rules: rRules, art: rArt, sound: rSound, settings: rSettings }[tab])(b); }
+function renderNow() { const b = $("#body"); if (!b) return; if (LVV && tab !== "level") { LVV.off(); LVV = null; } ({ level: rLevel, objects: rObjects, rules: rRules, art: rArt, sound: rSound, settings: rSettings, script: rScript }[tab])(b); }
 
 /* ---------- LEVEL ---------- */
 let LVV = null, curLv = 0, brush = null, tool = "paint", zoomL = 2;
@@ -324,15 +342,65 @@ function rSettings(b) {
   $("#stm", b).onchange = (e) => edit(() => { S.timer = Math.max(0, Math.min(900, +e.target.value || 0)); }, { noRender: true });
 }
 
+/* ---------- SCRIPT (code mode) ---------- */
+const API_2D = `api.on("start", (level) => {})        // a level starts
+api.on("tick", (dt) => {})            // every frame (dt in seconds)
+api.on("touch", (a, b) => {})         // two things touch; a.name, b.name, a.destroy()
+api.on("end", (result) => {})         // game over / win
+api.score / api.addScore(n) / api.setScore(n)
+api.lives / api.addLives(n)           api.level / api.nextLevel()
+api.win() / api.lose()                api.text("Hi!", 2)  api.sound("coin")  api.shake(4)
+api.spawn("Coin", x, y, vx, vy)       // x, y in tiles; returns the new thing
+api.objects("Slime")                  // list: {x, y, vx, vy, setVel(vx,vy), destroy()}
+api.player()                          api.key("left"|"right"|"up"|"down"|"a"|"b")
+api.getVar("name") / api.setVar("name", v)   api.time   api.random()`;
+function rScript(b) {
+  b.innerHTML = `<div class="pane"><div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(240px,360px)"><div class="card2"><h3>Script</h3>
+    <p class="hint">Optional JavaScript that runs alongside your rules. Games with a script are reviewed by staff before they go public, and scripts always run in a locked-down sandbox.</p>
+    <textarea id="code" spellcheck="false" style="width:100%;min-height:360px;font:500 13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#0c0921;color:#e9e4ff;border:1px solid var(--line2);border-radius:12px;padding:12px;tab-size:2">${esc(P.script || "")}</textarea>
+    <div class="row2" style="margin-top:10px"><button class="ib sm" id="ex">Insert example</button><button class="ib sm dang" id="clr">Remove script</button><span class="hint" style="margin:0;align-self:center">${(P.script || "").trim() ? "This game will need review when you publish." : "No script: publishes instantly."}</span></div></div>
+    <div class="card2"><h3>API</h3><pre style="white-space:pre-wrap;font:500 12px/1.5 ui-monospace,Menlo,monospace;color:var(--tx2);margin:0">${esc(API_2D)}</pre></div></div></div>`;
+  const ta = $("#code", b); ta.oninput = () => { P.script = ta.value; mark(); };
+  ta.onkeydown = (e) => { if (e.key === "Tab") { e.preventDefault(); const s0 = ta.selectionStart; ta.setRangeText("  ", s0, ta.selectionEnd, "end"); P.script = ta.value; mark(); } };
+  $("#ex", b).onclick = () => { const it = Object.values(P.objects).find((o) => o.kind === "item"); const ex = `// Every 10 seconds, a bonus ${it ? it.name : "Coin"} appears near the player.\napi.on("start", () => api.text("Bonus every 10s!", 2));\nlet t = 0;\napi.on("tick", (dt) => {\n  t += dt;\n  if (t > 10) { t = 0; const p = api.player(); if (p) api.spawn("${it ? it.name : "Coin"}", p.x + 3, p.y - 2); }\n});\n`; ta.value = (ta.value ? ta.value + "\n" : "") + ex; P.script = ta.value; mark(); render(); };
+  $("#clr", b).onclick = () => { if (!confirm("Remove the script?")) return; edit(() => { P.script = ""; }); };
+}
+function customValidate(p) { const e = []; if (!p.html || p.html.length < 40) e.push("Paste or upload your game's HTML."); if (p.html && p.html.length > 450000) e.push("The HTML is too big (max about 450 KB). Inline fewer images."); if (p.html && !/LZScore|LZEnd/.test(p.html)) e.push("Call LZScore(points) or LZEnd(points, won) somewhere so scores reach the leaderboard."); return e; }
+function customEditor() {
+  document.body.classList.add("ed");
+  app.innerHTML = `<div class="ed-wrap"><div class="ed-top"><a class="ib sm" href="/arcade/studio/" title="Back">◀</a><input class="ttl" id="ttl" maxlength="60" value="${esc(P.title)}" aria-label="Game title"><span class="stat" id="stat">Saved</span><button class="ib go" id="test">▶ Test</button><button class="ib pri" id="pub">Publish</button></div>
+    <div class="ed-body"><div class="pane"><div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(240px,360px)"><div class="card2"><h3>Your game's HTML</h3>
+      <p class="hint">A complete, single-file HTML game. Inline your scripts, styles and images (data URLs). It runs in a sandbox with no access to storage or the player's account, and staff review it before it goes public.</p>
+      <div class="row2" style="margin-bottom:8px"><label class="ib sm" style="cursor:pointer">Upload .html<input type="file" id="file" accept=".html,.htm,text/html" hidden></label><span class="hint" id="size" style="margin:0;align-self:center"></span></div>
+      <textarea id="code" spellcheck="false" style="width:100%;min-height:420px;font:500 12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;background:#0c0921;color:#e9e4ff;border:1px solid var(--line2);border-radius:12px;padding:12px">${esc(P.html || "")}</textarea></div>
+      <div class="card2"><h3>Scores</h3><pre style="white-space:pre-wrap;font:500 12px/1.5 ui-monospace,monospace;color:var(--tx2);margin:0">LZScore(points)
+  Saves a score to your game's leaderboard
+  (call it whenever a round ends).
+
+LZEnd(points, won)
+  Same, and shows the game-over screen.
+
+Scores are capped and rate-limited.</pre>
+      <div class="fld" style="margin-top:14px"><label>Description</label><textarea id="desc" maxlength="300">${esc(P.desc || "")}</textarea></div>
+      <div class="fld"><label>Cover image (optional)</label><label class="ib sm" style="cursor:pointer;width:max-content">Choose image<input type="file" id="cover" accept="image/*" hidden></label>${P.thumb ? `<img src="${esc(P.thumb)}" alt="" style="width:100%;border-radius:10px;margin-top:8px">` : ""}</div></div></div></div></div></div>`;
+  const ta = $("#code"), size = () => { $("#size").textContent = Math.round((P.html || "").length / 1024) + " KB of 450 KB"; }; size();
+  ta.oninput = () => { P.html = ta.value; size(); mark(); };
+  $("#file").onchange = (e) => { const f = e.target.files[0]; if (!f) return; if (f.size > 460000) { toast("That file is over 450 KB."); return; } f.text().then((t) => { P.html = t; ta.value = t; size(); mark(); }); };
+  $("#cover").onchange = (e) => { const f = e.target.files[0]; if (!f) return; const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = 320; c.height = 180; const x = c.getContext("2d"); const r = Math.max(320 / im.width, 180 / im.height); x.drawImage(im, (320 - im.width * r) / 2, (180 - im.height * r) / 2, im.width * r, im.height * r); P.thumb = c.toDataURL("image/jpeg", 0.8); mark(); customEditor(); }; im.src = URL.createObjectURL(f); };
+  $("#desc").oninput = (e) => { P.desc = e.target.value; mark(); };
+  $("#ttl").oninput = (e) => { P.title = e.target.value || "Untitled"; mark(); };
+  $("#test").onclick = testPlay; $("#pub").onclick = doPublish;
+}
+
 /* ---------- dialogs, test, publish ---------- */
 function dialog(html, wire) { const d = document.createElement("div"); d.className = "dlg"; d.innerHTML = `<div class="card2">${html}</div>`; document.body.appendChild(d); const close = () => d.remove(); d.addEventListener("click", (e) => { if (e.target === d) close(); }); wire && wire(d, close); return close; }
 let GAME = null;
 function testPlay() {
   E.audio(); flush();
-  const m = document.createElement("div"); m.className = "modal2"; m.innerHTML = `<div class="mh"><b>▶ ${esc(P.title)}</b>${P.engine !== "rush" && P.levels.length > 1 ? `<select id="tl" class="ib sm">${P.levels.map((l, i) => `<option value="${i}" ${i === (curLv || 0) ? "selected" : ""}>Start at ${i + 1}. ${esc(l.name || "Level")}</option>`).join("")}</select>` : ""}<button class="ib sm" id="tr">↻ Restart</button><button class="ib sm" id="tc">✕ Close</button></div><div class="game" id="tg"></div>`;
+  const m = document.createElement("div"); m.className = "modal2"; m.innerHTML = `<div class="mh"><b>▶ ${esc(P.title)}</b>${P.levels && P.levels.length > 1 ? `<select id="tl" class="ib sm">${P.levels.map((l, i) => `<option value="${i}" ${i === (curLv || 0) ? "selected" : ""}>Start at ${i + 1}. ${esc(l.name || "Level")}</option>`).join("")}</select>` : ""}<button class="ib sm" id="tr">↻ Restart</button><button class="ib sm" id="tc">✕ Close</button></div><div class="game" id="tg"></div>`;
   document.body.appendChild(m);
   const host = $("#tg", m), eng = engineOf(P);
-  const start = (lv) => { if (GAME) GAME.destroy(); $$(".over", host).forEach((o) => o.remove()); GAME = eng.play(host, JSON.parse(JSON.stringify(P)), { level: lv || 0, onEnd: (r) => { if (r.ongoing) return; const o = document.createElement("div"); o.className = "over"; o.innerHTML = `<div class="card2"><h3>${r.won ? "You win!" : "Game over"}</h3><p class="hint">Score ${LZ.fmt(r.score)}. Test runs don't go on the leaderboard.</p><div class="row2" style="justify-content:center"><button class="ib go" data-again>Play again</button><button class="ib" data-close>Back to editing</button></div></div>`; host.appendChild(o); $("[data-again]", o).onclick = () => start(lv); $("[data-close]", o).onclick = close; } }); window.__GAME = GAME; };
+  const start = (lv) => { if (GAME) GAME.destroy(); $$(".over", host).forEach((o) => o.remove()); GAME = eng.play(host, JSON.parse(JSON.stringify(P)), { allowScript: true, level: lv || 0, onEnd: (r) => { if (r.ongoing) return; const o = document.createElement("div"); o.className = "over"; o.innerHTML = `<div class="card2"><h3>${r.won ? "You win!" : "Game over"}</h3><p class="hint">Score ${LZ.fmt(r.score)}. Test runs don't go on the leaderboard.</p><div class="row2" style="justify-content:center"><button class="ib go" data-again>Play again</button><button class="ib" data-close>Back to editing</button></div></div>`; host.appendChild(o); $("[data-again]", o).onclick = () => start(lv); $("[data-close]", o).onclick = close; } }); window.__GAME = GAME; };
   const close = () => { if (GAME) GAME.destroy(); GAME = null; E.stopMusic(); m.remove(); };
   $("#tr", m).onclick = () => start($("#tl", m) ? +$("#tl", m).value : 0); $("#tc", m).onclick = close; const tl = $("#tl", m); if (tl) tl.onchange = () => start(+tl.value);
   const esc2 = (e) => { if (e.key === "Escape") { close(); window.removeEventListener("keydown", esc2); } }; window.addEventListener("keydown", esc2);
@@ -340,7 +408,7 @@ function testPlay() {
 }
 async function doPublish() {
   await flush();
-  const errs = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).validate(P) : E.validate(P);
+  const errs = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).validate(P) : P.engine === "custom" ? customValidate(P) : E.validate(P);
   if (errs.length) { dialog(`<h3>Almost there</h3><p class="hint">Fix these before publishing:</p><ul>${errs.map((e) => `<li>${esc(e)}</li>`).join("")}</ul><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>OK</button></div>`, (d, c) => ($("[data-x]", d).onclick = c)); return; }
   if (!LZ.signedIn()) { dialog(`<h3>Sign in to publish</h3><p class="hint">Your game goes up under your Carzzy Apps username, with its own leaderboard. You earn creator LP when people play it.</p><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>Not now</button><button class="ib pri" data-s>Sign in</button></div>`, (d, c) => { $("[data-x]", d).onclick = c; $("[data-s]", d).onclick = () => { c(); LZ.openAccount("signin"); }; }); return; }
   const close = dialog(`<h3>${P.pubId ? "Update your published game" : "Publish to the Community"}</h3><p class="hint">${P.pubId ? "Players get the new version right away. Scores and likes stay." : "Anyone can play it, like it and remix it. You can update it any time."}</p>
@@ -351,9 +419,11 @@ async function doPublish() {
     $("[data-go]", d).onclick = async (ev) => {
       const btn = ev.target; btn.disabled = true; btn.textContent = "Publishing…"; P.title = $("#pt", d).value.trim() || "Untitled"; P.desc = $("#pdsc", d).value.trim();
       try {
-        const thumb = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).thumb(P) : E.renderLevel(P, 0, 320, 180, { focusPlayer: true }).toDataURL("image/jpeg", 0.8);
-        const id = await C.publish(P, thumb, P.pubId); P.pubId = id; await flush(); c();
-        dialog(`<h3>🎉 It's live!</h3><p class="hint">Share the link. Every play and like earns you creator LP.</p><div class="fld"><input readonly value="${location.origin}/arcade/community/play/?id=${encodeURIComponent(id)}" onclick="this.select()"></div><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>Keep editing</button><a class="ib pri" href="/arcade/community/play/?id=${encodeURIComponent(id)}">Play it</a></div>`, (d2, c2) => ($("[data-x]", d2).onclick = c2));
+        const thumb = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).thumb(P) : P.engine === "custom" ? (P.thumb || CUSTOM_STARTERS.upload.img) : E.renderLevel(P, 0, 320, 180, { focusPlayer: true }).toDataURL("image/jpeg", 0.8);
+        const res = await C.publish(P, thumb, P.pubId), id = res.id; P.pubId = id; await flush(); c();
+        const link = `/arcade/community/play/?id=${encodeURIComponent(id)}`;
+        if (res.status === "pending") dialog(`<h3>Sent for review</h3><p class="hint">Games with code are checked by Lazer Arcade staff before they go public. It shows up in the Community once it's approved. You can keep editing; each update goes back into review.</p><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>Keep editing</button><a class="ib pri" href="${link}">Preview</a></div>`, (d2, c2) => ($("[data-x]", d2).onclick = c2));
+        else dialog(`<h3>🎉 It's live!</h3><p class="hint">Share the link. Every play and like earns you creator LP.</p><div class="fld"><input readonly value="${location.origin}${link}" onclick="this.select()"></div><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>Keep editing</button><a class="ib pri" href="${link}">Play it</a></div>`, (d2, c2) => ($("[data-x]", d2).onclick = c2));
         if ($("#ttl")) $("#ttl").value = P.title;
       } catch (e) { console.warn(e); $(".err", d).textContent = e.code === "size" ? "This game is too big to publish. Try fewer or smaller levels." : "Couldn't publish right now (" + (e.code || "error") + "). Try again in a moment."; btn.disabled = false; btn.textContent = "Publish"; }
     };

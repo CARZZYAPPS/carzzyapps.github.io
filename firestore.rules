@@ -309,7 +309,7 @@ service cloud.firestore {
           && data.lp is int
           && data.lp >= 0
           && data.games is map
-          && data.games.size() <= 60
+          && data.games.size() <= 300
           && data.updatedAt == request.time;
       }
       allow read: if true;
@@ -357,12 +357,15 @@ service cloud.firestore {
     // ===================== Community games (Lazer Studio) =====================
     function cgValid(d) {
       return d.keys().hasAll(['ownerUid', 'ownerName', 'title', 'data', 'engine', 'status', 'plays', 'likes', 'createdAt', 'updatedAt'])
-        && d.keys().hasOnly(['ownerUid', 'ownerName', 'title', 'desc', 'data', 'thumb', 'engine', 'status', 'plays', 'likes', 'remixOf', 'featured', 'createdAt', 'updatedAt'])
+        && d.keys().hasOnly(['ownerUid', 'ownerName', 'title', 'desc', 'data', 'thumb', 'engine', 'status', 'plays', 'likes', 'remixOf', 'featured', 'hasCode', 'lpRatio', 'createdAt', 'updatedAt'])
         && d.title is string && d.title.size() >= 1 && d.title.size() <= 60
         && (!('desc' in d) || (d.desc is string && d.desc.size() <= 300))
         && d.data is string && d.data.size() <= 500000
         && (!('thumb' in d) || (d.thumb is string && d.thumb.size() <= 120000))
-        && d.engine in ['studio2d', 'rush', 'crane']
+        && d.engine in ['studio2d', 'rush', 'crane', 'custom', 'html']
+        && (!('hasCode' in d) || d.hasCode is bool)
+        && (d.engine != 'custom' || d.hasCode == true)
+        && (!('lpRatio' in d) || (d.lpRatio is number && d.lpRatio >= 0 && d.lpRatio <= 1))
         && (!('remixOf' in d) || (d.remixOf is string && d.remixOf.size() <= 40))
         && d.plays is int && d.likes is int;
     }
@@ -372,14 +375,22 @@ service cloud.firestore {
         && cgValid(request.resource.data)
         && request.resource.data.ownerUid == request.auth.uid
         && ownsUsername(request.resource.data.ownerName)
-        && request.resource.data.status == 'live' && !('featured' in request.resource.data)
+        && request.resource.data.engine != 'html' && !('featured' in request.resource.data) && !('lpRatio' in request.resource.data)
+        // games with creator code wait for staff review unless staff publish them
+        && (request.resource.data.status == 'pending'
+          || (request.resource.data.status == 'live' && (request.resource.data.get('hasCode', false) == false || isArcadeAdmin())))
         && request.resource.data.plays == 0 && request.resource.data.likes == 0
         && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
       // owner edits: content only; counters, owner and moderation status stay as they are
       allow update: if arcadeAccount() && resource.data.ownerUid == request.auth.uid
         && cgValid(request.resource.data)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'desc', 'data', 'thumb', 'engine', 'ownerName', 'updatedAt'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'desc', 'data', 'thumb', 'engine', 'ownerName', 'hasCode', 'status', 'updatedAt'])
+        && request.resource.data.engine != 'html'
         && ownsUsername(request.resource.data.ownerName)
+        && (request.resource.data.status == resource.data.status
+          || request.resource.data.status == 'pending'
+          || (request.resource.data.status == 'live' && resource.data.status in ['pending', 'rejected'] && (request.resource.data.get('hasCode', false) == false || isArcadeAdmin())))
+        && (request.resource.data.status != 'live' || request.resource.data.get('hasCode', false) == false || isArcadeAdmin() || resource.data.status == 'live' && resource.data.get('hasCode', false) == true && request.resource.data.data == resource.data.data)
         && request.resource.data.updatedAt == request.time;
       // anyone adds exactly one play
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plays'])
@@ -393,8 +404,9 @@ service cloud.firestore {
               && exists(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))
               && !existsAfter(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))));
       // staff hide / unhide
-      allow update: if isArcadeAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && request.resource.data.status in ['live', 'hidden'];
+      allow update: if isArcadeAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lpRatio', 'featured'])
+        && request.resource.data.status in ['live', 'hidden', 'pending', 'rejected']
+        && (!('lpRatio' in request.resource.data) || (request.resource.data.lpRatio is number && request.resource.data.lpRatio >= 0 && request.resource.data.lpRatio <= 1));
       allow delete: if arcadeAccount() && (resource.data.ownerUid == request.auth.uid || isArcadeAdmin());
     }
     match /communityLikes/{gameId}/users/{uid} {
@@ -423,8 +435,16 @@ service cloud.firestore {
         && request.resource.data.text is string && request.resource.data.text.size() <= 1000
         && (request.resource.data.uid == '' || (request.auth != null && request.resource.data.uid == request.auth.uid))
         && request.resource.data.createdAt == request.time;
-      allow read: if isArcadeAdmin();
-      allow update, delete: if false;
+      allow read, delete: if isArcadeAdmin();
+      allow update: if false;
+    }
+    // community settings (LP ratios, creator rates): staff only
+    match /arcadeConfig/{id} {
+      allow read: if true;
+      allow write: if isArcadeAdmin()
+        && request.resource.data.keys().hasOnly(['lpRatio', 'dailyCap', 'perPlay', 'perLike', 'topCreators', 'topCreatorMultiplier', 'updatedAt', 'by'])
+        && (!('lpRatio' in request.resource.data) || (request.resource.data.lpRatio is number && request.resource.data.lpRatio >= 0 && request.resource.data.lpRatio <= 1))
+        && (!('dailyCap' in request.resource.data) || (request.resource.data.dailyCap is number && request.resource.data.dailyCap >= 0 && request.resource.data.dailyCap <= 20000));
     }
     // creator LP board, written only by the backend job
     match /communityCreators/{uid} {

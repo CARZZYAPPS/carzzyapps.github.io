@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Community staff | Lazer Arcade</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07051a">
+<link rel="icon" href="/arcade/img/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="/arcade/arcade.css">
+<style>
+.top{padding:40px 0 6px}.top h1{font-size:clamp(28px,5vw,48px);font-weight:900}
+.tabs{margin:20px 0}
+.card{padding:18px;margin-bottom:14px}
+.card h3{font-size:18px;margin:0 0 4px}
+.meta{color:var(--tx2);font-size:13.5px;font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.row input,.row select{background:var(--card);border:1px solid var(--line2);color:#fff;border-radius:10px;padding:8px 10px;font:700 14px var(--body);width:110px}
+.code{white-space:pre-wrap;max-height:240px;overflow:auto;background:#0c0921;border:1px solid var(--line2);border-radius:12px;padding:10px;font:500 12px/1.45 ui-monospace,Menlo,monospace;color:#d9d2ff;margin-top:10px}
+.g{display:grid;grid-template-columns:96px 1fr;gap:14px;align-items:start}
+.g img{width:96px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:#000}
+.btn.bad{background:linear-gradient(90deg,#ff4d6d,#ff7a59)}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.kv label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.kv input{background:var(--card);border:1px solid var(--line2);color:#fff;border-radius:10px;padding:9px 10px;font:700 15px var(--body)}
+.hint{color:var(--tx2);font-size:13.5px;margin:6px 0 0}
+table{width:100%;border-collapse:collapse}td,th{padding:8px 6px;border-top:1px solid rgba(124,77,255,.15);text-align:left;font-size:14px}th{color:var(--mut);font-size:11px;letter-spacing:.1em}
+td input{background:var(--card);border:1px solid var(--line2);color:#fff;border-radius:8px;padding:6px 8px;width:90px;font:700 13px var(--body)}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <a class="logo" href="/arcade/" data-logo><b>LAZER <span>ARCADE</span></b></a>
+  <div class="links"><a href="/arcade/community/">Community</a><a href="/arcade/studio/">Studio</a><a href="/arcade/community/staff/" class="on">Staff</a></div>
+  <div class="sp"></div>
+  <button class="acct out" id="acct" type="button">Sign in</button>
+</div></nav>
+<main class="wrap" id="main">
+  <header class="top"><span class="kick">Staff</span><h1>Community control</h1><p class="hint">Review games with code, handle reports, and set how many Lazer Points community games pay.</p></header>
+  <div id="body"><div class="empty">Checking your access…</div></div>
+</main>
+<script type="module">
+import LZ, { mountShell } from "/arcade/shell.js";
+import * as C from "/arcade/community/cloud.js";
+mountShell();
+const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s)), esc = LZ.esc, fmt = LZ.fmt;
+let tab = "queue";
+async function boot() {
+  await LZ.ready;
+  if (!(await C.isStaff())) { $("#body").innerHTML = `<div class="panel card"><h3>Staff only</h3><p class="hint">${LZ.signedIn() ? "Your account isn't on the staff list." : "Sign in with a staff account."}</p>${LZ.signedIn() ? "" : '<div class="row"><button class="btn sm" id="si">Sign in</button></div>'}</div>`; const si = $("#si"); if (si) si.onclick = () => LZ.openAccount("signin"); return; }
+  $("#body").innerHTML = `<div class="chips tabs" id="tabs">${[["queue", "Review queue"], ["reports", "Reports"], ["lp", "Lazer Points"], ["games", "All games"]].map(([k, n]) => `<button class="chip ${k === tab ? "on" : ""}" data-t="${k}">${n}</button>`).join("")}</div><div id="pane"></div>`;
+  $$("#tabs [data-t]").forEach((b) => (b.onclick = () => { tab = b.dataset.t; $$("#tabs [data-t]").forEach((x) => x.classList.toggle("on", x === b)); render(); }));
+  render();
+}
+function codeOf(g) { try { const p = JSON.parse(g.data || "{}"); return p.engine === "custom" ? p.html || "" : p.script || ""; } catch (e) { return ""; } }
+async function render() {
+  const p = $("#pane"); p.innerHTML = '<div class="skel" style="height:120px"></div>';
+  try {
+    if (tab === "queue") {
+      const list = await C.listByStatus("pending"), rej = await C.listByStatus("rejected");
+      p.innerHTML = (list.length ? list.map((g) => gameCard(g, true)).join("") : '<div class="empty">Nothing waiting for review.</div>') + (rej.length ? `<h3 style="margin:26px 0 10px">Rejected</h3>` + rej.map((g) => gameCard(g, true)).join("") : "");
+    } else if (tab === "reports") {
+      const reps = await C.listReports(80), ids = [...new Set(reps.map((r) => r.gameId))], games = {};
+      await Promise.all(ids.map(async (id) => { try { games[id] = await C.getGame(id); } catch (e) {} }));
+      p.innerHTML = reps.length ? reps.map((r) => { const g = games[r.gameId]; return `<div class="panel card"><h3>${g ? esc(g.title) : "(deleted game)"} <span class="tag">${esc(r.reason)}</span></h3><div class="meta">${g ? "by " + esc(g.ownerName) + " · status " + esc(g.status) + " · " : ""}${r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleString() : ""}${r.uid ? " · from a signed-in player" : " · from a guest"}</div>${r.text ? `<p class="hint">"${esc(r.text)}"</p>` : ""}
+        <div class="row">${g ? `<a class="btn sm ghost" href="/arcade/community/play/?id=${encodeURIComponent(g.id)}" target="_blank">Open game</a>${g.status === "hidden" ? `<button class="btn sm" data-st="live" data-id="${esc(g.id)}">Unhide game</button>` : `<button class="btn sm bad" data-st="hidden" data-id="${esc(g.id)}">Hide game</button>`}` : ""}<button class="btn sm ghost" data-dis="${esc(r.id)}">Dismiss report</button></div></div>`; }).join("") : '<div class="empty">No open reports.</div>';
+    } else if (tab === "lp") {
+      const c = await C.getConfig(true), games = await C.listAll(200);
+      p.innerHTML = `<div class="panel card"><h3>Player Lazer Points</h3><p class="hint">Players earn <b>score × ratio</b> LP when they finish a round of a community game, up to the daily cap per game. A ratio of 0.002 pays 2 LP per 1,000 points. Leave it at 0 to pay nothing by default.</p>
+        <div class="kv" style="margin-top:12px"><label>Default ratio<input id="lpRatio" type="number" step="0.0001" min="0" max="1" value="${c.lpRatio}"></label><label>Daily cap per game, per player (LP)<input id="dailyCap" type="number" min="0" max="20000" value="${c.dailyCap}"></label></div>
+        <h3 style="margin-top:22px">Creator earnings</h3><p class="hint">Paid hourly by the backend to whoever made the game. The top creators get the multiplier.</p>
+        <div class="kv" style="margin-top:12px"><label>LP per play<input id="perPlay" type="number" min="0" value="${c.perPlay}"></label><label>LP per like<input id="perLike" type="number" min="0" value="${c.perLike}"></label><label>Top creators (how many)<input id="topCreators" type="number" min="0" value="${c.topCreators}"></label><label>Top-creator multiplier<input id="topCreatorMultiplier" type="number" step="0.1" min="1" value="${c.topCreatorMultiplier}"></label></div>
+        <div class="row"><button class="btn" id="saveCfg">Save settings</button><span class="hint" id="cfgMsg"></span></div></div>
+        <div class="panel card"><h3>Per-game ratios</h3><p class="hint">Override the default for one game. Clear the box to use the default.</p>
+        <table><thead><tr><th>GAME</th><th>BY</th><th>PLAYS</th><th>RATIO</th><th></th></tr></thead><tbody>${games.map((g) => `<tr><td><a href="/arcade/community/play/?id=${encodeURIComponent(g.id)}" target="_blank">${esc(g.title)}</a></td><td>${esc(g.ownerName || "")}</td><td>${fmt(g.plays)}</td><td><input type="number" step="0.0001" min="0" max="1" data-r="${esc(g.id)}" value="${typeof g.lpRatio === "number" ? g.lpRatio : ""}" placeholder="${c.lpRatio}"></td><td><button class="btn sm ghost" data-sr="${esc(g.id)}">Save</button></td></tr>`).join("")}</tbody></table></div>`;
+      $("#saveCfg").onclick = async () => { const o = {}; ["lpRatio", "dailyCap", "perPlay", "perLike", "topCreators", "topCreatorMultiplier"].forEach((k) => (o[k] = $("#" + k).value)); try { await C.saveConfig(o); $("#cfgMsg").textContent = "Saved."; } catch (e) { $("#cfgMsg").textContent = "Couldn't save (" + (e.code || "error") + ")."; } };
+      $$("[data-sr]").forEach((b) => (b.onclick = async () => { const v = $(`[data-r="${b.dataset.sr}"]`).value; try { await C.setGameLp(b.dataset.sr, v === "" ? null : v); LZ.toast("Saved"); } catch (e) { LZ.toast("Couldn't save (" + (e.code || "error") + ")"); } }));
+    } else {
+      const games = (await C.listAll(200)).concat(await C.listByStatus("hidden")), seen = new Set();
+      p.innerHTML = games.filter((g) => !seen.has(g.id) && seen.add(g.id)).map((g) => gameCard(g, false)).join("") || '<div class="empty">No games yet.</div>';
+    }
+  } catch (e) { console.warn(e); p.innerHTML = `<div class="empty">Couldn't load (${esc(e.code || e.message)}).</div>`; }
+  $$("[data-st]", p).forEach((b) => (b.onclick = async () => { b.disabled = true; try { await C.setStatus(b.dataset.id, b.dataset.st); LZ.toast("Done"); render(); } catch (e) { LZ.toast("Couldn't change it (" + (e.code || "error") + ")"); b.disabled = false; } }));
+  $$("[data-dis]", p).forEach((b) => (b.onclick = async () => { try { await C.dismissReport(b.dataset.dis); render(); } catch (e) { LZ.toast("Couldn't dismiss (" + (e.code || "error") + ")"); } }));
+  $$("[data-code]", p).forEach((b) => (b.onclick = () => { const el = $("#code-" + b.dataset.code); el.hidden = !el.hidden; }));
+}
+function gameCard(g, review) {
+  const code = codeOf(g), eng = { studio2d: "Studio 2D", rush: "Rush Tycoon", custom: "Custom HTML", html: "Hosted" }[g.engine] || g.engine;
+  return `<div class="panel card g"><img alt="" src="${esc(g.thumb || "")}"><div><h3>${esc(g.title)} <span class="tag">${esc(g.status)}</span></h3><div class="meta">by ${esc(g.ownerName || "player")} · ${eng}${g.hasCode ? " · has code (" + fmt(code.length) + " chars)" : ""} · ▶ ${fmt(g.plays)} · ♥ ${fmt(g.likes)}</div>${g.desc ? `<p class="hint">${esc(g.desc)}</p>` : ""}
+    <div class="row"><a class="btn sm ghost" href="/arcade/community/play/?id=${encodeURIComponent(g.id)}" target="_blank">Play / preview</a>${code ? `<button class="btn sm ghost" data-code="${esc(g.id)}">Show code</button>` : ""}
+    ${review ? `<button class="btn sm" data-st="live" data-id="${esc(g.id)}">Approve</button>${g.status !== "rejected" ? `<button class="btn sm bad" data-st="rejected" data-id="${esc(g.id)}">Reject</button>` : ""}` : g.status === "hidden" ? `<button class="btn sm" data-st="live" data-id="${esc(g.id)}">Unhide</button>` : g.status === "live" ? `<button class="btn sm bad" data-st="hidden" data-id="${esc(g.id)}">Hide</button>` : ""}</div>
+    ${code ? `<div class="code" id="code-${esc(g.id)}" hidden>${esc(code.slice(0, 60000))}${code.length > 60000 ? "\n…" : ""}</div>` : ""}</div></div>`;
+}
+LZ.onChange(() => boot());
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Lazer Studio game</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none}#host{position:fixed;inset:0}</style></head>
+<body><div id="host"></div>
+<script>
+// Sandboxed runner for Studio 2D games that include creator scripts. No access to the arcade page or storage.
+var booted=false;
+window.addEventListener('message',function(e){
+  var d=e.data;if(booted||!d||d.type!=='s2d-boot'||e.source!==parent)return;booted=true;
+  var url=URL.createObjectURL(new Blob([d.engine],{type:'text/javascript'}));
+  import(url).then(function(E){
+    E.createGame(document.getElementById('host'),d.project,{level:d.level||0,script:d.script||'',touch:d.touch,onEnd:function(r){parent.postMessage({type:'s2d-end',score:Math.max(0,Math.round(+r.score||0)),won:!!r.won},'*');}});
+  }).catch(function(err){document.body.insertAdjacentHTML('beforeend','<p style="color:#fff;font:700 16px system-ui;padding:20px">Couldn\'t start this game.</p>');console.error(err);});
+});
+parent.postMessage({type:'s2d-ready'},'*');
+</script></body></html>
