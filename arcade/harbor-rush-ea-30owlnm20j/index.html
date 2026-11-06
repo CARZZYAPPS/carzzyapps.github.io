@@ -452,6 +452,8 @@ function updEndless(dt){
 function update(dt){
   if(!LV||LV.phase!=='play')return;
   LV.t+=dt;if(LV.endT>0){LV.endT-=dt;if(LV.endT<=0){endLevel(true);return;}}
+  // every truck has been dealt with (loaded or left): wrap up, even if the last one drove off empty
+  if(!LV.endless&&!(LV.endT>0)&&LV.spawned>=LV.p.n&&LV.served+LV.missed>=LV.p.n&&!LV.trucks.some(function(t){return t.state!=='out';}))LV.endT=.9;
   updCrane(dt);updTrucks(dt);updRules(dt);updEndless(dt);
 }
 
