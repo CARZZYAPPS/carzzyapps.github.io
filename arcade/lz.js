@@ -351,12 +351,36 @@ async function settleEarly() {
   toast(`Early-access bonus: +${fmt(t)} Lazer Points`);
   return t;
 }
+// Moves points queued on this browser (signed out, or the leaderboard was unreachable) into the account.
+// Sent in chunks under the 20,000-per-write limit so big backlogs aren't cut off.
+let syncing = null;
 async function syncPending() {
-  const p = pendingAll(); if (!Object.keys(p).length || !signedIn()) return 0;
-  let total = 0; Object.values(p).forEach((e) => (total += e.lp || 0));
-  await addToAccount(p);
-  setPending({});
-  return total;
+  if (syncing) return syncing;
+  syncing = (async () => {
+    const p = pendingAll(); if (!Object.keys(p).length || !signedIn()) return 0;
+    let moved = 0, first = true;
+    while (Object.keys(p).length) {
+      let budget = 19000; const batch = {};
+      for (const k of Object.keys(p)) {
+        const e = p[k], take = Math.min(budget, Math.max(0, Math.round(e.lp || 0)));
+        batch[k] = { lp: take, best: e.best || 0, plays: e.plays || 0, last: e.last || 0 };
+        if (e.eaLp) batch[k].eaLp = e.eaLp;
+        budget -= take;
+        if (budget <= 0) break;
+      }
+      await addToAccount(batch);
+      Object.keys(batch).forEach((k) => {
+        const e = p[k], b = batch[k];
+        e.lp = Math.max(0, (e.lp || 0) - b.lp); e.plays = 0; delete e.eaLp;
+        moved += b.lp;
+        if (!e.lp) delete p[k];
+      });
+      setPending(p);
+      first = false;
+    }
+    return moved;
+  })();
+  try { return await syncing; } finally { syncing = null; }
 }
 
 let askedThisPage = false;
