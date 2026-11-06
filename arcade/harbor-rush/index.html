@@ -35,7 +35,7 @@ a.btn{display:inline-block;margin-top:14px;background:var(--hz);color:var(--ink)
 var L=new Date('2026-11-12T12:00:00-05:00').getTime();
 function t(){var d=Math.max(0,L-Date.now()),u=[['DAYS',864e5],['HRS',36e5],['MIN',6e4],['SEC',1e3]],h='';
   u.forEach(function(x){var n=Math.floor(d/x[1]);d-=n*x[1];h+='<div><b>'+n+'</b><small>'+x[0]+'</small></div>';});
-  document.getElementById('cd').innerHTML=h;if(L<=Date.now())location.reload();}
+  document.getElementById('cd').innerHTML=h;}
 t();setInterval(t,1000);
 </script>
 </body>
