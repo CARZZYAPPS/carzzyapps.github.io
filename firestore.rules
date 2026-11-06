@@ -336,6 +336,93 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ===================== Community games (Lazer Studio) =====================
+    function cgValid(d) {
+      return d.keys().hasAll(['ownerUid', 'ownerName', 'title', 'data', 'engine', 'status', 'plays', 'likes', 'createdAt', 'updatedAt'])
+        && d.keys().hasOnly(['ownerUid', 'ownerName', 'title', 'desc', 'data', 'thumb', 'engine', 'status', 'plays', 'likes', 'remixOf', 'createdAt', 'updatedAt'])
+        && d.title is string && d.title.size() >= 1 && d.title.size() <= 60
+        && (!('desc' in d) || (d.desc is string && d.desc.size() <= 300))
+        && d.data is string && d.data.size() <= 500000
+        && (!('thumb' in d) || (d.thumb is string && d.thumb.size() <= 120000))
+        && d.engine in ['studio2d', 'rush', 'crane']
+        && (!('remixOf' in d) || (d.remixOf is string && d.remixOf.size() <= 40))
+        && d.plays is int && d.likes is int;
+    }
+    match /communityGames/{gameId} {
+      allow read: if true;
+      allow create: if arcadeAccount() && gameId.matches('^[a-z0-9]{6,40}$')
+        && cgValid(request.resource.data)
+        && request.resource.data.ownerUid == request.auth.uid
+        && ownsUsername(request.resource.data.ownerName)
+        && request.resource.data.status == 'live'
+        && request.resource.data.plays == 0 && request.resource.data.likes == 0
+        && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      // owner edits: content only; counters, owner and moderation status stay as they are
+      allow update: if arcadeAccount() && resource.data.ownerUid == request.auth.uid
+        && cgValid(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'desc', 'data', 'thumb', 'engine', 'ownerName', 'updatedAt'])
+        && ownsUsername(request.resource.data.ownerName)
+        && request.resource.data.updatedAt == request.time;
+      // anyone adds exactly one play
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plays'])
+        && request.resource.data.plays == resource.data.plays + 1;
+      // likes move together with the player's like document (same batch)
+      allow update: if arcadeAccount() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+        && ((request.resource.data.likes == resource.data.likes + 1
+              && !exists(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))
+              && existsAfter(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid)))
+          || (request.resource.data.likes == resource.data.likes - 1
+              && exists(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))
+              && !existsAfter(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))));
+      // staff hide / unhide
+      allow update: if isArcadeAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['live', 'hidden'];
+      allow delete: if arcadeAccount() && (resource.data.ownerUid == request.auth.uid || isArcadeAdmin());
+    }
+    match /communityLikes/{gameId}/users/{uid} {
+      allow read: if true;
+      allow create: if arcadeAccount() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time
+        && getAfter(/databases/$(database)/documents/communityGames/$(gameId)).data.likes == get(/databases/$(database)/documents/communityGames/$(gameId)).data.likes + 1;
+      allow delete: if arcadeAccount() && request.auth.uid == uid
+        && getAfter(/databases/$(database)/documents/communityGames/$(gameId)).data.likes == get(/databases/$(database)/documents/communityGames/$(gameId)).data.likes - 1;
+    }
+    // per-game boards: each player writes only their own row
+    match /communityScores/{gameId}/rows/{uid} {
+      allow read: if true;
+      allow create, update: if arcadeAccount() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['username', 'best', 'updatedAt'])
+        && ownsUsername(request.resource.data.username)
+        && request.resource.data.best is int && request.resource.data.best >= 0 && request.resource.data.best <= 1000000000
+        && (resource == null || request.resource.data.best >= resource.data.best)
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isArcadeAdmin();
+    }
+    match /communityReports/{reportId} {
+      allow create: if request.resource.data.keys().hasOnly(['gameId', 'reason', 'text', 'uid', 'createdAt'])
+        && request.resource.data.gameId is string && request.resource.data.gameId.size() <= 40
+        && request.resource.data.reason in ['inappropriate', 'copied', 'broken', 'other']
+        && request.resource.data.text is string && request.resource.data.text.size() <= 1000
+        && (request.resource.data.uid == '' || (request.auth != null && request.resource.data.uid == request.auth.uid))
+        && request.resource.data.createdAt == request.time;
+      allow read: if isArcadeAdmin();
+      allow update, delete: if false;
+    }
+    // creator LP board, written only by the backend job
+    match /communityCreators/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
+    // private Studio projects
+    match /studioProjects/{uid}/items/{pid} {
+      allow read, delete: if arcadeAccount() && request.auth.uid == uid;
+      allow create, update: if arcadeAccount() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['title', 'engine', 'data', 'at'])
+        && request.resource.data.data is string && request.resource.data.data.size() <= 900000
+        && request.resource.data.title is string && request.resource.data.title.size() <= 60
+        && request.resource.data.at is number;
+    }
+
     // Feedback tickets. Write-only for players; a GitHub Action copies them into repo Issues.
     match /arcadeTickets/{ticketId} {
       function validTicket(data) {

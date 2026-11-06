@@ -55,4 +55,46 @@ async function uidOf(name) { const s = await db.collection("usernames").doc(name
     });
     tx.set(stateRef, { others, plays, visits, seeded, at: FV.serverTimestamp() });
   });
+  await communityEarnings(creators);
 })().catch((e) => { console.error(e); process.exit(1); });
+
+// Community creators (anyone who published in Lazer Studio) earn LP from their games' plays and likes.
+// The top creators earn topCreatorMultiplier. Results also feed the public communityCreators board.
+async function communityEarnings(staff) {
+  const cc = cfg.community || { perPlay: 5, perLike: 20, topCreators: 3 };
+  const games = await db.collection("communityGames").get();
+  const by = {};
+  games.forEach((d) => { const g = d.data(); if (!g.ownerUid || g.status === "hidden") return; const o = by[g.ownerUid] = by[g.ownerUid] || { username: g.ownerName, plays: 0, likes: 0, games: 0 }; o.plays += g.plays || 0; o.likes += g.likes || 0; o.games++; o.username = g.ownerName || o.username; });
+  const stRef = db.collection("arcadeAdmin").doc("communityEarnings");
+  const st = (await stRef.get()).data() || { owners: {} };
+  const owners = st.owners || {};
+  const ranked = Object.keys(by).sort((a, b) => ((by[b].plays * cc.perPlay + by[b].likes * cc.perLike) - (by[a].plays * cc.perPlay + by[a].likes * cc.perLike)));
+  const top = new Set(ranked.slice(0, cc.topCreators || 3).concat(staff.map((c) => c.uid)));
+  for (const uid of Object.keys(by)) {
+    const o = by[uid], prev = owners[uid] || { plays: 0, likes: 0, lp: 0 };
+    const dP = Math.max(0, o.plays - prev.plays), dL = Math.max(0, o.likes - prev.likes);
+    const earn = Math.round((dP * cc.perPlay + dL * cc.perLike) * (top.has(uid) ? cfg.topCreatorMultiplier : 1));
+    const lp = (prev.lp || 0) + earn;
+    if (earn > 0) {
+      const ref = db.collection("arcadePlayers").doc(uid);
+      await db.runTransaction(async (tx) => {
+        const s = await tx.get(ref), cur = s.exists ? s.data() : { username: o.username, lp: 0, games: {}, prog: {} };
+        const gm = Object.assign({}, cur.games || {}), row = Object.assign({ lp: 0, best: 0, plays: 0, last: 0 }, gm.community || {});
+        row.lp += earn; row.last = earn; row.best = Math.max(row.best, earn); row.plays = o.plays; gm.community = row;
+        tx.set(ref, { username: cur.username || o.username, lp: (cur.lp || 0) + earn, games: gm, prog: cur.prog || {}, updatedAt: FV.serverTimestamp() });
+      });
+      console.log("Community creator", o.username, "+", earn, "LP");
+    }
+    owners[uid] = { plays: o.plays, likes: o.likes, lp };
+  }
+  // creator board: staff creators show their whole-arcade creator LP plus community LP
+  const writes = [];
+  for (const uid of Object.keys(by)) writes.push(db.collection("communityCreators").doc(uid).set({ username: by[uid].username, lp: owners[uid].lp, games: by[uid].games, plays: by[uid].plays, likes: by[uid].likes, updatedAt: FV.serverTimestamp() }));
+  for (const c of staff) {
+    const p = (await db.collection("arcadePlayers").doc(c.uid).get()).data() || {};
+    const arcadeLp = ((p.games || {}).lazerarcade || {}).lp || 0, mine = by[c.uid] || { games: 0, plays: 0, likes: 0 };
+    writes.push(db.collection("communityCreators").doc(c.uid).set({ username: c.username, lp: arcadeLp + ((owners[c.uid] || {}).lp || 0), games: mine.games + 1, plays: mine.plays, likes: mine.likes, note: "Lazer Arcade", updatedAt: FV.serverTimestamp() }));
+  }
+  await Promise.all(writes);
+  await stRef.set({ owners, at: FV.serverTimestamp() });
+}

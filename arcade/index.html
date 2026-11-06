@@ -170,12 +170,17 @@
   .grid{grid-template-columns:1fr}
   .stats{gap:18px}
 }
+.comm{display:grid;grid-template-columns:1.4fr 1fr;gap:0;overflow:hidden;text-decoration:none;border-color:rgba(34,228,255,.35);box-shadow:0 0 60px rgba(34,228,255,.12)}
+.comm .ctx{padding:28px}.comm h2{font-size:clamp(24px,3.4vw,34px);margin:8px 0}.comm p{color:var(--tx2);max-width:560px}.comm .cta2{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.comm .cart{display:grid;grid-template-columns:1fr 1fr;place-items:center;background:radial-gradient(circle at 40% 40%,rgba(34,228,255,.3),transparent 60%),radial-gradient(circle at 70% 70%,rgba(255,61,212,.25),transparent 60%),linear-gradient(135deg,#1b0f4a,#0b0726);font-size:44px;padding:20px}
+.comm .cart span{filter:drop-shadow(0 0 14px rgba(124,77,255,.8))}
+@media (max-width:760px){.comm{grid-template-columns:1fr}.comm .cart{grid-template-columns:repeat(4,1fr);font-size:30px;padding:14px}}
 </style>
 </head>
 <body>
 <nav class="nav"><div class="wrap">
   <a class="logo" href="/arcade/" data-logo><b>LAZER <span>ARCADE</span></b></a>
-  <div class="links"><a href="#games" class="on">Games</a><a href="#today">Events</a><a href="/arcade/leaderboard/">Leaderboard</a><a href="#soon">Coming soon</a><a href="#" data-feedback>Feedback</a></div>
+  <div class="links"><a href="#games" class="on">Games</a><a href="#today">Events</a><a href="/arcade/community/">Community</a><a href="/arcade/leaderboard/">Leaderboard</a><a href="#soon">Coming soon</a><a href="#" data-feedback>Feedback</a></div>
   <div class="sp"></div>
   <a class="back" href="/">← Carzzy Apps</a>
   <button class="acct out" id="acct" type="button">Sign in</button>
@@ -188,7 +193,7 @@
       <span class="by"><i>LY</i>Original games by Lazer Yudel</span>
       <h1>Games built to<br><em>pull you back&nbsp;in.</em></h1>
       <p class="lead">Lazer Arcade is a growing collection of original browser games: deep tycoons, sharp puzzles and skill builders, playable instantly on any device. New games ship regularly, and your Carzzy Apps account carries your progress across all of them.</p>
-      <div class="cta"><a class="btn" id="heroPlay" href="#games">Browse games</a><a class="btn ghost" href="#soon">What's coming</a></div>
+      <div class="cta"><a class="btn" id="heroPlay" href="#games">Browse games</a><a class="btn ghost" href="/arcade/community/">Community games</a></div>
       <div class="stats"><div><b id="sGames">–</b><span>games live</span></div><div><b id="sSoon">–</b><span>in development</span></div><div><b id="sPlays">–</b><span>plays so far</span></div></div>
     </div>
     <a class="panel feat" id="feat" href="#games" aria-label="Featured game"><div class="fth"></div><div class="fbd"><span class="pill nx">FEATURED</span><h3>&nbsp;</h3><p>&nbsp;</p><span class="btn sm">Play now</span></div></a>
@@ -205,6 +210,10 @@
   <section class="sec" id="games">
     <div class="sh"><div><span class="kick">Games</span><h2>Most played</h2></div><div class="chips" id="cats" role="tablist" aria-label="Categories"></div></div>
     <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="sec" id="community">
+    <div class="panel comm"><div class="ctx"><span class="kick">New · Community</span><h2>Make your own game. No code.</h2><p>Lazer Studio lets anyone paint levels, draw pixel art and snap rules together, then publish to the Community with its own leaderboard. Play what other players made, like the best and remix anything.</p><div class="cta2"><a class="btn" href="/arcade/community/">Community games</a><a class="btn ghost" href="/arcade/studio/">Open Lazer Studio</a></div></div><div class="cart" aria-hidden="true"><span>🕹️</span><span>🎨</span><span>⚡</span><span>🏆</span></div></div>
   </section>
 
   <section class="sec" id="board">

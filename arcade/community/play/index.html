@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Community game | Lazer Arcade</title>
+<meta name="description" content="A community game made with Lazer Studio. Play it, like it, remix it.">
+<meta name="theme-color" content="#07051a">
+<link rel="icon" href="/arcade/img/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="/arcade/arcade.css">
+<style>
+.pg{padding-top:22px;padding-bottom:10px}
+.head{display:flex;gap:14px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.head h1{font-size:clamp(24px,4vw,40px);font-weight:900;line-height:1.05}
+.head .by{color:var(--tx2);font-weight:700;margin-top:6px}
+.head .by a{color:var(--cyan);text-decoration:none}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.lay{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 150px);border-radius:18px;overflow:hidden;background:#000;border:1px solid var(--line2)}
+.stage.rush{aspect-ratio:auto;height:min(calc(100vh - 150px),760px)}
+.cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:6;background:rgba(4,2,16,.55);text-align:center;padding:20px}
+.cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;image-rendering:pixelated;filter:brightness(.6)}
+.cover h2{font-size:clamp(22px,4vw,36px)}
+.cover p{margin:0;color:#e6e0ff;font-weight:700;max-width:520px}
+.cover .card{background:rgba(19,13,51,.92);border:1px solid var(--line2);border-radius:18px;padding:20px;max-width:380px}
+.big{font:900 40px var(--display);margin:6px 0}
+.fs{position:absolute;top:10px;right:10px;z-index:7;border:0;background:rgba(0,0,0,.45);color:#fff;border-radius:10px;padding:6px 10px;font-weight:800;cursor:pointer}
+.desc{color:var(--tx2);margin:14px 2px 0}
+.side h3{font-size:17px;padding:16px 16px 4px}
+.side .note{color:var(--mut);font-size:12.5px;padding:0 16px 8px;margin:0}
+.liked{background:rgba(255,61,212,.18)!important;border-color:var(--pink)!important}
+.dlg{position:fixed;inset:0;z-index:70;background:rgba(4,2,16,.7);display:flex;align-items:center;justify-content:center;padding:16px}
+.dlg .panel{width:min(440px,100%);padding:20px}
+.dlg select,.dlg textarea{width:100%;background:var(--card);border:1px solid var(--line2);color:#fff;border-radius:10px;padding:9px;font:700 14px var(--body);margin:6px 0 12px}
+.stage:fullscreen{border-radius:0;max-height:none}
+@media (max-width:900px){.lay{grid-template-columns:1fr}.stage{aspect-ratio:auto;height:min(72vh,560px)}}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <a class="logo" href="/arcade/" data-logo><b>LAZER <span>ARCADE</span></b></a>
+  <div class="links"><a href="/arcade/#games">Games</a><a href="/arcade/community/" class="on">Community</a><a href="/arcade/studio/">Studio</a><a href="/arcade/leaderboard/">Leaderboard</a></div>
+  <div class="sp"></div>
+  <a class="back" href="/arcade/community/">← Community</a>
+  <button class="acct out" id="acct" type="button">Sign in</button>
+</div></nav>
+<main class="wrap pg" id="main">
+  <div class="head"><div><span class="kick">Community game</span><h1 id="title">Loading…</h1><div class="by" id="by"></div></div>
+    <div class="acts"><button class="btn sm ghost" id="like">♥ <span id="likes">0</span></button><a class="btn sm ghost" id="remix" href="#">↻ Remix</a><button class="btn sm ghost" id="share">Share</button><button class="btn sm ghost" id="report">Report</button><button class="btn sm ghost" id="hide" hidden>Hide (staff)</button></div></div>
+  <div class="lay"><div><div class="stage" id="stage"><button class="fs" id="fs" title="Full screen">⛶</button></div><p class="desc" id="desc"></p></div>
+    <aside class="panel side"><h3>Leaderboard</h3><p class="note">This game's own board. Community scores don't count toward the overall board.</p><div class="rows" id="board"><div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div></div></aside></div>
+</main>
+<footer><div class="wrap"><span><b>Lazer Arcade</b> · Community game · made with <a href="/arcade/studio/">Lazer Studio</a></span><span><a href="/arcade/community/">More community games</a></span></div></footer>
+<script type="module">
+import LZ, { mountShell } from "/arcade/shell.js";
+import * as C from "/arcade/community/cloud.js";
+import { ENGINES } from "/arcade/studio/engines.js";
+import { audio } from "/arcade/studio/engine.js";
+mountShell();
+const $ = (s) => document.querySelector(s), esc = LZ.esc, fmt = LZ.fmt;
+const id = new URLSearchParams(location.search).get("id");
+await LZ.ready;
+const g = id ? await C.getGame(id).catch(() => null) : null;
+const roles = await LZ.roles();
+const isStaff = () => LZ.signedIn() && !!roles[(LZ.username || "").toLowerCase()];
+if (!g || (g.status === "hidden" && !isStaff())) {
+  $("#main").innerHTML = `<div class="panel" style="padding:30px;text-align:center;margin-top:30px"><h1 style="font-size:28px">${g ? "This game was taken down" : "Game not found"}</h1><p style="color:var(--tx2)">${g ? "It was hidden after a report." : "The link may be wrong, or the game was removed."}</p><a class="btn" href="/arcade/community/">Browse community games</a></div>`;
+} else {
+  const project = JSON.parse(g.data), eng = ENGINES[g.engine || project.engine || "studio2d"] || ENGINES.studio2d;
+  document.title = g.title + " | Lazer Arcade Community";
+  $("#title").textContent = g.title; $("#by").innerHTML = `by <b>${esc(g.ownerName || "player")}</b> · ${esc(eng.name)} · ▶ <span id="plays">${fmt(g.plays)}</span> plays${g.remixOf ? ` · remix of <a href="?id=${encodeURIComponent(g.remixOf)}">this game</a>` : ""}${g.status === "hidden" ? ' · <b style="color:#ff8a9a">HIDDEN</b>' : ""}`;
+  $("#desc").textContent = g.desc || ""; $("#likes").textContent = fmt(g.likes); $("#remix").href = "/arcade/studio/?remix=" + encodeURIComponent(g.id);
+  if (eng.id === "rush") $("#stage").classList.add("rush");
+  const stage = $("#stage"); let game = null, counted = false, likedNow = false;
+  const cover = (html) => { const c = document.createElement("div"); c.className = "cover"; c.innerHTML = html; stage.appendChild(c); return c; };
+  const start = () => {
+    audio(); stage.querySelectorAll(".cover").forEach((c) => c.remove()); if (game) game.destroy();
+    if (!counted) { counted = true; C.countPlay(g.id).then(() => { $("#plays").textContent = fmt((g.plays || 0) + 1); }); }
+    game = eng.play(stage, JSON.parse(g.data), { onEnd: ended, gameId: g.id });
+  };
+  async function ended(r) {
+    let line = "";
+    if (LZ.signedIn()) { try { const s = await C.submitScore(g.id, r.score); line = s.improved ? "New personal best!" : "Your best: " + fmt(s.best); if (s.improved) watch(); } catch (e) { line = "Couldn't save your score right now."; } }
+    else line = '<a href="#" id="si" style="color:var(--cyan)">Sign in</a> to put your score on the board.';
+    if (r.ongoing) { LZ.toast("Score saved: " + fmt(r.score)); return; }
+    const c = cover(`<div class="card"><h2>${r.won ? "You win!" : "Game over"}</h2><div class="big">${fmt(r.score)}</div><p>${line}</p><div style="display:flex;gap:8px;justify-content:center;margin-top:14px"><button class="btn sm" data-again>Play again</button><a class="btn sm ghost" href="/arcade/community/">More games</a></div></div>`);
+    c.querySelector("[data-again]").onclick = start; const si = c.querySelector("#si"); if (si) si.onclick = (e) => { e.preventDefault(); LZ.openAccount("signin"); };
+  }
+  cover(`<img alt="" src="${esc(g.thumb || "")}"><h2>${esc(g.title)}</h2><p>${esc(g.desc || "")}</p><button class="btn" id="play">▶ Play</button><p style="font-size:13px;color:var(--tx2)">${matchMedia("(pointer:coarse)").matches ? "On-screen buttons appear when you play." : "Arrows / WASD to move · Space to jump · X to fire"}</p>`);
+  $("#play").onclick = start;
+  $("#fs").onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else stage.requestFullscreen && stage.requestFullscreen().catch(() => {}); };
+  // likes
+  const paintLike = () => $("#like").classList.toggle("liked", likedNow);
+  LZ.onChange(async () => { likedNow = await C.liked(g.id); paintLike(); $("#hide").hidden = !isStaff(); if (isStaff()) $("#hide").textContent = g.status === "hidden" ? "Unhide (staff)" : "Hide (staff)"; });
+  $("#like").onclick = async () => {
+    if (!LZ.signedIn()) { LZ.openAccount("signin"); return; }
+    if ($("#like").disabled) return; $("#like").disabled = true; const on = !likedNow;
+    try { await C.setLike(g.id, on); likedNow = on; g.likes = (g.likes || 0) + (on ? 1 : -1); $("#likes").textContent = fmt(Math.max(0, g.likes)); paintLike(); } catch (e) { LZ.toast("Couldn't save your like right now."); }
+    $("#like").disabled = false;
+  };
+  $("#share").onclick = async () => { const u = location.href; try { if (navigator.share) await navigator.share({ title: g.title, url: u }); else { await navigator.clipboard.writeText(u); LZ.toast("Link copied"); } } catch (e) {} };
+  $("#report").onclick = () => {
+    const d = document.createElement("div"); d.className = "dlg"; d.innerHTML = `<div class="panel"><h2 style="font-size:20px">Report this game</h2><p style="color:var(--tx2);font-size:14px">Staff review every report. Games with problems get hidden.</p><select id="rr"><option value="inappropriate">Inappropriate or offensive</option><option value="copied">Copied someone else's work</option><option value="broken">Broken / can't be played</option><option value="other">Something else</option></select><textarea id="rt" maxlength="1000" placeholder="Anything we should know? (optional)"></textarea><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sm ghost" data-x>Cancel</button><button class="btn sm" data-go>Send report</button></div></div>`;
+    document.body.appendChild(d); d.querySelector("[data-x]").onclick = () => d.remove();
+    d.querySelector("[data-go]").onclick = async () => { try { await C.report(g.id, d.querySelector("#rr").value, d.querySelector("#rt").value); LZ.toast("Thanks. Staff will take a look."); } catch (e) { LZ.toast("Couldn't send the report right now."); } d.remove(); };
+  };
+  $("#hide").onclick = async () => { const to = g.status === "hidden" ? "live" : "hidden"; if (!confirm(to === "hidden" ? "Hide this game from the community?" : "Make this game visible again?")) return; try { await C.setStatus(g.id, to); g.status = to; LZ.toast(to === "hidden" ? "Game hidden." : "Game is live again."); $("#hide").textContent = to === "hidden" ? "Unhide (staff)" : "Hide (staff)"; } catch (e) { LZ.toast("Couldn't change it (" + (e.code || "error") + ")."); } };
+  // board
+  let unwatch = null; const watch = () => { if (unwatch) unwatch(); unwatch = C.watchScores(g.id, (rows) => {
+    const me = LZ.user ? LZ.user.uid : null;
+    $("#board").innerHTML = rows === null ? '<div class="empty">Couldn\'t load the board right now.</div>' : rows.length ? rows.map((r, i) => `<div class="lr r${i + 1} ${r.uid === me ? "me" : ""}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.username)}</span><span class="pt">${fmt(r.best)}</span></div>`).join("") : '<div class="empty">No scores yet. Be the first!</div>';
+  }); }; watch();
+  window.__PLAY = { start, get game() { return game; } };
+}
+</script>
+</body>
+</html>

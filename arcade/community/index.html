@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Community games | Lazer Arcade</title>
+<meta name="description" content="Games made by Lazer Arcade players with Lazer Studio. Play, like, remix, or make your own without code.">
+<link rel="canonical" href="https://www.carzzyapps.com/arcade/community/">
+<meta name="theme-color" content="#07051a">
+<link rel="icon" href="/arcade/img/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="/arcade/arcade.css">
+<style>
+.hero{padding:48px 0 8px;display:flex;gap:24px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.hero h1{font-size:clamp(34px,6vw,62px);font-weight:900;line-height:1}
+.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--tx2);max-width:560px;margin:12px 0 0}
+.pin{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0;margin-top:28px;overflow:hidden;text-decoration:none;border-color:rgba(255,210,63,.35);box-shadow:0 0 50px rgba(124,77,255,.18)}
+.pin .art{min-height:200px;background:radial-gradient(circle at 30% 40%,rgba(34,228,255,.35),transparent 55%),radial-gradient(circle at 75% 60%,rgba(255,61,212,.3),transparent 55%),linear-gradient(135deg,#1b0f4a,#0b0726);display:grid;place-items:center}
+.pin .art svg{width:96px;height:96px;filter:drop-shadow(0 0 24px rgba(124,77,255,.8))}
+.pin .tx{padding:22px}
+.pin h2{font-size:26px;margin:8px 0 6px}
+.pin p{color:var(--tx2);margin:0 0 14px}
+.pin .st{display:flex;gap:14px;flex-wrap:wrap;font-weight:800;font-size:14px;color:var(--tx2);margin-bottom:14px}
+.badge{display:inline-block;border-radius:999px;padding:2px 8px;font:800 10px var(--display);letter-spacing:.08em;background:var(--grad);color:#fff;vertical-align:2px}
+.badge.pinned{background:rgba(255,210,63,.18);color:var(--gold);border:1px solid rgba(255,210,63,.45)}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:30px 0 16px}
+.bar input{flex:1;min-width:200px;background:var(--card);border:1px solid var(--line2);color:#fff;border-radius:12px;padding:11px 14px;font:700 15px var(--body)}
+.lay{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.gc{display:block;text-decoration:none;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(180deg,var(--card2),var(--card));transition:transform .15s,border-color .15s}
+.gc:hover{transform:translateY(-3px);border-color:var(--cyan)}
+.gc img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000;image-rendering:pixelated}
+.gc .b{padding:12px 14px}
+.gc b{font:800 16px var(--display);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gc small{color:var(--tx2);font-weight:700;font-size:13px}
+.gc .m{display:flex;gap:12px;color:var(--mut);font-weight:800;font-size:12.5px;margin-top:6px}
+.side h3{font-size:17px;padding:16px 16px 6px}
+.side .note{color:var(--mut);font-size:12.5px;padding:0 16px 10px;margin:0}
+.make{padding:20px;margin-bottom:16px}
+.make h3{font-size:19px;margin-bottom:6px}
+.make p{color:var(--tx2);margin:0 0 14px;font-size:14px}
+@media (max-width:900px){.lay{grid-template-columns:1fr}.pin{grid-template-columns:1fr}.pin .art{min-height:130px}}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <a class="logo" href="/arcade/" data-logo><b>LAZER <span>ARCADE</span></b></a>
+  <div class="links"><a href="/arcade/#games">Games</a><a href="/arcade/community/" class="on">Community</a><a href="/arcade/studio/">Studio</a><a href="/arcade/leaderboard/">Leaderboard</a><a href="#" data-feedback>Feedback</a></div>
+  <div class="sp"></div>
+  <a class="back" href="/">← Carzzy Apps</a>
+  <button class="acct out" id="acct" type="button">Sign in</button>
+</div></nav>
+<main class="wrap">
+  <header class="hero"><div><span class="kick">Community</span><h1>Made by <em>players.</em></h1><p>Games built in Lazer Studio, no code needed. Play them, like the best ones and remix anything. Every game has its own leaderboard.</p></div><a class="btn" href="/arcade/studio/">＋ Make a game</a></header>
+  <div class="panel pin" id="pin"><div class="art" data-logo></div><div class="tx"><span class="badge pinned">PINNED</span> <span class="badge">CREATOR</span><h2>Lazer Arcade</h2><p>The whole arcade is Lazer Yudel's game. Every game on it and every visit counts toward it, so its leaderboard is the overall Lazer Points board.</p><div class="st"><span>by LazerYudel</span><span id="pinPlays">▶ –</span></div><a class="btn sm" href="/arcade/">Open Lazer Arcade</a> <a class="btn sm ghost" href="/arcade/leaderboard/">Leaderboard</a></div></div>
+  <div class="bar"><div class="chips" id="sort"><button class="chip on" data-s="popular">Popular</button><button class="chip" data-s="new">New</button><button class="chip" data-s="liked">Most liked</button></div><input id="q" type="search" placeholder="Search games or creators" aria-label="Search community games"></div>
+  <div class="lay"><div><div class="grid" id="grid"><div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div></div></div>
+    <aside><div class="panel make"><h3>Make your own</h3><p>Pick an engine and a starter, paint levels, draw pixel art and snap rules together. Publish in one click.</p><a class="btn sm" href="/arcade/studio/">Open Lazer Studio</a> <a class="btn sm ghost" href="/arcade/studio/" id="myp">My projects</a></div>
+    <div class="panel side"><h3>Top creators</h3><p class="note">Creators earn LP when people play and like their games. Top creators earn double.</p><div class="rows" id="creators"></div></div></aside></div>
+</main>
+<footer><div class="wrap"><span><b>Lazer Arcade</b> by Lazer Yudel · part of <a href="/">Carzzy Apps</a></span><span><a href="/arcade/">All games</a> · <a href="/arcade/studio/">Lazer Studio</a></span></div></footer>
+<script type="module">
+import LZ, { mountShell } from "/arcade/shell.js";
+import * as C from "/arcade/community/cloud.js";
+mountShell();
+const $ = (s) => document.querySelector(s), esc = LZ.esc, fmt = LZ.fmt;
+let sort = "popular", games = [], loading = false;
+async function load() {
+  loading = true; $("#grid").innerHTML = '<div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div>';
+  try { games = await C.listGames(sort, 90); } catch (e) { console.warn(e); games = null; }
+  loading = false; draw();
+}
+function draw() {
+  const q = $("#q").value.trim().toLowerCase(), g = $("#grid");
+  if (games === null) { g.innerHTML = '<div class="empty">Couldn\'t reach the community right now. Try again in a moment.</div>'; return; }
+  const list = games.filter((x) => !q || (x.title || "").toLowerCase().includes(q) || (x.ownerName || "").toLowerCase().includes(q));
+  g.innerHTML = list.length ? list.map((x) => `<a class="gc" href="/arcade/community/play/?id=${encodeURIComponent(x.id)}"><img alt="" loading="lazy" src="${esc(x.thumb || "")}"><div class="b"><b>${esc(x.title)}</b><small>by ${esc(x.ownerName || "player")}</small><div class="m"><span>▶ ${fmt(x.plays)}</span><span>♥ ${fmt(x.likes)}</span>${x.remixOf ? "<span>↻ remix</span>" : ""}</div></div></a>`).join("")
+    : `<div class="empty">${q ? "No games match that search." : "No community games yet. Be the first: <a href=\"/arcade/studio/\">make one</a>."}</div>`;
+}
+document.querySelectorAll("#sort [data-s]").forEach((b) => (b.onclick = () => { sort = b.dataset.s; document.querySelectorAll("#sort [data-s]").forEach((x) => x.classList.toggle("on", x === b)); load(); }));
+$("#q").oninput = draw;
+load();
+// top creators: LazerYudel (Lazer Arcade) is pinned first, then creators ranked by creator LP
+(async () => {
+  const [cs, roles] = await Promise.all([C.topCreators(10), LZ.roles()]);
+  const creatorName = Object.keys(roles).find((k) => roles[k] === "creator");
+  let rows = cs.slice();
+  if (!rows.length) { // until the backend job has run, rank by what's loaded
+    const m = {}; (games || []).forEach((g) => { const k = g.ownerUid; m[k] = m[k] || { username: g.ownerName, lp: 0, games: 0 }; m[k].lp += (g.plays || 0) * 5 + (g.likes || 0) * 20; m[k].games++; }); rows = Object.values(m).sort((a, b) => b.lp - a.lp);
+  }
+  const fallback = !cs.length;
+  const top = rows.findIndex((r) => (r.username || "").toLowerCase() === creatorName); if (top > 0) rows.unshift(rows.splice(top, 1)[0]);
+  if (top < 0 && creatorName) rows.unshift({ username: "LazerYudel", lp: null, note: "Lazer Arcade" });
+  if (fallback && rows[0] && (rows[0].username || "").toLowerCase() === creatorName) { rows[0].note = "Lazer Arcade" + (rows[0].games ? " + " + rows[0].games + " game" + (rows[0].games > 1 ? "s" : "") : ""); rows[0].lp = null; }
+  $("#creators").innerHTML = rows.slice(0, 10).map((r, i) => `<div class="lr r${i + 1}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.username)}${(r.username || "").toLowerCase() === creatorName ? ' <span class="badge">CREATOR</span>' : ""}<small>${r.note || (r.games ? r.games + " game" + (r.games > 1 ? "s" : "") : "Lazer Arcade")}</small></span><span class="pt">${r.lp == null ? "∞" : fmt(r.lp)}<small>${r.lp == null ? "" : "creator LP"}</small></span></div>`).join("");
+})();
+LZ.plays(["crema", "harbor"]).then((p) => { const t = Object.values(p).reduce((a, b) => a + b, 0); $("#pinPlays").textContent = "▶ " + (t ? fmt(t) : "–") + " plays"; }).catch(() => {});
+</script>
+</body>
+</html>
