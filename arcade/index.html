@@ -86,6 +86,15 @@
 .pill.q{background:rgba(124,77,255,.2);color:#d9ccff}
 .pill.idea{background:rgba(34,228,255,.15);color:var(--cyan)}
 .queue{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.pin2{margin-left:auto;font:800 11px var(--display);border-radius:999px;padding:4px 10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:var(--mut);cursor:pointer;grid-column:2;justify-self:start;margin-top:6px}
+.pin2.on{background:var(--gold);color:#14102e;border-color:transparent}
+.vote{font:800 12px var(--display);border-radius:999px;padding:5px 12px;border:1px solid rgba(255,210,63,.45);background:transparent;color:var(--gold);cursor:pointer;align-self:flex-start}
+.vote.on{background:var(--gold);color:#14102e}.vote[disabled]{opacity:.5;cursor:default}
+.vc{font:800 12px var(--display);color:var(--mut)}
+.perks{display:grid;gap:10px;margin-top:14px}
+.perks .pk{display:flex;gap:12px;align-items:center;padding:14px 16px}
+.perks .pk b{font:800 14px var(--display)}.perks .pk small{display:block;color:var(--mut);font-size:12.5px}
+.perks .pk .btn{margin-left:auto}
 .qi{padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .qi .t{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .qi h4{margin:0;font:700 15px var(--display)}
@@ -224,6 +233,12 @@
     </div>
   </section>
 
+  <section class="sec" id="tiers">
+    <div class="sh"><div><span class="kick">Tiers &amp; perks</span><h2>Climb for real perks</h2><p>Lifetime Lazer Points unlock tiers. Each tier keeps everything below it, and you never lose one.</p></div><a class="btn ghost sm" href="/arcade/credits/">Credits wall</a></div>
+    <div id="ladder"></div>
+    <div class="perks" id="perks"></div>
+  </section>
+
   <section class="sec" id="achievements">
     <div class="sh"><div><span class="kick">Achievements</span><h2>Bonus points for playing around</h2><p>They count across every game in the arcade. Each one pays a one-time Lazer Points bonus.</p></div></div>
     <div class="achs" id="achs"></div>
@@ -249,10 +264,11 @@
   </section>
 </main>
 
-<footer><div class="wrap"><span><b>Lazer Arcade</b> by Lazer Yudel · part of <a href="/">Carzzy Apps</a></span><span><a href="/arcade/leaderboard/">Leaderboard</a> · <a href="#" data-feedback>Feedback</a></span></div></footer>
+<footer><div class="wrap"><span><b>Lazer Arcade</b> by Lazer Yudel · part of <a href="/">Carzzy Apps</a></span><span><a href="/arcade/leaderboard/">Leaderboard</a> · <a href="/arcade/credits/">Credits</a> · <a href="#" data-feedback>Feedback</a></span></div></footer>
 
 <script type="module">
 import LZ, { mountShell } from "/arcade/shell.js";
+import { loadTiers, loadAch, nameHtml, rowClass, injectCss, ladderHtml, hasTier } from "/arcade/tiers.js";
 const paint = mountShell();
 const $ = (s) => document.querySelector(s);
 const esc = LZ.esc, fmt = LZ.fmt;
@@ -295,6 +311,11 @@ function feat(g) {
   f.querySelector("h3").textContent = g.name;
   f.querySelector("p").textContent = g.hook;
 }
+function voteHtml(name) {
+  const n = myVotes.counts[name] || 0, can = !!myRow && hasTier(TIERS, myRow.lp, "gold"), mine = myVotes.mine === name;
+  if (!can && !n) return "";
+  return `<div style="display:flex;gap:10px;align-items:center;margin-top:4px">${can ? `<button class="vote ${mine ? "on" : ""}" data-vote="${esc(name)}" ${mine ? "disabled" : ""}>${mine ? "✓ Your vote" : "Vote to ship next"}</button>` : ""}${n ? `<span class="vc">${n} ${n === 1 ? "vote" : "votes"}</span>` : ""}</div>`;
+}
 function soon() {
   const live = new Set(cat.games.map((g) => g.name)), items = cat.upcoming.filter((u) => !live.has(u.name));
   const soonest = items.filter((u) => u.launch && new Date(u.launch) > Date.now()).sort((a, b) => new Date(a.launch) - new Date(b.launch))[0];
@@ -309,19 +330,27 @@ function soon() {
       const d = Math.floor(ms / 864e5), hh = Math.floor(ms / 36e5) % 24, mm = Math.floor(ms / 6e4) % 60, ss = Math.floor(ms / 1e3) % 60;
       el.innerHTML = [[d, "days"], [hh, "hours"], [mm, "min"], [ss, "sec"]].map(([v, l]) => `<span><b>${String(v).padStart(2, "0")}</b><small>${l}</small></span>`).join("");
     };
-    tick(); setInterval(tick, 1000);
+    tick(); if (window.__cdT) clearInterval(window.__cdT); window.__cdT = setInterval(tick, 1000);
   }
   const ea = $("#eaBtn"); if (ea) ea.onclick = () => LZ.requestAccess(nx.name);
-  $("#queue").innerHTML = rest.map((u, i) => `<div class="panel qi"><div class="t"><h4>${esc(u.name)}</h4><span class="pill ${u.status === "idea" ? "idea" : "q"}">${u.status === "idea" ? "IDEA" : u.launch ? new Date(u.launch).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "#" + (i + 2)}</span></div>${u.tag ? `<span class="pill" style="background:rgba(255,210,63,.15);color:var(--gold);margin-bottom:6px;display:inline-block;width:fit-content;align-self:flex-start">🕎 ${esc(u.tag)}</span>` : ""}<p>${esc(u.hook)}</p></div>`).join("");
+  $("#queue").innerHTML = rest.map((u, i) => `<div class="panel qi"><div class="t"><h4>${esc(u.name)}</h4><span class="pill ${u.status === "idea" ? "idea" : "q"}">${u.status === "idea" ? "IDEA" : u.launch ? new Date(u.launch).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "#" + (i + 2)}</span></div>${u.tag ? `<span class="pill" style="background:rgba(255,210,63,.15);color:var(--gold);margin-bottom:6px;display:inline-block;width:fit-content;align-self:flex-start">🕎 ${esc(u.tag)}</span>` : ""}<p>${esc(u.hook)}</p>${voteHtml(u.name)}</div>`).join("");
+  document.querySelectorAll("[data-vote]").forEach((b) => (b.onclick = async () => {
+    b.disabled = true;
+    try { await LZ.vote(b.dataset.vote); LZ.toast("Vote counted for " + b.dataset.vote); myVotes = await LZ.votes(); } catch (e) { LZ.toast("Couldn't count that vote."); }
+    soon();
+  }));
   document.querySelectorAll("#next [data-feedback]").forEach((b) => (b.onclick = () => LZ.openFeedback("arcade")));
 }
 const roles = await LZ.roles();
+const [TIERS, ACH] = await Promise.all([loadTiers(), loadAch()]);
+injectCss();
+let myRow = null, myVotes = { counts: {}, mine: null };
 const badge = (u) => { const r = roles[String(u || "").toLowerCase()]; return r ? `<span class="badge ${r}">${r === "creator" ? "CREATOR" : "ADMIN"}</span>` : ""; };
 let unwatch = null;
 function board() {
   if (unwatch) unwatch();
   const paintRows = (rows) => {
-    $("#topRows").innerHTML = rows.length ? rows.map((r, i) => `<div class="lr r${i + 1} ${LZ.user && r.uid === LZ.user.uid ? "me" : ""}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.username)}${badge(r.username)}</span><span class="pt">${fmt(r.lp)}<small>LP</small></span></div>`).join("")
+    $("#topRows").innerHTML = rows.length ? rows.map((r, i) => `<div class="lr r${i + 1} ${LZ.user && r.uid === LZ.user.uid ? "me" : ""}${rowClass(r, TIERS)}"><span class="rk">${i + 1}</span><span class="nm">${nameHtml(r, TIERS, ACH, badge(r.username))}</span><span class="pt">${fmt(r.lp)}<small>LP</small></span></div>`).join("")
       : '<div class="empty">No one on the board yet. Finish a game and take #1.</div>';
   };
   const fallback = () => fetch("/arcade/board-fallback.json", { cache: "no-cache" }).then((r) => r.json()).then((j) => paintRows(j.players || [])).catch(() => paintRows([]));
@@ -333,9 +362,10 @@ async function mine() {
     const p = LZ.pendingLP();
     el.innerHTML = p ? `<b>${fmt(p)} LP</b> waiting on this device. <a href="#" id="mineIn" style="color:var(--cyan)">Sign in</a> to put them on the board.` : `<a href="#" id="mineIn" style="color:var(--cyan)">Sign in</a> to see your rank and save your points.`;
     const a = $("#mineIn"); if (a) a.onclick = (e) => { e.preventDefault(); LZ.openAccount("signin"); };
-    myGames = {}; grid(); return;
+    myGames = {}; myRow = null; perks(); grid(); return;
   }
   const m = await LZ.me();
+  myRow = m; perks(); today(); soon();
   myGames = (m && m.games) || {};
   const r = m && m.lp ? await LZ.rank("lp", m.lp) : null;
   el.innerHTML = m && m.lp ? `You're <b>#${r || "?"}</b> with <b>${fmt(m.lp)} LP</b>.` : `You're signed in as <b>${esc(LZ.username)}</b>. Finish a round to get on the board.`;
@@ -364,10 +394,37 @@ async function today() {
     return `<div class="panel ev ${esc(e.theme || "")}">${head}${ms}${doors}</div>`;
   }).join("") || '<div class="panel ev"><h3>No events right now</h3><p class="calnote">New events show up here.</p></div>';
   $("#evs").querySelectorAll("[data-ev]").forEach((b) => (b.onclick = async () => { b.disabled = true; const got = await LZ.claimDoor(b.dataset.ev, +b.dataset.i); if (got) LZ.toast(`Door opened · +${fmt(got)} Lazer Points`); today(); paint(); }));
-  $("#achs").innerHTML = pr.achievements.map((a) => `<div class="panel ach ${a.done ? "done" : ""}"><div class="ic">${svg(a.icon)}</div><h4>${esc(a.name)}</h4><p>${esc(a.desc)}</p><div class="rw"><span>${a.done ? "Unlocked" : fmt(a.have) + " / " + fmt(a.target)}</span><span>+${fmt(a.bonus)} LP</span></div><div class="bar2"><i style="width:${Math.round((a.target ? a.have / a.target : 0) * 100)}%"></i></div></div>`).join("");
+  $("#achs").innerHTML = pr.achievements.map((a) => `<div class="panel ach ${a.done ? "done" : ""}"><div class="ic">${svg(a.icon)}</div><h4>${esc(a.name)}</h4><p>${esc(a.desc)}</p><div class="rw"><span>${a.done ? "Unlocked" : fmt(a.have) + " / " + fmt(a.target)}</span><span>+${fmt(a.bonus)} LP</span></div><div class="bar2"><i style="width:${Math.round((a.target ? a.have / a.target : 0) * 100)}%"></i></div>${a.done && canPin() ? `<button class="pin2 ${pins().includes(a.id) ? "on" : ""}" data-pin="${esc(a.id)}">${pins().includes(a.id) ? "Pinned" : "Pin to my row"}</button>` : ""}</div>`).join("");
+  $("#achs").querySelectorAll("[data-pin]").forEach((b) => (b.onclick = async () => {
+    const id = b.dataset.pin, cur = pins(); let next = cur.includes(id) ? cur.filter((x) => x !== id) : cur.concat(id);
+    if (next.length > 3) { LZ.toast("You can pin up to 3. Unpin one first."); return; }
+    b.disabled = true;
+    try { await LZ.setPins(next); myRow = Object.assign({}, myRow, { pins: next }); LZ.toast(cur.includes(id) ? "Unpinned" : "Pinned to your leaderboard row"); } catch (e) { LZ.toast("Couldn't save that. Try again."); }
+    today();
+  }));
+}
+function pins() { return (myRow && Array.isArray(myRow.pins)) ? myRow.pins : []; }
+function canPin() { return !!myRow && hasTier(TIERS, myRow.lp, "silver"); }
+async function perks() {
+  const lp = myRow ? myRow.lp || 0 : null;
+  $("#ladder").innerHTML = ladderHtml(TIERS, lp);
+  const el = $("#perks"), out = [];
+  if (lp != null && hasTier(TIERS, lp, "platinum")) {
+    const ea = await LZ.access("earlyAccess");
+    ea.forEach((g) => out.push(`<div class="panel pk"><span class="pill nx">EARLY ACCESS</span><div><b>${esc(g.name)}</b><small>${g.until ? "Public launch " + new Date(g.until).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "Before anyone else"}</small></div><a class="btn sm" href="${esc(g.path)}">Play now</a></div>`));
+    if (!ea.length) out.push(`<div class="panel pk"><span class="pill nx">EARLY ACCESS</span><div><b>Nothing in early access right now</b><small>New games show up here a week before launch.</small></div></div>`);
+  }
+  if (lp != null && hasTier(TIERS, lp, "diamond")) {
+    const beta = await LZ.access("beta");
+    beta.forEach((g) => out.push(`<div class="panel pk"><span class="pill ev1">BETA</span><div><b>${esc(g.name)}</b><small>Unfinished build. Expect rough edges and tell us what breaks.</small></div><a class="btn sm" href="${esc(g.path)}">Try it</a></div>`));
+    out.push(`<div class="panel pk"><span class="pill ev1">CREDITS</span><div><b>You're on the credits wall</b><small>${myRow.hideCredits ? "Hidden by you." : "Listed for everyone to see."}</small></div><button class="btn ghost sm" id="crTog">${myRow.hideCredits ? "Show my name" : "Hide my name"}</button></div>`);
+  }
+  el.innerHTML = out.join("");
+  const t = $("#crTog"); if (t) t.onclick = async () => { t.disabled = true; try { await LZ.setHideCredits(!myRow.hideCredits); myRow.hideCredits = !myRow.hideCredits; } catch (e) { LZ.toast("Couldn't save that."); } perks(); };
 }
 
-chips(); grid(); soon(); today();
+chips(); grid(); soon(); today(); perks();
+LZ.votes().then((v) => { myVotes = v; soon(); });
 LZ.plays(cat.games.map((g) => g.id)).then((p) => { playsBy = p; grid(); const t = Object.values(p).reduce((a, b) => a + b, 0); $("#sPlays").textContent = t ? fmt(t) : "–"; });
 board();
 LZ.onChange(() => { mine(); paint(); if (LZ.signedIn()) LZ.syncProg().then(today); });

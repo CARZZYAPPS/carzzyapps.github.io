@@ -67,6 +67,7 @@
 
 <script type="module">
 import LZ, { mountShell } from "/arcade/shell.js";
+import { loadTiers, loadAch, nameHtml, rowClass, injectCss, tierOf } from "/arcade/tiers.js";
 const paint = mountShell();
 const $ = (s) => document.querySelector(s);
 const esc = LZ.esc, fmt = LZ.fmt;
@@ -75,6 +76,8 @@ const qs = new URLSearchParams(location.search);
 let tab = cat.games.some((g) => g.id === qs.get("game")) ? qs.get("game") : "all";
 let metric = "lp", unwatch = null;
 const roles = await LZ.roles();
+const [TIERS, ACH] = await Promise.all([loadTiers(), loadAch()]);
+injectCss();
 const badge = (u) => { const r = roles[String(u || "").toLowerCase()]; return r ? `<span class="badge ${r}">${r === "creator" ? "CREATOR" : "ADMIN"}</span>` : ""; };
 
 function field() { return tab === "all" ? "lp" : `games.${tab}.${metric}`; }
@@ -105,9 +108,9 @@ function draw(rows, g, unit) {
   const me = LZ.user ? LZ.user.uid : null;
   const ng = (r) => Object.keys(r.games || {}).filter((k) => k !== "bonus").length;
   const sub = (r) => tab === "all" ? ng(r) + " game" + (ng(r) === 1 ? "" : "s") : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
-  $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { const r = rows[i]; return `<div class="panel pod p${i + 1}"><div class="crown">${["1ST", "2ND", "3RD"][i]}</div><div class="av">${esc((r.username || "?")[0].toUpperCase())}</div><div class="nm">${esc(r.username)}</div>${badge(r.username)}<div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div></div>`; }).join("") : "";
+  $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { const r = rows[i]; return `<div class="panel pod p${i + 1}"><div class="crown">${["1ST", "2ND", "3RD"][i]}</div><div class="av">${esc((r.username || "?")[0].toUpperCase())}</div><div class="nm">${nameHtml(r, TIERS, ACH, "")}</div>${badge(r.username)}<div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div></div>`; }).join("") : "";
   const list = rows.length >= 3 ? rows.slice(3) : rows, off = rows.length >= 3 ? 3 : 0;
-  $("#rows").innerHTML = rows.length ? (list.map((r, i) => `<div class="lr r${i + 1 + off} ${r.uid === me ? "me" : ""}"><span class="rk">${i + 1 + off}</span><span class="nm">${esc(r.username)}${badge(r.username)}<small>${sub(r)}</small></span><span class="pt">${fmt(val(r))}<small>${esc(unit)}</small></span></div>`).join("") || '<div class="empty">That\'s everyone so far.</div>')
+  $("#rows").innerHTML = rows.length ? (list.map((r, i) => `<div class="lr r${i + 1 + off} ${r.uid === me ? "me" : ""}${rowClass(r, TIERS)}"><span class="rk">${i + 1 + off}</span><span class="nm">${nameHtml(r, TIERS, ACH, badge(r.username))}<small>${sub(r)}</small></span><span class="pt">${fmt(val(r))}<small>${esc(unit)}</small></span></div>`).join("") || '<div class="empty">That\'s everyone so far.</div>')
     : `<div class="empty">No scores yet. ${g ? `<a href="${esc(g.path)}" style="color:var(--cyan)">Play ${esc(g.name)}</a> and take #1.` : "Be the first."}</div>`;
 }
 async function you() {

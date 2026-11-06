@@ -13,6 +13,8 @@ const sa = JSON.parse(process.env.SA);
 admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.project_id || "carzzy-apps" });
 const db = admin.firestore();
 const FV = admin.firestore.FieldValue;
+// Player-set fields that full-row writes must carry over.
+const keep = (cur, out) => { if (Array.isArray(cur.pins)) out.pins = cur.pins; if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits; return out; };
 
 async function uidOf(name) {
   const byId = await db.collection("usernames").doc(name.toLowerCase()).get();
@@ -61,7 +63,7 @@ async function uidOf(name) {
         add += cfg.legendSeed; seeded[c.uid] = true; console.log("Seeded", c.username, "with", cfg.legendSeed, "LP");
       }
       if (earn > 0) { const row = Object.assign({ lp: 0, best: 0, plays: 0, last: 0 }, games.lazerarcade || {}); row.lp += earn; row.plays += dPlays; row.last = earn; row.best = Math.max(row.best, earn); games.lazerarcade = row; }
-      tx.set(refs[i], { username: cur.username || c.username, lp: (cur.lp || 0) + add, games, prog: cur.prog || {}, updatedAt: FV.serverTimestamp() });
+      tx.set(refs[i], keep(cur, { username: cur.username || c.username, lp: (cur.lp || 0) + add, games, prog: cur.prog || {}, updatedAt: FV.serverTimestamp() }));
       console.log(c.username, "+", add, "LP (earned", earn, "from", dLp, "player LP,", dPlays, "plays,", dVisits, "visits)");
     });
     tx.set(stateRef, { others, plays, visits, seeded, at: FV.serverTimestamp() });
@@ -92,7 +94,7 @@ async function communityEarnings(staff) {
         const s = await tx.get(ref), cur = s.exists ? s.data() : { username: o.username, lp: 0, games: {}, prog: {} };
         const gm = Object.assign({}, cur.games || {}), row = Object.assign({ lp: 0, best: 0, plays: 0, last: 0 }, gm.community || {});
         row.lp += earn; row.last = earn; row.best = Math.max(row.best, earn); row.plays = o.plays; gm.community = row;
-        tx.set(ref, { username: cur.username || o.username, lp: (cur.lp || 0) + earn, games: gm, prog: cur.prog || {}, updatedAt: FV.serverTimestamp() });
+        tx.set(ref, keep(cur, { username: cur.username || o.username, lp: (cur.lp || 0) + earn, games: gm, prog: cur.prog || {}, updatedAt: FV.serverTimestamp() }));
       });
       console.log("Community creator", o.username, "+", earn, "LP");
     }

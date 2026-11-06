@@ -329,7 +329,7 @@ async function addToAccount(entries) {
       if (o.eaPaid && !row.eaPaid) row.eaPaid = o.eaPaid;
       gm[k] = row;
     });
-    tx.set(ref, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() });
+    tx.set(ref, keepExtras(cur, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() }));
   });
 }
 async function settleEarly() {
@@ -421,6 +421,29 @@ function stash(id, e) {
   setPending(p);
 }
 function pendingLP() { let t = 0; Object.values(pendingAll()).forEach((e) => (t += e.lp || 0)); return t; }
+
+/* ---------------- tiers & perks ---------------- */
+// Fields a player sets on their own row that every full-row write must carry over.
+function keepExtras(cur, out) { if (Array.isArray(cur.pins)) out.pins = cur.pins; if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits; return out; }
+async function editRow(fn) {
+  if (!signedIn()) throw new Error("signed-out");
+  const ref = doc(db, "arcadePlayers", state.user.uid);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref); const cur = snap.exists() ? snap.data() : { lp: 0, games: {} };
+    const out = keepExtras(cur, { username: state.username, lp: cur.lp || 0, games: cur.games || {}, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() });
+    fn(out); tx.set(ref, out);
+  });
+}
+// Silver and up: pin up to 3 earned achievements to your leaderboard row.
+async function setPins(ids) { await editRow((o) => { o.pins = (ids || []).filter((x) => typeof x === "string").slice(0, 3); }); }
+// Diamond and up: hide or show your name on the credits wall.
+async function setHideCredits(v) { await editRow((o) => { o.hideCredits = !!v; }); }
+// Gold and up: one vote for which queued game ships next (changing it moves the vote).
+async function vote(game) { if (!signedIn()) throw new Error("signed-out"); await setDoc(doc(db, "arcadeVotes", state.user.uid), { game: String(game).slice(0, 40), at: serverTimestamp() }); }
+async function votes() { try { const s = await getDocs(collection(db, "arcadeVotes")); const c = {}; let mine = null; s.forEach((d) => { const g = d.data().game; c[g] = (c[g] || 0) + 1; if (signedIn() && d.id === state.user.uid) mine = g; }); return { counts: c, mine }; } catch (e) { return { counts: {}, mine: null }; } }
+// Platinum: early-access links. Diamond: beta builds. The database only lets qualifying accounts read these.
+async function access(kind) { if (!signedIn()) return []; try { const s = await getDoc(doc(db, "arcadeAccess", kind)); return s.exists() ? (s.data().games || []) : []; } catch (e) { return []; } }
+async function credits(minLp) { try { const s = await getDocs(query(collection(db, "arcadePlayers"), where("lp", ">=", minLp), orderBy("lp", "desc"), limit(500))); return s.docs.map((d) => Object.assign({ uid: d.id }, d.data())).filter((r) => !r.hideCredits && (r.lp || 0) >= minLp); } catch (e) { console.warn("credits", e.code || e); return []; } }
 
 /* ---------------- roles (creator / admin badges) ---------------- */
 let rolesP = null;
@@ -660,7 +683,7 @@ async function openFeedback(gameId) {
 const LZ = {
   ready: readyP, auth, db, catalog, gameInfo, toLP, onChange, signedIn,
   get user() { return state.user; }, get username() { return state.username; },
-  boot, save, flush, endSession, inEarlyAccess, settleEarly, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles,
+  boot, save, flush, endSession, inEarlyAccess, settleEarly, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles, setPins, setHideCredits, vote, votes, access, credits,
   openAccount, openFeedback, requestAccess, accountMenu, toast, logout, base: BASE, fmt, esc
 };
 window.LZ = LZ;

@@ -300,11 +300,27 @@ service cloud.firestore {
     }
 
     // Public leaderboard rows. Each player writes only their own row; one write can add at most 20,000 LP.
+    // Tier thresholds (keep in sync with arcade/tiers.json): silver 50,000 · gold 100,000 · platinum 250,000 · diamond 500,000.
+    function lpOf(uid) {
+      return exists(/databases/$(database)/documents/arcadePlayers/$(uid))
+        ? get(/databases/$(database)/documents/arcadePlayers/$(uid)).data.lp : 0;
+    }
+    // Pinned badges: Silver and up, at most 3, each one an achievement the player has actually earned.
+    function pinEarned(data, i) {
+      return data.pins.size() <= i || (data.pins[i] is string && 'prog' in data && 'ach' in data.prog && data.pins[i] in data.prog.ach);
+    }
+    function pinsOk(data) {
+      return !('pins' in data) || (data.pins is list && data.pins.size() <= 3
+        && (data.pins.size() == 0 || data.lp >= 50000)
+        && pinEarned(data, 0) && pinEarned(data, 1) && pinEarned(data, 2));
+    }
     match /arcadePlayers/{uid} {
       function validPlayer(data) {
         return data.keys().hasAll(['username', 'lp', 'games', 'updatedAt'])
-          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'updatedAt'])
+          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'updatedAt'])
           && (!('prog' in data) || data.prog is map)
+          && pinsOk(data)
+          && (!('hideCredits' in data) || data.hideCredits is bool)
           && ownsUsername(data.username)
           && data.lp is int
           && data.lp >= 0
@@ -322,9 +338,28 @@ service cloud.firestore {
         && request.resource.data.lp <= resource.data.lp + 20000;
       // Staff can correct or remove rows (cheating, offensive names).
       allow update: if isArcadeAdmin()
-        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'updatedAt'])
         && request.resource.data.lp is int && request.resource.data.lp >= 0;
       allow delete: if isArcadeAdmin();
+    }
+
+    // Gold and up: one vote per player for the next game to ship.
+    match /arcadeVotes/{uid} {
+      allow read: if true;
+      allow create, update: if arcadeAccount() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['game', 'at'])
+        && request.resource.data.game is string && request.resource.data.game.size() >= 1 && request.resource.data.game.size() <= 40
+        && request.resource.data.at == request.time
+        && lpOf(request.auth.uid) >= 100000;
+      allow delete: if arcadeAccount() && request.auth.uid == uid;
+    }
+    // Perk links written by the backend: earlyAccess (Platinum+), beta (Diamond+). Staff can always read.
+    match /arcadeAccess/{kind} {
+      allow read: if arcadeAccount()
+        && (isArcadeAdmin()
+          || (kind == 'earlyAccess' && lpOf(request.auth.uid) >= 250000)
+          || (kind == 'beta' && lpOf(request.auth.uid) >= 500000));
+      allow write: if false;
     }
 
     // Per-account game saves, private to the player.

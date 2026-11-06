@@ -1,6 +1,6 @@
-# Lazer Arcade: Badges and Perks (TO BUILD, NOT IMPLEMENTED)
+# Lazer Arcade: Badges and Perks (LIVE)
 
-Status: instruction only. Nothing in this file has been built yet. When asked to "build the badges feature," follow this spec.
+Status: built and live (Nov 2026). Thresholds: `arcade/tiers.json` (keep `firestore.rules` tier numbers in sync). Code: `arcade/tiers.js`, `arcade/lz.js` (setPins, vote, access, credits), `arcade/credits/`, rules for `arcadePlayers.pins/hideCredits`, `arcadeVotes`, `arcadeAccess`. Early-access and beta links: `.github/arcade-access.json`, synced hourly by the backend workflow.
 
 ## Goal
 

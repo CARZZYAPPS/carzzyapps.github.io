@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Credits | Lazer Arcade</title>
+<meta name="description" content="The Lazer Arcade credits wall: every Diamond and Legend player.">
+<link rel="canonical" href="https://www.carzzyapps.com/arcade/credits/">
+<meta name="theme-color" content="#07051a">
+<link rel="icon" href="/arcade/img/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="/arcade/arcade.css">
+<style>
+.roll{position:relative;height:min(70vh,640px);overflow:hidden;margin-top:24px;border-radius:24px;border:1px solid var(--line2,rgba(255,255,255,.12));background:radial-gradient(600px 300px at 50% 0,rgba(124,77,255,.18),transparent 70%),rgba(7,5,26,.6);-webkit-mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(transparent,#000 14%,#000 86%,transparent)}
+.track{position:absolute;left:0;right:0;top:100%;text-align:center;animation:roll var(--dur,40s) linear infinite}
+.roll:hover .track{animation-play-state:paused}
+@keyframes roll{to{transform:translateY(calc(-100% - min(70vh,640px)))}}
+.track h3{font:800 14px var(--display);letter-spacing:.3em;color:var(--mut,#9d97c4);margin:46px 0 18px}
+.track .n{font:700 clamp(20px,4vw,30px) var(--display);margin:12px 0;line-height:1.2}
+.track .n small{display:block;font:700 12px var(--body,sans-serif);color:var(--mut,#9d97c4);margin-top:2px;letter-spacing:.04em}
+.track .lead{font:800 clamp(26px,6vw,44px) var(--display);margin:40px 0 0}
+.empty2{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--mut,#9d97c4)}
+@media (prefers-reduced-motion:reduce){.track{animation:none;position:static;padding:20px 0}.roll{height:auto;-webkit-mask-image:none;mask-image:none}}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <a class="logo" href="/arcade/" data-logo><b>LAZER <span>ARCADE</span></b></a>
+  <div class="links"><a href="/arcade/#games">Games</a><a href="/arcade/community/">Community</a><a href="/arcade/leaderboard/">Leaderboard</a><a href="/arcade/#soon">Coming soon</a><a href="#" data-feedback>Feedback</a></div>
+  <div class="sp"></div>
+  <a class="back" href="/">← Carzzy Apps</a>
+  <button class="acct out" id="acct" type="button">Sign in</button>
+</div></nav>
+
+<main class="wrap">
+  <section class="sec" style="padding-top:28px">
+    <span class="kick">Credits</span>
+    <h1 style="margin:6px 0 8px">Thank <em>you</em>.</h1>
+    <p style="color:var(--tx2,#b9b3d9);max-width:640px">Every player who reached <b>Diamond</b> (500,000 LP) or <b>Legend</b> (1,000,000 LP) gets their name on this wall for good. Legends first. Diamond players can hide their name from the Tiers &amp; perks panel on the arcade home page.</p>
+    <div class="roll" id="roll"><div class="empty2">Loading the credits…</div></div>
+  </section>
+</main>
+
+<footer><div class="wrap"><span><b>Lazer Arcade</b> by Lazer Yudel · part of <a href="/">Carzzy Apps</a></span><span><a href="/arcade/">All games</a> · <a href="/arcade/leaderboard/">Leaderboard</a></span></div></footer>
+
+<script type="module">
+import LZ, { mountShell } from "/arcade/shell.js";
+import { loadTiers, tierOf } from "/arcade/tiers.js";
+mountShell();
+const esc = LZ.esc, fmt = LZ.fmt;
+const tiers = await loadTiers();
+const diamond = tiers.find((t) => t.id === "diamond"), legend = tiers.find((t) => t.id === "legend");
+const rows = await LZ.credits(diamond ? diamond.lp : 500000);
+const el = document.getElementById("roll");
+if (!rows.length) { el.innerHTML = '<div class="empty2">No one has reached Diamond yet. The first name here is up for grabs.</div>'; }
+else {
+  const L = rows.filter((r) => legend && r.lp >= legend.lp), D = rows.filter((r) => !legend || r.lp < legend.lp);
+  const sec = (title, list, color) => list.length ? `<h3>${title}</h3>` + list.map((r) => `<div class="n" style="color:${color}">${esc(r.username)}<small>${fmt(r.lp)} LP</small></div>`).join("") : "";
+  el.innerHTML = `<div class="track" style="--dur:${Math.max(22, 10 + rows.length * 2.2)}s"><div class="lead">LAZER ARCADE</div><h3>FOUNDING PLAYERS</h3>${sec("LEGENDS", L, legend ? legend.color : "#ff5fd8")}${sec("DIAMOND", D, diamond ? diamond.color : "#a5b4ff")}<h3>AND EVERYONE WHO PLAYED</h3><div class="lead" style="font-size:22px">Thank you.</div></div>`;
+}
+</script>
+</body>
+</html>

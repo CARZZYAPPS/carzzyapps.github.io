@@ -1,0 +1,7 @@
+{
+  "note": "Perk links synced to Firestore arcadeAccess/* by the backend workflow. earlyAccess: shown to Platinum+ until the release date. beta: shown to Diamond+.",
+  "earlyAccess": [
+    { "id": "harbor", "name": "Harbor Rush", "path": "/arcade/harbor-rush-ea-30owlnm20j/", "until": "2026-11-12T12:00:00-05:00" }
+  ],
+  "beta": []
+}

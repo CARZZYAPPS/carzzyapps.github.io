@@ -1,0 +1,11 @@
+{
+  "note": "Tier ladder by lifetime Lazer Points. Perks stack: each tier includes everything below it. Tune thresholds here.",
+  "tiers": [
+    { "id": "bronze", "name": "Bronze", "lp": 25000, "color": "#e0955a", "perk": "Tier badge and a name color on every leaderboard" },
+    { "id": "silver", "name": "Silver", "lp": 50000, "color": "#c9d3e6", "perk": "Pin up to 3 achievement badges to your leaderboard row" },
+    { "id": "gold", "name": "Gold", "lp": 100000, "color": "#ffd23f", "perk": "Vote on which queued game ships next" },
+    { "id": "platinum", "name": "Platinum", "lp": 250000, "color": "#7df9ff", "perk": "Early access to every new game" },
+    { "id": "diamond", "name": "Diamond", "lp": 500000, "color": "#a5b4ff", "perk": "Beta builds before early access, plus your name on the credits wall" },
+    { "id": "legend", "name": "Legend", "lp": 1000000, "color": "#ff5fd8", "perk": "Founding Player frame on every leaderboard, plus everything above" }
+  ]
+}
