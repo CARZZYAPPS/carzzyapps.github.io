@@ -8,7 +8,7 @@ git fetch -q origin main
 git fetch -q https://github.com/EWieds/EWieds.github.io main:refs/mirror/ewieds 2>/dev/null || true
 IDX=$(mktemp); export GIT_INDEX_FILE=$IDX
 git read-tree origin/main
-git rm -q --cached --ignore-unmatch CNAME .github/workflows/lazer-arcade.yml >/dev/null
+git update-index --force-remove CNAME .github/workflows/lazer-arcade.yml
 TREE=$(git write-tree); unset GIT_INDEX_FILE; rm -f $IDX
 MSG="Mirror of CARZZYAPPS/carzzyapps.github.io@$(git rev-parse --short origin/main): $(git log -1 --format=%s origin/main)"
 if git rev-parse -q --verify refs/mirror/ewieds >/dev/null; then
