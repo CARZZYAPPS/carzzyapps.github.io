@@ -98,7 +98,7 @@
     // or errors out (shows up as "internal"), claim it directly in Firestore; the usernames rules allow this.
     async function claimUsernameSafely(user, username) {
       try { await claimUsername({ username }); return; }
-      catch (err) { if (err.code === "functions/already-exists" || err.code === "functions/invalid-argument") throw err; console.warn("claimUsername function failed (" + (err.code || err.message) + "), claiming directly.", err); }
+      catch (err) { if (err.code === "functions/already-exists") throw err; console.warn("claimUsername function failed (" + (err.code || err.message) + "), claiming directly.", err); }
       const db = getFirestore(app);
       const ref = doc(db, "usernames", username.toLowerCase());
       await runTransaction(db, async (tx) => {
@@ -133,8 +133,8 @@
 
       let cred = null;
       try {
-        if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
-          msg.style.color = "#f00"; msg.textContent = "Username must be 3–20 letters, numbers, or underscores."; return;
+        if (!username || username.length > 30 || username.includes("/") || username === "." || username === ".." || /^__.*__$/.test(username)) {
+          msg.style.color = "#f00"; msg.textContent = "Pick a username up to 30 characters (no slashes)."; return;
         }
         const staySignedIn = document.getElementById("stay-signed-in").checked;
         await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);

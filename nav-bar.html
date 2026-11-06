@@ -50,6 +50,7 @@
         .nav-links {
             position: absolute;
             right: 1.5vw;
+            white-space: nowrap;
         }
 
         .nav-link,
@@ -91,6 +92,10 @@
             list-style: none;
             border: solid #00d1b2 5px;
             box-shadow: -7px 7px 15px rgba(0, 0, 0, 0.5);
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            max-width: 100vw;
+            box-sizing: border-box;
         }
 
         .menu-overlay {
@@ -134,13 +139,13 @@
             color: #00d1b2;
         }
 
-        @media (max-width: 1250px) {
+        @media (max-width: 1520px) {
             .nav-head {
                 display: none;
             }
         }
 
-        @media (max-width: 930px) {
+        @media (max-width: 1200px) {
             nav {
                 padding-bottom: 0;
             }

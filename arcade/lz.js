@@ -17,7 +17,7 @@ const CONFIG = {
   appId: "1:716862658931:web:6295033aaa1d8155dc0d06"
 };
 const BASE = "/arcade/";
-const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/;
+const USERNAME_RE = /^[^\/]{1,30}$/;
 const SESSION_LP_CAP = 20000;
 
 const app = getApps().length ? getApp() : initializeApp(CONFIG);

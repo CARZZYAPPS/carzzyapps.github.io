@@ -20,8 +20,8 @@ service cloud.firestore {
           && data.uid == request.auth.uid
           && data.guest is bool
           && data.username is string
-          && data.username.matches('^[A-Za-z0-9_]{3,20}$')
-          && username.matches('^[a-z0-9_]{3,20}$')
+          && data.username.matches('^[^/]{1,30}$')
+          && username.matches('^[^/]{1,30}$')
           && (data.guest
             ? request.auth.token.firebase.sign_in_provider == 'anonymous'
             : request.auth.token.email is string);
@@ -116,7 +116,7 @@ service cloud.firestore {
         && data.state is map
         && validGameState(data.state)
         && (!('username' in data)
-          || (data.username is string && data.username.matches('^[A-Za-z0-9_]{3,20}$')))
+          || (data.username is string && data.username.matches('^[^/]{1,30}$')))
         && (!('gameVersion' in data)
           || data.gameVersion == 'yes-graphics')
         && data.updatedAt == request.time;
@@ -135,7 +135,7 @@ service cloud.firestore {
       allow create, update: if request.auth != null
         && request.auth.uid == playerId
         && request.resource.data.username is string
-        && request.resource.data.username.matches('^[A-Za-z0-9_]{3,20}$')
+        && request.resource.data.username.matches('^[^/]{1,30}$')
         && request.resource.data.gameVersion == 'yes-graphics'
         && validGameSave(request.resource.data);
       allow delete: if false;
@@ -168,7 +168,7 @@ service cloud.firestore {
           && (!('adminRevision' in data)
             || (data.adminRevision is int && data.adminRevision >= 0))
           && (!('username' in data)
-            || (data.username is string && data.username.matches('^[A-Za-z0-9_]{3,20}$')))
+            || (data.username is string && data.username.matches('^[^/]{1,30}$')))
           && (!('gameVersion' in data) || data.gameVersion == 'no-graphics')
           && data.updatedAt == request.time;
       }
@@ -214,7 +214,7 @@ service cloud.firestore {
           && data.actorType == 'player'
           && data.uid == request.auth.uid
           && data.username is string
-          && data.username.matches('^[A-Za-z0-9_]{3,20}$')
+          && data.username.matches('^[^/]{1,30}$')
           && (!('gameVersion' in data) || data.gameVersion == 'no-graphics')
           && data.best is int
           && data.best >= 0
@@ -239,7 +239,7 @@ service cloud.firestore {
           && data.actorType == 'admin'
           && data.uid is string
           && data.username is string
-          && data.username.matches('^[A-Za-z0-9_]{3,20}$')
+          && data.username.matches('^[^/]{1,30}$')
           && (!('gameVersion' in data) || data.gameVersion == 'no-graphics')
           && data.previousBest is int
           && data.previousBest >= 0
@@ -264,7 +264,7 @@ service cloud.firestore {
 
     function ownsUsername(name) {
       return name is string
-        && name.matches('^[A-Za-z0-9_]{3,20}$')
+        && name.matches('^[^/]{1,30}$')
         && exists(/databases/$(database)/documents/usernames/$(name.lower()))
         && get(/databases/$(database)/documents/usernames/$(name.lower())).data.uid == request.auth.uid;
     }

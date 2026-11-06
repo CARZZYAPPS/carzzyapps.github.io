@@ -10,7 +10,7 @@ initializeApp();
 const db = getFirestore();
 const auth = getAuth();
 const webApiKey = defineString("FIREBASE_WEB_API_KEY");
-const usernamePattern = /^[A-Za-z0-9_]{3,20}$/;
+const usernamePattern = /^[^\/]{1,30}$/;
 
 function normalizeUsername(value) {
   if (typeof value !== "string" || !usernamePattern.test(value)) {

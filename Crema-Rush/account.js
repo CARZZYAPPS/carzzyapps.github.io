@@ -22,7 +22,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 var SIGN_IN_KEY = "signIn";
-var usernamePattern = /^[A-Za-z0-9_]{3,20}$/;
+var usernamePattern = /^[^\/]{1,30}$/;
 
 function setSignedInFlag(isSignedIn) {
   try {
@@ -184,7 +184,7 @@ function requestUser(auth, db, container, pendingGuest, initialMode) {
         '<button class="btn ghost" type="button" data-account-mode="choose"' +
         (account.busy ? " disabled" : "") + '>Back</button>' +
         (creating
-          ? '<p class="account-note">Usernames use 3–20 letters, numbers, or underscores.</p>'
+          ? '<p class="account-note">Usernames can be up to 30 characters (no slashes).</p>'
           : "") +
         "</div>";
       var usernameInput = container.querySelector("#account-username");
@@ -203,7 +203,7 @@ function requestUser(auth, db, container, pendingGuest, initialMode) {
       var staySignedIn = !!container.querySelector("#stay-signed-in").checked;
       var creating = account.mode === "create";
       if (creating && !usernamePattern.test(username)) {
-        render("Use 3–20 letters, numbers, or underscores for your username.", username);
+        render("Pick a username up to 30 characters (no slashes).", username);
         return;
       }
       if (!creating && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -410,7 +410,7 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
             '<p class="rc-sub">Your progress remains attached to this account.</p>' +
             '<form data-rename-form novalidate>' +
             '<label class="account-label" for="rename-username">New username</label>' +
-            '<input class="account-input" id="rename-username" name="username" type="text" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" value="' + escapedUsername + '" autocomplete="username" autocapitalize="none" spellcheck="false" required>' +
+            '<input class="account-input" id="rename-username" name="username" type="text" minlength="1" maxlength="30" value="' + escapedUsername + '" autocomplete="username" autocapitalize="none" spellcheck="false" required>' +
             '<label class="account-label" for="rename-password">Current password</label>' +
             '<input class="account-input" id="rename-password" name="password" type="password" autocomplete="current-password" required>' +
             '<p class="account-error" role="alert">' + (message || "") + '</p>' +
@@ -425,8 +425,8 @@ export async function connectCremaAccount(config, container, returnTo, initialMo
           event.preventDefault();
           var nextUsername = event.target.elements.username.value.trim();
           var password = event.target.elements.password.value;
-          if (!/^[A-Za-z0-9_]{3,20}$/.test(nextUsername)) {
-            render("Use 3–20 letters, numbers, or underscores.", nextUsername);
+          if (!/^[^\/]{1,30}$/.test(nextUsername)) {
+            render("Up to 30 characters, no slashes.", nextUsername);
             return;
           }
           if (!password) {
