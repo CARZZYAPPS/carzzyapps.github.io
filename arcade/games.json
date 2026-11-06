@@ -63,17 +63,12 @@
     {
       "id": "harbor",
       "name": "Harbor Rush",
-      "version": "2.0",
+      "version": "3.0",
       "path": "/arcade/harbor-rush/",
-      "hook": "You run the crane. Ships arrive stacked high and every truck wants the one container that's buried. Dig, sort, keep reefers powered and hazmat fenced, then grow into a shipping empire.",
-      "categories": [
-        "tycoon",
-        "time",
-        "3d",
-        "strategy"
-      ],
+      "hook": "Swing a real crane over a stacked ship. Dig out exactly what each truck wants and land every box dead center, through wind, frozen reefers and a night shift with hazmat.",
+      "categories": ["arcade", "puzzle", "time"],
       "ratio": 0.04,
-      "scoreLabel": "shift score",
+      "scoreLabel": "level score",
       "accent": [
         "#ff9a1f",
         "#2f8fd0"
