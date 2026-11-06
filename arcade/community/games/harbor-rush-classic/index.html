@@ -2327,8 +2327,10 @@ function tapAt(x,y){
   var r=cvs.getBoundingClientRect();ndc.set((x-r.left)/r.width*2-1,-((y-r.top)/r.height)*2+1);ray.setFromCamera(ndc,camera);
   var hits=ray.intersectObjects(shiftHits(),false);if(!hits.length)return;
   for(var i=0;i<hits.length;i++)if(hits[i].object.userData.gull){shooGull();return;}
+  // precise targets (tray spots, scrap, a station's slot or top) always beat a station's big body box
+  for(var q=0;q<hits.length;q++){var uq=hits[q].object.userData;if(uq.tray!=null){trayTap(uq.tray);return;}if(uq.trash){binTap();return;}}
+  for(q=0;q<hits.length;q++){var us=hits[q].object.userData;if(us.st&&(us.slot!=null||us.top)){tapStation(us.st,us);return;}}
   var h=hits[0].object.userData;
-  if(h.st&&h.slot==null&&!h.top){for(var j=1;j<hits.length;j++){var u=hits[j].object.userData;if(u.st===h.st&&(u.slot!=null||u.top)){h=u;break;}}}
   if(h.tray!=null){trayTap(h.tray);return;}
   if(h.trash){binTap();return;}
   if(h.st)tapStation(h.st,h);

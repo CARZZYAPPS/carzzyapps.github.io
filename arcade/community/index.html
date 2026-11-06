@@ -43,11 +43,11 @@
 .make h3{font-size:19px;margin-bottom:6px}
 .make p{color:var(--tx2);margin:0 0 14px;font-size:14px}
 @media (max-width:900px){.lay{grid-template-columns:1fr}.pin{grid-template-columns:1fr}.pin .art{min-height:130px}}
-.feat2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);margin-top:16px;overflow:hidden;text-decoration:none;border-color:rgba(34,228,255,.35);transition:transform .15s,border-color .15s}
+.feat2{display:grid;grid-template-columns:150px minmax(0,1fr);align-items:center;margin-top:12px;overflow:hidden;text-decoration:none;border-color:rgba(34,228,255,.25);transition:transform .15s,border-color .15s;max-width:640px}
 .feat2:hover{transform:translateY(-2px);border-color:var(--cyan)}
-.feat2 img{width:100%;height:100%;min-height:180px;object-fit:cover;display:block;background:#0b1626}
-.feat2 .tx{padding:22px}.feat2 h2{font-size:24px;margin:8px 0 6px}.feat2 p{color:var(--tx2);margin:0 0 12px}.feat2 .st{display:flex;gap:14px;font-weight:800;font-size:14px;color:var(--tx2);margin-bottom:14px}
-@media (max-width:900px){.feat2{grid-template-columns:1fr}.feat2 img{min-height:0;aspect-ratio:16/9}}
+.feat2 img{width:100%;height:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#0b1626}
+.feat2 .tx{padding:10px 14px}.feat2 h2{font-size:17px;margin:4px 0 2px}.feat2 p{color:var(--tx2);margin:0 0 6px;font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.feat2 .st{display:flex;gap:10px;font-weight:800;font-size:12px;color:var(--tx2);margin:0}.feat2 .badge{font-size:10px}
+@media (max-width:600px){.feat2{grid-template-columns:104px minmax(0,1fr)}.feat2 p{-webkit-line-clamp:1}}
 </style>
 </head>
 <body>
