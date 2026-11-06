@@ -92,7 +92,21 @@ function load(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s
 function save(){if(!G)return;try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}if(window.LZ_GAME&&window.LZ)try{LZ.save(LZ_GAME);}catch(e){}}
 function starsTotal(){var t=0;for(var k in G.stars)t+=G.stars[k];return t;}
 function portStars(pi){var t=0;for(var i=0;i<6;i++)t+=G.stars[pi+'-'+i]||0;return t;}
-function portOpen(pi){return starsTotal()>=PORTS[pi].need;}
+/* After the four hand-built ports the harbor never ends: new ports are generated forever, each one harder. */
+var GEN_NAMES=['Storm Reach','Iron Bay','Coral Docks','Polar Gate','Neon Pier','Rust Harbor','Typhoon Quay','Sunset Wharf','Fog Island','Megaport'],PCACHE={};
+var RULE_TXT={wind:'gusts',reefer:'reefers',hazmat:'hazmat',night:'night shift'};
+function port(pi){
+  if(pi<PORTS.length)return PORTS[pi];if(PCACHE[pi])return PCACHE[pi];
+  var g=pi-PORTS.length,R=mulberry(pi*7919+13),base=PORTS[(g+1)%PORTS.length],d0=g+1;
+  var pool=['wind','reefer','hazmat','night'],rules=[];pool.forEach(function(r){if(R()<.5)rules.push(r);});
+  while(rules.length<2){var x=pool[Math.floor(R()*pool.length)];if(rules.indexOf(x)<0)rules.push(x);}
+  var th=Object.assign({},base.th);if(rules.indexOf('night')>=0)th=Object.assign({},PORTS[3].th);else delete th.night;
+  var lv=[];for(var i=0;i<6;i++){var d=d0+i/5,n=Math.min(30,13+Math.round(d*1.4)+i),p={c:Math.min(8,6+Math.floor((i+d0)/4)),h:5,f:.62,y:4,l:Math.min(3,2+(i>=3?1:0)),n:n,p:Math.max(10,Math.round(46*Math.pow(.95,d))),k:6,par:Math.round(30+n*Math.max(8,14.5*Math.pow(.97,d)))};
+    if(rules.indexOf('wind')>=0)p.w=Math.min(4,1.3+d*.15);if(rules.indexOf('reefer')>=0){p.r=Math.min(.45,.25+d*.025);p.pw=2;}if(rules.indexOf('hazmat')>=0)p.z=Math.min(.38,.22+d*.02);lv.push(p);}
+  return PCACHE[pi]={id:'gen'+pi,name:GEN_NAMES[g%GEN_NAMES.length]+(g>=GEN_NAMES.length?' '+(Math.floor(g/GEN_NAMES.length)+1):''),
+    tag:'Port '+(pi+1)+': '+rules.map(function(r){return RULE_TXT[r];}).join(', ')+'. Faster trucks, taller ships, no breaks.',need:56+g*14,th:th,rules:rules.indexOf('night')>=0?['night']:[],lv:lv};
+}
+function portOpen(pi){return starsTotal()>=port(pi).need;}
 function lvOpen(pi,li){return portOpen(pi)&&(li===0||G.stars[pi+'-'+(li-1)]>0);}
 function endlessOpen(){return (G.stars['0-5']||0)>0;}
 

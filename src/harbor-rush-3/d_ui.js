@@ -26,17 +26,18 @@ function showMap(){
   LV=null;gameUI(false);PAUSED=true;var st=starsTotal(),h='';
   h+='<div class="top"><button class="btn sec" data-a="title" aria-label="Back">◀</button><div class="sp"></div><div class="coins">★ '+st+'</div><div class="coins">⛁ '+fmt(G.coins)+'</div><button class="btn sec" data-a="shop">Workshop</button></div>';
   h+='<h1>Ports</h1>';
-  PORTS.forEach(function(P,pi){var open=portOpen(pi),bg='linear-gradient(160deg,'+P.th.sky[0]+' 0%,'+P.th.sea[0]+' 70%,'+P.th.sea[1]+' 100%)';
+  var shown=PORTS.length;while(portOpen(shown-1))shown++;
+  for(var pp=0;pp<shown;pp++)(function(P,pi){var open=portOpen(pi),bg='linear-gradient(160deg,'+P.th.sky[0]+' 0%,'+P.th.sea[0]+' 70%,'+P.th.sea[1]+' 100%)';
     h+='<div class="port" style="background:'+bg+'"><div class="stc">'+portStars(pi)+'/18 ★</div><h3>'+esc(P.name)+'</h3><div class="tg">'+esc(P.tag)+'</div><div class="lvls">';
     for(var li=0;li<6;li++){var s=G.stars[pi+'-'+li]||0,ok=lvOpen(pi,li),nx=ok&&!s;h+='<button class="lv'+(nx?' next':'')+'" data-a="lv" data-p="'+pi+'" data-l="'+li+'"'+(ok?'':' disabled')+'>'+(li+1)+'<small>'+(s?starsStr(s):ok?'':'🔒')+'</small></button>';}
-    h+='</div>'+(open?'':'<div class="lock">🔒 '+P.need+' ★ to unlock<br>(you have '+st+')</div>')+'</div>';});
+    h+='</div>'+(open?'':'<div class="lock">🔒 '+P.need+' ★ to unlock<br>(you have '+st+')</div>')+'</div>';})(port(pp),pp);
   var eo=endlessOpen();
   h+='<div class="mode"><button class="btn'+(eo?' grn':' sec')+'" data-a="endless"'+(eo?'':' disabled')+'>Rush Hour'+(eo?' · best '+fmt(G.endless):' · clear 1-6')+'</button></div>';
   h+='<div class="mode"><button class="btn sec" data-a="mute">Sound: '+(G.mute?'off':'on')+'</button></div>';
   show(h,'','map');
 }
 function showIntro(pi,li){
-  var P=PORTS[pi],p=P.lv[li],rules=P.rules.slice();if(p.w&&rules.indexOf('wind')<0)rules.push('wind');if(p.r&&rules.indexOf('reefer')<0)rules.push('reefer');if(p.z&&rules.indexOf('hazmat')<0)rules.push('hazmat');
+  var P=port(pi),p=P.lv[li],rules=P.rules.slice();if(p.w&&rules.indexOf('wind')<0)rules.push('wind');if(p.r&&rules.indexOf('reefer')<0)rules.push('reefer');if(p.z&&rules.indexOf('hazmat')<0)rules.push('hazmat');
   var R={wind:['💨','Wind gusts push the hanging load. Wait for it to settle.'],reefer:['❄','Reefers thaw off the ship. Ship them or park them on a ⚡ powered slot.'],hazmat:['☢','Hazmat: a clang costs a heart, a bump costs 100 points. Land it clean.'],night:['🌙','Night shift: only the lights show what\'s what.']};
   var g='<div class="goal"><div><i>🚚</i>Load '+p.n+' trucks</div><div><i>⏱</i>Par time '+mmss(p.par)+' with all 3 hearts for ★★★</div>';
   rules.forEach(function(r){g+='<div><i>'+R[r][0]+'</i>'+R[r][1]+'</div>';});g+='</div>';
@@ -79,7 +80,7 @@ function showResults(r){
   h+='<span class="t">Score</span><span class="t">'+P(r.total)+'</span><span>Coins</span><span class="gold">+'+P(r.coins)+' ⛁</span>';
   if(window.LZ_GAME)h+='<span>Lazer Points'+(r.ea?' (held, paid 1.5× at launch)':LZM>1?' ('+LZM+'× today)':'')+'</span><span class="pos">+'+P(r.ea?Math.round(r.lp*1.5):r.lp)+' LP</span>';
   h+='</div>';
-  var nx=!r.endless&&r.win&&LV&&LV.li<5?[LV.pi,LV.li+1]:!r.endless&&r.win&&LV&&LV.pi<PORTS.length-1&&portOpen(LV.pi+1)?[LV.pi+1,0]:null;
+  var nx=!r.endless&&r.win&&LV&&LV.li<5?[LV.pi,LV.li+1]:!r.endless&&r.win&&LV&&portOpen(LV.pi+1)?[LV.pi+1,0]:null;
   h+='<div class="row"><button class="btn sec" data-a="map">Ports</button><button class="btn sec" data-a="retry">Retry</button>'+(nx?'<button class="btn" data-a="lv" data-p="'+nx[0]+'" data-l="'+nx[1]+'">Next</button>':'')+'</div></div>';
   show(h,'glass','res');
   if(!r.endless)$('#scr .stars').querySelectorAll('svg').forEach(function(s,i){if(i<r.stars)setTimeout(function(){s.classList.add('in');SFX.star(i);},250+i*300);else{s.style.color='rgba(255,255,255,.15)';setTimeout(function(){s.classList.add('in');},250+i*300);}});

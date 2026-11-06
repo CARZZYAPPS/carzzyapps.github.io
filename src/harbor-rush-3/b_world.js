@@ -18,7 +18,7 @@ function topY(s){return baseY(s)+s.stack.length*CH;}
 function mkBox(t){return {t:t,thaw:null,id:Math.random()};}
 
 function startLevel(pi,li,endless){
-  var P=PORTS[pi],p=Object.assign({},endless?endlessParams():P.lv[li]),L=layout(p),R=mulberry(endless?Math.floor(Math.random()*1e9):pi*977+li*131+7);
+  var P=port(pi),p=Object.assign({},endless?endlessParams():P.lv[li]),L=layout(p),R=mulberry(endless?Math.floor(Math.random()*1e9):pi*977+li*131+7);
   var rules={};(endless?endlessRules():P.rules).forEach(function(r){rules[r]=1;});if(p.w)rules.wind=1;if(p.r)rules.reefer=1;if(p.z)rules.hazmat=1;
   LV={pi:pi,li:li,endless:!!endless,P:P,p:p,L:L,rules:rules,R:R,t:0,score:0,combo:0,best:0,hearts:3,served:0,missed:0,spawned:0,trucks:[],next:1.2,
       perf:0,bumps:0,clangs:0,lost:0,phase:'play',wind:0,windT:rnd(6,10),gust:0,gustDir:1,tutStep:p.tut?0:-1,shipT:0,ships:1,endT:0,
