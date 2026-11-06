@@ -1,49 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="utf-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign Up | Carzzy Apps</title>
-
-    <meta name="description" content="Create an account to use Carzzy Apps games and services.">
-    <meta name="keywords" content="Carzzy Apps, create account, sign up">
-    <meta name="author" content="Avis, DeBus">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#0a0a0a">
-    <meta name="color-scheme" content="dark">
-    <meta name="application-name" content="Carzzy Apps">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Carzzy Apps">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:title" content="Sign Up | Carzzy Apps">
-    <meta property="og:description" content="Create an account to use Carzzy Apps games and services.">
-    <meta property="og:url" content="https://www.carzzyapps.com/auth/sign-up/">
-    <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta property="og:image:alt" content="Carzzy Apps logo">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Sign Up | Carzzy Apps">
-    <meta name="twitter:description" content="Create an account to use Carzzy Apps games and services.">
-    <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta name="twitter:image:alt" content="Carzzy Apps logo">
-    <link rel="canonical" href="https://www.carzzyapps.com/auth/sign-up/">
-
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
-  <style>
-    body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
-    .card{background:#1a1a1a;border:1px solid #00d1b2;padding:30px;border-radius:12px;width:100%;max-width:450px;box-sizing:border-box;margin:100px auto 0 auto;}
-    h2 {font-size: 32px; text-align: center;}
-    label{display:block;margin-top:20px;font-size:15px}
-    input,button{width:100%;padding:10px;margin-top:5px;border-radius:6px;box-sizing:border-box}
-    input{background:#2a2a2a;border:1px solid #333;color:#fff}
-    button{background:#00d1b2;border:none;color:#0a0a0a;font-weight:bold;cursor:pointer;margin-top:25px; font-size: 20px;}
-    .msg{text-align:center;margin-top:15px}
-    .stay-signed-in-container{display:flex;align-items:center;gap:8px;margin-top:12px;color:#ccc;font-size:14px}
-    .stay-signed-in-container input{width:auto;margin:0;accent-color:#00d1b2}
-    .stay-signed-in-container label{margin:0;cursor:pointer}
-  </style>
+    <title>Sign Up | Carzzy Apps</title>
+    <style>
+      body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
+      .card{background:#1a1a1a;border:1px solid #00d1b2;padding:30px;border-radius:12px;width:100%;max-width:450px;box-sizing:border-box;margin:100px auto 0 auto;}
+      h2 {font-size:32px;text-align:center;}
+      label{display:block;margin-top:20px;font-size:15px}
+      input,button{width:100%;padding:10px;margin-top:5px;border-radius:6px;box-sizing:border-box}
+      input{background:#2a2a2a;border:1px solid #333;color:#fff}
+      button{background:#00d1b2;border:none;color:#0a0a0a;font-weight:bold;cursor:pointer;margin-top:25px;font-size:20px;}
+      .msg{text-align:center;margin-top:15px}
+      .stay-signed-in-container{display:flex;align-items:center;gap:8px;margin-top:12px;color:#ccc;font-size:14px}
+      .stay-signed-in-container input{width:auto;margin:0;accent-color:#00d1b2}
+      .stay-signed-in-container label{margin:0;cursor:pointer}
+    </style>
 </head>
 <body>
   <script src="/nav-bar.js"></script>
@@ -52,33 +25,25 @@
     <form id="signup-form">
       <label for="username">Username</label>
       <input type="text" id="username" required placeholder="carzzy_boss">
-
       <label for="email">Email Address</label>
       <input type="email" id="email" required placeholder="you@example.com">
-
       <label for="password">Password</label>
       <input type="password" id="password" required placeholder="••••••••">
-
       <label for="confirm-password">Confirm Password</label>
       <input type="password" id="confirm-password" required placeholder="••••••••">
-
-      <!-- Show Password Checkbox -->
-      <div style="display: flex; align-items: center; gap: 8px; margin-top: 15px; font-size: 14px;">
-        <input type="checkbox" id="show-password" style="width: auto; margin: 0; cursor: pointer; accent-color: #00d1b2;">
-        <label for="show-password" style="margin: 0; cursor: pointer; color: #ccc;">Show Password</label>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:15px;font-size:14px;">
+        <input type="checkbox" id="show-password" style="width:auto;margin:0;cursor:pointer;accent-color:#00d1b2;">
+        <label for="show-password" style="margin:0;cursor:pointer;color:#ccc;">Show Password</label>
       </div>
-
       <div class="stay-signed-in-container">
         <input type="checkbox" id="stay-signed-in">
         <label for="stay-signed-in">Stay signed in on this device</label>
       </div>
-
       <button type="submit">Sign Up</button>
     </form>
     <div id="msg" class="msg"></div>
-    <div style="text-align:center; margin-top:15px;color:#ccc;">Already have an account? <a href="/auth/sign-in" style="color:#00d1b2">Sign In</a></div>
+    <div style="text-align:center;margin-top:15px;color:#ccc;">Already have an account? <a href="/auth/sign-in" style="color:#00d1b2">Sign In</a></div>
   </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
@@ -89,34 +54,38 @@
       setPersistence,
       updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-    import { getFirestore, doc, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, collection, query, where, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
-    const auth = getAuth(app); const claimUsername = httpsCallable(getFunctions(app, "us-central1"), "claimUsername");
-    // Claims the username with the Cloud Function when it's available. If the function isn't deployed
-    // or errors out (shows up as "internal"), claim it directly in Firestore; the usernames rules allow this.
+    const auth = getAuth(app);
+
     async function claimUsernameSafely(user, username) {
-      try { await claimUsername({ username }); return; }
-      catch (err) { if (err.code === "functions/already-exists") throw err; console.warn("claimUsername function failed (" + (err.code || err.message) + "), claiming directly.", err); }
       const db = getFirestore(app);
-      const ref = doc(db, "usernames", username.toLowerCase());
+      const usernamesRef = collection(db, "usernames");
+      
+      const q = query(usernamesRef, where("username", "==", username));
+      const querySnapshot = await getDocs(q);
+      let isTaken = false;
+      querySnapshot.forEach((docSnap) => {
+        if (docSnap.data().uid !== user.uid) { isTaken = true; }
+      });
+      if (isTaken) {
+        const e = new Error("taken"); e.code = "already-exists"; throw e;
+      }
+      
+      const ref = doc(db, "usernames", user.uid);
       await runTransaction(db, async (tx) => {
-        const snap = await tx.get(ref);
-        if (snap.exists() && snap.data().uid !== user.uid) { const e = new Error("taken"); e.code = "functions/already-exists"; throw e; }
         tx.set(ref, { uid: user.uid, guest: false, username });
       });
     }
 
-    // Toggle Password Visibility
     const showPasswordCheckbox = document.getElementById("show-password");
     const passwordInput = document.getElementById("password");
     const confirmPasswordInput = document.getElementById("confirm-password");
 
     showPasswordCheckbox.addEventListener("change", () => {
       const type = showPasswordCheckbox.checked ? "text" : "password";
-      passwordInput.type = type;
-      confirmPasswordInput.type = type;
+      passwordInput.type = type; confirmPasswordInput.type = type;
     });
 
     document.getElementById("signup-form").addEventListener("submit", async (e) => {
@@ -133,43 +102,30 @@
 
       let cred = null;
       try {
-        if (!username || username.length > 30 || username.includes("/") || username === "." || username === ".." || /^__.*__$/.test(username)) {
-          msg.style.color = "#f00"; msg.textContent = "Pick a username up to 30 characters (no slashes)."; return;
+        if (!username || username.length > 15) {
+          msg.style.color = "#f00"; msg.textContent = "Username must be up to 15 characters."; return;
         }
         const staySignedIn = document.getElementById("stay-signed-in").checked;
         await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);
         cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: username });
         await claimUsernameSafely(cred.user, username);
-        if (staySignedIn) {
-          localStorage.setItem("signIn", "true");
-        } else {
-          localStorage.removeItem("signIn");
-        }
+        if (staySignedIn) { localStorage.setItem("signIn", "true"); } else { localStorage.removeItem("signIn"); }
         msg.style.color = "#00d1b2"; msg.textContent = "Account registered successfully!";
         setTimeout(() => {document.location.href = "/auth/verify-email";}, 500);
       } catch (err) {
         if (cred && cred.user) {
-          try {
-            await cred.user.delete();
-          } catch (delErr) {
-            console.error("Cleanup rollback failed:", delErr);
-          }
+          try { await cred.user.delete(); } catch (delErr) { console.error("Cleanup failed:", delErr); }
         }
-
         msg.style.color = "#f00";
         let friendlyMessage = "An unexpected error occurred. Please try again.";
         switch (err.code) {
           case "auth/email-already-in-use": friendlyMessage = "This email address is already registered."; break;
-          case "functions/already-exists": friendlyMessage = "That username is already taken."; break;
-          case "functions/permission-denied": friendlyMessage = "Username registration failed. Sign in again and try."; break;
-          case "functions/unavailable": friendlyMessage = "Username registration is temporarily unavailable."; break;
-          case "functions/not-found": friendlyMessage = "Username registration is not set up yet. Please try again later."; break;
+          case "already-exists": friendlyMessage = "That username is already taken."; break;
           case "auth/invalid-email": friendlyMessage = "Please enter a valid email address."; break;
           case "auth/weak-password": friendlyMessage = "Your password is too weak."; break;
           case "auth/network-request-failed": friendlyMessage = "Network error. Check connection."; break;
           case "permission-denied": friendlyMessage = "Username registration failed."; break;
-          case "auth/password-does-not-meet-requirements": friendlyMessage = "Password must contain an uppercase and lowercase letter, a number, a special character, and be at least 6 characters long."; break;
           default: friendlyMessage = err.message;
         }
         msg.textContent = friendlyMessage;
