@@ -1,96 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="utf-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign In | Carzzy Apps</title>
-
-    <meta name="description" content="Sign in to your Carzzy Apps account.">
-    <meta name="keywords" content="Carzzy Apps, account sign in">
-    <meta name="author" content="Avis, DeBus">
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#0a0a0a">
-    <meta name="color-scheme" content="dark">
-    <meta name="application-name" content="Carzzy Apps">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Carzzy Apps">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:title" content="Sign In | Carzzy Apps">
-    <meta property="og:description" content="Sign in to your Carzzy Apps account.">
-    <meta property="og:url" content="https://www.carzzyapps.com/auth/sign-in/">
-    <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta property="og:image:alt" content="Carzzy Apps logo">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Sign In | Carzzy Apps">
-    <meta name="twitter:description" content="Sign in to your Carzzy Apps account.">
-    <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta name="twitter:image:alt" content="Carzzy Apps logo">
-    <link rel="canonical" href="https://www.carzzyapps.com/auth/sign-in/">
-
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
-  <style>
-    body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
-    .card{background:#1a1a1a;border:1px solid #00d1b2;padding:30px;border-radius:12px;width:100%;max-width:450px;box-sizing:border-box;margin:150px auto 0 auto;}
-    h2 {font-size: 32px; text-align: center;}
-    label{display:block;margin-top:20px;font-size:15px}
-    input,button{width:100%;padding:10px;margin-top:5px;border-radius:6px;box-sizing:border-box}
-    input{background:#2a2a2a;border:1px solid #333;color:#fff}
-    button{background:#00d1b2;border:none;color:#0a0a0a;font-weight:bold;cursor:pointer;margin-top:25px; font-size: 20px}
-    .msg{text-align:center;margin-top:15px}
-
-    /* Show Password styling to prevent checkbox from expanding 100% wide */
-    .show-pw-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .show-pw-container input {
-      width: auto;
-      margin: 0;
-      cursor: pointer;
-      accent-color: #00d1b2;
-    }
-    .show-pw-container label {
-      margin: 0;
-      font-size: 14px;
-      color: #ccc;
-      cursor: pointer;
-    }
-    .stay-signed-in-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 12px;
-      color: #ccc;
-      font-size: 14px;
-    }
-    .stay-signed-in-container input {
-      width: auto;
-      margin: 0;
-      accent-color: #00d1b2;
-    }
-    .stay-signed-in-container label {
-      margin: 0;
-      cursor: pointer;
-    }
-  </style>
+    <title>Sign In | Carzzy Apps</title>
+    <style>
+      body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
+      .card{background:#1a1a1a;border:1px solid #00d1b2;padding:30px;border-radius:12px;width:100%;max-width:450px;box-sizing:border-box;margin:150px auto 0 auto;}
+      h2 {font-size: 32px; text-align: center;}
+      label{display:block;margin-top:20px;font-size:15px}
+      input,button{width:100%;padding:10px;margin-top:5px;border-radius:6px;box-sizing:border-box}
+      input{background:#2a2a2a;border:1px solid #333;color:#fff}
+      button{background:#00d1b2;border:none;color:#0a0a0a;font-weight:bold;cursor:pointer;margin-top:25px; font-size: 20px}
+      .msg{text-align:center;margin-top:15px}
+      .show-pw-container {display: flex; align-items: center; gap: 8px; margin-top: 10px;}
+      .show-pw-container input {width: auto; margin: 0; cursor: pointer; accent-color: #00d1b2;}
+      .show-pw-container label {margin: 0; font-size: 14px; color: #ccc; cursor: pointer;}
+      .stay-signed-in-container {display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #ccc; font-size: 14px;}
+      .stay-signed-in-container input {width: auto; margin: 0; accent-color: #00d1b2;}
+      .stay-signed-in-container label {margin: 0; cursor: pointer;}
+    </style>
 </head>
 <body>
   <script src="/nav-bar.js"></script>
   <div class="card">
     <h2>Sign In</h2>
     <form id="login-form">
-      <label for="email">Username or Email Address</label>
-      <input type="text" id="email" required placeholder="username or you@example.com" autocomplete="username">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" required placeholder="you@example.com" autocomplete="email">
 
       <label for="password">Password</label>
       <input type="password" id="password" required placeholder="••••••••">
 
-      <!-- Toggle Password Checkbox -->
       <div class="show-pw-container">
         <input type="checkbox" id="toggle-password">
         <label for="toggle-password">Show password</label>
@@ -117,19 +58,14 @@
       browserSessionPersistence,
       getAuth,
       setPersistence,
-      signInWithEmailAndPassword,
-      signInWithCustomToken
+      signInWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
-    const signInWithUsername = httpsCallable(getFunctions(app, "us-central1"), "signInWithUsername");
 
-    // Show/Hide password logic
     const passwordInput = document.getElementById("password");
     const togglePassword = document.getElementById("toggle-password");
-
     togglePassword.addEventListener("change", () => {
       passwordInput.type = togglePassword.checked ? "text" : "password";
     });
@@ -140,25 +76,23 @@
       try {
         const staySignedIn = document.getElementById("stay-signed-in").checked;
         await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);
-        const identifier = document.getElementById("email").value.trim();
+        const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
-        if (identifier.includes("@")) {
-          await signInWithEmailAndPassword(auth, identifier, password);
-        } else {
-          const result = await signInWithUsername({ username: identifier, password });
-          await signInWithCustomToken(auth, result.data.customToken);
-        }
+
+        // Perform email-based login directly
+        await signInWithEmailAndPassword(auth, email, password);
+        
         if (staySignedIn) {
           localStorage.setItem("signIn", "true");
         } else {
           localStorage.removeItem("signIn");
         }
         msg.style.color = "#00d1b2"; msg.textContent = "Logged in successfully!";
-        const returnTo = sessionStorage.getItem("prevPage");
+        const returnTo = sessionStorage.getItem("prevPage") || "/";
         window.location.href = returnTo;
       } catch (error) {
         console.error("Sign-in failed.", error);
-        msg.style.color = "#f00"; msg.textContent = ["functions/internal", "functions/not-found", "functions/unavailable", "functions/unknown"].includes(error.code) ? "Username sign-in is unavailable right now. Please sign in with your email address." : "Incorrect username/email or password";
+        msg.style.color = "#f00"; msg.textContent = "Incorrect email or password";
       }
     });
   </script>
