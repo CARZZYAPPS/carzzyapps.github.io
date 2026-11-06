@@ -641,4 +641,6 @@ const LZ = {
 };
 window.LZ = LZ;
 window.dispatchEvent(new CustomEvent("lz-ready"));
+// One site visit per browser session (feeds creator earnings).
+try { if (!sessionStorage.getItem("cz.visit")) { sessionStorage.setItem("cz.visit", "1"); setDoc(doc(db, "arcadeStats", "site"), { plays: increment(1) }, { merge: true }).catch(() => {}); } } catch (e) {}
 export default LZ;

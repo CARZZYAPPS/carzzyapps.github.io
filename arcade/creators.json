@@ -1,0 +1,9 @@
+{
+  "note": "Creator earnings. A GitHub Action runs hourly and credits each creator in roles.json. Lazer Arcade itself counts as a creator game, so every player's LP, every game play and every site visit pays its creator.",
+  "share": 0.10,
+  "topCreatorMultiplier": 2,
+  "perPlay": 5,
+  "perVisit": 2,
+  "legendSeed": 1000000,
+  "seedUsers": ["LazerYudel"]
+}
