@@ -1,5 +1,6 @@
 // Rush engine kit for Lazer Studio: a no-code editor over the Rush tycoon engine's data.
 // A project is { engine:"rush", title, desc, kit:{ name, theme, bases, toppings, stations, recipes, districts, dayLen, cash } }.
+import { tabs as deepTabs, migrate } from "./kit2.js";
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 
@@ -61,6 +62,7 @@ export function validate(P) {
   return [...new Set(errs)];
 }
 export function thumb(P) {
+  if (P.cover && /^\/arcade\/[\w\/.-]+\.(jpg|png|webp)$/.test(P.cover)) return P.cover;
   const k = P.kit || {}, th = k.theme || {}, c = document.createElement("canvas"); c.width = 320; c.height = 180; const x = c.getContext("2d");
   const g = x.createLinearGradient(0, 0, 0, 180); g.addColorStop(0, th.wall || "#3f8f7a"); g.addColorStop(1, th.wall2 || "#2c6a5a"); x.fillStyle = g; x.fillRect(0, 0, 320, 180);
   x.fillStyle = th.flA || "#fff"; x.fillRect(0, 130, 320, 50); x.fillStyle = th.counter || "#a0663f"; x.fillRect(0, 108, 320, 26); x.fillStyle = th.top || "#fff"; x.fillRect(0, 104, 320, 8);
@@ -97,9 +99,11 @@ api.onTick(() => {
 export function editor(app, P, hooks) {
   let tab = "shop";
   const k = P.kit = P.kit || {}; ["bases", "toppings"].forEach((f) => (k[f] = k[f] || {})); ["stations", "recipes", "districts"].forEach((f) => (k[f] = k[f] || [])); k.theme = k.theme || {};
+  migrate(k);
+  const X = deepTabs({ k, P, save: () => hooks.save(), render: () => render() });
   document.body.classList.add("ed");
   app.innerHTML = `<div class="ed-wrap"><div class="ed-top"><a class="ib sm" href="/arcade/studio/" title="Back">◀</a><input class="ttl" id="ttl" maxlength="60" value="${esc(P.title)}" aria-label="Game title"><span class="stat" id="stat">Saved</span><button class="ib go" id="test">▶ Test</button><button class="ib pri" id="pub">Publish</button></div>
-    <div class="tabs2" id="tabs">${[["shop", "Shop"], ["products", "Products"], ["toppings", "Toppings"], ["machines", "Machines"], ["menu", "Menu"], ["districts", "Districts"], ["script", "Script"]].map(([a, n]) => `<button data-t="${a}" class="${a === tab ? "on" : ""}">${n}</button>`).join("")}</div><div class="ed-body"><div class="pane" id="pane"></div></div></div>`;
+    <div class="tabs2" id="tabs">${[["shop", "Shop"], ["types", "Shop types"], ["products", "Products"], ["toppings", "Toppings"], ["machines", "Machines"], ["menu", "Menu"], ["districts", "Districts"], ["models", "Models"], ["scene", "Scene"], ["customers", "Customers"], ["rules", "Rules"], ["hazards", "Hazards"], ["text", "Text"], ["script", "Script"]].map(([a, n]) => `<button data-t="${a}" class="${a === tab ? "on" : ""}">${n}</button>`).join("")}</div><div class="ed-body"><div class="pane" id="pane"></div></div></div>`;
   $("#ttl").oninput = (e) => hooks.setTitle(e.target.value || "Untitled");
   $("#test").onclick = hooks.test; $("#pub").onclick = hooks.publish;
   $$("#tabs [data-t]").forEach((b) => (b.onclick = () => { tab = b.dataset.t; $$("#tabs [data-t]").forEach((x) => x.classList.toggle("on", x === b)); render(); }));
@@ -107,6 +111,8 @@ export function editor(app, P, hooks) {
   const opt = (m, sel) => Object.keys(m).map((a) => `<option value="${a}" ${a === sel ? "selected" : ""}>${esc(m[a])}</option>`).join("");
   const nameMap = (o) => { const m = {}; Object.keys(o).forEach((a) => (m[a] = o[a].name)); return m; };
   const nid = (p) => p + Date.now().toString(36).slice(-5);
+  const mNames = () => { const m = {}; Object.keys(k.models || {}).forEach((a) => (m[a] = k.models[a].name || a)); return m; };
+  const tNames = () => { const m = {}; (k.types || []).forEach((t) => (m[t.id] = t.name)); return m; };
   const num = (path, v, mn, mx, st, label) => `<div class="fld"><label>${label}</label><input type="number" data-k="${path}" value="${v == null ? "" : v}" min="${mn}" max="${mx}" step="${st}"></div>`;
   const txt = (path, v, label, max) => `<div class="fld"><label>${label}</label><input data-k="${path}" value="${esc(v || "")}" maxlength="${max || 40}"></div>`;
   const col = (path, v, label) => `<div class="fld"><label>${label}</label><input type="color" data-k="${path}" value="${esc(v || "#ffffff")}"></div>`;
@@ -124,20 +130,14 @@ export function editor(app, P, hooks) {
         <div class="row2">${num("dayLen", k.dayLen || 150, 60, 300, 10, "Day length (seconds)")}${num("cash", k.cash || 60, 20, 5000, 10, "Starting cash")}</div>
         <h3 style="margin-top:12px">Colors</h3><div class="row2">${[["wall", "Wall"], ["wall2", "Wall shade"], ["accent", "Accent"], ["counter", "Counter"], ["top", "Countertop"], ["trim", "Trim"], ["flA", "Floor A"], ["flB", "Floor B"], ["stn", "Machines"]].map(([a, n]) => col("theme." + a, k.theme[a], n)).join("")}</div></div>`;
     } else if (tab === "products") {
-      h = `<p class="hint">Products are the base items customers order. Each one needs a machine that makes it.</p>` + Object.keys(k.bases).map((id) => { const b = k.bases[id]; return `<div class="rule"><div class="row2">${txt(`bases.${id}.name`, b.name, "Name", 24)}${`<div class="fld"><label>Served in</label><select data-k="bases.${id}.vessel" data-re="1">${opt(VESSELS, b.vessel)}</select></div>`}
-        ${b.vessel === "plate" ? sel(`bases.${id}.food`, FOODS, b.food, "Food look") : b.vessel === "cone" || b.vessel === "icecup" ? col(`bases.${id}.scoop`, b.scoop, "Scoop color") : col(`bases.${id}.liq`, b.liq, "Drink color")}${b.vessel === "mug" ? col(`bases.${id}.mug`, b.mug, "Mug color") : ""}
+      h = `<p class="hint">Products are the base items customers order. Each one needs a machine that makes it.</p>` + Object.keys(k.bases).map((id) => { const b = k.bases[id]; if (b.vessel !== "custom") delete b.model; return `<div class="rule"><div class="row2">${txt(`bases.${id}.name`, b.name, "Name", 24)}${`<div class="fld"><label>Served in</label><select data-k="bases.${id}.vessel" data-re="1">${opt(Object.assign({}, VESSELS, { custom: "★ My 3D model" }), b.vessel)}</select></div>`}${b.vessel === "custom" ? sel(`bases.${id}.model`, Object.assign({ "": "(pick a model)" }, mNames()), b.model || "", "Model") : ""}
+        ${b.vessel === "custom" ? "" : b.vessel === "plate" ? sel(`bases.${id}.food`, FOODS, b.food, "Food look") : b.vessel === "cone" || b.vessel === "icecup" ? col(`bases.${id}.scoop`, b.scoop, "Scoop color") : col(`bases.${id}.liq`, b.liq, "Drink color")}${b.vessel === "mug" ? col(`bases.${id}.mug`, b.mug, "Mug color") : ""}
         <button class="x" data-del="bases:${id}" title="Delete" style="align-self:center">🗑</button></div></div>`; }).join("") + `<button class="ib pri" id="addB">+ Product</button>`;
     } else if (tab === "toppings") {
-      h = `<p class="hint">Toppings sit on the topping rack (bought in the shop) or come from a jug machine. Customers order combos of a product plus toppings.</p>` + Object.keys(k.toppings).map((id) => { const t = k.toppings[id]; return `<div class="rule"><div class="row2">${txt(`toppings.${id}.name`, t.name, "Name", 24)}${col(`toppings.${id}.col`, t.col, "Color")}${sel(`toppings.${id}.vis`, LOOKS, t.vis, "Looks like")}${sel(`toppings.${id}.box`, BOXES, t.box, "Container")}${num(`toppings.${id}.lvl`, t.lvl || 1, 1, 30, 1, "Unlock level")}${num(`toppings.${id}.cost`, t.cost || 0, 0, 100000, 10, "Cost")}<button class="x" data-del="toppings:${id}" title="Delete" style="align-self:center">🗑</button></div></div>`; }).join("") + `<button class="ib pri" id="addT">+ Topping</button>`;
-    } else if (tab === "machines") {
-      const used = k.stations.map((s) => s.model);
-      h = `<p class="hint">Pick a machine type for how it works, then name it and tune it. Cookers make one item per slot and can burn. Batch machines make several at once and go stale. Each type can be used once.</p>` + k.stations.map((s, i) => { const M = MODELS[s.model] || {}, makesOpts = Object.assign({}, nameMap(k.bases), s.model === "steamer" ? nameMap(k.toppings) : {}); const avail = {}; Object.keys(MODELS).forEach((m) => { if (m === s.model || used.indexOf(m) < 0) avail[m] = MODELS[m].label; });
-        return `<div class="rule"><div class="row2">${`<div class="fld"><label>Type</label><select data-k="stations.${i}.model" data-re="1">${opt(avail, s.model)}</select></div>`}${txt(`stations.${i}.name`, s.name, "Name", 24)}${sel(`stations.${i}.makes`, makesOpts, s.makes, "Makes")}</div>
-          <div class="row2">${num(`stations.${i}.time`, s.time || 5, 1, 20, 0.1, "Seconds to make")}${M.kind === "cooker" ? num(`stations.${i}.burn`, s.burn || 6, 2, 30, 0.5, "Burns after (sec)") + num(`stations.${i}.slots`, s.slots || 2, 1, 4, 1, "Slots") : num(`stations.${i}.stale`, s.stale || 30, 5, 120, 1, "Goes stale after (sec)") + num(`stations.${i}.serv`, s.serv || 4, 1, 10, 1, "Servings per batch")}
-          ${num(`stations.${i}.lvl`, s.lvl || 1, 1, 30, 1, "Unlock level")}${num(`stations.${i}.cost`, s.cost || 0, 0, 1000000, 10, "Cost")}<button class="x" data-del="stations:${i}" title="Delete" style="align-self:center">🗑</button></div></div>`; }).join("") + `<button class="ib pri" id="addS" ${used.length >= Object.keys(MODELS).length ? "disabled" : ""}>+ Machine</button>`;
+      h = `<p class="hint">Toppings sit on the topping rack (bought in the shop) or come from a jug machine. Customers order combos of a product plus toppings.</p>` + Object.keys(k.toppings).map((id) => { const t = k.toppings[id]; return `<div class="rule"><div class="row2">${txt(`toppings.${id}.name`, t.name, "Name", 24)}${col(`toppings.${id}.col`, t.col, "Color")}${sel(`toppings.${id}.vis`, LOOKS, t.vis, "Looks like")}${sel(`toppings.${id}.box`, BOXES, t.box, "Container")}${sel(`toppings.${id}.model`, Object.assign({ "": "Built-in look" }, mNames()), t.model || "", "3D model on top")}${num(`toppings.${id}.lvl`, t.lvl || 1, 1, 30, 1, "Unlock level")}${num(`toppings.${id}.cost`, t.cost || 0, 0, 100000, 10, "Cost")}<button class="x" data-del="toppings:${id}" title="Delete" style="align-self:center">🗑</button></div></div>`; }).join("") + `<button class="ib pri" id="addT">+ Topping</button>`;
     } else if (tab === "menu") {
       const tops = Object.keys(k.toppings);
-      h = `<p class="hint">Menu items = a product plus any toppings. Popularity sets how often people order it. Tags decide which districts love it.</p>` + k.recipes.map((r, i) => `<div class="rule"><div class="row2">${txt(`recipes.${i}.name`, r.name, "Name", 28)}${sel(`recipes.${i}.base`, nameMap(k.bases), r.base, "Product")}${num(`recipes.${i}.price`, r.price || 4, 0.5, 200, 0.25, "Price")}${num(`recipes.${i}.w`, r.w || 2, 1, 5, 1, "Popularity (1-5)")}<button class="x" data-del="recipes:${i}" title="Delete" style="align-self:center">🗑</button></div>
+      h = `<p class="hint">Menu items = a product plus any toppings. Popularity sets how often people order it. Tags decide which districts love it.</p>` + k.recipes.map((r, i) => `<div class="rule"><div class="row2">${txt(`recipes.${i}.name`, r.name, "Name", 28)}${sel(`recipes.${i}.base`, nameMap(k.bases), r.base, "Product")}${(k.types || []).length ? sel(`recipes.${i}.type`, tNames(), r.type, "Shop type") : ""}${num(`recipes.${i}.price`, r.price || 4, 0.5, 200, 0.25, "Price")}${num(`recipes.${i}.w`, r.w || 2, 1, 5, 1, "Popularity (1-5)")}<button class="x" data-del="recipes:${i}" title="Delete" style="align-self:center">🗑</button></div>
         <div class="row2" style="gap:14px"><span class="fl">Toppings</span>${tops.map((t) => `<label class="sl" style="margin:0"><input type="checkbox" data-rc="${i}:${t}" ${(r.comps || []).includes(t) ? "checked" : ""}> ${esc(k.toppings[t].name)}</label>`).join("") || '<span class="hint" style="margin:0">No toppings yet</span>'}</div>
         <div class="row2" style="gap:14px;margin-top:6px"><span class="fl">Tags</span>${TAGS.map((t) => `<label class="sl" style="margin:0"><input type="checkbox" data-rt="${i}:${t}" ${(r.tags || "").split(" ").includes(t) ? "checked" : ""}> ${t}</label>`).join("")}</div></div>`).join("") + `<button class="ib pri" id="addR">+ Menu item</button>`;
     } else if (tab === "districts") {
@@ -147,21 +147,21 @@ export function editor(app, P, hooks) {
         <div class="row2" style="gap:14px;margin-top:6px"><span class="fl">Loves</span>${TAGS.map((t) => `<label class="sl" style="margin:0"><input type="checkbox" data-dp="${i}:${t}" ${(d.pref || {})[t] ? "checked" : ""}> ${t}</label>`).join("")}</div>
         ${txt(`districts.${i}.twist`, d.twist, "Description", 140)}</div>`).join("") + `<button class="ib pri" id="addD">+ District</button>`;
     }
+    else if (X[tab]) h = X[tab].html();
     else if (tab === "script") {
       h = `<div class="grid2" style="grid-template-columns:minmax(0,1fr) minmax(240px,380px)"><div class="card2"><h3>Script</h3><p class="hint">Optional JavaScript that runs inside your game. Games with a script are reviewed by staff before they go public, and scripts run in a locked-down sandbox.</p>
         <textarea id="code" spellcheck="false" style="width:100%;min-height:380px;font:500 13px/1.5 ui-monospace,Menlo,Consolas,monospace;background:#0c0921;color:#e9e4ff;border:1px solid var(--line2);border-radius:12px;padding:12px">${esc(P.script || "")}</textarea>
         <div class="row2" style="margin-top:10px"><button class="ib sm" id="ex">Insert example</button><span class="hint" style="margin:0;align-self:center">${(P.script || "").trim() ? "Publishing will send this game for review." : "No script: publishes instantly."}</span></div></div>
         <div class="card2"><h3>API</h3><pre style="white-space:pre-wrap;font:500 12px/1.5 ui-monospace,monospace;color:var(--tx2);margin:0">${esc(API)}</pre></div></div>`;
     }
-    p.innerHTML = h; wire(p);
+    p.innerHTML = h; wire(p); if (X[tab]) X[tab].after(p);
     const code = $("#code", p); if (code) { code.oninput = () => { P.script = code.value; save(); }; $("#ex", p).onclick = () => { code.value += (code.value ? "\n" : "") + EXAMPLE; P.script = code.value; save(); render(); }; }
     const desc = $("#desc", p); if (desc) desc.oninput = (e) => { P.desc = e.target.value; save(); };
     const on = (id, fn) => { const b = $(id, p); if (b) b.onclick = () => { fn(); save(); render(); }; };
     on("#addB", () => (k.bases[nid("b")] = { name: "New product", vessel: "cup", liq: "#8a4b2a" }));
     on("#addT", () => (k.toppings[nid("t")] = { name: "New topping", col: "#ff6fa8", vis: "sprinkles", box: "shaker", lvl: 1, cost: 50 }));
-    on("#addS", () => { const free = Object.keys(MODELS).find((m) => !k.stations.some((s) => s.model === m)); const b = Object.keys(k.bases)[0]; if (free) k.stations.push({ model: free, name: "New machine", makes: b, time: 5, lvl: 1, cost: 100 }); });
     on("#addR", () => { const b = Object.keys(k.bases)[0]; k.recipes.push({ base: b, comps: [], name: "New item", price: 4, w: 2, tags: "" }); });
-    on("#addD", () => k.districts.push({ name: "New district", lvl: k.districts.length * 2 + 2, cost: 1500 * k.districts.length, demand: 1, pat: 1, tips: 1, price: 1, win: "street", twist: "" }));
+    on("#addD", () => k.districts.push({ id: nid("d"), name: "New district", lvl: k.districts.length * 2 + 2, cost: 1500 * k.districts.length, demand: 1, pat: 1, tips: 1, price: 1, win: "street", twist: "" }));
     $$("[data-rc]", p).forEach((el) => (el.onchange = () => { const [i, t] = el.dataset.rc.split(":"), r = k.recipes[+i]; r.comps = (r.comps || []).filter((c) => c !== t); if (el.checked) r.comps.push(t); save(); }));
     $$("[data-rt]", p).forEach((el) => (el.onchange = () => { const [i, t] = el.dataset.rt.split(":"), r = k.recipes[+i]; const s = new Set((r.tags || "").split(" ").filter(Boolean)); el.checked ? s.add(t) : s.delete(t); r.tags = [...s].join(" "); save(); }));
     $$("[data-de]", p).forEach((el) => (el.onchange = () => { const [i, e] = el.dataset.de.split(":"), d = k.districts[+i]; d.ev = (d.ev || []).filter((x) => x !== e); if (el.checked) d.ev.push(e); save(); }));

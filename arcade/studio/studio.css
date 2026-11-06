@@ -121,3 +121,6 @@ body.ed .nav{display:none}
 }
 .modal2 .mh b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:560px){.modal2 #tl{display:none}.modal2 .mh .ib{padding:6px 9px}}
+@media(max-width:860px){.grid2[style]{grid-template-columns:1fr!important}}
+.row2.v3>.fld{min-width:64px}
+.rule .fl{align-self:center}

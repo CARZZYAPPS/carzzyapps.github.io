@@ -117,8 +117,8 @@ function waterTex2(c){return canvasTex(256,256,function(g){g.fillStyle=hexCss(c)
 var _fitCamera=fitCamera;
 fitCamera=function(){_fitCamera();var C=(KX.scene||{}).camera;if(!SH||!C)return;var tgt=camBase.tgt,z=+C.zoom||1,tilt=(+C.tilt||0)*Math.PI/180;
   if(tilt){var v=camera.position.clone().sub(tgt),r=v.length(),a=Math.atan2(v.y,v.z)+tilt;v.set(v.x,Math.sin(a)*r,Math.cos(a)*r);camera.position.copy(tgt).add(v);camera.lookAt(tgt);}
-  if(z!==1){camera.position.copy(tgt).add(camera.position.clone().sub(tgt).multiplyScalar(1/z));camera.lookAt(tgt);}
-  camera.updateMatrixWorld(true);camBase.pos.copy(camera.position);};
+  if(z!==1){var off=camera.position.clone().sub(tgt).multiplyScalar(1/z);camera.position.copy(tgt).add(off);camera.lookAt(tgt);}
+  var pz=+C.pan||0;if(pz){camera.position.z+=pz;tgt.z+=pz;camera.lookAt(tgt);}camera.updateMatrixWorld(true);camBase.pos.copy(camera.position);};
 
 /* ---------- modifiers (rules change demand, prices, patience, machine speed) ---------- */
 function modVal(kind,id){var m=1,now=SH?SH.t:0;KX.mods=KX.mods.filter(function(x){return x.until>now;});KX.mods.forEach(function(x){if(x.kind===kind&&(!x.id||x.id===id))m*=x.mult;});return m;}
@@ -203,7 +203,7 @@ function kitTick(dt){
     if(w.t==='every'){KX.every[i]=(KX.every[i]||0)+dt;var p=Math.max(1,+w.sec||30);if(KX.every[i]>=p){KX.every[i]-=p;if(kitCond(r.if))kitDo(r.do,{},i);}}
     else if(w.t==='random'){if(Math.random()<dt*(+w.per||1)/60&&kitCond(r.if))kitDo(r.do,{},i);}
     else if(w.t==='at'){if(!KX.fired[i]&&SH.t/SH.len>=(+w.f||.5)){KX.fired[i]=1;if(kitCond(r.if))kitDo(r.do,{},i);}}
-    else if(w.t==='money'||w.t==='served'||w.t==='streak'){var v=w.t==='money'?G.cash:w.t==='served'?SH.s.served:SH.streak;if(!KX.fired[i]&&v>=(+w.n||0)){KX.fired[i]=1;if(kitCond(r.if))kitDo(r.do,{},i);}}
+    else if(w.t==='money'||w.t==='servedCount'||w.t==='streak'){var v=w.t==='money'?G.cash:w.t==='servedCount'?SH.s.served:SH.streak;if(!KX.fired[i]&&v>=(+w.n||0)){KX.fired[i]=1;if(kitCond(r.if))kitDo(r.do,{},i);}}
   });
   SH.st.forEach(function(o){var prev=KX.stPrev[o.k]||{},cur=o.kind==='cooker'?o.slots.map(function(s){return s.st;}):[o.st];
     cur.forEach(function(s,j){var p=prev[j];if(p!==s){if(s==='ready')kitEmit('done',{station:STN[o.k].kitId||o.k});if(s==='burnt'||s==='stale')kitEmit('burnt',{station:STN[o.k].kitId||o.k});}});KX.stPrev[o.k]=cur;});

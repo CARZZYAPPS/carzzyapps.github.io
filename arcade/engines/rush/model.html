@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Model preview | Lazer Studio</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#151033;font:600 12px system-ui,sans-serif;color:#cfc8ff}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#h{position:fixed;left:8px;bottom:6px;opacity:.7;pointer-events:none}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/arcade/engines/rush/models.js"></script></head>
+<body><canvas id="c"></canvas><div id="h">Drag to turn · scroll or pinch to zoom · tap a part to select it</div>
+<script>
+// Data-only preview for the Studio model builder: receives a model spec by postMessage and draws it. Runs no creator code.
+(function () {
+  var T = THREE, cvs = document.getElementById("c"), R = new T.WebGLRenderer({ canvas: cvs, antialias: true });
+  R.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+  var scene = new T.Scene(), cam = new T.PerspectiveCamera(35, 1, 0.05, 200);
+  scene.add(new T.HemisphereLight(0xffffff, 0x8a7fb0, 0.85)); var dl = new T.DirectionalLight(0xffffff, 0.75); dl.position.set(3, 6, 4); scene.add(dl);
+  var grid = new T.GridHelper(6, 24, 0x6a5fd0, 0x2c2560); scene.add(grid);
+  var core = KitModelCore(T, { labelTex: function (txt, bg, fg) { var c = document.createElement("canvas"); c.width = 512; c.height = 128; var x = c.getContext("2d"); x.fillStyle = bg || "#fff"; x.fillRect(0, 0, 512, 128); x.fillStyle = fg || "#222"; x.font = "800 64px system-ui,sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(String(txt || "").slice(0, 18), 256, 66); var t = new T.CanvasTexture(c); return t; } });
+  var cur = null, state = "idle", sel = null, box = null, yaw = 0.6, pitch = 0.45, dist = 4, tgt = new T.Vector3(0, 0.5, 0), fitted = false;
+  function size() { var w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  addEventListener("resize", size); size();
+  function load(spec, keepView) {
+    if (cur) scene.remove(cur.g); cur = null;
+    try { cur = core.build(spec || { parts: [] }); } catch (e) { return; }
+    scene.add(cur.g); cur.setState(state);
+    if (!keepView || !fitted) { var b = new T.Box3().setFromObject(cur.g); if (!b.isEmpty()) { var c = b.getCenter(new T.Vector3()), s = b.getSize(new T.Vector3()); tgt.copy(c); dist = Math.max(1.2, Math.max(s.x, s.y, s.z) * 2.2); fitted = true; } }
+    mark();
+  }
+  function mark() { if (box) { scene.remove(box); box = null; } if (!cur || !sel || !cur.byId[sel]) return; box = new T.BoxHelper(cur.byId[sel], 0xffd84a); scene.add(box); }
+  addEventListener("message", function (e) { var d = e.data || {}; if (d.type === "model") { var fresh = d.fresh; if (fresh) fitted = false; sel = d.sel || null; if (d.state) state = d.state; load(d.spec, !fresh); } });
+  var drag = null, moved = 0, pts = {};
+  cvs.addEventListener("pointerdown", function (e) { pts[e.pointerId] = [e.clientX, e.clientY]; drag = [e.clientX, e.clientY, yaw, pitch]; moved = 0; cvs.setPointerCapture(e.pointerId); });
+  cvs.addEventListener("pointermove", function (e) {
+    var ids = Object.keys(pts); if (!pts[e.pointerId]) return;
+    if (ids.length === 2) { var o = pts[ids[0] == e.pointerId ? ids[1] : ids[0]], p0 = pts[e.pointerId], d0 = Math.hypot(p0[0] - o[0], p0[1] - o[1]), d1 = Math.hypot(e.clientX - o[0], e.clientY - o[1]); if (d0 > 0) dist = Math.max(0.4, Math.min(40, dist * d0 / d1)); pts[e.pointerId] = [e.clientX, e.clientY]; moved = 99; return; }
+    pts[e.pointerId] = [e.clientX, e.clientY]; if (!drag) return; var dx = e.clientX - drag[0], dy = e.clientY - drag[1]; moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
+    yaw = drag[2] - dx * 0.01; pitch = Math.max(-0.2, Math.min(1.45, drag[3] + dy * 0.01));
+  });
+  function up(e) { delete pts[e.pointerId]; if (drag && moved < 5 && cur) pick(e); drag = null; }
+  cvs.addEventListener("pointerup", up); cvs.addEventListener("pointercancel", function (e) { delete pts[e.pointerId]; drag = null; });
+  cvs.addEventListener("wheel", function (e) { e.preventDefault(); dist = Math.max(0.4, Math.min(40, dist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
+  var ray = new T.Raycaster(), nd = new T.Vector2();
+  function pick(e) { var r = cvs.getBoundingClientRect(); nd.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(nd, cam);
+    var hs = ray.intersectObject(cur.g, true); if (!hs.length) return; var o = hs[0].object; while (o && o.userData.partIndex == null) o = o.parent; if (!o) return;
+    var id = Object.keys(cur.byId).filter(function (k) { return cur.byId[k] === o; })[0]; if (id) parent.postMessage({ type: "model-pick", id: id }, "*"); }
+  var last = performance.now();
+  (function loop(now) { requestAnimationFrame(loop); var dt = Math.min(0.05, (now - last) / 1000); last = now;
+    cam.position.set(tgt.x + Math.sin(yaw) * Math.cos(pitch) * dist, tgt.y + Math.sin(pitch) * dist, tgt.z + Math.cos(yaw) * Math.cos(pitch) * dist); cam.lookAt(tgt);
+    if (cur) { cur.setState(state); cur.upd(dt, now / 1000); } if (box) box.update(); R.render(scene, cam); })(last);
+  parent.postMessage({ type: "model-ready" }, "*");
+})();
+</script></body></html>
