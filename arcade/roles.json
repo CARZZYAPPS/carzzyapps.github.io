@@ -4,6 +4,14 @@
     {
       "username": "LazerYudel",
       "role": "creator"
+    },
+    {
+      "username": "Avis (Admin)",
+      "role": "admin"
+    },
+    {
+      "username": "DeBus (Admin)",
+      "role": "admin"
     }
   ]
 }
