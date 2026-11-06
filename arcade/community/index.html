@@ -114,7 +114,8 @@ C.isStaff().then((st) => { if (st) document.querySelector(".links").insertAdjace
   if (fallback && rows[0] && (rows[0].username || "").toLowerCase() === creatorName) { rows[0].note = "Lazer Arcade" + (rows[0].games ? " + " + rows[0].games + " game" + (rows[0].games > 1 ? "s" : "") : ""); rows[0].lp = null; }
   $("#creators").innerHTML = rows.slice(0, 10).map((r, i) => `<div class="lr r${i + 1}"><span class="rk">${i + 1}</span><span class="nm">${esc(r.username)}${(r.username || "").toLowerCase() === creatorName ? ' <span class="badge">CREATOR</span>' : ""}<small>${r.note || (r.games ? r.games + " game" + (r.games > 1 ? "s" : "") : "Lazer Arcade")}</small></span><span class="pt">${r.lp == null ? "∞" : fmt(r.lp)}<small>${r.lp == null ? "" : "creator LP"}</small></span></div>`).join("");
 })();
-LZ.plays(["crema", "harbor"]).then((p) => { const t = Object.values(p).reduce((a, b) => a + b, 0); $("#pinPlays").textContent = "▶ " + (t ? fmt(t) : "–") + " plays"; sitePlays = t; const a = (games || []).find((x) => x.id === "__arcade"); if (a) { a.plays = t; if (sort === "popular") games.sort((x, y) => (+y.plays || 0) - (+x.plays || 0)); draw(); } }).catch(() => {});
+// Lazer Arcade's plays = every play anywhere on the arcade: all main games plus every community game.
+LZ.catalog().then((c) => LZ.plays((c.all || c.games).map((g) => g.id))).then(async (p) => { await new Promise((r) => { const w = () => (loading ? setTimeout(w, 150) : r()); w(); }); const comm = (games || []).filter((x) => x.id !== "__arcade").reduce((a, x) => a + (+x.plays || 0), 0); const t = Object.values(p).reduce((a, b) => a + b, 0) + comm; $("#pinPlays").textContent = "▶ " + (t ? fmt(t) : "–") + " plays"; sitePlays = t; const a = (games || []).find((x) => x.id === "__arcade"); if (a) { a.plays = t; if (sort === "popular") games.sort((x, y) => (+y.plays || 0) - (+x.plays || 0)); draw(); } }).catch(() => {});
 </script>
 </body>
 </html>

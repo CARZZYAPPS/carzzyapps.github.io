@@ -74,6 +74,9 @@ async function uidOf(name) {
 // Community creators (anyone who published in Lazer Studio) earn LP from their games' plays and likes.
 // The top creators earn topCreatorMultiplier. Results also feed the public communityCreators board.
 async function communityEarnings(staff) {
+  let allLp = 0, allPlays = 0;
+  (await db.collection("arcadePlayers").get()).forEach((d) => { allLp += d.data().lp || 0; });
+  (await db.collection("arcadeStats").get()).forEach((d) => { if (d.id !== "site") allPlays += d.data().plays || 0; });
   const cc = cfg.community || { perPlay: 5, perLike: 20, topCreators: 3 };
   const games = await db.collection("communityGames").get();
   const by = {};
@@ -105,8 +108,10 @@ async function communityEarnings(staff) {
   for (const uid of Object.keys(by)) writes.push(db.collection("communityCreators").doc(uid).set({ username: by[uid].username, lp: owners[uid].lp, games: by[uid].games, plays: by[uid].plays, likes: by[uid].likes, updatedAt: FV.serverTimestamp() }));
   for (const c of staff) {
     const p = (await db.collection("arcadePlayers").doc(c.uid).get()).data() || {};
-    const arcadeLp = ((p.games || {}).lazerarcade || {}).lp || 0, mine = by[c.uid] || { games: 0, plays: 0, likes: 0 };
-    writes.push(db.collection("communityCreators").doc(c.uid).set({ username: c.username, lp: arcadeLp + ((owners[c.uid] || {}).lp || 0), games: mine.games + 1, plays: mine.plays, likes: mine.likes, note: "Lazer Arcade", updatedAt: FV.serverTimestamp() }));
+    const mine = by[c.uid] || { games: 0, plays: 0, likes: 0 };
+    // Lazer Arcade is the staff creator's game: every point earned anywhere on the arcade counts, doubled as a top creator.
+    const arcadeLp = Math.round(allLp * (cfg.topCreatorMultiplier || 2));
+    writes.push(db.collection("communityCreators").doc(c.uid).set({ username: c.username, lp: arcadeLp + ((owners[c.uid] || {}).lp || 0), games: mine.games + 1, plays: mine.plays + allPlays, likes: mine.likes, note: "Lazer Arcade", updatedAt: FV.serverTimestamp() }));
   }
   await Promise.all(writes);
   await stRef.set({ owners, at: FV.serverTimestamp() });
