@@ -1,0 +1,10 @@
+{
+  "id": "harborclassic",
+  "owner": "LazerYudel",
+  "title": "Harbor Rush Classic",
+  "desc": "The original Harbor Rush, the first game built on the Rush engine. Unload ships, juggle trucks and grow one pier into a shipping empire.",
+  "engine": "html",
+  "thumb": "/arcade/community/games/harbor-rush-classic/thumb.jpg",
+  "data": { "engine": "html", "title": "Harbor Rush Classic", "url": "/arcade/community/games/harbor-rush-classic/" },
+  "featured": 1
+}

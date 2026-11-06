@@ -7,7 +7,7 @@ name: Lazer Arcade backend
 on:
   push:
     branches: [main]
-    paths: ["firestore.rules", "functions/**", "arcade/roles.json", "arcade/creators.json", ".github/workflows/lazer-arcade.yml", ".github/scripts/**"]
+    paths: ["firestore.rules", "functions/**", "arcade/roles.json", "arcade/creators.json", "arcade/community/seed/**", ".github/workflows/lazer-arcade.yml", ".github/scripts/**"]
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
@@ -107,4 +107,5 @@ jobs:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: |
           cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
+          NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/seed-community.js" "$GITHUB_WORKSPACE"
           NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/creator-earnings.js" "$GITHUB_WORKSPACE"

@@ -25,6 +25,22 @@ export const ENGINES = {
       return { destroy() { window.removeEventListener("message", onMsg); f.remove(); }, pause() {} };
     }
   },
+  html: {
+    id: "html", name: "Hosted game", status: "staff", icon: "🎮",
+    tag: "A complete game hosted on Lazer Arcade by staff.",
+    // Only staff-hosted files under /arcade/community/games/ can be loaded. The game posts {type:"rush-score"} at the end of each round.
+    play(host, project, opts) {
+      const url = String(project.url || "");
+      if (!/^\/arcade\/community\/games\/[a-z0-9-]+\/(index\.html)?$/.test(url)) { host.insertAdjacentHTML("beforeend", '<p style="color:#fff;padding:20px">This game can\'t be loaded.</p>'); return { destroy() {}, pause() {} }; }
+      const f = document.createElement("iframe");
+      f.src = url; f.title = project.title || "Game"; f.allow = "autoplay; fullscreen";
+      f.setAttribute("sandbox", "allow-scripts allow-same-origin allow-pointer-lock");
+      f.style.cssText = "border:0;width:100%;height:100%;display:block;background:#000";
+      const onMsg = (e) => { if (e.source !== f.contentWindow || !e.data) return; if (e.data.type === "rush-score" && opts && opts.onEnd) opts.onEnd({ score: Math.max(0, Math.min(1e8, Math.round(+e.data.score || 0))), won: true, time: 0, ongoing: true }); };
+      window.addEventListener("message", onMsg); host.appendChild(f);
+      return { destroy() { window.removeEventListener("message", onMsg); f.remove(); }, pause() {} };
+    }
+  },
   crane: {
     id: "crane", name: "Crane", status: "soon", icon: "🏗️",
     tag: "Harbor Rush's physics crane. Build your own ports, ships and cargo puzzles. Coming soon."

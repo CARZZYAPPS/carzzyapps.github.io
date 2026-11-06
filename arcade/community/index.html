@@ -43,6 +43,11 @@
 .make h3{font-size:19px;margin-bottom:6px}
 .make p{color:var(--tx2);margin:0 0 14px;font-size:14px}
 @media (max-width:900px){.lay{grid-template-columns:1fr}.pin{grid-template-columns:1fr}.pin .art{min-height:130px}}
+.feat2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);margin-top:16px;overflow:hidden;text-decoration:none;border-color:rgba(34,228,255,.35);transition:transform .15s,border-color .15s}
+.feat2:hover{transform:translateY(-2px);border-color:var(--cyan)}
+.feat2 img{width:100%;height:100%;min-height:180px;object-fit:cover;display:block;background:#0b1626}
+.feat2 .tx{padding:22px}.feat2 h2{font-size:24px;margin:8px 0 6px}.feat2 p{color:var(--tx2);margin:0 0 12px}.feat2 .st{display:flex;gap:14px;font-weight:800;font-size:14px;color:var(--tx2);margin-bottom:14px}
+@media (max-width:900px){.feat2{grid-template-columns:1fr}.feat2 img{min-height:0;aspect-ratio:16/9}}
 </style>
 </head>
 <body>
@@ -56,6 +61,7 @@
 <main class="wrap">
   <header class="hero"><div><span class="kick">Community</span><h1>Made by <em>players.</em></h1><p>Games built in Lazer Studio, no code needed. Play them, like the best ones and remix anything. Every game has its own leaderboard.</p></div><a class="btn" href="/arcade/studio/">＋ Make a game</a></header>
   <div class="panel pin" id="pin"><div class="art" data-logo></div><div class="tx"><span class="badge pinned">PINNED</span> <span class="badge">CREATOR</span><h2>Lazer Arcade</h2><p>The whole arcade is Lazer Yudel's game. Every game on it and every visit counts toward it, so its leaderboard is the overall Lazer Points board.</p><div class="st"><span>by LazerYudel</span><span id="pinPlays">▶ –</span></div><a class="btn sm" href="/arcade/">Open Lazer Arcade</a> <a class="btn sm ghost" href="/arcade/leaderboard/">Leaderboard</a></div></div>
+  <a class="panel feat2" href="/arcade/community/play/?id=harborclassic"><img alt="" src="/arcade/community/games/harbor-rush-classic/thumb.jpg"><div class="tx"><span class="badge pinned">FEATURED</span> <span class="badge">CREATOR</span><h2>Harbor Rush Classic</h2><p>The original Harbor Rush, the first game built on the Rush engine. Unload ships, juggle trucks and grow one pier into a shipping empire.</p><div class="st"><span>by LazerYudel</span><span>Rush engine</span></div><span class="btn sm">▶ Play</span></div></a>
   <div class="bar"><div class="chips" id="sort"><button class="chip on" data-s="popular">Popular</button><button class="chip" data-s="new">New</button><button class="chip" data-s="liked">Most liked</button></div><input id="q" type="search" placeholder="Search games or creators" aria-label="Search community games"></div>
   <div class="lay"><div><div class="grid" id="grid"><div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div><div class="skel" style="height:220px"></div></div></div>
     <aside><div class="panel make"><h3>Make your own</h3><p>Pick an engine and a starter, paint levels, draw pixel art and snap rules together. Publish in one click.</p><a class="btn sm" href="/arcade/studio/">Open Lazer Studio</a> <a class="btn sm ghost" href="/arcade/studio/" id="myp">My projects</a></div>

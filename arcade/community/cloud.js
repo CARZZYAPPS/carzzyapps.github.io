@@ -11,9 +11,18 @@ export function newId() { return Date.now().toString(36) + Math.random().toStrin
 export async function listGames(order, n) {
   const f = order === "new" ? "createdAt" : order === "liked" ? "likes" : "plays";
   const s = await getDocs(query(collection(db, "communityGames"), orderBy(f, "desc"), limit(n || 60)));
-  return s.docs.map((d) => Object.assign({ id: d.id }, d.data())).filter((g) => g.status !== "hidden").map((g) => { delete g.data; return g; });
+  return s.docs.map((d) => Object.assign({ id: d.id }, d.data())).filter((g) => (g.status || "live") === "live" && !BUILTIN[g.id]).map((g) => { delete g.data; return g; });
 }
-export async function getGame(id) { const s = await getDoc(doc(db, "communityGames", id)); return s.exists() ? Object.assign({ id }, s.data()) : null; }
+// Staff games that are bundled with the site, so they work even when Firestore can't be reached.
+export const BUILTIN = {
+  harborclassic: { id: "harborclassic", ownerName: "LazerYudel", title: "Harbor Rush Classic", engine: "html", status: "live", plays: 0, likes: 0, thumb: "/arcade/community/games/harbor-rush-classic/thumb.jpg",
+    desc: "The original Harbor Rush, the first game built on the Rush engine. Unload ships, juggle trucks and grow one pier into a shipping empire.",
+    data: JSON.stringify({ engine: "html", title: "Harbor Rush Classic", url: "/arcade/community/games/harbor-rush-classic/" }) }
+};
+export async function getGame(id) {
+  try { const s = await getDoc(doc(db, "communityGames", id)); if (s.exists()) return Object.assign({ id }, BUILTIN[id] ? { data: BUILTIN[id].data, thumb: BUILTIN[id].thumb } : {}, s.data()); } catch (e) { if (!BUILTIN[id]) throw e; }
+  return BUILTIN[id] ? Object.assign({}, BUILTIN[id]) : null;
+}
 export async function publish(project, thumb, existingId) {
   if (!LZ.signedIn()) throw Object.assign(new Error("signin"), { code: "signin" });
   const data = JSON.stringify(project); if (data.length > MAX_DATA) throw Object.assign(new Error("too big"), { code: "size" });

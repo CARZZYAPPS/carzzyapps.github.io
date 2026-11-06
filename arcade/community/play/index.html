@@ -63,7 +63,7 @@ mountShell();
 const $ = (s) => document.querySelector(s), esc = LZ.esc, fmt = LZ.fmt;
 const id = new URLSearchParams(location.search).get("id");
 await LZ.ready;
-const g = id ? await C.getGame(id).catch(() => null) : null;
+const g = id ? await C.getGame(id).catch(() => (C.BUILTIN[id] ? Object.assign({}, C.BUILTIN[id]) : null)) : null;
 const roles = await LZ.roles();
 const isStaff = () => LZ.signedIn() && !!roles[(LZ.username || "").toLowerCase()];
 if (!g || (g.status === "hidden" && !isStaff())) {
@@ -72,13 +72,13 @@ if (!g || (g.status === "hidden" && !isStaff())) {
   const project = JSON.parse(g.data), eng = ENGINES[g.engine || project.engine || "studio2d"] || ENGINES.studio2d;
   document.title = g.title + " | Lazer Arcade Community";
   $("#title").textContent = g.title; $("#by").innerHTML = `by <b>${esc(g.ownerName || "player")}</b> · ${esc(eng.name)} · ▶ <span id="plays">${fmt(g.plays)}</span> plays${g.remixOf ? ` · remix of <a href="?id=${encodeURIComponent(g.remixOf)}">this game</a>` : ""}${g.status === "hidden" ? ' · <b style="color:#ff8a9a">HIDDEN</b>' : ""}`;
-  $("#desc").textContent = g.desc || ""; $("#likes").textContent = fmt(g.likes); $("#remix").href = "/arcade/studio/?remix=" + encodeURIComponent(g.id);
-  if (eng.id === "rush") $("#stage").classList.add("rush");
+  $("#desc").textContent = g.desc || ""; $("#likes").textContent = fmt(g.likes); $("#remix").href = "/arcade/studio/?remix=" + encodeURIComponent(g.id); if (eng.id === "html") $("#remix").hidden = true;
+  if (eng.id === "rush" || eng.id === "html") $("#stage").classList.add("rush");
   const stage = $("#stage"); let game = null, counted = false, likedNow = false;
   const cover = (html) => { const c = document.createElement("div"); c.className = "cover"; c.innerHTML = html; stage.appendChild(c); return c; };
   const start = () => {
     audio(); stage.querySelectorAll(".cover").forEach((c) => c.remove()); if (game) game.destroy();
-    if (!counted) { counted = true; C.countPlay(g.id).then(() => { $("#plays").textContent = fmt((g.plays || 0) + 1); }); }
+    if (!counted) { counted = true; C.countPlay(g.id).catch(() => {}).then(() => { $("#plays").textContent = fmt((g.plays || 0) + 1); }); }
     game = eng.play(stage, JSON.parse(g.data), { onEnd: ended, gameId: g.id });
   };
   async function ended(r) {

@@ -339,7 +339,7 @@ service cloud.firestore {
     // ===================== Community games (Lazer Studio) =====================
     function cgValid(d) {
       return d.keys().hasAll(['ownerUid', 'ownerName', 'title', 'data', 'engine', 'status', 'plays', 'likes', 'createdAt', 'updatedAt'])
-        && d.keys().hasOnly(['ownerUid', 'ownerName', 'title', 'desc', 'data', 'thumb', 'engine', 'status', 'plays', 'likes', 'remixOf', 'createdAt', 'updatedAt'])
+        && d.keys().hasOnly(['ownerUid', 'ownerName', 'title', 'desc', 'data', 'thumb', 'engine', 'status', 'plays', 'likes', 'remixOf', 'featured', 'createdAt', 'updatedAt'])
         && d.title is string && d.title.size() >= 1 && d.title.size() <= 60
         && (!('desc' in d) || (d.desc is string && d.desc.size() <= 300))
         && d.data is string && d.data.size() <= 500000
@@ -354,7 +354,7 @@ service cloud.firestore {
         && cgValid(request.resource.data)
         && request.resource.data.ownerUid == request.auth.uid
         && ownsUsername(request.resource.data.ownerName)
-        && request.resource.data.status == 'live'
+        && request.resource.data.status == 'live' && !('featured' in request.resource.data)
         && request.resource.data.plays == 0 && request.resource.data.likes == 0
         && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
       // owner edits: content only; counters, owner and moderation status stay as they are
