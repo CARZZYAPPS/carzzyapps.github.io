@@ -259,3 +259,19 @@ function kitApi(){
 }
 function kitRunScript(code){if(!code||!String(code).trim())return;try{var api=kitApi();(new Function('api','"use strict";\n'+code))(api);}catch(e){scriptErr(e);}}
 window.__KITAPI=function(){return kitApi();};
+
+/* ---------- tray look: plates (default), pads or crates; any color ---------- */
+var _kitBuildTray=buildTray;
+buildTray=function(L,th){
+  var r=_kitBuildTray(L,th),S=KX.scene||{},TS=S.tray||{},style=TS.style||'plates';
+  if(style==='plates'&&!TS.color)return r;
+  var col=TS.color?new T.Color(TS.color).getHex():null;
+  trayG.children.slice().forEach(function(m){if(!m.isMesh||m.userData.tray!=null||m.userData.trash)return;var y=m.position.y;
+    if(Math.abs(y-.925)<.004&&(col!=null||style!=='plates'))m.material=toon(style==='pads'?0x3f454c:style==='crates'?0x6b4a2e:col);
+    if(style!=='plates'&&(Math.abs(y-.965)<.004||Math.abs(y-.982)<.004))m.visible=false;});
+  if(style!=='plates')L.tray.forEach(function(p){
+    if(style==='pads'){bx(.5,.02,.5,toon(0x7b848e),p.x,.96,p.z,trayG);var e=toon(col!=null?col:0xffc63d);bx(.5,.024,.05,e,p.x,.962,p.z-.225,trayG);bx(.5,.024,.05,e,p.x,.962,p.z+.225,trayG);bx(.05,.024,.5,e,p.x-.225,.962,p.z,trayG);bx(.05,.024,.5,e,p.x+.225,.962,p.z,trayG);}
+    else{bx(.48,.06,.48,toon(col!=null?col:0xb07a44),p.x,.98,p.z,trayG);bx(.5,.02,.08,toon(0x7a5230),p.x,1.02,p.z-.2,trayG);bx(.5,.02,.08,toon(0x7a5230),p.x,1.02,p.z+.2,trayG);}
+  });
+  return r;
+};

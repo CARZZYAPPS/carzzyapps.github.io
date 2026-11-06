@@ -18,7 +18,7 @@ R("""'<h1>Crema <span>Rush</span></h1><p class="lead">Run the counter, then buil
 R("cash:60,","cash:(KIT.kit&&+KIT.kit.cash||60),")
 R("tops:{},staff","tops:kitStartTops(ind),staff")
 i=s.rindex('})();')
-s=s[:i]+open('k_kit2.js').read()+"\nwindow.__KIT={G:function(){return G;},SH:function(){return SH;},end:function(){if(SH)SH.t=SH.len;},start:function(){startShift();},close:function(){closeModal();}};\n"+s[i:]
+s=s[:i]+open('k_kit2.js').read()+"\nwindow.__KIT={G:function(){return G;},SH:function(){return SH;},end:function(){if(SH)SH.t=SH.len;},start:function(){startShift();},close:function(){closeModal();},cam:function(){return JSON.stringify([camera.position,camBase.pos,camBase.tgt,SH&&SH.L.zF]);}};\n"+s[i:]
 open('rush-kit.html','w').write(s)
 import re;open('chk_kit.js','w').write(re.findall(r'<script>(.*?)</script>',s,re.S)[-1])
 PY

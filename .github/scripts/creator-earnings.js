@@ -74,8 +74,7 @@ async function uidOf(name) {
 // Community creators (anyone who published in Lazer Studio) earn LP from their games' plays and likes.
 // The top creators earn topCreatorMultiplier. Results also feed the public communityCreators board.
 async function communityEarnings(staff) {
-  let allLp = 0, allPlays = 0;
-  (await db.collection("arcadePlayers").get()).forEach((d) => { allLp += d.data().lp || 0; });
+  let allPlays = 0;
   (await db.collection("arcadeStats").get()).forEach((d) => { if (d.id !== "site") allPlays += d.data().plays || 0; });
   const cc = cfg.community || { perPlay: 5, perLike: 20, topCreators: 3 };
   const games = await db.collection("communityGames").get();
@@ -109,8 +108,8 @@ async function communityEarnings(staff) {
   for (const c of staff) {
     const p = (await db.collection("arcadePlayers").doc(c.uid).get()).data() || {};
     const mine = by[c.uid] || { games: 0, plays: 0, likes: 0 };
-    // Lazer Arcade is the staff creator's game: every point earned anywhere on the arcade counts, doubled as a top creator.
-    const arcadeLp = Math.round(allLp * (cfg.topCreatorMultiplier || 2));
+    // Real creator LP actually paid for Lazer Arcade (a share of everyone's LP, plays and visits, already at the top-creator rate).
+    const arcadeLp = ((p.games || {}).lazerarcade || {}).lp || 0;
     writes.push(db.collection("communityCreators").doc(c.uid).set({ username: c.username, lp: arcadeLp + ((owners[c.uid] || {}).lp || 0), games: mine.games + 1, plays: mine.plays + allPlays, likes: mine.likes, note: "Lazer Arcade", updatedAt: FV.serverTimestamp() }));
   }
   await Promise.all(writes);
