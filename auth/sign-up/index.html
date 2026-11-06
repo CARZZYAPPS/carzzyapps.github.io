@@ -61,9 +61,10 @@
 
     async function claimUsernameSafely(user, username) {
       const db = getFirestore(app);
+      const lowercaseUsername = username.toLowerCase();
       const usernamesRef = collection(db, "usernames");
       
-      const q = query(usernamesRef, where("username", "==", username));
+      const q = query(usernamesRef, where("usernameLower", "==", lowercaseUsername));
       const querySnapshot = await getDocs(q);
       let isTaken = false;
       querySnapshot.forEach((docSnap) => {
@@ -75,7 +76,7 @@
       
       const ref = doc(db, "usernames", user.uid);
       await runTransaction(db, async (tx) => {
-        tx.set(ref, { uid: user.uid, guest: false, username });
+        tx.set(ref, { uid: user.uid, guest: false, username, usernameLower: lowercaseUsername });
       });
     }
 
