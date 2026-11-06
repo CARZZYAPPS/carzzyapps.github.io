@@ -9,7 +9,8 @@ const db = admin.firestore();
   const list = (JSON.parse(fs.readFileSync(process.argv[2], "utf8")).roles || []).filter((r) => r.username && ["creator", "admin"].includes(r.role));
   const want = new Map();
   for (const r of list) {
-    const snap = await db.collection("usernames").doc(r.username.toLowerCase()).get();
+    let snap = await db.collection("usernames").doc(r.username.toLowerCase()).get();
+    if (!snap.exists) { const q = await db.collection("usernames").where("usernameLower", "==", r.username.toLowerCase()).limit(1).get(); if (!q.empty) snap = q.docs[0]; }
     if (!snap.exists || !snap.data().uid) { console.log(`::warning::No Carzzy Apps account with username "${r.username}"`); continue; }
     want.set(snap.data().uid, { role: r.role, username: r.username });
   }

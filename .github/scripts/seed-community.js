@@ -11,7 +11,8 @@ const db = admin.firestore(), FV = admin.firestore.FieldValue;
   if (!fs.existsSync(dir)) return;
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".json"))) {
     const s = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
-    const u = await db.collection("usernames").doc(s.owner.toLowerCase()).get();
+    let u = await db.collection("usernames").doc(s.owner.toLowerCase()).get();
+    if (!u.exists) { const q = await db.collection("usernames").where("usernameLower", "==", s.owner.toLowerCase()).limit(1).get(); if (!q.empty) u = q.docs[0]; }
     if (!u.exists) { console.log("No account for", s.owner, "- skipping", s.id); continue; }
     const ref = db.collection("communityGames").doc(s.id), cur = await ref.get();
     const body = { ownerUid: u.data().uid, ownerName: s.owner, title: s.title, desc: s.desc || "", engine: s.engine, thumb: s.thumb || "", data: typeof s.data === "string" ? s.data : JSON.stringify(s.data), featured: s.featured || 0, updatedAt: FV.serverTimestamp() };

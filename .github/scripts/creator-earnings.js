@@ -14,7 +14,12 @@ admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.proje
 const db = admin.firestore();
 const FV = admin.firestore.FieldValue;
 
-async function uidOf(name) { const s = await db.collection("usernames").doc(name.toLowerCase()).get(); return s.exists ? s.data().uid : null; }
+async function uidOf(name) {
+  const byId = await db.collection("usernames").doc(name.toLowerCase()).get();
+  if (byId.exists && byId.data().uid) return byId.data().uid;
+  const q = await db.collection("usernames").where("usernameLower", "==", name.toLowerCase()).limit(1).get();
+  return q.empty ? null : q.docs[0].data().uid;
+}
 
 (async () => {
   const creators = [];

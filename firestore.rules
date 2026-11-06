@@ -14,6 +14,7 @@ service cloud.firestore {
     }
 
     match /usernames/{username} {
+      // Legacy: doc id = lowercase username, fields uid/guest/username.
       function validUsernameClaim(data) {
         return data.keys().hasAll(['uid', 'guest', 'username'])
           && data.keys().hasOnly(['uid', 'guest', 'username'])
@@ -26,13 +27,28 @@ service cloud.firestore {
             ? request.auth.token.firebase.sign_in_provider == 'anonymous'
             : request.auth.token.email is string);
       }
+      // Current sign-up: doc id = uid, fields uid/guest/username/usernameLower.
+      function validUidClaim(data) {
+        return username == request.auth.uid
+          && data.keys().hasAll(['uid', 'guest', 'username', 'usernameLower'])
+          && data.keys().hasOnly(['uid', 'guest', 'username', 'usernameLower'])
+          && data.uid == request.auth.uid
+          && data.guest is bool
+          && data.username is string
+          && data.username.size() >= 1 && data.username.size() <= 30
+          && !data.username.matches('.*/.*')
+          && data.usernameLower == data.username.lower()
+          && (data.guest
+            ? request.auth.token.firebase.sign_in_provider == 'anonymous'
+            : request.auth.token.email is string);
+      }
 
       allow read: if true;
       allow create: if request.auth != null
-        && validUsernameClaim(request.resource.data);
+        && (validUidClaim(request.resource.data) || validUsernameClaim(request.resource.data));
       allow update: if request.auth != null
         && resource.data.uid == request.auth.uid
-        && validUsernameClaim(request.resource.data);
+        && (validUidClaim(request.resource.data) || validUsernameClaim(request.resource.data));
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
@@ -265,8 +281,10 @@ service cloud.firestore {
     function ownsUsername(name) {
       return name is string
         && name.matches('^[^/]{1,30}$')
-        && exists(/databases/$(database)/documents/usernames/$(name.lower()))
-        && get(/databases/$(database)/documents/usernames/$(name.lower())).data.uid == request.auth.uid;
+        && ((exists(/databases/$(database)/documents/usernames/$(request.auth.uid))
+              && get(/databases/$(database)/documents/usernames/$(request.auth.uid)).data.username == name)
+          || (exists(/databases/$(database)/documents/usernames/$(name.lower()))
+              && get(/databases/$(database)/documents/usernames/$(name.lower())).data.uid == request.auth.uid));
     }
 
     function isArcadeAdmin() {
