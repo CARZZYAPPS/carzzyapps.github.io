@@ -5,97 +5,78 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { background: #0a0a0a; color: #ccc; font-family: sans-serif; margin: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; color: #ccc; font-family: sans-serif; margin: 0; padding-top: 80px; box-sizing: border-box; }
     .container { display: flex; max-width: 900px; margin: 40px auto; gap: 20px; padding: 0 15px; }
-    .sidebar { width: 220px; background: #2a2a2a; border-radius: 8px; padding: 15px; height: fit-content; display: flex; flex-direction: column; gap: 8px; margin-top: 100px; }
-    .sidebar-btn { background: none; border: none; color: #aaa; cursor: pointer; padding: 12px 15px; width: 100%; text-align: left; font-weight: bold; border-radius: 4px; transition: all 0.2s; }
-    .sidebar-btn:hover { background: #1a1a1a; color: #fff; }
+    .sidebar { width: 220px; background: #2a2a2a; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 8px; height: fit-content; }
+    .sidebar-btn { background: none; border: none; color: #aaa; cursor: pointer; padding: 12px; text-align: left; font-weight: bold; border-radius: 4px; }
     .sidebar-btn.active { color: #00d1b2; background: #1a1a1a; }
-    .main-content { flex: 1; background: #2a2a2a; padding: 30px; border-radius: 8px; min-height: 350px; margin-top: 100px; }
+    .main-content { flex: 1; background: #2a2a2a; padding: 30px; border-radius: 8px; }
     .panel { display: none; }
     .panel.active { display: block; }
-    h2 { color: #00d1b2; margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 20px; }
+    h2 { color: #00d1b2; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
     label { font-size: 0.8rem; color: #aaa; display: block; margin: 15px 0 5px; }
     input { background: #1a1a1a; border: 1px solid #444; color: #ccc; padding: 10px; width: 100%; box-sizing: border-box; border-radius: 4px; }
     input:focus { border-color: #00d1b2; outline: none; }
-    button.action-btn { background: #00d1b2; color: #0a0a0a; border: none; padding: 12px; font-weight: bold; border-radius: 4px; width: 100%; margin-top: 20px; cursor: pointer; }
-    .status { color: #00d1b2; margin-top: 15px; font-size: 0.85rem; text-align: center; }
+    .show-pwd-label { display: flex; align-items: center; gap: 0.5rem; margin: 10px 0; font-size: 0.85rem; cursor: pointer; }
+    .show-pwd-label input { accent-color: #00d1b2; cursor: pointer; }
+    button.action-btn { background: #00d1b2; color: #0a0a0a; border: none; padding: 12px; font-weight: bold; border-radius: 4px; width: 100%; margin-top: 15px; cursor: pointer; }
+    .status { color: #00d1b2; margin-top: 15px; text-align: center; }
   </style>
 </head>
 <body>
-
 <div class="container">
-  <!-- Left Sidebar Options -->
   <div class="sidebar">
     <button class="sidebar-btn active" onclick="showTab('tab-user')">Username</button>
     <button class="sidebar-btn" onclick="showTab('tab-pwd')">Password</button>
     <button class="sidebar-btn" onclick="showTab('tab-email')">Email</button>
     <button class="sidebar-btn" onclick="showTab('tab-del')">Delete Account</button>
   </div>
-
-  <!-- Right Main Area -->
   <div class="main-content">
     <div id="profile" style="display:none;">
-      <!-- Username Panel -->
       <div id="tab-user" class="panel active">
-        <h2>Change Username</h2>
+        <h2>Username</h2>
         <label>New Username</label>
         <input id="username-in" type="text" />
-        <button class="action-btn" onclick="updateUsername()">Update Username</button>
+        <button class="action-btn" onclick="updateUsername()">Update</button>
       </div>
-
-      <!-- Password Panel -->
       <div id="tab-pwd" class="panel">
-        <h2>Change Password</h2>
+        <h2>Password</h2>
         <label>Current Password</label>
         <input id="pwd-curr" type="password" />
         <label>New Password</label>
         <input id="pwd-new" type="password" />
-        <button class="action-btn" onclick="changePassword()">Change Password</button>
+        <label class="show-pwd-label"><input type="checkbox" onchange="togglePassword('pwd-curr', 'pwd-new', this)" /> Show Passwords</label>
+        <button class="action-btn" onclick="changePassword()">Update</button>
       </div>
-
-      <!-- Email Panel -->
       <div id="tab-email" class="panel">
-        <h2>Change Email Address</h2>
+        <h2>Email</h2>
         <label>Current Password</label>
         <input id="email-curr-pwd" type="password" />
         <label>New Email</label>
         <input id="email-new" type="email" />
-        <button class="action-btn" onclick="changeEmail()">Change Email</button>
+        <label class="show-pwd-label"><input type="checkbox" onchange="togglePassword('email-curr-pwd', null, this)" /> Show Password</label>
+        <button class="action-btn" onclick="changeEmail()">Update</button>
       </div>
-
-      <!-- Delete Panel -->
       <div id="tab-del" class="panel">
-        <h2 style="color: #ff3860;">Delete Account</h2>
-        <p style="color:#ff3860; font-size: 0.9rem;">Warning: This action is permanent and cannot be undone.</p>
-        <label>Password</label>
+        <h2 style="color:#ff3860;">Delete Account</h2>
+        <label>Confirm Password</label>
         <input id="del-pwd" type="password" />
-        <button class="action-btn" style="background:#ff3860; color:#fff;" onclick="deleteAcc()">Delete Account</button>
+        <label class="show-pwd-label"><input type="checkbox" onchange="togglePassword('del-pwd', null, this)" /> Show Password</label>
+        <button class="action-btn" style="background:#ff3860; color:#fff;" onclick="deleteAcc()">Delete</button>
       </div>
       <div id="status" class="status"></div>
     </div>
   </div>
 </div>
-
 <script src="/nav-bar.js"></script>
 <script type="module">
   sessionStorage.setItem("prevPage", document.location.href);
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { 
-    getAuth, 
-    onAuthStateChanged, 
-    updatePassword, 
-    verifyBeforeUpdateEmail, // Replaced updateEmail
-    deleteUser, 
-    reauthenticateWithCredential, 
-    EmailAuthProvider, 
-    updateProfile 
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  const auth = getAuth(app), db = getFirestore(app);
   let curUser = null;
 
   window.showTab = (id) => {
@@ -105,22 +86,21 @@
     document.getElementById('status').innerText = "";
   };
 
+  window.togglePassword = (id1, id2, cb) => {
+    const type = cb.checked ? 'text' : 'password';
+    if (id1) document.getElementById(id1).type = type;
+    if (id2) document.getElementById(id2).type = type;
+  };
+
   onAuthStateChanged(auth, u => {
-    if (!u || u.isAnonymous) {
-      window.location.href = "/auth/sign-in";
-      return;
-    }
-    if (!u.emailVerified) {
-      window.location.href = "/auth/verify-email";
-      return;
-    }
+    if (!u || u.isAnonymous) { window.location.href = "/auth/sign-in"; return; }
+    if (!u.emailVerified) { window.location.href = "/auth/verify-email"; return; }
     curUser = u;
     document.getElementById('profile').style.display = 'block';
   });
 
   const reauth = async (pwd) => {
-    const cred = EmailAuthProvider.credential(curUser.email, pwd);
-    await reauthenticateWithCredential(curUser, cred);
+    await reauthenticateWithCredential(curUser, EmailAuthProvider.credential(curUser.email, pwd));
   };
 
   const setStatus = (msg, err = false) => {
@@ -129,64 +109,56 @@
     el.innerText = msg;
   };
 
+  const getFriendlyError = (err) => {
+    const code = err?.code || "";
+    if ((err?.message || "").includes("permission-denied")) return "Username violates rules (must be 1-30 chars, no slashes).";
+    switch (code) {
+      case 'auth/wrong-password': return "Incorrect password. Please try again.";
+      case 'auth/requires-recent-login': return "For security, log out and back in before trying this.";
+      case 'auth/email-already-in-use': return "This email is already associated with another account.";
+      case 'auth/weak-password': return "Password is too weak.";
+      default: return "An unexpected error occurred. Please try again.";
+    }
+  };
+
   window.updateUsername = async () => {
     const val = document.getElementById('username-in').value.trim();
     try {
       setStatus("Updating...");
       await updateProfile(curUser, { displayName: val });
-      
-      await setDoc(doc(db, "usernames", curUser.uid), {
-        uid: curUser.uid,
-        guest: false,
-        username: val,
-        usernameLower: val.toLowerCase()
-      });
-
-      try {
-        await updateDoc(doc(db, "arcadePlayers", curUser.uid), {
-          username: val,
-          updatedAt: serverTimestamp()
-        });
-      } catch (e) {
-        console.log("arcadePlayers doc not found or skipped:", e.message);
-      }
+      await setDoc(doc(db, "usernames", curUser.uid), { uid: curUser.uid, guest: false, username: val, usernameLower: val.toLowerCase() });
+      try { await updateDoc(doc(db, "arcadePlayers", curUser.uid), { username: val, updatedAt: serverTimestamp() }); } catch {}
       setStatus("Username updated!");
-    } catch (e) { setStatus(e.message, true); }
+    } catch (e) { setStatus(getFriendlyError(e), true); }
   };
 
   window.changePassword = async () => {
-    const curr = document.getElementById('pwd-curr').value;
-    const newPwd = document.getElementById('pwd-new').value;
     try {
       setStatus("Verifying password...");
-      await reauth(curr);
-      await updatePassword(curUser, newPwd);
+      await reauth(document.getElementById('pwd-curr').value);
+      await updatePassword(curUser, document.getElementById('pwd-new').value);
       setStatus("Password changed!");
-    } catch (e) { setStatus(e.message, true); }
+    } catch (e) { setStatus(getFriendlyError(e), true); }
   };
 
   window.changeEmail = async () => {
-    const curr = document.getElementById('email-curr-pwd').value;
     const mail = document.getElementById('email-new').value;
     try {
       setStatus("Verifying password...");
-      await reauth(curr);
-      setStatus("Sending verification email...");
+      await reauth(document.getElementById('email-curr-pwd').value);
       await verifyBeforeUpdateEmail(curUser, mail);
-      setStatus("Verification link sent! Please check " + mail + " to complete the change.");
-    } catch (e) { setStatus(e.message, true); }
+      setStatus("Verification email sent! Click the link in your inbox to complete the change.");
+    } catch (e) { setStatus(getFriendlyError(e), true); }
   };
 
   window.deleteAcc = async () => {
-    const pwd = document.getElementById('del-pwd').value;
     try {
       setStatus("Deleting...");
-      await reauth(pwd);
+      await reauth(document.getElementById('del-pwd').value);
       await deleteUser(curUser);
       location.reload();
-    } catch (e) { setStatus(e.message, true); }
+    } catch (e) { setStatus(getFriendlyError(e), true); }
   };
 </script>
-
 </body>
 </html>
