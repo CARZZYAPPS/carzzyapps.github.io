@@ -113,10 +113,10 @@
     const code = err?.code || "";
     if ((err?.message || "").includes("permission-denied")) return "Username violates rules (must be 1-30 chars, no slashes).";
     switch (code) {
-      case 'auth/wrong-password': return "Incorrect password. Please try again.";
+      case 'auth/invalid-credential': return "Incorrect password. Please try again.";
       case 'auth/requires-recent-login': return "For security, log out and back in before trying this.";
       case 'auth/email-already-in-use': return "This email is already associated with another account.";
-      case 'auth/weak-password': return "Password is too weak.";
+      case 'auth/weak-password': return "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters.";
       default: return "An unexpected error occurred. Please try again.";
     }
   };
