@@ -78,7 +78,7 @@
 </div>
 
 <script src="/nav-bar.js"></script>
-<script type="module">
+<script>
   sessionStorage.setItem("prevPage", document.location.href);
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, updateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
@@ -184,6 +184,5 @@
     } catch (e) { setStatus(e.message, true); }
   };
 
-</script>
 </body>
 </html>
