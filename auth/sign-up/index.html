@@ -129,7 +129,7 @@
           case "auth/email-already-in-use": friendlyMessage = "This email address is already registered."; break;
           case "already-exists": friendlyMessage = "That username is already taken."; break;
           case "auth/invalid-email": friendlyMessage = "Please enter a valid email address."; break;
-          case "auth/weak-password": friendlyMessage = "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters."; break;
+          case "auth/weak-password": case 'auth/password-does-not-meet-requirements': friendlyMessage = "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters."; break;
           case "auth/network-request-failed":
           case "unavailable":
           case "deadline-exceeded": friendlyMessage = "Network error. Check connection and try again."; break;
