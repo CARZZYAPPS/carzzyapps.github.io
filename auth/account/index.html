@@ -17,7 +17,6 @@
 </head>
 <body>
 <div class="card">
-  <div id="gate">Checking authorization status...</div>
   <div id="profile" style="display:none;">
     <div class="tabs">
       <button class="tab active" onclick="showTab('tab-user')">Username</button>
@@ -62,7 +61,9 @@
   </div>
 </div>
 
+<script src="/nav-bar.js"></script>
 <script type="module">
+  sessionStorage.setItem("prevPage", document.location.href);
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, updateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
