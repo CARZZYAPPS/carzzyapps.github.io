@@ -104,106 +104,115 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, verifyPasswordResetCode, confirmPasswordReset, checkActionCode, applyActionCode } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, verifyPasswordResetCode, confirmPasswordReset, checkActionCode, applyActionCode } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", 
-      authDomain: "carzzy-apps.firebaseapp.com"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", 
+    authDomain: "carzzy-apps.firebaseapp.com"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-    const params = new URLSearchParams(window.location.search);
-    const mode = params.get('mode');
-    const actionCode = params.get('oobCode');
-    const continueUrl = params.get('continueUrl'); // Grab return URL dynamically [1.1.2]
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode');
+  const actionCode = params.get('oobCode');
+  const continueUrl = params.get('continueUrl'); 
 
-    const titleEl = document.getElementById('title');
-    const statusEl = document.getElementById('status');
-    const resetForm = document.getElementById('reset-form');
-    const showPwd = document.getElementById('show-pwd');
-    const newPwdInput = document.getElementById('new-password');
-    const confirmPwdInput = document.getElementById('confirm-password');
+  const titleEl = document.getElementById('title');
+  const statusEl = document.getElementById('status');
+  const resetForm = document.getElementById('reset-form');
+  const showPwd = document.getElementById('show-pwd');
+  const newPwdInput = document.getElementById('new-password');
+  const confirmPwdInput = document.getElementById('confirm-password');
 
-    const titles = {
-      resetPassword: "Reset Password",
-      recoverEmail: "Recover Email",
-      verifyEmail: "Verify Email"
-    };
+  // Added verifyAndChangeEmail to the titles mapping
+  const titles = {
+    resetPassword: "Reset Password",
+    recoverEmail: "Recover Email",
+    verifyEmail: "Verify Email",
+    verifyAndChangeEmail: "Verify Email Change" 
+  };
 
-    if (titles[mode]) {
-      document.title = `${titles[mode]} | Carzzy Apps`;
-      titleEl.innerText = titles[mode];
+  if (titles[mode]) {
+    document.title = `${titles[mode]} | Carzzy Apps`;
+    titleEl.innerText = titles[mode];
+  }
+
+  showPwd.onchange = () => {
+    const type = showPwd.checked ? 'text' : 'password';
+    newPwdInput.type = type;
+    confirmPwdInput.type = type;
+  };
+
+  const handleRedirect = () => {
+    setTimeout(() => {
+      window.location.href = continueUrl || "https://www.carzzyapps.com/";
+    }, 2000);
+  };
+
+  if (!actionCode) {
+    statusEl.innerText = "Error: Invalid action request.";
+  } else {
+    switch (mode) {
+      case 'resetPassword':
+        verifyPasswordResetCode(auth, actionCode).then(email => {
+          statusEl.innerText = `Choose a new password for ${email}`;
+          resetForm.classList.remove('hidden');
+
+          document.getElementById('submit-reset').onclick = () => {
+            const newPassword = newPwdInput.value;
+            const confirmPassword = confirmPwdInput.value;
+
+            if (newPassword !== confirmPassword) {
+              statusEl.innerText = "Error: Passwords do not match.";
+              return;
+            }
+            if (newPassword.length < 6) {
+              statusEl.innerText = "Password must be at least 6 characters.";
+              return;
+            }
+
+            confirmPasswordReset(auth, actionCode, newPassword).then(() => {
+              statusEl.innerText = "Success! Your password is updated. Redirecting...";
+              resetForm.classList.add('hidden');
+              handleRedirect(); 
+            }).catch(err => statusEl.innerText = err.message);
+          };
+        }).catch(() => statusEl.innerText = "Expired or invalid reset link.");
+        break;
+
+      case 'recoverEmail':
+        checkActionCode(auth, actionCode).then(info => {
+          const revertedEmail = info.data.email;
+          return applyActionCode(auth, actionCode).then(() => {
+            statusEl.innerText = `Email address reverted to ${revertedEmail}. Redirecting...`;
+            handleRedirect(); 
+          });
+        }).catch(() => statusEl.innerText = "Failed to restore previous email.");
+        break;
+
+      case 'verifyEmail':
+        applyActionCode(auth, actionCode).then(() => {
+          statusEl.innerText = "Your email address is verified! Redirecting...";
+          handleRedirect(); 
+        }).catch(() => statusEl.innerText = "Invalid or expired verification link.");
+        break;
+
+      // New handler added for verifyBeforeUpdateEmail operations
+      case 'verifyAndChangeEmail':
+        applyActionCode(auth, actionCode).then(() => {
+          statusEl.innerText = "Your new email address has been verified and updated! Redirecting...";
+          handleRedirect(); 
+        }).catch(() => statusEl.innerText = "Invalid or expired verification link.");
+        break;
+
+      default:
+        statusEl.innerText = "Unknown security request.";
     }
-
-    showPwd.onchange = () => {
-      const type = showPwd.checked ? 'text' : 'password';
-      newPwdInput.type = type;
-      confirmPwdInput.type = type;
-    };
-
-    // Auto-redirect helper [1.1.3]
-    const handleRedirect = () => {
-      setTimeout(() => {
-        window.location.href = continueUrl || "https://www.carzzyapps.com/";
-      }, 2000);
-    };
-
-    if (!actionCode) {
-      statusEl.innerText = "Error: Invalid action request.";
-    } else {
-      switch (mode) {
-        case 'resetPassword':
-          verifyPasswordResetCode(auth, actionCode).then(email => {
-            statusEl.innerText = `Choose a new password for ${email}`;
-            resetForm.classList.remove('hidden');
-
-            document.getElementById('submit-reset').onclick = () => {
-              const newPassword = newPwdInput.value;
-              const confirmPassword = confirmPwdInput.value;
-
-              if (newPassword !== confirmPassword) {
-                statusEl.innerText = "Error: Passwords do not match.";
-                return;
-              }
-              if (newPassword.length < 6) {
-                statusEl.innerText = "Password must be at least 6 characters.";
-                return;
-              }
-
-              confirmPasswordReset(auth, actionCode, newPassword).then(() => {
-                statusEl.innerText = "Success! Your password is updated. Redirecting...";
-                resetForm.classList.add('hidden');
-                handleRedirect(); // Auto-redirect after password update [1.1.3]
-              }).catch(err => statusEl.innerText = err.message);
-            };
-          }).catch(() => statusEl.innerText = "Expired or invalid reset link.");
-          break;
-
-        case 'recoverEmail':
-          checkActionCode(auth, actionCode).then(info => {
-            const revertedEmail = info.data.email;
-            return applyActionCode(auth, actionCode).then(() => {
-              statusEl.innerText = `Email address reverted to ${revertedEmail}. Redirecting...`;
-              handleRedirect(); // Auto-redirect after email recovery [1.1.3]
-            });
-          }).catch(() => statusEl.innerText = "Failed to restore previous email.");
-          break;
-
-        case 'verifyEmail':
-          applyActionCode(auth, actionCode).then(() => {
-            statusEl.innerText = "Your email address is verified! Redirecting...";
-            handleRedirect(); // Auto-redirect after email verification [1.1.3]
-          }).catch(() => statusEl.innerText = "Invalid or expired verification link.");
-          break;
-
-        default:
-          statusEl.innerText = "Unknown security request.";
-      }
-    }
-  </script>
+  }
+</script>
 </body>
 </html>
