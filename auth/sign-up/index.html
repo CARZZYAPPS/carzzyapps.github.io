@@ -130,7 +130,10 @@
           case "already-exists": friendlyMessage = "That username is already taken."; break;
           case "auth/invalid-email": friendlyMessage = "Please enter a valid email address."; break;
           case "auth/weak-password": friendlyMessage = "Your password is too weak."; break;
-          case "auth/network-request-failed": friendlyMessage = "Network error. Check connection."; break;
+          case "auth/network-request-failed":
+          case "unavailable":
+          case "deadline-exceeded": friendlyMessage = "Network error. Check connection and try again."; break;
+
           case "permission-denied": friendlyMessage = "Username registration failed."; break;
           default: friendlyMessage = err.message;
         }
