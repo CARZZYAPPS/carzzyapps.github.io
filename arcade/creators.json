@@ -4,10 +4,6 @@
   "topCreatorMultiplier": 2,
   "perPlay": 5,
   "perVisit": 2,
-  "legendSeed": 1000000,
-  "seedUsers": [
-    "LazerYudel"
-  ],
   "community": {
     "perPlay": 5,
     "perLike": 20,

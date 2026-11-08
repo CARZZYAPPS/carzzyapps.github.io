@@ -16,6 +16,10 @@ on:
         description: Print read-only arcade diagnostics
         type: boolean
         default: false
+      unseed:
+        description: One-time removal of the Legend seed LP
+        type: boolean
+        default: false
       findhashes:
         description: Comma-separated SHA-256 email hashes to look up (prints usernames only)
         type: string
@@ -138,3 +142,18 @@ jobs:
         run: |
           cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
           NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/find-admins.js"
+
+  unseed:
+    if: github.event_name == 'workflow_dispatch' && inputs.unseed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Remove Legend seed
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
+          NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/remove-legend-seed.js"

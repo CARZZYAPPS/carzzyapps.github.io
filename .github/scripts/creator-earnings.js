@@ -1,5 +1,4 @@
 // Credits Lazer Arcade creators. Runs hourly from the Lazer Arcade backend workflow.
-// 1) One-time Legend seed for each name in creators.json seedUsers, spread across the catalog by popularity.
 // 2) Every run: creators earn `share` of all other players' new LP, plus perPlay per game play and perVisit per
 //    site visit since the last run, times topCreatorMultiplier. Credited as the "lazerarcade" game.
 const admin = require("firebase-admin");
@@ -53,15 +52,6 @@ async function uidOf(name) {
       const cur = docs[i].exists ? docs[i].data() : { username: c.username, lp: 0, games: {} };
       const games = Object.assign({}, cur.games || {});
       let add = earn;
-      if (cfg.seedUsers.includes(c.username) && !seeded[c.uid]) {
-        const w = catalog.map((g) => (playsBy[g.id] || 0) + 1), tw = w.reduce((a, b) => a + b, 0);
-        catalog.forEach((g, k) => {
-          const share = Math.round(cfg.legendSeed * w[k] / tw), r = g.ratio || 0.04, row = Object.assign({ lp: 0, best: 0, plays: 0, last: 0 }, games[g.id] || {});
-          row.lp += share; row.plays += Math.round(share / 300); row.best = Math.max(row.best, Math.round(share / r / Math.max(1, row.plays) * 1.8)); row.last = row.best;
-          games[g.id] = row;
-        });
-        add += cfg.legendSeed; seeded[c.uid] = true; console.log("Seeded", c.username, "with", cfg.legendSeed, "LP");
-      }
       if (earn > 0) { const row = Object.assign({ lp: 0, best: 0, plays: 0, last: 0 }, games.lazerarcade || {}); row.lp += earn; row.plays += dPlays; row.last = earn; row.best = Math.max(row.best, earn); games.lazerarcade = row; }
       tx.set(refs[i], keep(cur, { username: cur.username || c.username, lp: (cur.lp || 0) + add, games, prog: cur.prog || {}, updatedAt: FV.serverTimestamp() }));
       console.log(c.username, "+", add, "LP (earned", earn, "from", dLp, "player LP,", dPlays, "plays,", dVisits, "visits)");
