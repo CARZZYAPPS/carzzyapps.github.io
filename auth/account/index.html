@@ -73,7 +73,7 @@
   sessionStorage.setItem("prevPage", document.location.href);
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
   const auth = getAuth(app), db = getFirestore(app);
@@ -117,7 +117,7 @@
       case 'auth/requires-recent-login': return "For security, log out and back in before trying this.";
       case 'auth/email-already-in-use': return "This email is already associated with another account.";
       case 'auth/weak-password':
-      case 'auth/password-does-not-meet-requirements': // Support custom password policies
+      case 'auth/password-does-not-meet-requirements':
         return "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters.";
       default: return "An unexpected error occurred. Please try again.";
     }
@@ -129,7 +129,6 @@
     try {
       setStatus("Checking availability...");
       
-      // Query to search for a duplicate usernameLower
       const q = query(collection(db, "usernames"), where("usernameLower", "==", val.toLowerCase()), limit(1));
       const querySnapshot = await getDocs(q);
       
@@ -177,11 +176,19 @@
     try {
       setStatus("Deleting...");
       await reauth(document.getElementById('del-pwd').value);
+      const uid = curUser.uid;
+      
+      // Clear Firestore references while still authenticated
+      await deleteDoc(doc(db, "usernames", uid));
+      await deleteDoc(doc(db, "arcadePlayers", uid));
+      
+      // Delete the Auth user
       await deleteUser(curUser);
       location.reload();
     } catch (e) { setStatus(getFriendlyError(e), true); }
   };
 </script>
+
 
 </body>
 </html>
