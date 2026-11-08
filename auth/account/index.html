@@ -68,7 +68,7 @@
       <div id="tab-del" class="panel">
         <h2 style="color: #ff3860;">Delete Account</h2>
         <p style="color:#ff3860; font-size: 0.9rem;">Warning: This action is permanent and cannot be undone.</p>
-        <label>Confirm Password</label>
+        <label>Password</label>
         <input id="del-pwd" type="password" />
         <button class="action-btn" style="background:#ff3860; color:#fff;" onclick="deleteAcc()">Delete Account</button>
       </div>
@@ -82,7 +82,8 @@
   sessionStorage.setItem("prevPage", document.location.href);
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, updateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  // Added updateDoc and serverTimestamp imports
+  import { getFirestore, doc, setDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
   const auth = getAuth(app);
@@ -124,14 +125,30 @@
     const val = document.getElementById('username-in').value.trim();
     try {
       setStatus("Updating...");
+      
+      // 1. Update Auth Profile
       await updateProfile(curUser, { displayName: val });
+      
+      // 2. Update usernames mapping document
       await setDoc(doc(db, "usernames", curUser.uid), {
         uid: curUser.uid,
         guest: false,
         username: val,
         usernameLower: val.toLowerCase()
       });
-      setStatus("Username updated!");
+
+      // 3. Update arcadePlayers document with new username & valid timestamp
+      try {
+        await updateDoc(doc(db, "arcadePlayers", curUser.uid), {
+          username: val,
+          updatedAt: serverTimestamp()
+        });
+      } catch (e) {
+        // Log if doc doesn't exist yet (e.g. new user has 0 LP/games played)
+        console.log("arcadePlayers doc not found or skipped:", e.message);
+      }
+
+      setStatus("Username updated everywhere!");
     } catch (e) { setStatus(e.message, true); }
   };
 
@@ -166,6 +183,7 @@
       location.reload();
     } catch (e) { setStatus(e.message, true); }
   };
+
 </script>
 </body>
 </html>
