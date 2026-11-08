@@ -193,6 +193,18 @@ button{font:inherit;color:inherit;cursor:pointer}
 .row .tx small{display:block;font:700 12px/1.4 var(--body);color:var(--muted);margin-top:2px}
 .row .meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
 .tg{font:800 11px var(--body);background:#f4e8d6;border-radius:8px;padding:2px 7px;white-space:nowrap}
+.rhelp{font:700 13px/1.45 var(--body);color:var(--ink2);margin:4px 2px 8px}
+.rcp{display:flex;gap:12px;align-items:flex-start;padding:10px;background:var(--card);border:2px solid var(--mint);border-radius:16px;margin-bottom:8px}
+.rcp.lock{border-color:var(--line);opacity:.62}
+.rcp .ic{width:54px;height:54px;flex:none;border-radius:14px;background:#fff1dc;overflow:hidden}
+.rcp .ic img{width:100%;height:100%;object-fit:cover}
+.rcp .tx{flex:1;min-width:0}
+.rcp .tx>b{font:700 17px/1.15 var(--display);margin-right:6px}
+.tg.good{background:#dff6e7;color:var(--mint-d)}
+.rsteps{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.rstep{display:flex;align-items:baseline;gap:8px;font:700 12px/1.35 var(--body);color:var(--muted)}
+.rstep i{flex:none;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--butter);font:800 11px/20px var(--body);text-align:center;font-style:normal;align-self:flex-start}
+.rstep b{font:800 13px var(--body);color:var(--ink);margin-right:4px}
 .tg.g{background:#dcf4e5;color:var(--go-d)}.tg.r{background:#ffe0da;color:var(--cherry-d)}.tg.b{background:#ddeefb;color:#25618a}.tg.y{background:#fff0bf;color:#7a5600}
 .row .ac{display:flex;flex-direction:column;gap:5px;align-items:stretch;flex:none}
 .buy{border:2.5px solid var(--ink);border-radius:12px;background:var(--go);color:#fff;font:700 16px var(--display);padding:7px 12px;min-width:86px;box-shadow:0 3px 0 var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -1994,6 +2006,27 @@ function rowHtml(r){return '<div class="row'+(r.lock?' lock':'')+(r.on?' on':'')
 function mmss(ms){var s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+('0'+s%60).slice(-2);}
 function recipesUsing(ind,t){return IND[ind].R.filter(function(r){return r.comps.indexOf(t)>=0;}).slice(0,3).map(function(r){return r.name;}).join(', ');}
 
+function recipesBody(loc){
+  var I=IND[loc.ind],have=stList(loc),menu=menuOf(loc).map(function(r){return r.key;}),h='';
+  function srcOf(x){var k=null;I.stations.forEach(function(s){if(!k&&STN[s].makes===x)k=s;});return k;}
+  function step(n,t){return '<span class="rstep"><i>'+n+'</i><span>'+t+'</span></span>';}
+  h+='<p class="rhelp">Start with the machine for the base. It goes on your tray. Then add the rest in any order, and they go onto that tray item. When it matches the order, tap it on the tray to serve.</p>';
+  var on=[],off=[];
+  I.R.forEach(function(r){
+    var ok=menu.indexOf(r.key)>=0,need=null,bs=srcOf(r.base),n=1,steps=[];
+    if(bs){var d=STN[bs];steps.push(step(n++,'<b>'+esc(d.name)+'</b>'+(d.kind==='cooker'?'tap to start, tap again when it\'s ready':'tap to brew, tap again to pour')));
+      if(!ok&&have.indexOf(bs)<0)need=G.lvl<d.lvl?'Level '+d.lvl:'Buy '+d.name;}
+    r.comps.slice().sort(function(x,y){return VIS_ORDER.indexOf(x)-VIS_ORDER.indexOf(y);}).forEach(function(c){var cs=srcOf(c),t;
+      if(cs){var d=STN[cs];t='<b>'+esc(TOPS[c].name)+'</b>from the '+esc(d.name.toLowerCase())+(d.kind==='batch'?' (brew it first)':'');if(!ok&&!need&&have.indexOf(cs)<0)need=G.lvl<d.lvl?'Level '+d.lvl:'Buy '+d.name;}
+      else{t='<b>'+esc(TOPS[c].name)+'</b>from the topping rack';var tp=I.tops[c];if(!ok&&!need&&!loc.tops[c])need=tp&&G.lvl<tp.lvl?'Level '+tp.lvl:'Buy '+TOPS[c].name.toLowerCase();}
+      steps.push(step(n++,t));});
+    steps.push(step('✓','<b>Serve</b>tap it on the tray'));
+    var row='<div class="rcp'+(ok?'':' lock')+'"><div class="ic">'+img(iconOf(r.base,r.comps))+'</div><div class="tx"><b>'+esc(r.name)+'</b>'+(ok?'':'<span class="tg">'+esc(need||'Locked')+'</span>')+'<div class="rsteps">'+steps.join('')+'</div></div></div>';
+    (ok?on:off).push(row);});
+  if(on.length)h+='<div class="grp">On your menu</div>'+on.join('');
+  if(off.length)h+='<div class="grp">Not yet</div>'+off.join('');
+  return h;
+}
 function shopRows(loc,tab){
   var li=G.locs.indexOf(loc),I=IND[loc.ind],rows=[],used=stList(loc).length,max=SIZES[loc.size].stations;
   if(tab==='equip'){
@@ -2028,6 +2061,7 @@ function shopRows(loc,tab){
 function groupRows(rows){var h='',g=null;rows.forEach(function(r){var gg=r.grp||'';if(gg!==g){g=gg;if(gg==='tops')h+='<div class="grp">Topping rack</div>';else if(gg==='mkt')h+='<div class="grp">Marketing</div>';else if(gg==='sab')h+='<div class="grp">Dirty tricks</div>';}h+=rowHtml(r);});return h;}
 
 function shopBody(loc,tab){
+  if(tab==='recipes')return recipesBody(loc);
   var li=G.locs.indexOf(loc),D=distOf(loc),h='',e=locEcon(loc);
   if(tab==='equip'){h+='<div class="kv"><span>Counter space</span><span>'+stList(loc).length+' of '+SIZES[loc.size].stations+' stations</span><span>Menu</span><span>'+menuOf(loc).length+' items</span></div>';
     if(G.rebuild&&inShiftAt(loc))h+='<p class="fine">New equipment goes on the counter at the start of your next shift.</p>';
@@ -2116,7 +2150,7 @@ function empBody(tab){
 
 function renderSheet(){
   if(!SHEET)return;var el=$('#sheet'),old=el.querySelector('.sh-b'),sc=old?old.scrollTop:0,h,tabs;
-  if(SHEET.kind==='shop'){var loc=G.locs[SHEET.li],D=distOf(loc);tabs=[['equip','Equipment'],['staff','Staff'],['store','Shop'],['market','Marketing']];
+  if(SHEET.kind==='shop'){var loc=G.locs[SHEET.li],D=distOf(loc);tabs=[['equip','Equipment'],['staff','Staff'],['store','Shop'],['market','Marketing'],['recipes','Recipes']];
     h='<div class="sh"><div class="sh-h"><div class="ti"><h2>'+esc(loc.name)+'</h2><p>'+IND[loc.ind].name+' · '+SIZES[loc.size].name+' · '+esc(cityName(loc.city))+'</p></div><div class="cashb">'+fmt(G.cash)+'</div><button class="x" type="button" data-a="close" aria-label="Close">✕</button></div>';
     h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-a="tab" data-p="'+t[0]+'" aria-selected="'+(SHEET.tab===t[0])+'">'+t[1]+'</button>';}).join('')+'</div>';
     h+='<div class="sh-b">'+shopBody(loc,SHEET.tab)+'</div></div>';}
@@ -2125,7 +2159,7 @@ function renderSheet(){
     h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" data-a="tab" data-p="'+t[0]+'" aria-selected="'+(SHEET.tab===t[0])+'">'+t[1]+'</button>';}).join('')+'</div>';
     h+='<div class="sh-b">'+empBody(SHEET.tab)+'</div></div>';}
   if(SHEET.fresh){h=h.replace('<div class="sh">','<div class="sh in">');SHEET.fresh=false;}
-  el.innerHTML=h;el.hidden=false;var nb=el.querySelector('.sh-b');if(nb)nb.scrollTop=sc;SHEET.body=nb?nb.innerHTML:'';
+  el.innerHTML=h;el.hidden=false;var tb=el.querySelector('.tabs [aria-selected="true"]');if(tb&&tb.scrollIntoView)tb.scrollIntoView({block:'nearest',inline:'nearest'});var nb=el.querySelector('.sh-b');if(nb)nb.scrollTop=sc;SHEET.body=nb?nb.innerHTML:'';
 }
 var sheetPtr=false;
 $('#sheet').addEventListener('pointerdown',function(){sheetPtr=true;});
@@ -2143,7 +2177,7 @@ function refreshSheet(){
 }
 function openShop(li,tab){SHEET={kind:'shop',li:li==null?G.act:li,tab:tab||'equip',fresh:true};renderSheet();pauseFor();}
 function openEmpire(tab){SHEET={kind:'emp',tab:tab||'shops',city:curLoc().city,fresh:true};renderSheet();pauseFor();}
-function closeSheet(){SHEET=null;$('#sheet').hidden=true;if(SH&&SH.phase==='done'&&lastSum&&$('#modal').hidden){showSummary(lastSum);return;}unpause();}
+function closeSheet(){var bk=SHEET&&SHEET.back;SHEET=null;if(bk){$('#sheet').hidden=true;MODAL=bk.kind;var m=$('#modal');m.innerHTML=bk.html;m.hidden=false;pauseFor();return;}$('#sheet').hidden=true;if(SH&&SH.phase==='done'&&lastSum&&$('#modal').hidden){showSummary(lastSum);return;}unpause();}
 setInterval(refreshSheet,1000);
 
 /* ================= MODALS ================= */
@@ -2170,13 +2204,13 @@ function onLevel(l){sfx.lvl();if(SH&&SH.phase!=='done'){var u=unlocksAt(l);banne
 function showTitle(hasSave){
   openModal('<h1>Crema <span>Rush</span></h1><p class="lead">Run the counter, then build a coffee empire. Bakeries, juice bars and ice cream parlors open up as you grow.</p>'+
     '<ol><li>Customers order with bubbles. Tap a machine to start an item and tap it again when it is done to put it on the tray.</li><li>Tap milk or toppings to add them to a tray item. Tap a finished item to serve it.</li><li>Burnt food and slow service cost you. Fast service builds streaks and tips.</li><li>Hire staff to automate, open new shops, fight rivals and buy holdings. Shops with a manager earn while you work elsewhere.</li></ol>'+
-    '<div class="btns">'+(hasSave?btn('Keep playing','start',{cls:'gold'})+btn('New game','new',{cls:'sec'}):btn('Open the shop','start',{cls:'gold'}))+'</div>'+arcadeTitle(),'title');
+    '<div class="btns">'+(hasSave?btn('Keep playing','start',{cls:'gold'})+btn('New game','new',{cls:'sec'}):btn('Open the shop','start',{cls:'gold'}))+'</div><div class="btns">'+btn('Recipes','recipes',{cls:'sec'})+'</div>'+arcadeTitle(),'title');
 }
 function arcadeTitle(){if(!window.LZ_GAME||!window.LZ)return '<p class="fine">Progress saves in this browser.</p>';
   var x2=LZM>1?'<div class="lzbar" style="background:#fff3c4;border-color:#f2c94c"><span><b>Game of the Day:</b> '+LZM+'× Lazer Points on every shift today.</span></div>':'';
   var u=LZ.signedIn()?LZ.username:'';
   return x2+'<div class="lzbar"><span>'+(u?'Signed in as <b>'+esc(u)+'</b>. Progress saves to your account.':'Playing as guest. Progress saves in this browser.')+'</span>'+(u?'':btn('Sign in','acct',{cls:'sec'}))+'</div>'+
-    '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div><div class="btns">'+btn('☕ Coffee recipes','recipes',{cls:'sec'})+'</div>'+
+    '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div>'+
     '<p class="fine"><b>New in v3.1:</b> extra tray plates. Shop → Equipment → Tray extension.</p>'+
     '<p class="fine"><a href="#" data-a="legacy">Play the legacy version</a> if you have progress there. Legacy points don\'t carry over to v3.</p>';}
 function showPause(){openModal('<h1>Paused</h1><p class="lead">'+esc(curLoc().name)+' · Level '+G.lvl+' · '+fmt(G.cash)+'</p><div class="btns">'+btn('Resume','mclose',{cls:'gold'})+'</div><div class="btns">'+btn('Sound '+(G.mute?'off':'on'),'snd',{cls:'sec'})+btn('Music '+(G.music?'on':'off'),'mus',{cls:'sec'})+'</div><div class="btns">'+btn('Start over','new',{cls:'warn'})+'</div>'+(window.LZ_GAME?'<div class="btns">'+btn(LZ.signedIn()?esc(LZ.username):'Sign in','acct',{cls:'sec'})+btn('Leaderboard','lb',{cls:'sec'})+btn('Feedback','fb',{cls:'sec'})+'</div><div class="btns">'+btn('Recipes','recipes',{cls:'sec'})+btn('Back to Lazer Arcade','arcade',{cls:'sec'})+'</div>':''),'pause');}
@@ -2211,7 +2245,7 @@ document.addEventListener('click',function(e){
   if(a==='emp'){closeModal();openEmpire();return;}
   if(a==='start'){lastSum=null;closeModal();if(!G.started){G.started=true;}startShift();var og=window.__off;if(og&&Math.abs(og.gain)>1){setTimeout(function(){showNews('While you were away: '+(og.gain>=0?'+':'')+fmt(og.gain)+' from your shops ('+Math.round(og.eff*100)+'% rate).',og.gain>=0?'good':'bad');},1200);}return;}
   if(a==='legacy'){if(window.LZ)LZ.flush();location.href='/Crema-Rush/';return;}
-  if(a==='recipes'){save();if(window.LZ)LZ.flush();window.open('/arcade/crema-rush/recipes/','_blank','noopener');return;}
+  if(a==='recipes'){var back=MODAL?{kind:MODAL,html:$('#modal').innerHTML}:null;MODAL=null;$('#modal').hidden=true;openShop(null,'recipes');SHEET.back=back;return;}
   if(a==='arcade'){save();if(window.LZ)LZ.flush();setTimeout(function(){location.href='/arcade/';},250);return;}
   if(a==='lb'){save();if(window.LZ)LZ.flush();setTimeout(function(){location.href='/arcade/leaderboard/?game=crema';},250);return;}
   if(a==='fb'){if(window.LZ)LZ.openFeedback('crema');return;}
