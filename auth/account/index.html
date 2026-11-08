@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <style>
+    body { background: #0a0a0a; color: #ccc; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+    .card { background: #2a2a2a; padding: 25px; border-radius: 8px; width: 100%; max-width: 450px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    .tab { background: none; border: none; color: #aaa; cursor: pointer; padding: 5px 10px; font-weight: bold; }
+    .tab.active { color: #00d1b2; border-bottom: 2px solid #00d1b2; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    label { font-size: 0.8rem; color: #aaa; display: block; margin: 10px 0 5px; }
+    input { background: #1a1a1a; border: 1px solid #444; color: #ccc; padding: 8px; width: 100%; box-sizing: border-box; border-radius: 4px; }
+    button { background: #00d1b2; color: #0a0a0a; border: none; padding: 10px; font-weight: bold; border-radius: 4px; width: 100%; margin-top: 15px; cursor: pointer; }
+    .status { color: #00d1b2; margin-top: 10px; font-size: 0.85rem; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div id="gate">Checking authorization status...</div>
+  <div id="profile" style="display:none;">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('tab-user')">Username</button>
+      <button class="tab" onclick="showTab('tab-pwd')">Password</button>
+      <button class="tab" onclick="showTab('tab-email')">Email</button>
+      <button class="tab" onclick="showTab('tab-del')">Delete</button>
+    </div>
+
+    <!-- Username Panel -->
+    <div id="tab-user" class="panel active">
+      <label>New Username</label>
+      <input id="username-in" type="text" />
+      <button onclick="updateUsername()">Update Username</button>
+    </div>
+
+    <!-- Password Panel -->
+    <div id="tab-pwd" class="panel">
+      <label>Current Password</label>
+      <input id="pwd-curr" type="password" />
+      <label>New Password</label>
+      <input id="pwd-new" type="password" />
+      <button onclick="changePassword()">Change Password</button>
+    </div>
+
+    <!-- Email Panel -->
+    <div id="tab-email" class="panel">
+      <label>Current Password</label>
+      <input id="email-curr-pwd" type="password" />
+      <label>New Email</label>
+      <input id="email-new" type="email" />
+      <button onclick="changeEmail()">Change Email</button>
+    </div>
+
+    <!-- Delete Panel -->
+    <div id="tab-del" class="panel">
+      <p style="color:#ff3860;">Warning: This action is permanent.</p>
+      <label>Confirm Password</label>
+      <input id="del-pwd" type="password" />
+      <button style="background:#ff3860; color:#fff;" onclick="deleteAcc()">Delete Account</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, updatePassword, updateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const app = initializeApp({ apiKey: "YOUR_API_KEY", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  let curUser = null;
+
+  window.showTab = (id) => {
+    document.querySelectorAll('.panel, .tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.target.classList.add('active');
+    document.getElementById('status').innerText = "";
+  };
+
+  onAuthStateChanged(auth, u => {
+    // 1. Not signed in OR anonymous -> Redirect to sign-in page
+    if (!u || u.isAnonymous) {
+      window.location.href = "/auth/sign-in";
+      return;
+    }
+
+    // 2. Signed in but not verified -> Redirect to email verification page
+    if (!u.emailVerified) {
+      window.location.href = "/auth/verify-email";
+      return;
+    }
+
+    // 3. User is valid and verified -> Reveal profile settings
+    curUser = u;
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('profile').style.display = 'block';
+  });
+
+  const reauth = async (pwd) => {
+    const cred = EmailAuthProvider.credential(curUser.email, pwd);
+    await reauthenticateWithCredential(curUser, cred);
+  };
+
+  const setStatus = (msg, err = false) => {
+    const el = document.getElementById('status');
+    el.style.color = err ? '#ff3860' : '#00d1b2';
+    el.innerText = msg;
+  };
+
+  window.updateUsername = async () => {
+    const val = document.getElementById('username-in').value.trim();
+    try {
+      setStatus("Updating...");
+      await updateProfile(curUser, { displayName: val });
+      await setDoc(doc(db, "usernames", curUser.uid), {
+        uid: curUser.uid,
+        guest: false,
+        username: val,
+        usernameLower: val.toLowerCase()
+      });
+      setStatus("Username updated!");
+    } catch (e) { setStatus(e.message, true); }
+  };
+
+  window.changePassword = async () => {
+    const curr = document.getElementById('pwd-curr').value;
+    const newPwd = document.getElementById('pwd-new').value;
+    try {
+      setStatus("Verifying password...");
+      await reauth(curr);
+      await updatePassword(curUser, newPwd);
+      setStatus("Password changed!");
+    } catch (e) { setStatus(e.message, true); }
+  };
+
+  window.changeEmail = async () => {
+    const curr = document.getElementById('email-curr-pwd').value;
+    const mail = document.getElementById('email-new').value;
+    try {
+      setStatus("Verifying password...");
+      await reauth(curr);
+      await updateEmail(curUser, mail);
+      setStatus("Email updated!");
+    } catch (e) { setStatus(e.message, true); }
+  };
+
+  window.deleteAcc = async () => {
+    const pwd = document.getElementById('del-pwd').value;
+    try {
+      setStatus("Deleting...");
+      await reauth(pwd);
+      await deleteUser(curUser);
+      location.reload();
+    } catch (e) { setStatus(e.message, true); }
+  };
+</script>
+</body>
+</html>
