@@ -10,7 +10,12 @@ function findBest(o, depth = 0) { let b = 0; if (!o || typeof o !== "object" || 
   return b; }
 (async () => {
   const flag = db.collection("arcadeAdmin").doc("legendSeedRemoved");
-  if ((await flag.get()).exists) { console.log("Already removed."); return; }
+  const fl = await flag.get();
+  if (fl.exists) {
+    // follow-up: Harbor 3 saves keep no best, so restore Harbor's real best from its last real score (3,563)
+    if (!fl.data().harborFix) { const ps0 = await db.collection("arcadePlayers").get(); const d0 = ps0.docs.find((x) => x.id.startsWith(UIDP) && x.data().username === "LazerYudel");
+      await d0.ref.update({ "games.harbor.best": 3563, "games.harbor.last": 3563 }); await flag.update({ harborFix: true }); console.log("harbor best set to 3563"); }
+    else console.log("Already removed."); return; }
   const ps = await db.collection("arcadePlayers").get();
   const d = ps.docs.find((x) => x.id.startsWith(UIDP) && x.data().username === "LazerYudel");
   if (!d) throw new Error("LazerYudel row not found");
