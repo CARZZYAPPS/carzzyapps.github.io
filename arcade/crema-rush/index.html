@@ -2176,10 +2176,10 @@ function arcadeTitle(){if(!window.LZ_GAME||!window.LZ)return '<p class="fine">Pr
   var x2=LZM>1?'<div class="lzbar" style="background:#fff3c4;border-color:#f2c94c"><span><b>Game of the Day:</b> '+LZM+'× Lazer Points on every shift today.</span></div>':'';
   var u=LZ.signedIn()?LZ.username:'';
   return x2+'<div class="lzbar"><span>'+(u?'Signed in as <b>'+esc(u)+'</b>. Progress saves to your account.':'Playing as guest. Progress saves in this browser.')+'</span>'+(u?'':btn('Sign in','acct',{cls:'sec'}))+'</div>'+
-    '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div>'+
+    '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div><div class="btns">'+btn('☕ Coffee recipes','recipes',{cls:'sec'})+'</div>'+
     '<p class="fine"><b>New in v3.1:</b> extra tray plates. Shop → Equipment → Tray extension.</p>'+
     '<p class="fine"><a href="#" data-a="legacy">Play the legacy version</a> if you have progress there. Legacy points don\'t carry over to v3.</p>';}
-function showPause(){openModal('<h1>Paused</h1><p class="lead">'+esc(curLoc().name)+' · Level '+G.lvl+' · '+fmt(G.cash)+'</p><div class="btns">'+btn('Resume','mclose',{cls:'gold'})+'</div><div class="btns">'+btn('Sound '+(G.mute?'off':'on'),'snd',{cls:'sec'})+btn('Music '+(G.music?'on':'off'),'mus',{cls:'sec'})+'</div><div class="btns">'+btn('Start over','new',{cls:'warn'})+'</div>'+(window.LZ_GAME?'<div class="btns">'+btn(LZ.signedIn()?esc(LZ.username):'Sign in','acct',{cls:'sec'})+btn('Leaderboard','lb',{cls:'sec'})+btn('Feedback','fb',{cls:'sec'})+'</div><div class="btns">'+btn('Back to Lazer Arcade','arcade',{cls:'sec'})+'</div>':''),'pause');}
+function showPause(){openModal('<h1>Paused</h1><p class="lead">'+esc(curLoc().name)+' · Level '+G.lvl+' · '+fmt(G.cash)+'</p><div class="btns">'+btn('Resume','mclose',{cls:'gold'})+'</div><div class="btns">'+btn('Sound '+(G.mute?'off':'on'),'snd',{cls:'sec'})+btn('Music '+(G.music?'on':'off'),'mus',{cls:'sec'})+'</div><div class="btns">'+btn('Start over','new',{cls:'warn'})+'</div>'+(window.LZ_GAME?'<div class="btns">'+btn(LZ.signedIn()?esc(LZ.username):'Sign in','acct',{cls:'sec'})+btn('Leaderboard','lb',{cls:'sec'})+btn('Feedback','fb',{cls:'sec'})+'</div><div class="btns">'+btn('Recipes','recipes',{cls:'sec'})+btn('Back to Lazer Arcade','arcade',{cls:'sec'})+'</div>':''),'pause');}
 function chooser(city,did){
   var D=district(city,did),h='<span class="tg b">'+esc(cityName(city))+'</span><h1>'+esc(D.name)+'</h1><p class="lead">'+esc(D.twist)+'</p>';
   IND_ORDER.forEach(function(k){var I=IND[k],c=locCost(city,did,k),r={ic:img(heroIcon(k)),title:I.name,desc:'Prices ×'+I.pm+' · equipment costs ×'+I.cm};
@@ -2211,6 +2211,7 @@ document.addEventListener('click',function(e){
   if(a==='emp'){closeModal();openEmpire();return;}
   if(a==='start'){lastSum=null;closeModal();if(!G.started){G.started=true;}startShift();var og=window.__off;if(og&&Math.abs(og.gain)>1){setTimeout(function(){showNews('While you were away: '+(og.gain>=0?'+':'')+fmt(og.gain)+' from your shops ('+Math.round(og.eff*100)+'% rate).',og.gain>=0?'good':'bad');},1200);}return;}
   if(a==='legacy'){if(window.LZ)LZ.flush();location.href='/Crema-Rush/';return;}
+  if(a==='recipes'){save();if(window.LZ)LZ.flush();window.open('/arcade/crema-rush/recipes/','_blank','noopener');return;}
   if(a==='arcade'){save();if(window.LZ)LZ.flush();setTimeout(function(){location.href='/arcade/';},250);return;}
   if(a==='lb'){save();if(window.LZ)LZ.flush();setTimeout(function(){location.href='/arcade/leaderboard/?game=crema';},250);return;}
   if(a==='fb'){if(window.LZ)LZ.openFeedback('crema');return;}

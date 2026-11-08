@@ -184,6 +184,7 @@
 .comm .cart{display:grid;grid-template-columns:1fr 1fr;place-items:center;background:radial-gradient(circle at 40% 40%,rgba(34,228,255,.3),transparent 60%),radial-gradient(circle at 70% 70%,rgba(255,61,212,.25),transparent 60%),linear-gradient(135deg,#1b0f4a,#0b0726);font-size:44px;padding:20px}
 .comm .cart span{filter:drop-shadow(0 0 14px rgba(124,77,255,.8))}
 @media (max-width:760px){.comm{grid-template-columns:1fr}.comm .cart{grid-template-columns:repeat(4,1fr);font-size:30px;padding:14px}}
+.game .xlink{margin-left:auto;margin-right:10px;font-size:13px;font-weight:800;color:#ffb56b;padding:6px 10px;border-radius:10px;background:rgba(255,154,61,.12);white-space:nowrap}.game .xlink:hover{background:rgba(255,154,61,.24)}
 </style>
 </head>
 <body>
@@ -287,6 +288,8 @@ function chips() {
   $("#cats").querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => { filter = b.dataset.c; chips(); grid(); }));
 }
 function isNew(g) { return g.released && Date.now() - new Date(g.released).getTime() < 1000 * 60 * 60 * 24 * 30; }
+document.addEventListener("click", (e) => { const x = e.target.closest && e.target.closest(".xlink"); if (x) { e.preventDefault(); e.stopPropagation(); location.href = x.dataset.href; } }, true);
+document.addEventListener("keydown", (e) => { const x = e.target.closest && e.target.closest(".xlink"); if (x && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); location.href = x.dataset.href; } });
 function grid() {
   const list = cat.games.filter((g) => filter === "all" || g.categories.includes(filter))
     .sort((a, b) => (playsBy[b.id] || 0) - (playsBy[a.id] || 0) || String(b.released).localeCompare(String(a.released)));
@@ -296,7 +299,7 @@ function grid() {
       <div class="th" style="background-image:url('${esc(g.thumb)}')"><div class="badges">${g.id === gotdId ? '<span class="x2b">2× TODAY</span>' : ""}${isNew(g) ? '<span class="new">NEW</span>' : ""}<span>v${esc(g.version)}</span></div></div>
       <div class="bd"><h3>${esc(g.name)}</h3><p>${esc(g.hook)}</p>
         <div class="tags">${g.categories.map((c) => `<span class="tag">${esc(catName[c] || c)}</span>`).join("")}</div>
-        <div class="ft"><small><b>${fmt(playsBy[g.id] || 0)}</b> plays${mine ? ` · you: <b>${fmt(mine.lp)} LP</b>` : ""}</small><span class="play">Play</span></div></div></a>`;
+        <div class="ft"><small><b>${fmt(playsBy[g.id] || 0)}</b> plays${mine ? ` · you: <b>${fmt(mine.lp)} LP</b>` : ""}</small>${g.extra ? `<span class="xlink" data-href="${esc(g.extra.path)}" role="link" tabindex="0">${esc(g.extra.label)}</span>` : ""}<span class="play">Play</span></div></div></a>`;
   });
   if (filter === "all" || cat.upcoming.some((u) => (u.categories || []).includes(filter))) {
     const nx = cat.upcoming.find((u) => u.status === "next" && (filter === "all" || (u.categories || []).includes(filter))) || cat.upcoming.find((u) => filter === "all" || (u.categories || []).includes(filter));
