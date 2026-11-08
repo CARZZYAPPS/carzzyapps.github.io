@@ -164,7 +164,7 @@
     const mail = document.getElementById('email-new').value;
     try {
       const actionCodeSettings = {
-        url: window.location;
+        url: window.location
       };
       setStatus("Verifying password...");
       await reauth(document.getElementById('email-curr-pwd').value);
