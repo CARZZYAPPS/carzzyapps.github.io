@@ -1,20 +1,8 @@
 {
   "items": [
     {
-      "name": "Harbor Rush",
-      "status": "next",
-      "hook": "Swing a real crane over a stacked ship and dig out what each truck wants. Wind, frozen reefers and a hazmat night shift.",
-      "categories": [
-        "tycoon",
-        "time",
-        "3d"
-      ],
-      "launch": "2026-11-12T12:00:00-05:00",
-      "earlyAccess": true
-    },
-    {
       "name": "Heist Planner",
-      "status": "queued",
+      "status": "next",
       "hook": "Draw every crew member's moves on a blueprint timeline, hit play, and watch the heist unfold. Tweak and rerun until it's flawless.",
       "categories": [
         "puzzle",
