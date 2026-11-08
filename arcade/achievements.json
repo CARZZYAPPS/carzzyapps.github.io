@@ -6,13 +6,13 @@
     {"id": "s250", "name": "Lifer", "desc": "Finish 250 games", "type": "sessions", "target": 250, "bonus": 3000, "icon": "play"},
     {"id": "s1000", "name": "Arcade legend", "desc": "Finish 1,000 games", "type": "sessions", "target": 1000, "bonus": 12000, "icon": "crown"},
 
-    {"id": "lp25k", "name": "25K club", "desc": "Earn 25,000 LP", "type": "lpEarned", "target": 25000, "bonus": 1500, "icon": "bolt"},
-    {"id": "lp100k", "name": "100K club", "desc": "Earn 100,000 LP", "type": "lpEarned", "target": 100000, "bonus": 5000, "icon": "bolt"},
-    {"id": "lp500k", "name": "Half-million club", "desc": "Earn 500,000 LP", "type": "lpEarned", "target": 500000, "bonus": 20000, "icon": "crown"},
-    {"id": "lp1m", "name": "Millionaire", "desc": "Earn 1,000,000 LP", "type": "lpEarned", "target": 1000000, "bonus": 50000, "icon": "crown"},
+    {"id": "lp25k", "name": "25K club", "desc": "Earn 25,000 LP playing games", "type": "lpEarned", "target": 25000, "bonus": 1500, "icon": "bolt"},
+    {"id": "lp100k", "name": "100K club", "desc": "Earn 100,000 LP playing games", "type": "lpEarned", "target": 100000, "bonus": 5000, "icon": "bolt"},
+    {"id": "lp500k", "name": "Half-million club", "desc": "Earn 500,000 LP playing games", "type": "lpEarned", "target": 500000, "bonus": 20000, "icon": "crown"},
+    {"id": "lp1m", "name": "Millionaire", "desc": "Earn 1,000,000 LP playing games", "type": "lpEarned", "target": 1000000, "bonus": 50000, "icon": "crown"},
 
-    {"id": "day8k", "name": "Big day", "desc": "Earn 8,000 LP in one day", "type": "lpInDay", "target": 8000, "bonus": 1000, "icon": "bolt"},
-    {"id": "day25k", "name": "Monster day", "desc": "Earn 25,000 LP in one day", "type": "lpInDay", "target": 25000, "bonus": 4000, "icon": "fire"},
+    {"id": "day8k", "name": "Big day", "desc": "Earn 8,000 LP playing games in one day", "type": "lpInDay", "target": 8000, "bonus": 1000, "icon": "bolt"},
+    {"id": "day25k", "name": "Monster day", "desc": "Earn 25,000 LP playing games in one day", "type": "lpInDay", "target": 25000, "bonus": 4000, "icon": "fire"},
     {"id": "marathon", "name": "Marathon", "desc": "Finish 25 games in one day", "type": "sessionsInDay", "target": 25, "bonus": 1500, "icon": "run"},
 
     {"id": "days7", "name": "Week one", "desc": "Play on 7 different days", "type": "daysPlayed", "target": 7, "bonus": 700, "icon": "cal"},
