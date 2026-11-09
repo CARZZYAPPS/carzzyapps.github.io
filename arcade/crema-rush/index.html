@@ -1753,8 +1753,8 @@ function hostile(loc){
   if(r<.2){loc.comp.S=Math.max(5,loc.comp.S-20);news(cn+' got hit by a health scandal. Their regulars are looking for a new spot.','good',loc);return;}
   if(r<.45){loc.hx.push({m:.85,until:now()+120000,k:'pricewar'});news(cn+' started a price war near '+loc.name+'. Fewer customers for 2 minutes.','bad',loc);}
   else if(r<.6){repAdd(loc,-.3);news(cn+' paid for a wave of fake bad reviews of '+loc.name+'.','bad',loc);}
-  else if(r<.8){var roles=ROLE_ORDER.filter(function(k){return k!=='manager'&&loc.staff[k]>0;});
-    if(roles.length){var k=pick(roles);loc.staff[k]--;news(cn+' poached a '+ROLES[k].name.toLowerCase()+' from '+loc.name+'.','bad',loc);if(SH&&SH.loc===loc&&SH.phase!=='done')resetBots();}
+  else if(r<.68){var roles=ROLE_ORDER.filter(function(k){return k!=='manager'&&loc.staff[k]>0;});
+    if(roles.length){var k=pick(roles);loc.staff[k]--;(loc.away=loc.away||[]).push({k:k,until:now()+150000});news(cn+' lured a '+ROLES[k].name.toLowerCase()+' away from '+loc.name+'. They\'ll be back in 2½ minutes.','bad',loc);if(SH&&SH.loc===loc&&SH.phase!=='done')resetBots();}
     else{loc.comp.S+=6;news(cn+' expanded right next to '+loc.name+'.','bad',loc);}}
   else{loc.comp.S+=8;news(cn+' opened a bigger store near '+loc.name+'.','bad',loc);}
 }
@@ -1821,6 +1821,7 @@ var EA={chk:0,save:0,trend:0};
 function empTick(dt){
   if(!G)return;
   G.locs.forEach(function(loc){
+    if(loc.away&&loc.away.length){var t=now(),back=false;loc.away=loc.away.filter(function(a){if(a.until>t)return true;if((loc.staff[a.k]||0)<ROLES[a.k].cap[loc.size]){loc.staff[a.k]=(loc.staff[a.k]||0)+1;back=true;news('Your '+ROLES[a.k].name.toLowerCase()+' came back to '+loc.name+'.','good',loc);}return false;});if(back&&inShiftAt(loc))resetBots();}
     if(loc.comp){var tier=tierOf(loc),cap=20+16*tier+G.lvl*.8+G.fame/80;loc.comp.S=loc.comp.S>cap?Math.max(cap,loc.comp.S-dt/60*1.5):clamp(loc.comp.S+dt/60*.28*(1+.35*tier)*(1+G.fame/3000)+(Math.random()-.5)*dt*.3,5,cap);}
     if(inShiftAt(loc))return;
     var e=locEcon(loc),net=e.net/60*dt;G.cash+=net;loc.earned+=net;G.stats.passive+=net;if(SH&&SH.phase!=='done')SH.s.passive+=net;
@@ -2211,7 +2212,7 @@ function arcadeTitle(){if(!window.LZ_GAME||!window.LZ)return '<p class="fine">Pr
   var u=LZ.signedIn()?LZ.username:'';
   return x2+'<div class="lzbar"><span>'+(u?'Signed in as <b>'+esc(u)+'</b>. Progress saves to your account.':'Playing as guest. Progress saves in this browser.')+'</span>'+(u?'':btn('Sign in','acct',{cls:'sec'}))+'</div>'+
     '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div>'+
-    '<p class="fine"><b>New in v3.2:</b> rivals are easier to beat. They grow slower, cap lower and pull fewer dirty tricks. Recipes are in Shop → Recipes.</p>'+
+    '<p class="fine"><b>New in v3.2:</b> rivals are easier to beat. They grow slower, cap lower and pull fewer dirty tricks. Poached staff come back after 2½ minutes. Recipes are in Shop → Recipes.</p>'+
     '<p class="fine"><a href="#" data-a="legacy">Play the legacy version</a> if you have progress there. Legacy points don\'t carry over to v3.</p>';}
 function showPause(){openModal('<h1>Paused</h1><p class="lead">'+esc(curLoc().name)+' · Level '+G.lvl+' · '+fmt(G.cash)+'</p><div class="btns">'+btn('Resume','mclose',{cls:'gold'})+'</div><div class="btns">'+btn('Sound '+(G.mute?'off':'on'),'snd',{cls:'sec'})+btn('Music '+(G.music?'on':'off'),'mus',{cls:'sec'})+'</div><div class="btns">'+btn('Start over','new',{cls:'warn'})+'</div>'+(window.LZ_GAME?'<div class="btns">'+btn(LZ.signedIn()?esc(LZ.username):'Sign in','acct',{cls:'sec'})+btn('Leaderboard','lb',{cls:'sec'})+btn('Feedback','fb',{cls:'sec'})+'</div><div class="btns">'+btn('Recipes','recipes',{cls:'sec'})+btn('Back to Lazer Arcade','arcade',{cls:'sec'})+'</div>':''),'pause');}
 function chooser(city,did){
