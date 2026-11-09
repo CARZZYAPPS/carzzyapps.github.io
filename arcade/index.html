@@ -111,6 +111,15 @@
 .fb h3{font-size:22px} .fb p{margin:6px 0 0;color:var(--tx2)}
 
 /* today: game of the day + events */
+.spot{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);overflow:hidden;text-decoration:none;border-radius:22px;color:inherit}
+.spot .th{min-height:190px;background:#1b1240 center/cover no-repeat}
+.spot .bd{padding:20px 22px;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.spot h3{font-size:24px;margin:0}
+.spot .own{font-weight:700;color:var(--mut)}
+.spot .ds{color:var(--tx2,#b9b3d9);line-height:1.5;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.spot .ft{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:4px;font-weight:700;font-size:13px;color:var(--mut)}
+.spot .ft .btn{margin-left:auto}
+@media (max-width:700px){.spot{grid-template-columns:1fr}.spot .th{min-height:0;aspect-ratio:16/8}}
 .today{display:grid;grid-template-columns:1fr 1.35fr;gap:18px;align-items:stretch}
 .gotd{display:flex;flex-direction:column;overflow:hidden;text-decoration:none;border-radius:22px;position:relative}
 .gotd .th{aspect-ratio:16/8;background:#1b1240 center/cover no-repeat;position:relative}
@@ -215,6 +224,11 @@
     <div class="sh"><div><span class="kick">Today</span><h2>Game of the Day &amp; events</h2><p>One game pays double every day. Events add missions and bonus Lazer Points.</p></div></div>
     <div class="today"><a class="panel gotd" id="gotd" href="#games"><div class="th"><div class="x2">2×<small>POINTS</small></div></div><div class="bd"><span class="pill nx" style="align-self:flex-start">GAME OF THE DAY</span><h3>&nbsp;</h3><p>&nbsp;</p><div class="ft"><small id="gotdT">&nbsp;</small><span class="btn sm">Play</span></div></div></a>
       <div class="evs" id="evs"></div></div>
+  </section>
+
+  <section class="sec" id="spot" hidden>
+    <div class="sh"><div><span class="kick">Community</span><h2>Community spotlight</h2><p>A game built by a player in Lazer Studio. It changes every week.</p></div><a class="btn ghost sm" href="/arcade/community/">All community games</a></div>
+    <a class="panel spot" id="spotCard" href="/arcade/community/"></a>
   </section>
 
   <section class="sec" id="games">
@@ -379,6 +393,22 @@ const ICONS = { play: '<path d="M8 5v14l11-7z"/>', cal: '<rect x="3" y="5" width
 const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[k] || ICONS.star}</svg>`;
 let gotdId = null;
 function untilMidnight() { const n = new Date(), m = new Date(n); m.setHours(24, 0, 0, 0); const s = Math.max(0, (m - n) / 1000); return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`; }
+async function spotlight() {
+  try {
+    const [C, ev] = await Promise.all([import("/arcade/community/cloud.js"), fetch("/arcade/events.json", { cache: "no-cache" }).then((r) => r.json()).catch(() => ({}))]);
+    const live = await C.listGames("plays", 40).catch(() => []);
+    const pool = [...Object.values(C.BUILTIN), ...live].filter((g, i, a) => a.findIndex((y) => y.id === g.id) === i && g.title);
+    if (!pool.length) return;
+    const cfg = ev.communitySpotlight || {}, days = cfg.days || 7, n = new Date(), dn = Math.floor((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())) / 864e5);
+    const pinned = cfg.pin && pool.find((g) => g.id === cfg.pin);
+    const sorted = pool.slice().sort((a, b) => a.id.localeCompare(b.id));
+    const g = pinned || sorted[Math.floor(dn / days) % sorted.length];
+    const left = days - (dn % days);
+    const el = $("#spotCard"); el.href = "/arcade/community/play/?id=" + encodeURIComponent(g.id);
+    el.innerHTML = `<div class="th" style="background-image:url('${esc(g.thumb || "")}')"></div><div class="bd"><span class="pill nx" style="align-self:flex-start">COMMUNITY SPOTLIGHT</span><h3>${esc(g.title)}</h3><div class="own">by ${esc(g.ownerName || "a player")}</div><p class="ds">${esc(g.desc || "")}</p><div class="ft"><span>${fmt(g.plays || 0)} plays</span><span>${fmt(g.likes || 0)} likes</span>${pinned ? "" : `<span>New pick in ${left} day${left === 1 ? "" : "s"}</span>`}<span class="btn sm">Play</span></div></div>`;
+    $("#spot").hidden = false;
+  } catch (e) { console.warn("spotlight", e); }
+}
 async function today() {
   const [g, x] = await Promise.all([LZ.gameOfTheDay(), LZ.extras()]);
   if (g) {
@@ -426,7 +456,7 @@ async function perks() {
   const t = $("#crTog"); if (t) t.onclick = async () => { t.disabled = true; try { await LZ.setHideCredits(!myRow.hideCredits); myRow.hideCredits = !myRow.hideCredits; } catch (e) { LZ.toast("Couldn't save that."); } perks(); };
 }
 
-chips(); grid(); soon(); today(); perks();
+chips(); grid(); soon(); today(); spotlight(); perks();
 LZ.votes().then((v) => { myVotes = v; soon(); });
 LZ.plays(cat.games.map((g) => g.id)).then((p) => { playsBy = p; grid(); const t = Object.values(p).reduce((a, b) => a + b, 0); $("#sPlays").textContent = t ? fmt(t) : "–"; });
 board();

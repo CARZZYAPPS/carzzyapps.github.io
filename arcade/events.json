@@ -121,5 +121,8 @@
         ]
       }
     }
-  ]
+  ],
+  "communitySpotlight": {
+    "days": 7
+  }
 }
