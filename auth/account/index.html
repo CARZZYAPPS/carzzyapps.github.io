@@ -147,7 +147,7 @@
       await setDoc(doc(db, "usernames", curUser.uid), { uid: curUser.uid, guest: false, username: val, usernameLower: val.toLowerCase() });
       try { await updateDoc(doc(db, "arcadePlayers", curUser.uid), { username: val, updatedAt: serverTimestamp() }); } catch {}
       setStatus("Username updated!");
-    } catch (e) { setStatus(getFriendlyError(e), true); }
+    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
   };
 
   window.changePassword = async () => {
@@ -156,7 +156,7 @@
       await reauth(document.getElementById('pwd-curr').value);
       await updatePassword(curUser, document.getElementById('pwd-new').value);
       setStatus("Password changed!");
-    } catch (e) { setStatus(getFriendlyError(e), true); }
+    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
   };
 
   window.changeEmail = async () => {
@@ -169,7 +169,7 @@
       await reauth(document.getElementById('email-curr-pwd').value);
       await verifyBeforeUpdateEmail(curUser, mail, actionCodeSettings);
       setStatus("Verification email sent! Click the link in your inbox to complete the change.");
-    } catch (e) { setStatus(getFriendlyError(e), true); }
+    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
   };
 
   window.deleteAcc = async () => {
