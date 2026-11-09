@@ -597,7 +597,7 @@ function accountMenu() {
     <h2>${esc(state.username)}</h2>
     <p class="sub">Signed in to Carzzy Apps. Progress and Lazer Points save to this account.</p>
     <button class="btn" data-lb>View leaderboard</button>
-    <a href="/auth/account"><button class="btn">Account</button>
+    <a href="/auth/account"><button class="btn">Account</button></a>
     <button class="btn alt" data-out>Sign out</button>`,
   (card, done) => {
     card.querySelector("[data-lb]").onclick = () => { location.href = BASE + "leaderboard/"; };
