@@ -1676,7 +1676,7 @@ function load(){try{var s=JSON.parse(localStorage.getItem(SAVEKEY)||'null');if(s
 function save(){if(!G)return;G.ts=now();try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}if(window.LZ_GAME&&window.LZ)LZ.save(LZ_GAME);}
 var LZR=0.04,LZM=1;
 function lzBoot(){return new Promise(function(res){if(!window.LZ_GAME)return res();var done=false,fin=function(){if(!done){done=true;res();}};
-  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:3,minor:1,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
+  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:3,minor:2,progressOf:function(d){try{var g=JSON.parse(d);return Math.round((g.stats&&g.stats.earned||0)+(g.day||0)*10);}catch(e){return 0;}}}).then(function(){Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
   if(window.LZ)go();else window.addEventListener('lz-ready',go,{once:true});setTimeout(fin,3500);});}
 
 /* ---------- economics ---------- */
@@ -1695,7 +1695,7 @@ function mktAdd(loc){var t=now(),a=0;loc.mk=loc.mk.filter(function(m){return m.u
 function hxMult(loc){var t=now(),m=1;loc.hx=loc.hx.filter(function(h){return h.until>t;});loc.hx.forEach(function(h){m*=h.m;});return m;}
 function priceDemand(loc){return Math.pow(PRICE_T[loc.price+1].dem,1/(distOf(loc).price||1));}
 function attract(loc){return 40*(.6+.1*loc.rep)*famMult()*(1+mktAdd(loc))*loyMult()*(1+.04*loc.decor)*priceDemand(loc)*hxMult(loc);}
-function share(loc){if(!loc.comp)return 1;var A=attract(loc);return .3+.7*A/(A+loc.comp.S);}
+function share(loc){if(!loc.comp)return 1;var A=attract(loc);return .45+.55*A/(A+loc.comp.S);}
 function demandMin(loc,active){var D=distOf(loc),sz=SIZES[loc.size];return sz.dem*(active?1:1.35)*(D.demand||1)*repMult(loc)*share(loc)*(1+mktAdd(loc))*priceDemand(loc)*famMult()*loyMult()*(1+.03*loc.decor)*TM(D.tier).dm*hxMult(loc);}
 function wageMin(loc){var s=0;ROLE_ORDER.forEach(function(r){s+=(loc.staff[r]||0)*ROLES[r].wage;});return s*IND[loc.ind].wm*TM(tierOf(loc)).pm;}
 function rentMin(loc){return .35*loc.size*loc.size*IND[loc.ind].wm*TM(tierOf(loc)).pm*(distOf(loc).price||1)*Math.pow(.9,holdLv('realty'));}
@@ -1739,24 +1739,24 @@ function unlocksAt(l){
 }
 
 /* ---------- rivals ---------- */
-function newRival(loc){var tier=tierOf(loc);return {name:pick(RIVALS[loc.ind]),S:14+(G?G.lvl:1)*.7+tier*22,prev:0};}
+function newRival(loc){var tier=tierOf(loc);return {name:pick(RIVALS[loc.ind]),S:10+(G?G.lvl:1)*.45+tier*15,prev:0};}
 function news(text,kind,loc){G.news.unshift({t:now(),text:text,kind:kind||''});if(G.news.length>40)G.news.length=40;showNews(text,kind);}
 function compCheck(){
   var owned=G.locs.length;
   if(G.lvl>=12||owned>=3)G.locs.forEach(function(loc){if(!loc.comp&&Math.random()<.012*(1+owned*.15)){loc.comp=newRival(loc);loc.comp.prev=loc.comp.S;news(loc.comp.name+' just opened across from your '+loc.name+' shop.','bad',loc);}});
-  G.hostT-=5;if(G.hostT<=0){G.hostT=rnd(90,180);var c=G.locs.filter(function(l){return l.comp;});if(c.length)hostile(pick(c));}
+  G.hostT-=5;if(G.hostT<=0){G.hostT=rnd(200,360);var c=G.locs.filter(function(l){return l.comp;});if(c.length)hostile(pick(c));}
 }
 function hostile(loc){
   var cn=loc.comp.name;
   if(Math.random()<.15*(G.hq.security||0)){news('Your security team stopped a dirty trick by '+cn+'.','good',loc);return;}
   var r=Math.random();
-  if(r<.12){loc.comp.S=Math.max(5,loc.comp.S-20);news(cn+' got hit by a health scandal. Their regulars are looking for a new spot.','good',loc);return;}
-  if(r<.4){loc.hx.push({m:.72,until:now()+180000,k:'pricewar'});news(cn+' started a price war near '+loc.name+'. Fewer customers for 3 minutes.','bad',loc);}
+  if(r<.2){loc.comp.S=Math.max(5,loc.comp.S-20);news(cn+' got hit by a health scandal. Their regulars are looking for a new spot.','good',loc);return;}
+  if(r<.45){loc.hx.push({m:.85,until:now()+120000,k:'pricewar'});news(cn+' started a price war near '+loc.name+'. Fewer customers for 2 minutes.','bad',loc);}
   else if(r<.6){repAdd(loc,-.3);news(cn+' paid for a wave of fake bad reviews of '+loc.name+'.','bad',loc);}
   else if(r<.8){var roles=ROLE_ORDER.filter(function(k){return k!=='manager'&&loc.staff[k]>0;});
     if(roles.length){var k=pick(roles);loc.staff[k]--;news(cn+' poached a '+ROLES[k].name.toLowerCase()+' from '+loc.name+'.','bad',loc);if(SH&&SH.loc===loc&&SH.phase!=='done')resetBots();}
-    else{loc.comp.S+=12;news(cn+' expanded right next to '+loc.name+'.','bad',loc);}}
-  else{loc.comp.S+=15;news(cn+' opened a bigger store near '+loc.name+'.','bad',loc);}
+    else{loc.comp.S+=6;news(cn+' expanded right next to '+loc.name+'.','bad',loc);}}
+  else{loc.comp.S+=8;news(cn+' opened a bigger store near '+loc.name+'.','bad',loc);}
 }
 function resetBots(){SH.st.forEach(function(o){o.claim=null;(o.slots||[]).forEach(function(s){s.claim=null;});});SH.tray.forEach(function(e){if(e)e.claim=null;});mkBots();}
 
@@ -1821,7 +1821,7 @@ var EA={chk:0,save:0,trend:0};
 function empTick(dt){
   if(!G)return;
   G.locs.forEach(function(loc){
-    if(loc.comp){var tier=tierOf(loc),cap=30+25*tier+G.lvl*1.4+G.fame/40;loc.comp.S=clamp(loc.comp.S+dt/60*.55*(1+.5*tier)*(1+G.fame/1500)+(Math.random()-.5)*dt*.5,5,Math.max(cap,loc.comp.S));}
+    if(loc.comp){var tier=tierOf(loc),cap=20+16*tier+G.lvl*.8+G.fame/80;loc.comp.S=loc.comp.S>cap?Math.max(cap,loc.comp.S-dt/60*1.5):clamp(loc.comp.S+dt/60*.28*(1+.35*tier)*(1+G.fame/3000)+(Math.random()-.5)*dt*.3,5,cap);}
     if(inShiftAt(loc))return;
     var e=locEcon(loc),net=e.net/60*dt;G.cash+=net;loc.earned+=net;G.stats.passive+=net;if(SH&&SH.phase!=='done')SH.s.passive+=net;
     if(e.open){addFame(e.items/60*dt*.004);addXP(e.rev/60*dt*.18/xpScale(loc));
@@ -2211,7 +2211,7 @@ function arcadeTitle(){if(!window.LZ_GAME||!window.LZ)return '<p class="fine">Pr
   var u=LZ.signedIn()?LZ.username:'';
   return x2+'<div class="lzbar"><span>'+(u?'Signed in as <b>'+esc(u)+'</b>. Progress saves to your account.':'Playing as guest. Progress saves in this browser.')+'</span>'+(u?'':btn('Sign in','acct',{cls:'sec'}))+'</div>'+
     '<div class="btns">'+btn('Leaderboard','lb',{cls:'sec'})+btn('Lazer Arcade','arcade',{cls:'sec'})+'</div>'+
-    '<p class="fine"><b>New in v3.1:</b> extra tray plates. Shop → Equipment → Tray extension.</p>'+
+    '<p class="fine"><b>New in v3.2:</b> rivals are easier to beat. They grow slower, cap lower and pull fewer dirty tricks. Recipes are in Shop → Recipes.</p>'+
     '<p class="fine"><a href="#" data-a="legacy">Play the legacy version</a> if you have progress there. Legacy points don\'t carry over to v3.</p>';}
 function showPause(){openModal('<h1>Paused</h1><p class="lead">'+esc(curLoc().name)+' · Level '+G.lvl+' · '+fmt(G.cash)+'</p><div class="btns">'+btn('Resume','mclose',{cls:'gold'})+'</div><div class="btns">'+btn('Sound '+(G.mute?'off':'on'),'snd',{cls:'sec'})+btn('Music '+(G.music?'on':'off'),'mus',{cls:'sec'})+'</div><div class="btns">'+btn('Start over','new',{cls:'warn'})+'</div>'+(window.LZ_GAME?'<div class="btns">'+btn(LZ.signedIn()?esc(LZ.username):'Sign in','acct',{cls:'sec'})+btn('Leaderboard','lb',{cls:'sec'})+btn('Feedback','fb',{cls:'sec'})+'</div><div class="btns">'+btn('Recipes','recipes',{cls:'sec'})+btn('Back to Lazer Arcade','arcade',{cls:'sec'})+'</div>':''),'pause');}
 function chooser(city,did){
