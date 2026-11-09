@@ -3,24 +3,20 @@
 <head>
   <title>Account | Carzzy Apps</title>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { background: #0a0a0a; color: #ccc; font-family: sans-serif; margin: 0; padding-top: 80px; box-sizing: border-box; }
-    .container { display: flex; max-width: 900px; margin: 40px auto; gap: 20px; padding: 0 15px; }
-    .sidebar { width: 220px; background: #2a2a2a; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 8px; height: fit-content; margin-top: 100px }
-    .sidebar-btn { background: none; border: none; color: #aaa; cursor: pointer; padding: 12px; text-align: left; font-weight: bold; border-radius: 4px; }
-    .sidebar-btn.active { color: #00d1b2; background: #1a1a1a; }
-    .main-content { flex: 1; background: #2a2a2a; padding: 30px; border-radius: 8px; margin-top: 100px }
-    .panel { display: none; }
-    .panel.active { display: block; }
-    h2 { color: #00d1b2; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
-    label { font-size: 0.8rem; color: #aaa; display: block; margin: 15px 0 5px; }
-    input:not([type="checkbox"]) { background: #1a1a1a; border: 1px solid #444; color: #ccc; padding: 10px; width: 100%; box-sizing: border-box; border-radius: 4px; }
-    input:not([type="checkbox"]):focus { border-color: #00d1b2; outline: none; }
-    .show-pwd-label { display: flex; align-items: center; gap: 0.5rem; margin: 10px 0; font-size: 0.85rem; cursor: pointer; }
-    .show-pwd-label input { accent-color: #00d1b2; cursor: pointer; }
-    button.action-btn { background: #00d1b2; color: #0a0a0a; border: none; padding: 12px; font-weight: bold; border-radius: 4px; width: 100%; margin-top: 15px; cursor: pointer; }
-    .status { color: #00d1b2; margin-top: 15px; text-align: center; }
+    body{background:#0a0a0a;color:#ccc;font-family:sans-serif;}
+    .container{display:flex;max-width:900px;margin:50px auto;gap:20px;}
+    .sidebar{background:#2a2a2a;padding:15px;display:flex;flex-direction:column;gap:8px;border-radius:8px;}
+    .sidebar-btn{background:none;border:none;color:#aaa;cursor:pointer;padding:12px;text-align:left;font-weight:bold;}
+    .sidebar-btn.active{color:#00d1b2;background:#1a1a1a;}
+    .main-content{flex:1;background:#2a2a2a;padding:30px;border-radius:8px;}
+    .panel{display:none;}
+    .panel.active{display:block;}
+    h2{color:#00d1b2;margin-top:0;}
+    label{display:block;margin:15px 0 5px;font-size:0.8rem;}
+    input{background:#1a1a1a;border:1px solid #444;color:#ccc;padding:10px;width:100%;box-sizing:border-box;}
+    button.action-btn{background:#00d1b2;color:#0a0a0a;border:none;padding:12px;font-weight:bold;width:100%;margin-top:15px;cursor:pointer;}
+    .status{color:#00d1b2;margin-top:15px;text-align:center;}
   </style>
 </head>
 <body>
@@ -29,48 +25,45 @@
     <button class="sidebar-btn active" onclick="showTab('tab-user')">Username</button>
     <button class="sidebar-btn" onclick="showTab('tab-pwd')">Password</button>
     <button class="sidebar-btn" onclick="showTab('tab-email')">Email</button>
+    <button class="sidebar-btn" onclick="showTab('tab-pic')">Profile Picture</button>
     <button class="sidebar-btn" onclick="showTab('tab-del')">Delete Account</button>
   </div>
   <div class="main-content">
     <div id="profile" style="display:none;">
       <div id="tab-user" class="panel active">
         <h2>Username</h2>
-        <label>New Username</label>
-        <input id="username-in" type="text" />
+        <label>New Username</label><input id="username-in" type="text" />
         <button class="action-btn" onclick="updateUsername()">Update</button>
       </div>
       <div id="tab-pwd" class="panel">
         <h2>Password</h2>
-        <label>Current Password</label>
-        <input id="pwd-curr" type="password" />
-        <label>New Password</label>
-        <input id="pwd-new" type="password" />
-        <label class="show-pwd-label"><input type="checkbox" onchange="togglePassword('pwd-curr', 'pwd-new', this)" /> Show Passwords</label>
+        <label>Current Password</label><input id="pwd-curr" type="password" />
+        <label>New Password</label><input id="pwd-new" type="password" />
         <button class="action-btn" onclick="changePassword()">Update</button>
       </div>
       <div id="tab-email" class="panel">
         <h2>Email</h2>
-        <label>Current Password</label>
-        <input id="email-curr-pwd" type="password" />
-        <label>New Email</label>
-        <input id="email-new" type="email" />
-        <label class="show-pwd-label"><input type="checkbox" onchange="togglePassword('email-curr-pwd', null, this)" /> Show Password</label>
+        <label>Current Password</label><input id="email-curr-pwd" type="password" />
+        <label>New Email</label><input id="email-new" type="email" />
         <button class="action-btn" onclick="changeEmail()">Update</button>
+      </div>
+      <div id="tab-pic" class="panel">
+        <h2>Profile Picture</h2>
+        <label>Upload New Picture</label>
+        <input id="pic-in" type="file" accept="image/*" />
+        <button class="action-btn" onclick="updateProfilePic()">Upload & Crop</button>
+        <br /><img id="preview" style="width:120px; height:120px; border-radius:50%; object-fit:cover; margin-top:15px; border:3px solid #00d1b2; display:none;" />
       </div>
       <div id="tab-del" class="panel">
         <h2 style="color:#ff3860;">Delete Account</h2>
-        <label>Current Password</label>
-        <input id="del-pwd" type="password" />
-        <label class="show-pwd-label"><input type="checkbox" onchange="togglePassword('del-pwd', null, this)" /> Show Password</label>
+        <label>Current Password</label><input id="del-pwd" type="password" />
         <button class="action-btn" style="background:#ff3860; color:#fff;" onclick="deleteAcc()">Delete</button>
       </div>
       <div id="status" class="status"></div>
     </div>
   </div>
 </div>
-<script src="/nav-bar.js"></script>
 <script type="module">
-  sessionStorage.setItem("prevPage", document.location.href);
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
@@ -78,6 +71,7 @@
   const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
   const auth = getAuth(app), db = getFirestore(app);
   let curUser = null;
+  const cloudName = "u5bvfdsm", uploadPreset = "Carzzy-Apps-Profile-Pictures";
 
   window.showTab = (id) => {
     document.querySelectorAll('.panel, .sidebar-btn').forEach(el => el.classList.remove('active'));
@@ -86,110 +80,96 @@
     document.getElementById('status').innerText = "";
   };
 
-  window.togglePassword = (id1, id2, cb) => {
-    const type = cb.checked ? 'text' : 'password';
-    if (id1) document.getElementById(id1).type = type;
-    if (id2) document.getElementById(id2).type = type;
-  };
-
   onAuthStateChanged(auth, u => {
-    if (!u || u.isAnonymous) { window.location.href = "/auth/sign-in"; return; }
+    if (!u || u.isAnonymous) { window.location.href = "https://www.carzzyapps.com/auth/sign-in"; return; }
     if (!u.emailVerified) { window.location.href = "/auth/verify-email"; return; }
     curUser = u;
     document.getElementById('profile').style.display = 'block';
+    if (u.photoURL) {
+      const preview = document.getElementById('preview');
+      preview.src = u.photoURL; [1.2.2]
+      preview.style.display = 'inline-block';
+    }
   });
 
-  const reauth = async (pwd) => {
-    await reauthenticateWithCredential(curUser, EmailAuthProvider.credential(curUser.email, pwd));
-  };
-
+  const reauth = async (pwd) => reauthenticateWithCredential(curUser, EmailAuthProvider.credential(curUser.email, pwd));
   const setStatus = (msg, err = false) => {
     const el = document.getElementById('status');
     el.style.color = err ? '#ff3860' : '#00d1b2';
     el.innerText = msg;
   };
 
-  const getFriendlyError = (err) => {
-    const code = err?.code || "";
-    if ((err?.message || "").includes("permission-denied")) return "Username violates rules (must be 1-30 chars, no slashes).";
-    switch (code) {
-      case 'auth/invalid-credential': return "Incorrect password. Please try again.";
-      case 'auth/requires-recent-login': return "For security, log out and back in before trying this.";
-      case 'auth/email-already-in-use': return "This email is already associated with another account.";
-      case 'auth/weak-password':
-      case 'auth/password-does-not-meet-requirements':
-        return "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters.";
-      case 'auth/missing-password': return "Please enter your password.";
-      default: return "An unexpected error occurred. Please try again.";
-    }
-  };
-
   window.updateUsername = async () => {
     const val = document.getElementById('username-in').value.trim();
-    if (!val) { setStatus("Username cannot be empty.", true); return; }
+    if (!val) return setStatus("Username cannot be empty.", true);
     try {
       setStatus("Checking availability...");
-      
       const q = query(collection(db, "usernames"), where("usernameLower", "==", val.toLowerCase()), limit(1));
-      const querySnapshot = await getDocs(q);
-      
+      const snap = await getDocs(q);
       let isTaken = false;
-      querySnapshot.forEach(docSnap => {
-        if (docSnap.id !== curUser.uid) isTaken = true;
-      });
-
-      if (isTaken) {
-        setStatus("Username is already taken. Please choose another.", true);
-        return;
-      }
+      snap.forEach(d => { if (d.id !== curUser.uid) isTaken = true; });
+      if (isTaken) return setStatus("Username taken.", true);
 
       setStatus("Updating...");
-      await updateProfile(curUser, { displayName: val });
+      await updateProfile(curUser, { displayName: val }); [1.1.1]
       await setDoc(doc(db, "usernames", curUser.uid), { uid: curUser.uid, guest: false, username: val, usernameLower: val.toLowerCase() });
       try { await updateDoc(doc(db, "arcadePlayers", curUser.uid), { username: val, updatedAt: serverTimestamp() }); } catch {}
       setStatus("Username updated!");
-    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
+    } catch (e) { setStatus("Error updating username.", true); }
   };
 
   window.changePassword = async () => {
     try {
-      setStatus("Verifying password...");
+      setStatus("Verifying...");
       await reauth(document.getElementById('pwd-curr').value);
       await updatePassword(curUser, document.getElementById('pwd-new').value);
       setStatus("Password changed!");
-    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
+    } catch (e) { setStatus("Password change failed.", true); }
   };
 
   window.changeEmail = async () => {
-    const mail = document.getElementById('email-new').value;
     try {
-      const actionCodeSettings = {
-        url: window.location.href
-      };
-      setStatus("Verifying password...");
+      setStatus("Verifying...");
       await reauth(document.getElementById('email-curr-pwd').value);
-      await verifyBeforeUpdateEmail(curUser, mail, actionCodeSettings);
-      setStatus("Verification email sent! Click the link in your inbox to complete the change.");
-    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
+      await verifyBeforeUpdateEmail(curUser, document.getElementById('email-new').value, { url: window.location.href });
+      setStatus("Verification email sent!");
+    } catch (e) { setStatus("Email change failed.", true); }
+  };
+
+  window.updateProfilePic = async () => {
+    const fileInput = document.getElementById('pic-in');
+    if (!fileInput.files[0]) return setStatus("Please select an image.", true);
+    try {
+      setStatus("Uploading image...");
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      formData.append("upload_preset", uploadPreset); [1.1.1]
+
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      const croppedUrl = data.secure_url.replace("/upload/", "/upload/c_thumb,g_face,w_150,h_150,z_0.7/"); [1.1.1, 1.2.2]
+      setStatus("Saving...");
+      await updateProfile(curUser, { photoURL: croppedUrl }); [1.1.1]
+
+      const preview = document.getElementById('preview');
+      preview.src = croppedUrl; [1.2.2]
+      preview.style.display = 'inline-block';
+      setStatus("Profile picture updated!");
+    } catch (e) { setStatus("Upload failed.", true); }
   };
 
   window.deleteAcc = async () => {
     try {
       setStatus("Deleting...");
       await reauth(document.getElementById('del-pwd').value);
-      const uid = curUser.uid;
-      
-      // Clear Firestore references while still authenticated
-      await deleteDoc(doc(db, "usernames", uid));
-      await deleteDoc(doc(db, "arcadePlayers", uid));
-      
-      // Delete the Auth user
+      await deleteDoc(doc(db, "usernames", curUser.uid));
+      await deleteDoc(doc(db, "arcadePlayers", curUser.uid));
       await deleteUser(curUser);
       location.reload();
-    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
+    } catch (e) { setStatus("Deletion failed.", true); }
   };
 </script>
-
-
 </body>
 </html>
