@@ -111,7 +111,7 @@
       if (isTaken) return setStatus("Username taken.", true);
 
       setStatus("Updating...");
-      await updateProfile(curUser, { displayName: val }); [1.1.1]
+      await updateProfile(curUser, { displayName: val });
       await setDoc(doc(db, "usernames", curUser.uid), { uid: curUser.uid, guest: false, username: val, usernameLower: val.toLowerCase() });
       try { await updateDoc(doc(db, "arcadePlayers", curUser.uid), { username: val, updatedAt: serverTimestamp() }); } catch {}
       setStatus("Username updated!");
@@ -143,18 +143,18 @@
       setStatus("Uploading image...");
       const formData = new FormData();
       formData.append("file", fileInput.files[0]);
-      formData.append("upload_preset", uploadPreset); [1.1.1]
+      formData.append("upload_preset", uploadPreset);
 
       const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
       if (!res.ok) throw new Error();
       const data = await res.json();
 
-      const croppedUrl = data.secure_url.replace("/upload/", "/upload/c_thumb,g_face,w_150,h_150,z_0.7/"); [1.1.1, 1.2.2]
+      const croppedUrl = data.secure_url.replace("/upload/", "/upload/c_thumb,g_face,w_150,h_150,z_0.7/");
       setStatus("Saving...");
-      await updateProfile(curUser, { photoURL: croppedUrl }); [1.1.1]
+      await updateProfile(curUser, { photoURL: croppedUrl });
 
       const preview = document.getElementById('preview');
-      preview.src = croppedUrl; [1.2.2]
+      preview.src = croppedUrl;
       preview.style.display = 'inline-block';
       setStatus("Profile picture updated!");
     } catch (e) { setStatus("Upload failed.", true); }
@@ -171,5 +171,6 @@
     } catch (e) { setStatus("Deletion failed.", true); }
   };
 </script>
+
 </body>
 </html>
