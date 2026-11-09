@@ -119,6 +119,7 @@
       case 'auth/weak-password':
       case 'auth/password-does-not-meet-requirements':
         return "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters.";
+      case 'auth/missing-password': return "Please enter your password.";
       default: return "An unexpected error occurred. Please try again.";
     }
   };
