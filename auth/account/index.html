@@ -185,7 +185,7 @@
       // Delete the Auth user
       await deleteUser(curUser);
       location.reload();
-    } catch (e) { setStatus(getFriendlyError(e), true); }
+    } catch (e) { setStatus(getFriendlyError(e), true); console.error(e);}
   };
 </script>
 
