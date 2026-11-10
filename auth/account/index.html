@@ -187,7 +187,10 @@
       const croppedUrl = data.secure_url.replace("/upload/", "/upload/c_thumb,g_face,w_150,h_150,z_0.7/");
       setStatus("Saving...");
       await updateProfile(curUser, { photoURL: croppedUrl });
-
+      await updateDoc(doc(db, "arcadePlayers", curUser.uid), {
+        photoURL: croppedUrl,
+        updatedAt: serverTimestamp()
+      });
       const preview = document.getElementById('preview');
       preview.src = croppedUrl;
       preview.style.display = 'inline-block';
