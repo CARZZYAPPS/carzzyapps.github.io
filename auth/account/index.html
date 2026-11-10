@@ -55,9 +55,9 @@
       <div id="tab-pic" class="panel">
         <h2>Profile Picture</h2>
         <div class="file-upload-wrapper">
-          <label for="pic-in" class="custom-file-upload"><span id="upload-placeholder">📸 Click or Drop Photo</span></label>
-          <input id="pic-in" type="file" accept="image/*" onchange="showLocalPreview(this)" />
           <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
+          <label for="pic-in" class="custom-file-upload"><span id="upload-placeholder">Upload or Drag and Drop Photo</span></label>
+          <input id="pic-in" type="file" accept="image/*" onchange="showLocalPreview(this)" />
           <button class="action-btn" onclick="updateProfilePic()">Upload & Crop</button>
         </div>
       </div>
