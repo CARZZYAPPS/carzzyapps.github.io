@@ -195,7 +195,7 @@
       preview.src = croppedUrl;
       preview.style.display = 'inline-block';
       setStatus("Profile picture updated!");
-    } catch (e) { setStatus("Upload failed.", true); }
+    } catch (e) { setStatus("Upload failed.", true); console.error(e);}
   };
 
   window.deleteAcc = async () => {
