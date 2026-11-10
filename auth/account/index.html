@@ -5,9 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body{background:#0a0a0a;color:#ccc;font-family:sans-serif;margin:0;box-sizing:border-box;}
+    body{background:#0a0a0a;color:#ccc;font-family:sans-serif;margin:0;padding-top:80px;box-sizing:border-box;}
     .container{display:flex;max-width:900px;margin:40px auto;gap:20px;padding:0 15px;}
-    .sidebar{width:220px;background:#2a2a2a;border-radius:8px;padding:15px;display:flex;flex-direction:column;gap:8px;height:fit-content;margin-top:100px}
+    .sidebar{width:220px;background:#2a2a2a;border-radius:8px;padding:15px;display:flex;flex-direction:column;gap:8px;margin-top:100px}
     .sidebar-btn{background:none;border:none;color:#aaa;cursor:pointer;padding:12px;text-align:left;font-weight:bold;border-radius:4px;}
     .sidebar-btn.active{color:#00d1b2;background:#1a1a1a;}
     .main-content{flex:1;background:#2a2a2a;padding:30px;border-radius:8px;margin-top:100px}
@@ -19,7 +19,8 @@
     button.action-btn{background:#00d1b2;color:#0a0a0a;border:none;padding:12px;font-weight:bold;border-radius:4px;width:100%;margin-top:15px;cursor:pointer;}
     .status{color:#00d1b2;margin-top:15px;text-align:center;}
     .file-upload-wrapper{display:flex;flex-direction:column;align-items:center;gap:15px;margin-top:15px;}
-    .custom-file-upload{display:block;background:#1a1a1a;border:1.5px dashed #00d1b2;color:#00d1b2;padding:25px;width:100%;text-align:center;border-radius:8px;cursor:pointer;box-sizing:border-box;font-weight:bold;}
+    .custom-file-upload{display:block;background:#1a1a1a;border:1.5px dashed #00d1b2;color:#00d1b2;padding:25px;width:100%;text-align:center;border-radius:8px;cursor:pointer;box-sizing:border-box;font-weight:bold;transition:0.2s;}
+    .custom-file-upload.dragover{background:rgba(0,209,178,0.2);border-color:#fff;}
     #pic-in{display:none;}
   </style>
 </head>
@@ -54,7 +55,7 @@
       <div id="tab-pic" class="panel">
         <h2>Profile Picture</h2>
         <div class="file-upload-wrapper">
-          <label for="pic-in" class="custom-file-upload"><span id="upload-placeholder">📸 Choose Photo</span></label>
+          <label for="pic-in" class="custom-file-upload"><span id="upload-placeholder">📸 Click or Drop Photo</span></label>
           <input id="pic-in" type="file" accept="image/*" onchange="showLocalPreview(this)" />
           <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
           <button class="action-btn" onclick="updateProfilePic()">Upload & Crop</button>
@@ -115,6 +116,23 @@
       document.getElementById('upload-placeholder').textContent = `Selected: ${file.name}`;
     }
   };
+
+  const dropZone = document.querySelector('.custom-file-upload');
+  const fileInput = document.getElementById('pic-in');
+
+  ['dragenter', 'dragover'].forEach(name => {
+    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  });
+  ['dragleave', 'dragend', 'drop'].forEach(name => {
+    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+  });
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      window.showLocalPreview(fileInput);
+    }
+  });
 
   window.updateUsername = async () => {
     const val = document.getElementById('username-in').value.trim();
