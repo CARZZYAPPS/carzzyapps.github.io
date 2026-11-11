@@ -150,7 +150,7 @@
       await setDoc(doc(db, "usernames", curUser.uid), { uid: curUser.uid, guest: false, username: val, usernameLower: val.toLowerCase() });
       try { await updateDoc(doc(db, "arcadePlayers", curUser.uid), { username: val, updatedAt: serverTimestamp() }); } catch {}
       setStatus("Username updated!");
-    } catch (e) { setStatus("Error updating username.", true); }
+    } catch (e) { setStatus("Error updating username.", true); console.error(e);}
   };
 
   window.changePassword = async () => {
@@ -159,7 +159,7 @@
       await reauth(document.getElementById('pwd-curr').value);
       await updatePassword(curUser, document.getElementById('pwd-new').value);
       setStatus("Password changed!");
-    } catch (e) { setStatus("Password change failed.", true); }
+    } catch (e) { setStatus("Password change failed.", true); console.error(e);}
   };
 
   window.changeEmail = async () => {
@@ -168,7 +168,7 @@
       await reauth(document.getElementById('email-curr-pwd').value);
       await verifyBeforeUpdateEmail(curUser, document.getElementById('email-new').value, { url: window.location.href });
       setStatus("Verification email sent!");
-    } catch (e) { setStatus("Email change failed.", true); }
+    } catch (e) { setStatus("Email change failed.", true); console.error(e);}
   };
 
   window.updateProfilePic = async () => {
@@ -206,7 +206,7 @@
       await deleteDoc(doc(db, "arcadePlayers", curUser.uid));
       await deleteUser(curUser);
       location.reload();
-    } catch (e) { setStatus("Deletion failed.", true); }
+    } catch (e) { setStatus("Deletion failed.", true); console.error(e);}
   };
 </script>
 </body>
