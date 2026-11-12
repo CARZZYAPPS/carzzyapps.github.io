@@ -22,9 +22,21 @@ export function nameHtml(row, tiers, ach, roleBadge) {
   const name = `<span class="un${t && t.id === "legend" ? " fp" : ""}"${style}>${esc(row.username)}</span>`;
   return name + (roleBadge || "") + tb + (pins ? `<span class="pins">${pins}</span>` : "");
 }
+// Round profile picture for a board row; falls back to the first letter of the name.
+const AV_COLORS = ["#7c4dff", "#22e4ff", "#ff3d7f", "#ffd23f", "#3dffa8", "#ff8a3d"];
+export function safePhoto(u) { return typeof u === "string" && /^https:\/\/res\.cloudinary\.com\/[^\s"'<>]+$/.test(u) ? u : ""; }
+export function avatarHtml(row, cls) {
+  const n = String((row && row.username) || "?"), url = safePhoto(row && row.photoURL);
+  let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return url ? `<span class="lav ${cls || ""}"><img alt="" loading="lazy" src="${esc(url)}"></span>`
+    : `<span class="lav ${cls || ""}" style="background:${AV_COLORS[h % AV_COLORS.length]}">${esc(n[0].toUpperCase())}</span>`;
+}
 export function rowClass(row, tiers) { const t = tierOf(tiers, row.lp); return t ? " tier-" + t.id : ""; }
 
 export const TIER_CSS = `
+.lav{float:left;width:34px;height:34px;margin-right:11px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font:900 15px var(--display);color:#0d0a26;flex:none}
+.lav img{width:100%;height:100%;object-fit:cover;display:block}
+.lr .nm small{margin-top:1px}
 .tb{display:inline-block;margin-left:8px;border-radius:999px;padding:2px 8px;font:800 10px var(--display,sans-serif);letter-spacing:.08em;vertical-align:2px;color:#0b0726;background:var(--tc)}
 .tb-legend{background:linear-gradient(90deg,#ff5fd8,#a78bfa,#22e4ff);color:#fff}
 .tb-diamond{background:linear-gradient(90deg,#a5b4ff,#e0e7ff)}

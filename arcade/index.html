@@ -283,7 +283,7 @@
 
 <script type="module">
 import LZ, { mountShell } from "/arcade/shell.js";
-import { loadTiers, loadAch, nameHtml, rowClass, injectCss, ladderHtml, hasTier } from "/arcade/tiers.js";
+import { loadTiers, loadAch, nameHtml, rowClass, injectCss, ladderHtml, hasTier, avatarHtml } from "/arcade/tiers.js";
 const paint = mountShell();
 const $ = (s) => document.querySelector(s);
 const esc = LZ.esc, fmt = LZ.fmt;
@@ -367,7 +367,7 @@ let unwatch = null;
 function board() {
   if (unwatch) unwatch();
   const paintRows = (rows) => {
-    $("#topRows").innerHTML = rows.length ? rows.map((r, i) => `<div class="lr r${i + 1} ${LZ.user && r.uid === LZ.user.uid ? "me" : ""}${rowClass(r, TIERS)}"><span class="rk">${i + 1}</span><span class="nm">${nameHtml(r, TIERS, ACH, badge(r.username))}</span><span class="pt">${fmt(r.lp)}<small>LP</small></span></div>`).join("")
+    $("#topRows").innerHTML = rows.length ? rows.map((r, i) => `<div class="lr r${i + 1} ${LZ.user && r.uid === LZ.user.uid ? "me" : ""}${rowClass(r, TIERS)}"><span class="rk">${i + 1}</span><span class="nm">${avatarHtml(r)}${nameHtml(r, TIERS, ACH, badge(r.username))}</span><span class="pt">${fmt(r.lp)}<small>LP</small></span></div>`).join("")
       : '<div class="empty">No one on the board yet. Finish a game and take #1.</div>';
   };
   const fallback = () => fetch("/arcade/board-fallback.json", { cache: "no-cache" }).then((r) => r.json()).then((j) => paintRows(j.players || [])).catch(() => paintRows([]));

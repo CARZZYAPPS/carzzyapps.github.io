@@ -315,10 +315,17 @@ service cloud.firestore {
         && pinEarned(data, 0) && pinEarned(data, 1) && pinEarned(data, 2));
     }
     match /arcadePlayers/{uid} {
+      // Profile picture: an https image link from the account page uploader (Cloudinary).
+      function photoOk(data) {
+        return !('photoURL' in data)
+          || (data.photoURL is string && data.photoURL.size() <= 400
+            && data.photoURL.matches('^https://res[.]cloudinary[.]com/[^\\s"<>]+$'));
+      }
       function validPlayer(data) {
         return data.keys().hasAll(['username', 'lp', 'games', 'updatedAt'])
-          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'updatedAt'])
+          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'updatedAt'])
           && (!('prog' in data) || data.prog is map)
+          && photoOk(data)
           && pinsOk(data)
           && (!('hideCredits' in data) || data.hideCredits is bool)
           && ownsUsername(data.username)
@@ -338,7 +345,7 @@ service cloud.firestore {
         && request.resource.data.lp <= resource.data.lp + 20000;
       // Staff can correct or remove rows (cheating, offensive names).
       allow update: if isArcadeAdmin()
-        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'updatedAt'])
         && request.resource.data.lp is int && request.resource.data.lp >= 0;
       allow delete: if isArcadeAdmin();
     }
