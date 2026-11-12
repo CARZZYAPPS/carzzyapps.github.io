@@ -13,7 +13,7 @@ admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.proje
 const db = admin.firestore();
 const FV = admin.firestore.FieldValue;
 // Player-set fields that full-row writes must carry over.
-const keep = (cur, out) => { if (Array.isArray(cur.pins)) out.pins = cur.pins; if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits; return out; };
+const keep = (cur, out) => { if (Array.isArray(cur.pins)) out.pins = cur.pins; if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits; if (typeof cur.photoURL === "string") out.photoURL = cur.photoURL; if (typeof cur.bestRound === "number") { out.bestRound = cur.bestRound; if (typeof cur.bestRoundGame === "string") out.bestRoundGame = cur.bestRoundGame; } return out; };
 
 async function uidOf(name) {
   const byId = await db.collection("usernames").doc(name.toLowerCase()).get();

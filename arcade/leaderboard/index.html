@@ -80,8 +80,8 @@ const [TIERS, ACH] = await Promise.all([loadTiers(), loadAch()]);
 injectCss();
 const badge = (u) => { const r = roles[String(u || "").toLowerCase()]; return r ? `<span class="badge ${r}">${r === "creator" ? "CREATOR" : "ADMIN"}</span>` : ""; };
 
-function field() { return tab === "all" ? "lp" : `games.${tab}.${metric}`; }
-function val(r) { return tab === "all" ? r.lp : ((r.games || {})[tab] || {})[metric] || 0; }
+function field() { return tab === "all" ? (metric === "best" ? "bestRound" : "lp") : `games.${tab}.${metric}`; }
+function val(r) { return tab === "all" ? (metric === "best" ? r.bestRound || 0 : r.lp) : ((r.games || {})[tab] || {})[metric] || 0; }
 function tabs() {
   const list = [{ id: "all", name: "Overall" }].concat(cat.games.map((g) => ({ id: g.id, name: g.name })));
   $("#tabs").innerHTML = list.map((t) => `<button class="chip ${t.id === tab ? "on" : ""}" role="tab" aria-selected="${t.id === tab}" data-t="${t.id}">${esc(t.name)}</button>`).join("");
@@ -90,12 +90,14 @@ function tabs() {
 async function render() {
   tabs();
   const g = cat.games.find((x) => x.id === tab);
-  $("#metric").hidden = !g;
+  $("#metric").hidden = false;
+  $("#metric").querySelector('[data-m="best"]').textContent = g ? "Best score" : "Best round";
   $("#metric").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.m === metric));
   const unit = !g || metric === "lp" ? "LP" : (g.scoreLabel || "score");
+  const allBest = !g && metric === "best";
   $("#col").textContent = unit.toUpperCase();
   $("#title").innerHTML = g ? `${esc(g.name)} <em>Board</em>` : `Lazer <em>Leaderboard</em>`;
-  $("#desc").textContent = g ? (metric === "lp" ? `Lazer Points earned in ${g.name}. These also count toward the overall board.` : `Best single ${g.scoreLabel || "score"} in ${g.name}.`) : "Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.";
+  $("#desc").textContent = g ? (metric === "lp" ? `Lazer Points earned in ${g.name}. These also count toward the overall board.` : `Best single ${g.scoreLabel || "score"} in ${g.name}.`) : allBest ? "Most Lazer Points earned in a single round of any game." : "Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.";
   $("#rows").innerHTML = '<div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div>';
   if (unwatch) unwatch();
   const fail = () => fetch("/arcade/board-fallback.json", { cache: "no-cache" }).then((r) => r.json())
@@ -107,7 +109,8 @@ async function render() {
 function draw(rows, g, unit) {
   const me = LZ.user ? LZ.user.uid : null;
   const ng = (r) => Object.keys(r.games || {}).filter((k) => k !== "bonus").length;
-  const sub = (r) => tab === "all" ? ng(r) + " game" + (ng(r) === 1 ? "" : "s") : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
+  const gname = (id) => { const x = ((cat && cat.games) || cat || []).find((y) => y.id === id); return x ? x.name : ""; };
+  const sub = (r) => tab === "all" ? (metric === "best" ? (gname(r.bestRoundGame) ? "in " + gname(r.bestRoundGame) : "single round") : ng(r) + " game" + (ng(r) === 1 ? "" : "s")) : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
   
   $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { 
     const r = rows[i]; 

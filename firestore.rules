@@ -323,8 +323,10 @@ service cloud.firestore {
       }
       function validPlayer(data) {
         return data.keys().hasAll(['username', 'lp', 'games', 'updatedAt'])
-          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'updatedAt'])
+          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'bestRound', 'bestRoundGame', 'updatedAt'])
           && (!('prog' in data) || data.prog is map)
+          && (!('bestRound' in data) || (data.bestRound is int && data.bestRound >= 0 && data.bestRound <= 20000))
+          && (!('bestRoundGame' in data) || (data.bestRoundGame is string && data.bestRoundGame.size() <= 24))
           && photoOk(data)
           && pinsOk(data)
           && (!('hideCredits' in data) || data.hideCredits is bool)
@@ -345,7 +347,7 @@ service cloud.firestore {
         && request.resource.data.lp <= resource.data.lp + 20000;
       // Staff can correct or remove rows (cheating, offensive names).
       allow update: if isArcadeAdmin()
-        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'bestRound', 'bestRoundGame', 'updatedAt'])
         && request.resource.data.lp is int && request.resource.data.lp >= 0;
       allow delete: if isArcadeAdmin();
     }

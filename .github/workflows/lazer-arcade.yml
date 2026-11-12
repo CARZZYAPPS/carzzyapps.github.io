@@ -16,6 +16,10 @@ on:
         description: Print read-only arcade diagnostics
         type: boolean
         default: false
+      backfillbest:
+        description: Fill best single-round LP for existing players
+        type: boolean
+        default: false
       unseed:
         description: One-time removal of the Legend seed LP
         type: boolean
@@ -157,3 +161,18 @@ jobs:
         run: |
           cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
           NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/remove-legend-seed.js"
+
+  backfillbest:
+    if: github.event_name == 'workflow_dispatch' && inputs.backfillbest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Backfill best round
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
+          cd "$GITHUB_WORKSPACE" && NODE_PATH="$RUNNER_TEMP/node_modules" node .github/scripts/backfill-best-round.js

@@ -318,8 +318,9 @@ async function addToAccount(entries) {
     const snap = await tx.get(ref);
     const cur = snap.exists() ? snap.data() : { lp: 0, games: {} };
     const gm = Object.assign({}, cur.games || {});
-    let add = 0;
+    let add = 0, br = Math.max(0, Math.round(cur.bestRound || 0)), brg = typeof cur.bestRoundGame === "string" ? cur.bestRoundGame : "";
     Object.keys(entries).forEach((k) => {
+      const rd = Math.min(SESSION_LP_CAP, Math.max(0, Math.round(entries[k].round || 0))); if (rd > br) { br = rd; brg = k; }
       const e = entries[k], o = Object.assign({ lp: 0, best: 0, plays: 0, last: 0 }, gm[k] || {});
       const lp = Math.min(SESSION_LP_CAP, Math.max(0, Math.round(e.lp || 0)));
       add += lp;
@@ -329,7 +330,9 @@ async function addToAccount(entries) {
       if (o.eaPaid && !row.eaPaid) row.eaPaid = o.eaPaid;
       gm[k] = row;
     });
-    tx.set(ref, keepExtras(cur, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() }));
+    const out = keepExtras(cur, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() });
+    if (br) { out.bestRound = br; out.bestRoundGame = brg.slice(0, 24); }
+    tx.set(ref, out);
   });
 }
 async function settleEarly() {
@@ -365,6 +368,7 @@ async function syncPending() {
         const e = p[k], take = Math.min(budget, Math.max(0, Math.round(e.lp || 0)));
         batch[k] = { lp: take, best: e.best || 0, plays: e.plays || 0, last: e.last || 0 };
         if (e.eaLp) batch[k].eaLp = e.eaLp;
+        if (e.round) batch[k].round = e.round;
         budget -= take;
         if (budget <= 0) break;
       }
@@ -387,7 +391,7 @@ let askedThisPage = false;
 async function endSession(id, raw, info) {
   const early = await inEarlyAccess(id), mult = early ? 1 : await multiplier(id), base = await toLP(id, raw), lp = Math.round(base * mult);
   const won = early ? [] : await recordSession(id, lp, mult > 1);
-  const entry = early ? { lp: 0, eaLp: lp, best: raw, plays: 1, last: raw } : { lp, best: raw, plays: 1, last: raw };
+  const entry = early ? { lp: 0, eaLp: lp, best: raw, plays: 1, last: raw, round: lp } : { lp, best: raw, plays: 1, last: raw, round: lp };
   if (early) {
     const boost = (await gameInfo(id)).eaBoost || 1.5;
     if (signedIn()) { try { await addToAccount({ [id]: entry }); } catch (e) { stash(id, entry); } }
@@ -418,6 +422,7 @@ function stash(id, e) {
   const p = pendingAll(), o = p[id] || { lp: 0, best: 0, plays: 0, last: 0 };
   p[id] = { lp: o.lp + (e.lp || 0), best: Math.max(o.best, e.best || 0), plays: o.plays + (e.plays || 0), last: e.last || o.last };
   if (e.eaLp || o.eaLp) p[id].eaLp = (o.eaLp || 0) + (e.eaLp || 0);
+  if (e.round || o.round) p[id].round = Math.max(o.round || 0, e.round || 0);
   setPending(p);
 }
 function pendingLP() { let t = 0; Object.values(pendingAll()).forEach((e) => (t += e.lp || 0)); return t; }
@@ -428,6 +433,7 @@ function keepExtras(cur, out) {
   if (Array.isArray(cur.pins)) out.pins = cur.pins;
   if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits;
   if (typeof cur.photoURL === "string") out.photoURL = cur.photoURL;
+  if (typeof cur.bestRound === "number") { out.bestRound = cur.bestRound; if (typeof cur.bestRoundGame === "string") out.bestRoundGame = cur.bestRoundGame; }
   return out;
 }
 async function editRow(fn) {

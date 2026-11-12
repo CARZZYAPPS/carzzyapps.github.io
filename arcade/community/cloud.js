@@ -115,6 +115,7 @@ export async function awardLP(g, score) {
     row.lp += earn; row.dayLp += earn; row.plays += 1; row.last = Math.round(score); row.best = Math.max(row.best, Math.round(score)); games[key] = row;
     const out = { username: LZ.username, lp: (cur.lp || 0) + earn, games, updatedAt: serverTimestamp() }; if (cur.prog) out.prog = cur.prog; if (Array.isArray(cur.pins)) out.pins = cur.pins; if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits;
     if (typeof cur.photoURL === "string") out.photoURL = cur.photoURL;
+    if (typeof cur.bestRound === "number") { out.bestRound = cur.bestRound; if (typeof cur.bestRoundGame === "string") out.bestRoundGame = cur.bestRoundGame; }
     tx.set(ref, out); return earn;
   });
 }
