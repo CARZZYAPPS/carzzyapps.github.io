@@ -424,7 +424,12 @@ function pendingLP() { let t = 0; Object.values(pendingAll()).forEach((e) => (t 
 
 /* ---------------- tiers & perks ---------------- */
 // Fields a player sets on their own row that every full-row write must carry over.
-function keepExtras(cur, out) { if (Array.isArray(cur.pins)) out.pins = cur.pins; if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits; return out; }
+function keepExtras(cur, out) {
+  if (Array.isArray(cur.pins)) out.pins = cur.pins;
+  if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits;
+  if (typeof cur.photoURL === "string") out.photoURL = cur.photoURL;
+  return out;
+}
 async function editRow(fn) {
   if (!signedIn()) throw new Error("signed-out");
   const ref = doc(db, "arcadePlayers", state.user.uid);
