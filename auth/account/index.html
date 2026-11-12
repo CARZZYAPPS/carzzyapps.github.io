@@ -5,61 +5,65 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body{background:#0a0a0a;color:#ccc;font-family:sans-serif;margin:0;padding-top:80px;box-sizing:border-box;}
-    .container{display:flex;max-width:900px;margin:40px auto;gap:20px;padding:0 15px;}
-    .sidebar{width:220px;background:#2a2a2a;border-radius:8px;padding:15px;display:flex;flex-direction:column;gap:8px;margin-top:100px}
-    .sidebar-btn{background:none;border:none;color:#aaa;cursor:pointer;padding:12px;text-align:left;font-weight:bold;border-radius:4px;}
-    .sidebar-btn.active{color:#00d1b2;background:#1a1a1a;}
-    .main-content{flex:1;background:#2a2a2a;padding:30px;border-radius:8px;margin-top:100px}
-    .panel{display:none;}
-    .panel.active{display:block;}
-    h2{color:#00d1b2;margin-top:0;border-bottom:1px solid #444;padding-bottom:10px;}
-    label{font-size:0.8rem;color:#aaa;display:block;margin:15px 0 5px;}
-    input:not([type="checkbox"]){background:#1a1a1a;border:1px solid #444;color:#ccc;padding:10px;width:100%;box-sizing:border-box;border-radius:4px;}
-    button.action-btn{background:#00d1b2;color:#0a0a0a;border:none;padding:12px;font-weight:bold;border-radius:4px;width:100%;margin-top:15px;cursor:pointer;}
-    .status{color:#00d1b2;margin-top:15px;text-align:center;}
-    .file-upload-wrapper{display:flex;flex-direction:column;align-items:center;gap:15px;margin-top:15px;}
-    .custom-file-upload{display:block;background:#1a1a1a;border:1.5px dashed #00d1b2;color:#00d1b2;padding:25px;width:100%;text-align:center;border-radius:8px;cursor:pointer;box-sizing:border-box;font-weight:bold;transition:0.2s;}
-    .custom-file-upload.dragover{background:rgba(0,209,178,0.2);border-color:#fff;}
-    #pic-in{display:none;}
+    /* Global box-sizing ensures paddings/borders don't expand elements and break layout */
+    *, *:before, *:after { box-sizing: border-box; }
+    
+    body { background:#0a0a0a; color:#ccc; font-family:sans-serif; margin:0; padding-top:80px; }
+    
+    /* Explicitly force row layout and prevent vertical stacking/wrapping */
+    .container { display: flex; flex-direction: row; flex-wrap: nowrap; max-width: 900px; margin: 40px auto; gap: 20px; padding: 0 15px; }
+    
+    /* Sidebar sits on the left with a static width */
+    .sidebar { width: 220px; flex-shrink: 0; background: #2a2a2a; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 8px; margin-top: 100px; }
+    .sidebar-btn { background: none; border: none; color: #aaa; cursor: pointer; padding: 12px; text-align: left; font-weight: bold; border-radius: 4px; }
+    .sidebar-btn.active { color: #00d1b2; background: #1a1a1a; }
+    
+    /* Main content takes up the remaining side-by-side space */
+    .main-content { flex: 1; min-width: 0; background: #2a2a2a; padding: 30px; border-radius: 8px; margin-top: 100px; }
+    
+    .panel { display: none; }
+    .panel.active { display: block; }
+    h2 { color: #00d1b2; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    label { font-size: 0.8rem; color: #aaa; display: block; margin: 15px 0 5px; }
+    input:not([type="checkbox"]) { background: #1a1a1a; border: 1px solid #444; color: #ccc; padding: 10px; width: 100%; box-sizing: border-box; border-radius: 4px; }
+    button.action-btn { background: #00d1b2; color: #0a0a0a; border: none; padding: 12px; font-weight: bold; border-radius: 4px; width: 100%; margin-top: 15px; cursor: pointer; }
+    .status { color: #00d1b2; margin-top: 15px; text-align: center; }
+    .file-upload-wrapper { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; }
+    .custom-file-upload { display: block; background: #1a1a1a; border: 1.5px dashed #00d1b2; color: #00d1b2; padding: 25px; width: 100%; text-align: center; border-radius: 8px; cursor: pointer; box-sizing: border-box; font-weight: bold; transition: 0.2s; }
+    .custom-file-upload.dragover { background: rgba(0,209,178,0.2); border-color: #fff; }
+    #pic-in { display: none; }
   </style>
 </head>
 <body>
 <div class="container">
-  <nav class="sidebar">
+  <div class="sidebar">
     <button class="sidebar-btn active" onclick="showTab('tab-user')">Username</button>
     <button class="sidebar-btn" onclick="showTab('tab-pwd')">Password</button>
     <button class="sidebar-btn" onclick="showTab('tab-email')">Email</button>
     <button class="sidebar-btn" onclick="showTab('tab-pic')">Profile Picture</button>
     <button class="sidebar-btn" onclick="showTab('tab-del')">Delete Account</button>
-  </nav>
-  <main class="main-content">
+  </div>
+  <div class="main-content">
     <div id="profile" style="display:none;">
-      <section id="tab-user" class="panel active">
-        <form onsubmit="event.preventDefault(); updateUsername();">
-          <h2>Username</h2>
-          <label>New Username</label>
-          <input id="username-in" type="text" readonly onfocus="this.removeAttribute('readonly')" placeholder="Enter new username" />
-          <button class="action-btn" type="submit">Update</button>
-        </form>
-      </section>
-      <section id="tab-pwd" class="panel">
-        <form onsubmit="event.preventDefault(); changePassword();">
-          <h2>Password</h2>
-          <label>Current Password</label><input id="pwd-curr" type="password" autocomplete="new-password" />
-          <label>New Password</label><input id="pwd-new" type="password" autocomplete="new-password" />
-          <button class="action-btn" type="submit">Update</button>
-        </form>
-      </section>
-      <section id="tab-email" class="panel">
-        <form onsubmit="event.preventDefault(); changeEmail();">
-          <h2>Email</h2>
-          <label>Current Password</label><input id="email-curr-pwd" type="password" autocomplete="new-password" />
-          <label>New Email</label><input id="email-new" type="email" autocomplete="off" />
-          <button class="action-btn" type="submit">Update</button>
-        </form>
-      </section>
-      <section id="tab-pic" class="panel">
+      <div id="tab-user" class="panel active">
+        <h2>Username</h2>
+        <label>New Username</label>
+        <input id="username-in" type="text" readonly onfocus="this.removeAttribute('readonly')" placeholder="Enter new username" />
+        <button class="action-btn" onclick="updateUsername()">Update</button>
+      </div>
+      <div id="tab-pwd" class="panel">
+        <h2>Password</h2>
+        <label>Current Password</label><input id="pwd-curr" type="password" autocomplete="new-password" />
+        <label>New Password</label><input id="pwd-new" type="password" autocomplete="new-password" />
+        <button class="action-btn" onclick="changePassword()">Update</button>
+      </div>
+      <div id="tab-email" class="panel">
+        <h2>Email</h2>
+        <label>Current Password</label><input id="email-curr-pwd" type="password" autocomplete="new-password" />
+        <label>New Email</label><input id="email-new" type="email" autocomplete="off" />
+        <button class="action-btn" onclick="changeEmail()">Update</button>
+      </div>
+      <div id="tab-pic" class="panel">
         <h2>Profile Picture</h2>
         <div class="file-upload-wrapper">
           <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
@@ -67,17 +71,15 @@
           <input id="pic-in" type="file" accept="image/*" onchange="showLocalPreview(this)" />
           <button class="action-btn" onclick="updateProfilePic()">Upload & Crop</button>
         </div>
-      </section>
-      <section id="tab-del" class="panel">
-        <form onsubmit="event.preventDefault(); deleteAcc();">
-          <h2 style="color:#ff3860;">Delete Account</h2>
-          <label>Current Password</label><input id="del-pwd" type="password" autocomplete="new-password" />
-          <button class="action-btn" style="background:#ff3860;color:#fff;" type="submit">Delete</button>
-        </form>
-      </section>
+      </div>
+      <div id="tab-del" class="panel">
+        <h2 style="color:#ff3860;">Delete Account</h2>
+        <label>Current Password</label><input id="del-pwd" type="password" autocomplete="new-password" />
+        <button class="action-btn" style="background:#ff3860;color:#fff;" onclick="deleteAcc()">Delete</button>
+      </div>
       <div id="status" class="status"></div>
     </div>
-  </main>
+  </div>
 </div>
 <script src="/nav-bar.js"></script>
 <script type="module">
