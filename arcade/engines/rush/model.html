@@ -1,49 +1,131 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Model preview | Lazer Studio</title>
-<style>html,body{margin:0;height:100%;overflow:hidden;background:#151033;font:600 12px system-ui,sans-serif;color:#cfc8ff}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#h{position:fixed;left:8px;bottom:6px;opacity:.7;pointer-events:none}</style>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#151033;font:600 12px system-ui,sans-serif;color:#cfc8ff}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.bar{position:fixed;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+#tools{left:8px;top:8px}
+#refs{right:8px;top:8px}
+.bar button,.bar select{font:800 12px system-ui,sans-serif;color:#fff;background:#0c0921;border:1px solid #4a3f8a;border-radius:9px;padding:6px 9px;cursor:pointer}
+.bar button.on{background:#7c4dff;border-color:#a98bff}
+.bar button:disabled{opacity:.4;cursor:default}
+#info{position:fixed;left:8px;right:8px;bottom:6px;display:flex;justify-content:space-between;gap:8px;pointer-events:none;flex-wrap:wrap}
+#dims{background:rgba(12,9,33,.8);border-radius:8px;padding:4px 8px;color:#fff}
+#h{opacity:.7;align-self:flex-end}
+@media (max-width:460px){#refs{top:46px;left:8px;right:auto}#h{display:none}}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
 <script src="/arcade/engines/rush/models.js"></script></head>
-<body><canvas id="c"></canvas><div id="h">Drag to turn · scroll or pinch to zoom · tap a part to select it</div>
+<body><canvas id="c"></canvas>
+<div class="bar" id="tools" role="toolbar" aria-label="Edit tools">
+  <button data-mode="translate" class="on" title="Move (W)">✥ Move</button><button data-mode="rotate" title="Turn (E)">⟳ Turn</button><button data-mode="scale" title="Size (R)">⤡ Size</button>
+  <button id="snap" class="on" title="Snap to steps">Snap</button>
+</div>
+<div class="bar" id="refs"><select id="ref" aria-label="Size reference">
+  <option value="person">Size ref: person</option><option value="counter">Size ref: counter</option><option value="cup">Size ref: cup</option><option value="none">No size ref</option>
+</select></div>
+<div id="info"><span id="dims"></span><span id="h">Drag to turn · scroll or pinch to zoom · tap a part to select</span></div>
 <script>
-// Data-only preview for the Studio model builder: receives a model spec by postMessage and draws it. Runs no creator code.
+// Data-only preview for the Studio model builder: receives a model spec by postMessage, draws it and lets the creator
+// move, turn and size the selected part with handles. Edits go back to the editor as plain numbers. Runs no creator code.
 (function () {
   var T = THREE, cvs = document.getElementById("c"), R = new T.WebGLRenderer({ canvas: cvs, antialias: true });
-  R.setPixelRatio(Math.min(2, devicePixelRatio || 1));
-  var scene = new T.Scene(), cam = new T.PerspectiveCamera(35, 1, 0.05, 200);
+  R.setPixelRatio(Math.min(2, devicePixelRatio || 1)); R.setClearColor(0x151033);
+  var scene = new T.Scene(), cam = new T.PerspectiveCamera(35, 1, 0.02, 200);
   scene.add(new T.HemisphereLight(0xffffff, 0x8a7fb0, 0.85)); var dl = new T.DirectionalLight(0xffffff, 0.75); dl.position.set(3, 6, 4); scene.add(dl);
-  var grid = new T.GridHelper(6, 24, 0x6a5fd0, 0x2c2560); scene.add(grid);
-  var core = KitModelCore(T, { labelTex: function (txt, bg, fg) { var c = document.createElement("canvas"); c.width = 512; c.height = 128; var x = c.getContext("2d"); x.fillStyle = bg || "#fff"; x.fillRect(0, 0, 512, 128); x.fillStyle = fg || "#222"; x.font = "800 64px system-ui,sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(String(txt || "").slice(0, 18), 256, 66); var t = new T.CanvasTexture(c); return t; } });
-  var cur = null, state = "idle", sel = null, box = null, yaw = 0.6, pitch = 0.45, dist = 4, tgt = new T.Vector3(0, 0.5, 0), fitted = false;
+  // 1 grid square = 0.25 units. A shop customer is about 1.7 units tall.
+  var grid = new T.GridHelper(10, 40, 0x6a5fd0, 0x2c2560); scene.add(grid);
+  var core = KitModelCore(T, { labelTex: function (txt, bg, fg) { var c = document.createElement("canvas"); c.width = 512; c.height = 128; var x = c.getContext("2d"); x.fillStyle = bg || "#fff"; x.fillRect(0, 0, 512, 128); x.fillStyle = fg || "#222"; x.font = "800 64px system-ui,sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(String(txt || "").slice(0, 18), 256, 66); return new T.CanvasTexture(c); } });
+  var cur = null, state = "idle", sel = null, box = null, yaw = 0.6, pitch = 0.4, dist = 4, tgt = new T.Vector3(0, 0.5, 0), fitted = false, lastSpec = null;
   function size() { var w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
   addEventListener("resize", size); size();
+
+  /* ---------- size references (ghosts) ---------- */
+  var ghostM = new T.MeshLambertMaterial({ color: 0xbfb6ff, transparent: true, opacity: 0.28, depthWrite: false });
+  var lineM = new T.LineBasicMaterial({ color: 0xbfb6ff, transparent: true, opacity: 0.6 });
+  function gm(geo, x, y, z, parent) { var m = new T.Mesh(geo, ghostM); m.position.set(x, y, z); parent.add(m); m.add(new T.LineSegments(new T.EdgesGeometry(geo, 30), lineM)); return m; }
+  function personGhost() { var g = new T.Group();
+    [-0.1, 0.1].forEach(function (x) { gm(new T.CylinderGeometry(0.075, 0.065, 0.5, 10), x, 0.25, 0, g); });
+    gm(new T.CylinderGeometry(0.27, 0.2, 0.62, 14), 0, 0.8, 0, g);
+    gm(new T.SphereGeometry(0.33, 16, 12), 0, 1.36, 0, g); return g; }
+  var REF = {
+    person: { make: personGhost, h: 1.7, label: "Person: 1.7 tall" },
+    counter: { make: function () { var g = new T.Group(); gm(new T.BoxGeometry(2.4, 0.9, 0.9), 0, -0.45, 0, g); var p = personGhost(); p.position.set(0, -0.9, -0.95); g.add(p); return g; }, h: 0.9, label: "Machines sit on a counter 0.9 tall", under: true },
+    cup: { make: function () { var g = new T.Group(); gm(new T.CylinderGeometry(0.09, 0.075, 0.16, 16), 0, 0.08, 0, g); return g; }, h: 0.16, label: "Cup: 0.16 tall" }
+  };
+  var refKey = "person", refObj = null;
+  function placeRef() {
+    if (refObj) { scene.remove(refObj); refObj = null; }
+    var r = REF[refKey]; if (!r) return; refObj = r.make(); scene.add(refObj);
+    var b = cur ? new T.Box3().setFromObject(cur.g) : new T.Box3(); if (b.isEmpty()) b.set(new T.Vector3(-0.3, 0, -0.3), new T.Vector3(0.3, 0.6, 0.3));
+    if (r.under) refObj.position.set((b.min.x + b.max.x) / 2, 0, (b.min.z + b.max.z) / 2);
+    else { var w = new T.Box3().setFromObject(refObj).getSize(new T.Vector3()).x; refObj.position.set(b.max.x + w / 2 + 0.25, 0, (b.min.z + b.max.z) / 2); }
+  }
+  document.getElementById("ref").onchange = function (e) { refKey = e.target.value; placeRef(); if (cur) fit(); dims(); parent.postMessage({ type: "model-ref", ref: refKey }, "*"); };
+
+  /* ---------- handles ---------- */
+  var TC = T.TransformControls ? new T.TransformControls(cam, cvs) : null, snapOn = true, mode = "translate";
+  if (TC) { TC.setSize(0.9); scene.add(TC); applySnap(); TC.addEventListener("dragging-changed", function (e) { if (!e.value) sendEdit(); }); TC.addEventListener("objectChange", function () { if (box) box.update(); dims(); }); }
+  else document.getElementById("tools").style.display = "none";
+  function applySnap() { if (!TC) return; TC.setTranslationSnap(snapOn ? 0.05 : null); TC.setRotationSnap(snapOn ? 15 * Math.PI / 180 : null); TC.setScaleSnap(snapOn ? 0.05 : null); }
+  function setMode(m) { mode = m; if (TC) TC.setMode(m); [].forEach.call(document.querySelectorAll("[data-mode]"), function (b) { b.classList.toggle("on", b.dataset.mode === m); }); }
+  [].forEach.call(document.querySelectorAll("[data-mode]"), function (b) { b.onclick = function () { setMode(b.dataset.mode); }; });
+  document.getElementById("snap").onclick = function () { snapOn = !snapOn; this.classList.toggle("on", snapOn); applySnap(); };
+  var r3 = function (v, d) { var k = Math.pow(10, d); return Math.round(v * k) / k; };
+  function sendEdit() { if (!cur || !sel || !cur.byId[sel]) return; var o = cur.byId[sel], D = 180 / Math.PI;
+    parent.postMessage({ type: "model-edit", id: sel, p: [r3(o.position.x, 3), r3(o.position.y, 3), r3(o.position.z, 3)], r: [r3(o.rotation.x * D, 1), r3(o.rotation.y * D, 1), r3(o.rotation.z * D, 1)], s: [r3(o.scale.x, 3), r3(o.scale.y, 3), r3(o.scale.z, 3)] }, "*"); }
+
+  function dims() { var el = document.getElementById("dims"); if (!cur) { el.textContent = ""; return; } var b = new T.Box3().setFromObject(cur.g); if (b.isEmpty()) { el.textContent = "Empty model"; return; }
+    var s = b.getSize(new T.Vector3()), f = function (v) { return v.toFixed(2); }, r = REF[refKey];
+    el.textContent = "W " + f(s.x) + " × H " + f(s.y) + " × D " + f(s.z) + (r ? " · " + r.label : "") + " · grid square 0.25"; }
+
   function load(spec, keepView) {
+    if (TC) TC.detach();
     if (cur) scene.remove(cur.g); cur = null;
     try { cur = core.build(spec || { parts: [] }); } catch (e) { return; }
     scene.add(cur.g); cur.setState(state);
-    if (!keepView || !fitted) { var b = new T.Box3().setFromObject(cur.g); if (!b.isEmpty()) { var c = b.getCenter(new T.Vector3()), s = b.getSize(new T.Vector3()); tgt.copy(c); dist = Math.max(1.2, Math.max(s.x, s.y, s.z) * 2.2); fitted = true; } }
-    mark();
+    placeRef(); if (!keepView || !fitted) fit(); mark(); dims();
   }
-  function mark() { if (box) { scene.remove(box); box = null; } if (!cur || !sel || !cur.byId[sel]) return; box = new T.BoxHelper(cur.byId[sel], 0xffd84a); scene.add(box); }
-  addEventListener("message", function (e) { var d = e.data || {}; if (d.type === "model") { var fresh = d.fresh; if (fresh) fitted = false; sel = d.sel || null; if (d.state) state = d.state; load(d.spec, !fresh); } });
-  var drag = null, moved = 0, pts = {};
-  cvs.addEventListener("pointerdown", function (e) { pts[e.pointerId] = [e.clientX, e.clientY]; drag = [e.clientX, e.clientY, yaw, pitch]; moved = 0; cvs.setPointerCapture(e.pointerId); });
+  function fit() { var b = new T.Box3().setFromObject(cur.g); if (refObj) b.union(new T.Box3().setFromObject(refObj)); if (b.isEmpty()) return;
+    var c = b.getCenter(new T.Vector3()), s = b.getSize(new T.Vector3()); tgt.copy(c); dist = Math.max(1.4, Math.max(s.x, s.y * 1.2, s.z) * 2.1); fitted = true; }
+  function mark() { if (box) { scene.remove(box); box = null; } if (!cur || !sel || !cur.byId[sel]) { if (TC) TC.detach(); return; }
+    var o = cur.byId[sel]; box = new T.BoxHelper(o, 0xffd84a); scene.add(box); if (TC) TC.attach(o); }
+  addEventListener("message", function (e) { var d = e.data || {}; if (d.type !== "model") return;
+    if (d.fresh) fitted = false; sel = d.sel || null; if (d.state) state = d.state;
+    if (d.fresh && d.ref && (REF[d.ref] || d.ref === "none")) { refKey = d.ref; document.getElementById("ref").value = d.ref; }
+    lastSpec = d.spec; load(d.spec, !d.fresh); });
+
+  /* ---------- orbit, zoom, tap to select ---------- */
+  var drag = null, moved = 0, pts = {}, usedTC = false;
+  cvs.addEventListener("pointerdown", function (e) { pts[e.pointerId] = [e.clientX, e.clientY]; usedTC = !!(TC && (TC.dragging || TC.axis)); drag = usedTC ? null : [e.clientX, e.clientY, yaw, pitch]; moved = 0; });
   cvs.addEventListener("pointermove", function (e) {
     var ids = Object.keys(pts); if (!pts[e.pointerId]) return;
-    if (ids.length === 2) { var o = pts[ids[0] == e.pointerId ? ids[1] : ids[0]], p0 = pts[e.pointerId], d0 = Math.hypot(p0[0] - o[0], p0[1] - o[1]), d1 = Math.hypot(e.clientX - o[0], e.clientY - o[1]); if (d0 > 0) dist = Math.max(0.4, Math.min(40, dist * d0 / d1)); pts[e.pointerId] = [e.clientX, e.clientY]; moved = 99; return; }
+    if (TC && TC.dragging) { usedTC = true; drag = null; return; }
+    if (ids.length === 2) { var o = pts[ids[0] == e.pointerId ? ids[1] : ids[0]], p0 = pts[e.pointerId], d0 = Math.hypot(p0[0] - o[0], p0[1] - o[1]), d1 = Math.hypot(e.clientX - o[0], e.clientY - o[1]); if (d0 > 0 && d1 > 0) dist = Math.max(0.3, Math.min(40, dist * d0 / d1)); pts[e.pointerId] = [e.clientX, e.clientY]; moved = 99; return; }
     pts[e.pointerId] = [e.clientX, e.clientY]; if (!drag) return; var dx = e.clientX - drag[0], dy = e.clientY - drag[1]; moved = Math.max(moved, Math.abs(dx) + Math.abs(dy));
     yaw = drag[2] - dx * 0.01; pitch = Math.max(-0.2, Math.min(1.45, drag[3] + dy * 0.01));
   });
-  function up(e) { delete pts[e.pointerId]; if (drag && moved < 5 && cur) pick(e); drag = null; }
+  function up(e) { delete pts[e.pointerId]; if (!usedTC && drag && moved < 5 && cur) pick(e); drag = null; usedTC = false; }
   cvs.addEventListener("pointerup", up); cvs.addEventListener("pointercancel", function (e) { delete pts[e.pointerId]; drag = null; });
-  cvs.addEventListener("wheel", function (e) { e.preventDefault(); dist = Math.max(0.4, Math.min(40, dist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
+  cvs.addEventListener("wheel", function (e) { e.preventDefault(); dist = Math.max(0.3, Math.min(40, dist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
   var ray = new T.Raycaster(), nd = new T.Vector2();
   function pick(e) { var r = cvs.getBoundingClientRect(); nd.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(nd, cam);
-    var hs = ray.intersectObject(cur.g, true); if (!hs.length) return; var o = hs[0].object; while (o && o.userData.partIndex == null) o = o.parent; if (!o) return;
-    var id = Object.keys(cur.byId).filter(function (k) { return cur.byId[k] === o; })[0]; if (id) parent.postMessage({ type: "model-pick", id: id }, "*"); }
+    var hs = ray.intersectObject(cur.g, true), o = hs.length ? hs[0].object : null; while (o && o.userData.partIndex == null) o = o.parent;
+    var id = o ? Object.keys(cur.byId).filter(function (k) { return cur.byId[k] === o; })[0] : null;
+    parent.postMessage({ type: "model-pick", id: id || null }, "*"); }
+
+  /* ---------- keys go to the editor (undo, delete, duplicate) ---------- */
+  addEventListener("keydown", function (e) { var k = e.key.toLowerCase();
+    if (!e.ctrlKey && !e.metaKey) { if (k === "w") return setMode("translate"); if (k === "e") return setMode("rotate"); if (k === "r") return setMode("scale"); }
+    if (["z", "y", "d", "delete", "backspace", "escape"].indexOf(k) >= 0) { e.preventDefault(); parent.postMessage({ type: "model-key", key: k, ctrl: e.ctrlKey || e.metaKey, shift: e.shiftKey }, "*"); } });
+
   var last = performance.now();
   (function loop(now) { requestAnimationFrame(loop); var dt = Math.min(0.05, (now - last) / 1000); last = now;
     cam.position.set(tgt.x + Math.sin(yaw) * Math.cos(pitch) * dist, tgt.y + Math.sin(pitch) * dist, tgt.z + Math.cos(yaw) * Math.cos(pitch) * dist); cam.lookAt(tgt);
-    if (cur) { cur.setState(state); cur.upd(dt, now / 1000); } if (box) box.update(); R.render(scene, cam); })(last);
+    // Animations play when nothing is selected, so handles always edit the part's real resting position.
+    if (cur) { cur.setState(state); if (!sel) cur.upd(dt, now / 1000); } if (box) box.update(); R.render(scene, cam); })(last);
+  window.__MP = function () { return { cur: cur, cam: cam, TC: TC, sel: sel, refKey: refKey, refObj: refObj }; }; // test hook
   parent.postMessage({ type: "model-ready" }, "*");
 })();
 </script></body></html>

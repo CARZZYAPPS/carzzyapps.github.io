@@ -140,11 +140,40 @@ export function tabs(ctx) {
     machine: { name: "New machine", slotY: 0.11, slotZ: 0.2, lampY: 0.75, parts: [{ id: "b1", t: "rbox", p: [0, 0.35, -0.05], s: [1, 0.7, 0.6], c: "#e2553f", rad: 0.08 }, { id: "b2", t: "box", p: [0, 0.73, -0.05], s: [1.04, 0.06, 0.64], c: "#2a3a4a" }, { id: "b3", t: "text", p: [0, 0.55, 0.26], s: [0.7, 0.16, 1], c: "#ffffff", txt: "MACHINE", bg: "#2a3a4a", fg: "#ffffff" }, { id: "b4", t: "cyl", p: [0.3, 0.85, -0.1], s: [0.12, 0.2, 0.12], c: "#ffd04a", anim: [{ state: "working", type: "spin", axis: "y", speed: 1 }] }] },
     item: { name: "New item", top: 0.16, r: 0.09, parts: [{ id: "i1", t: "cyl", p: [0, 0.07, 0], s: [0.16, 0.14, 0.16], c: "#ffffff", taper: 1.2 }, { id: "i2", t: "cyl", p: [0, 0.12, 0], s: [0.15, 0.02, 0.15], c: "#8a4b2a" }] },
     customer: { name: "New customer", scale: 1, shadow: 0.7, parts: [{ id: "c1", t: "rbox", p: [0, 0.55, 0], s: [0.45, 0.6, 0.32], c: "#2f7fd0", rad: 0.3 }, { id: "c2", t: "sphere", p: [0, 1.02, 0], s: [0.36, 0.36, 0.36], c: "#f2c7a0" }, { id: "c3", t: "cyl", p: [-0.1, 0.13, 0], s: [0.12, 0.26, 0.12], c: "#2a2d33", anim: [{ state: "moving", type: "swing", axis: "x", amt: 1, speed: 2 }] }, { id: "c4", t: "cyl", p: [0.1, 0.13, 0], s: [0.12, 0.26, 0.12], c: "#2a2d33", anim: [{ state: "moving", type: "swing", axis: "x", amt: -1, speed: 2 }] }] },
-    prop: { name: "New prop", parts: [{ id: "p1", t: "cyl", p: [0, 0.6, 0], s: [0.14, 1.2, 0.14], c: "#9a6a3a" }, { id: "p2", t: "sphere", p: [0, 1.35, 0], s: [0.8, 0.7, 0.8], c: "#3aa35d" }] }
+    prop: { name: "New prop", parts: [{ id: "p1", t: "cyl", p: [0, 0.6, 0], s: [0.14, 1.2, 0.14], c: "#9a6a3a" }, { id: "p2", t: "sphere", p: [0, 1.35, 0], s: [0.8, 0.7, 0.8], c: "#3aa35d" }] },
+    car: { name: "New car", scale: 1, shadow: 1.4, walk: "roll", parts: [{ id: "v1", name: "Body", t: "rbox", p: [0, 0.42, 0], s: [1.9, 0.5, 0.95], c: "#e2453f", rad: 0.12 }, { id: "v2", name: "Cabin", t: "rbox", p: [-0.1, 0.82, 0], s: [1.05, 0.42, 0.85], c: "#e2453f", rad: 0.14 }, { id: "v3", name: "Windows", t: "box", p: [-0.1, 0.84, 0], s: [1.07, 0.3, 0.87], c: "#9fd8ff", m: "glass" }, { id: "v4", name: "Wheel", t: "cyl", p: [0.6, 0.2, 0.46], r: [90, 0, 0], s: [0.4, 0.14, 0.4], c: "#222222", anim: [{ state: "moving", type: "spin", axis: "y", speed: 2 }] }, { id: "v5", name: "Wheel", t: "cyl", p: [-0.6, 0.2, 0.46], r: [90, 0, 0], s: [0.4, 0.14, 0.4], c: "#222222", anim: [{ state: "moving", type: "spin", axis: "y", speed: 2 }] }, { id: "v6", name: "Wheel", t: "cyl", p: [0.6, 0.2, -0.46], r: [90, 0, 0], s: [0.4, 0.14, 0.4], c: "#222222", anim: [{ state: "moving", type: "spin", axis: "y", speed: 2 }] }, { id: "v7", name: "Wheel", t: "cyl", p: [-0.6, 0.2, -0.46], r: [90, 0, 0], s: [0.4, 0.14, 0.4], c: "#222222", anim: [{ state: "moving", type: "spin", axis: "y", speed: 2 }] }] },
+    table: { name: "New table", parts: [{ id: "t1", name: "Top", t: "cyl", p: [0, 0.74, 0], s: [0.9, 0.05, 0.9], c: "#c98a4b" }, { id: "t2", name: "Leg", t: "cyl", p: [0, 0.37, 0], s: [0.08, 0.72, 0.08], c: "#3a3a44" }, { id: "t3", name: "Foot", t: "cyl", p: [0, 0.02, 0], s: [0.5, 0.04, 0.5], c: "#3a3a44" }] },
+    crate: { name: "New crate", parts: [{ id: "k1", t: "box", p: [0, 0.25, 0], s: [0.5, 0.5, 0.5], c: "#b9824a" }, { id: "k2", t: "box", p: [0, 0.25, 0.252], s: [0.52, 0.08, 0.01], c: "#8a5a2a" }, { id: "k3", t: "box", p: [0, 0.25, -0.252], s: [0.52, 0.08, 0.01], c: "#8a5a2a" }] },
+    sign: { name: "New sign", parts: [{ id: "s1", name: "Post", t: "cyl", p: [0, 0.6, 0], s: [0.07, 1.2, 0.07], c: "#555b66", m: "metal" }, { id: "s2", name: "Board", t: "rbox", p: [0, 1.35, 0], s: [0.9, 0.4, 0.06], c: "#2a3a4a", rad: 0.05 }, { id: "s3", name: "Text", t: "text", p: [0, 1.35, 0.035], s: [0.8, 0.3, 1], txt: "OPEN", bg: "#2a3a4a", fg: "#ffd04a", c: "#ffffff" }] }
   };
+  const TPL_NAMES = { machine: "Machine", item: "Product / item", customer: "Customer", car: "Car / vehicle", table: "Table", crate: "Crate", sign: "Sign", prop: "Tree / scenery", blank: "Blank" };
+  // which size reference the preview starts with for a model
+  const refFor = (m) => m.slotY != null || m.lampY != null ? "counter" : m.top != null || m.r != null ? "cup" : "person";
+  const SWATCHES = ["#ffffff", "#2a2d33", "#e2453f", "#ff8a3d", "#ffd04a", "#3aa35d", "#22b8e4", "#2f6fd0", "#8a4bd0", "#ff6fae", "#9a6a3a", "#c9ccd3"];
+  // undo / redo for the model being edited
+  let hist = [], hi = -1, histFor = null;
+  function record() { const m = M(); if (!m) return; if (histFor !== mSel) { hist = []; hi = -1; histFor = mSel; } const j = JSON.stringify(m); if (hist[hi] === j) return; hist = hist.slice(0, hi + 1); hist.push(j); if (hist.length > 80) hist.shift(); hi = hist.length - 1; undoBtns(); }
+  function undoBtns() { const u = $("#mdlUndo"), r = $("#mdlRedo"); if (u) u.disabled = hi <= 0; if (r) r.disabled = hi >= hist.length - 1; }
+  function travel(d) { const j = hi + d; if (j < 0 || j >= hist.length) return; hi = j; k.models[mSel] = JSON.parse(hist[hi]); if (pSel && !(M().parts || []).some((q) => q.id === pSel)) pSel = null; save(); subModel(); subParts(); subPart(); post(); undoBtns(); }
+  function topY(m) { let y = 0; (m.parts || []).forEach((q) => { if (q.parent) return; const P = q.p || [0, 0, 0], S = q.s || [1, 1, 1]; y = Math.max(y, (+P[1] || 0) + Math.abs(+S[1] || 0) / 2); }); return y; }
+  function removePart(m, id) { const fam = [id]; m.parts.forEach((x) => { if (fam.includes(x.parent)) fam.push(x.id); }); m.parts = m.parts.filter((x) => !fam.includes(x.id)); }
+  function onKey(key, ctrl, shift) {
+    if (!document.getElementById("mdlPrev")) return;
+    if (ctrl && key === "z") return travel(shift ? 1 : -1);
+    if (ctrl && key === "y") return travel(1);
+    const m = M(); if (!m || !pSel) return;
+    if (key === "escape") { pSel = null; subParts(); subPart(); post(); return; }
+    if (key === "delete" || key === "backspace") { removePart(m, pSel); pSel = null; save(); subParts(); subPart(); post(); return; }
+    if (ctrl && key === "d") { const b = $("#ptDup"); if (b) b.click(); }
+  }
+  document.addEventListener("keydown", (e) => { const t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA")) return; const key = e.key.toLowerCase(), ctrl = e.ctrlKey || e.metaKey;
+    if (!document.getElementById("mdlPrev")) return;
+    if ((ctrl && ["z", "y", "d"].includes(key)) || key === "delete" || key === "backspace" || key === "escape") { if (key !== "escape") e.preventDefault(); onKey(key, ctrl, e.shiftKey); } });
   const M = () => k.models[mSel];
-  function post(fresh) { if (frame && ready && mSel && M()) frame.contentWindow.postMessage({ type: "model", spec: JSON.parse(JSON.stringify(M())), sel: pSel, state: prevState, fresh: !!fresh }, "*"); }
-  function onMsg(e) { if (!frame || e.source !== frame.contentWindow || !e.data) return; if (e.data.type === "model-ready") { ready = true; post(true); } if (e.data.type === "model-pick") { pSel = e.data.id; subParts(); subPart(); post(); } }
+  function post(fresh) { record(); if (frame && ready && mSel && M()) frame.contentWindow.postMessage({ type: "model", spec: JSON.parse(JSON.stringify(M())), sel: pSel, state: prevState, fresh: !!fresh, ref: fresh ? refFor(M()) : undefined }, "*"); }
+  function onMsg(e) { if (!frame || e.source !== frame.contentWindow || !e.data) return; if (e.data.type === "model-ready") { ready = true; post(true); } if (e.data.type === "model-pick") { pSel = e.data.id; subParts(); subPart(); post(); }
+    if (e.data.type === "model-edit") { const m = M(), q = m && (m.parts || []).find((x) => x.id === e.data.id); if (!q) return; const ok = (a) => Array.isArray(a) && a.length === 3 && a.every((v) => typeof v === "number" && isFinite(v)); if (!ok(e.data.p) || !ok(e.data.r) || !ok(e.data.s)) return; q.p = e.data.p; q.r = e.data.r; q.s = e.data.s; save(); subPart(); post(); }
+    if (e.data.type === "model-key") onKey(String(e.data.key || ""), !!e.data.ctrl, !!e.data.shift); }
   window.addEventListener("message", onMsg);
   function partList(m) {
     const kids = {}; (m.parts || []).forEach((q) => { const par = q.parent && m.parts.some((x) => x.id === q.parent) ? q.parent : ""; (kids[par] = kids[par] || []).push(q); });
@@ -152,7 +181,7 @@ export function tabs(ctx) {
   }
   function subList() {
     const box = $("#mdlList"); if (!box) return;
-    box.innerHTML = `<div class="row2"><div class="fld"><label>Editing</label><select id="mdlPick">${opt(modelNames(), mSel)}</select></div><div class="fld"><label>New model</label><select id="mdlTpl">${opt({ machine: "Machine", item: "Product / item", customer: "Customer / vehicle", prop: "Scenery prop", blank: "Blank" }, "machine")}</select></div><button class="ib sm pri" id="mdlNew" style="align-self:end">+ New</button></div>
+    box.innerHTML = `<div class="row2"><div class="fld"><label>Editing</label><select id="mdlPick">${opt(modelNames(), mSel)}</select></div><div class="fld"><label>New model</label><select id="mdlTpl">${opt(TPL_NAMES, "machine")}</select></div><button class="ib sm pri" id="mdlNew" style="align-self:end">+ New</button></div>
       ${mSel && M() ? `<div class="row2" style="margin-top:8px"><button class="ib sm" id="mdlDup">Duplicate</button><button class="ib sm" id="mdlDel">Delete</button></div>` : ""}`;
     $("#mdlPick").onchange = (e) => { mSel = e.target.value; pSel = null; subAll(true); };
     $("#mdlNew").onclick = () => { const t = $("#mdlTpl").value, id = nid("m"); k.models[id] = JSON.parse(JSON.stringify(TEMPLATES[t])); mSel = id; pSel = null; save(); subAll(true); };
@@ -170,16 +199,22 @@ export function tabs(ctx) {
     const box = $("#mdlParts"); if (!box) return; const m = M(); if (!m) { box.innerHTML = '<p class="hint">Make a model to start.</p>'; return; }
     box.innerHTML = `<div class="row2"><div class="fld"><label>Shape</label><select id="ptType">${opt(PART_TYPES, "box")}</select></div><button class="ib sm pri" id="ptAdd" style="align-self:end">+ Part</button></div>
       <div class="plist" style="margin-top:8px;max-height:260px;overflow:auto">${partList(m).map(([q, d]) => `<button class="ib sm ${q.id === pSel ? "pri" : ""}" data-pp="${esc(q.id)}" style="display:block;width:100%;text-align:left;margin:2px 0;padding-left:${10 + d * 14}px">${esc(q.name || (PART_TYPES[q.t] || q.t) + " " + (m.parts.indexOf(q) + 1))}${q.anim && q.anim.length ? " ✦" : ""}${q.hide ? " (hidden)" : ""}</button>`).join("") || '<p class="hint">No parts yet.</p>'}</div>`;
-    $("#ptAdd").onclick = () => { const t = $("#ptType").value, sel = (m.parts || []).find((q) => q.id === pSel); const q = { id: nid("q"), t, p: [0, 0.3, 0], s: t === "text" ? [0.8, 0.2, 1] : [0.3, 0.3, 0.3], c: "#ffb000" }; if (t === "text") Object.assign(q, { txt: "SIGN", bg: "#2a3a4a", fg: "#ffffff" }); if (sel && sel.t === "group") q.parent = sel.id; (m.parts = m.parts || []).push(q); pSel = q.id; save(); subParts(); subPart(); post(); };
+    $("#ptAdd").onclick = () => { const t = $("#ptType").value, sel = (m.parts || []).find((q) => q.id === pSel), sz = t === "text" ? [0.6, 0.18, 1] : t === "plane" ? [0.5, 0.5, 1] : [0.3, 0.3, 0.3];
+      let p = [0, topY(m) + sz[1] / 2 + 0.02, 0];
+      if (sel && sel.t !== "group" && !sel.parent) { const P = sel.p || [0, 0, 0], S = sel.s || [1, 1, 1]; p = [+P[0] || 0, (+P[1] || 0) + Math.abs(+S[1] || 0) / 2 + sz[1] / 2 + 0.02, +P[2] || 0]; }
+      if (sel && sel.t === "group") p = [0, 0, 0];
+      p = p.map((v) => Math.round(v * 1000) / 1000);
+      const q = { id: nid("q"), t, p, s: sz, c: "#ffb000" }; if (t === "text") Object.assign(q, { txt: "SIGN", bg: "#2a3a4a", fg: "#ffffff" }); if (sel && sel.t === "group") q.parent = sel.id; (m.parts = m.parts || []).push(q); pSel = q.id; save(); subParts(); subPart(); post(); };
     $$("[data-pp]", box).forEach((b) => (b.onclick = () => { pSel = b.dataset.pp; subParts(); subPart(); post(); }));
   }
   function subPart() {
     const box = $("#mdlPart"); if (!box) return; const m = M(), i = m ? (m.parts || []).findIndex((q) => q.id === pSel) : -1;
-    if (i < 0) { box.innerHTML = '<p class="hint">Pick a part in the list or tap it in the preview.</p>'; return; }
+    if (i < 0) { box.innerHTML = '<p class="hint">Tap a part in the preview (or pick it in the list). Then drag the arrows to move it, switch to Turn or Size at the top of the preview, or type exact numbers here.</p>'; return; }
     const q = m.parts[i], par = { "": "(none)" }; m.parts.forEach((x) => { if (x.id !== q.id && x.t === "group") par[x.id] = x.name || "Group " + x.id; });
     const v3 = (f, lab, st, d) => `<div class="row2 v3"><span class="fl" style="min-width:64px">${lab}</span>${[0, 1, 2].map((a) => `<div class="fld"><label>${"XYZ"[a]}</label><input type="number" step="${st}" data-p="${f}.${a}" data-n="1" value="${(q[f] || d)[a]}"></div>`).join("")}</div>`;
     box.innerHTML = `<div class="row2">${F.txt("name", q.name, "Part name", 24)}${F.sel("t", PART_TYPES, q.t, "Shape", 1)}${F.sel("parent", par, q.parent || "", "Inside group", 1)}</div>
       ${v3("p", "Position", 0.02, [0, 0, 0])}${v3("r", "Rotation°", 5, [0, 0, 0])}${v3("s", "Size", 0.02, [1, 1, 1])}
+      <div class="row2 sw" style="gap:4px;margin:2px 0 4px">${SWATCHES.map((c) => `<button class="swc" data-sw="${c}" title="${c}" style="width:22px;height:22px;border-radius:6px;border:2px solid ${(q.c || "").toLowerCase() === c ? "#fff" : "rgba(255,255,255,.18)"};background:${c};padding:0;cursor:pointer"></button>`).join("")}</div>
       <div class="row2">${F.col("c", q.c, "Color")}${F.sel("m", MATS, q.m || "toon", "Material")}${q.t === "cyl" || q.t === "cone" ? F.num("taper", q.taper, "Taper (top/bottom)", 0.05, 0.05, 4) : ""}${q.t === "rbox" ? F.num("rad", q.rad, "Roundness", 0.01, 0, 0.5) : ""}${q.t === "torus" ? F.num("th", q.th, "Thickness", 0.01, 0.02, 0.9) + F.num("arc", q.arc, "Arc°", 5, 10, 360) : ""}${F.chk("hide", q.hide, "Hidden until shown")}</div>
       ${q.t === "text" ? `<div class="row2">${F.txt("txt", q.txt, "Sign text", 18)}${F.col("bg", q.bg, "Sign color")}${F.col("fg", q.fg, "Text color")}</div>` : ""}
       <div class="row2" style="margin-top:6px"><button class="ib sm" id="ptDup">Duplicate</button><button class="ib sm" id="ptMir">Mirror (left/right)</button><button class="ib sm" id="ptUp">▲</button><button class="ib sm" id="ptDn">▼</button><button class="ib sm" id="ptDel">Delete</button></div>
@@ -188,6 +223,7 @@ export function tabs(ctx) {
       <button class="ib sm" id="anAdd">+ Animation</button>`;
     bind(box, q, () => post(), () => { subParts(); subPart(); post(); });
     const swap = (d) => { const j = i + d; if (j < 0 || j >= m.parts.length) return; [m.parts[i], m.parts[j]] = [m.parts[j], m.parts[i]]; save(); subParts(); };
+    $$("[data-sw]", box).forEach((b) => (b.onclick = () => { q.c = b.dataset.sw; save(); subPart(); post(); }));
     $("#ptUp").onclick = () => swap(-1); $("#ptDn").onclick = () => swap(1);
     const clone = (mirror) => { const fam = [q.id], out = []; m.parts.forEach((x) => { if (fam.includes(x.parent)) fam.push(x.id); }); const map = {};
       m.parts.filter((x) => fam.includes(x.id)).forEach((x) => { const c = JSON.parse(JSON.stringify(x)); map[x.id] = c.id = nid("q"); out.push(c); });
@@ -196,7 +232,7 @@ export function tabs(ctx) {
       if (top.name) top.name = top.name + (mirror ? " (mirror)" : " copy");
       m.parts.splice(i + 1, 0, ...out); pSel = top.id; save(); subParts(); subPart(); post(); };
     $("#ptDup").onclick = () => clone(false); $("#ptMir").onclick = () => clone(true);
-    $("#ptDel").onclick = () => { const fam = [q.id]; m.parts.forEach((x) => { if (fam.includes(x.parent)) fam.push(x.id); }); m.parts = m.parts.filter((x) => !fam.includes(x.id)); pSel = null; save(); subParts(); subPart(); post(); };
+    $("#ptDel").onclick = () => { removePart(m, q.id); pSel = null; save(); subParts(); subPart(); post(); };
     $("#anAdd").onclick = () => { (q.anim = q.anim || []).push({ state: "working", type: "bob", axis: "y", amt: 1, speed: 1 }); save(); subPart(); subParts(); post(); };
     $$("[data-ax]", box).forEach((b) => (b.onclick = () => { q.anim.splice(+b.dataset.ax, 1); if (!q.anim.length) delete q.anim; save(); subPart(); subParts(); post(); }));
   }
@@ -205,17 +241,19 @@ export function tabs(ctx) {
     label: "Models",
     html() {
       if (!mSel || !k.models[mSel]) { mSel = Object.keys(k.models)[0] || null; pSel = null; }
-      return `<div class="grid2" style="grid-template-columns:minmax(0,1.1fr) minmax(280px,1fr)"><div>
+      return `<div class="grid2 mdlg" style="grid-template-columns:minmax(0,1fr) minmax(320px,1.15fr)"><style>.mdlg>.mprev{order:2;position:sticky;top:8px}@media(max-width:860px){.mdlg>.mprev{order:-1;position:static}}</style><div>
         <div class="card2"><h3>3D models</h3><p class="hint">Build machines, products, customers, vehicles and scenery from shapes. Use them in Machines (Looks like), Products, Customers, Hazards and Scene.</p><div id="mdlList"></div><div id="mdlProps" style="margin-top:8px"></div></div>
-        <div class="card2" style="margin-top:12px"><h3>Parts</h3><div id="mdlParts"></div></div></div>
-        <div><div class="card2" style="padding:0;overflow:hidden"><div style="position:relative;aspect-ratio:4/3;background:#151033"><div id="mdlPrev" style="position:absolute;inset:0"></div>
-          <select id="mdlState" aria-label="Preview state" style="position:absolute;right:8px;top:8px;width:auto;background:#0c0921;color:#fff;border:1px solid #4a3f8a;border-radius:8px;padding:4px 6px">${opt(STATES, prevState)}</select></div></div>
-        <div class="card2" style="margin-top:12px"><h3>Selected part</h3><div id="mdlPart"></div></div></div></div>`;
+        <div class="card2" style="margin-top:12px"><h3>Parts</h3><div id="mdlParts"></div></div>
+        <div class="card2" style="margin-top:12px"><h3>Selected part</h3><div id="mdlPart"></div></div></div>
+        <div class="mprev"><div class="card2" style="padding:0;overflow:hidden"><div style="position:relative;aspect-ratio:1/1;max-height:62vh;width:100%;background:#151033"><div id="mdlPrev" style="position:absolute;inset:0"></div></div>
+          <div class="row2" style="padding:8px;gap:6px;align-items:center"><button class="ib sm" id="mdlUndo" title="Undo (Ctrl+Z)">↶ Undo</button><button class="ib sm" id="mdlRedo" title="Redo (Ctrl+Shift+Z)">↷ Redo</button><span style="flex:1"></span><label class="hint" style="margin:0">Preview</label><select id="mdlState" aria-label="Preview state" style="width:auto">${opt(STATES, prevState)}</select></div></div>
+        </div></div>`;
     },
     after(p) {
       ready = false; frame = document.createElement("iframe"); frame.setAttribute("sandbox", "allow-scripts"); frame.src = "/arcade/engines/rush/model.html"; frame.title = "Model preview"; frame.style.cssText = "border:0;width:100%;height:100%;display:block";
       $("#mdlPrev", p).appendChild(frame);
       $("#mdlState", p).onchange = (e) => { prevState = e.target.value; post(); };
+      $("#mdlUndo", p).onclick = () => travel(-1); $("#mdlRedo", p).onclick = () => travel(1);
       subAll(true);
     }
   };
