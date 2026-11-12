@@ -114,6 +114,7 @@ export async function awardLP(g, score) {
     const earn = Math.max(0, Math.min(want, cap - row.dayLp, 20000)); if (!earn) return 0;
     row.lp += earn; row.dayLp += earn; row.plays += 1; row.last = Math.round(score); row.best = Math.max(row.best, Math.round(score)); games[key] = row;
     const out = { username: LZ.username, lp: (cur.lp || 0) + earn, games, updatedAt: serverTimestamp() }; if (cur.prog) out.prog = cur.prog; if (Array.isArray(cur.pins)) out.pins = cur.pins; if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits;
+    if (typeof cur.photoURL === "string") out.photoURL = cur.photoURL;
     tx.set(ref, out); return earn;
   });
 }
