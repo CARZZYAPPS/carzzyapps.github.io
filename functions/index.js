@@ -1,7 +1,7 @@
 const { randomBytes } = require("node:crypto");
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
-const { getFirestore } = require("firebase-admin/firestore");
+const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { defineString } = require("firebase-functions/params");
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 
@@ -221,4 +221,67 @@ exports.changeUsername = onCall(async (request) => {
     throw new HttpsError("internal", "Could not change the username.");
   }
   return { username: newUsername };
+});
+
+const rhythmRunnerUsernamePattern = /^[A-Za-z0-9_]{2,20}$/;
+const inappropriateUsernameWords = new Set([
+  "anonymous", "admin", "asshole", "bastard", "bitch", "fuck", "porn", "shit"
+]);
+const generatedNameAdjectives = [
+  "Neon", "Turbo", "Pixel", "Cosmic", "Lucky", "Rapid", "Sunny", "Silent"
+];
+const generatedNameAnimals = [
+  "Panda", "Otter", "Falcon", "Tiger", "Comet", "Koala", "Raven", "Gecko"
+];
+
+function isAppropriateRhythmRunnerUsername(value) {
+  if (typeof value !== "string" || !rhythmRunnerUsernamePattern.test(value)) return false;
+  const words = value.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+  return value.toUpperCase() !== "RR"
+    && !words.some((word) => inappropriateUsernameWords.has(word));
+}
+
+function generateRhythmRunnerUsername() {
+  const adjective = generatedNameAdjectives[randomBytes(1)[0] % generatedNameAdjectives.length];
+  const animal = generatedNameAnimals[randomBytes(1)[0] % generatedNameAnimals.length];
+  const suffix = randomBytes(2).readUInt16BE(0).toString().padStart(5, "0");
+  return `${adjective}${animal}${suffix}`;
+}
+
+exports.submitRhythmRunnerScore = onCall(async (request) => {
+  const { playerId, username, score } = request.data || {};
+  if (
+    typeof playerId !== "string" ||
+    !/^[A-Za-z0-9_-]{8,64}$/.test(playerId) ||
+    !Number.isSafeInteger(score) ||
+    score < 0 ||
+    score > 2147483647
+  ) {
+    throw new HttpsError("invalid-argument", "The player ID or score is invalid.");
+  }
+
+  const safeUsername = isAppropriateRhythmRunnerUsername(username)
+    ? username.toUpperCase()
+    : generateRhythmRunnerUsername();
+  const scoreRef = db.collection("rhythmRunnerScores").doc(playerId);
+
+  try {
+    const savedScore = await db.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(scoreRef);
+      const bestScore = Math.max(
+        Number.isSafeInteger(snapshot.data()?.score) ? snapshot.data().score : 0,
+        score
+      );
+      transaction.set(scoreRef, {
+        username: safeUsername,
+        score: bestScore,
+        updatedAt: FieldValue.serverTimestamp()
+      });
+      return bestScore;
+    });
+    return { username: safeUsername, score: savedScore };
+  } catch (error) {
+    console.error("Could not save the Rhythm Runner score.", error);
+    throw new HttpsError("internal", "Could not save the Rhythm Runner score.");
+  }
 });

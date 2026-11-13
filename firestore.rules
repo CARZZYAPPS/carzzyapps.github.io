@@ -525,5 +525,23 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /rhythmRunnerScores/{playerId} {
+      function validRhythmRunnerScore(data) {
+        return data.keys().hasAll(['username', 'score', 'updatedAt'])
+          && data.keys().hasOnly(['username', 'score', 'updatedAt'])
+          && data.username is string
+          && data.username.matches('^[A-Za-z0-9_]{2,20}$')
+          && data.score is int
+          && data.score >= 0
+          && data.score <= 2147483647
+          && data.updatedAt == request.time;
+      }
+
+      allow read: if true;
+      allow create, update: if isCremaRushAdmin()
+        && validRhythmRunnerScore(request.resource.data);
+      allow delete: if isCremaRushAdmin();
+    }
+
   }
 }

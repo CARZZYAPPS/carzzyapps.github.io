@@ -82,6 +82,14 @@
       cursor: pointer;
     }
 
+    .username-notice {
+      max-width: 310px;
+      margin: 0 auto 10px;
+      color: #b4bfbb;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     #usernamePrompt {
       display: none;
       position: absolute;
@@ -93,6 +101,12 @@
       border-radius: 12px;
       border: 1px solid #00d1b2;
       width: 260px;
+    }
+
+    #usernamePrompt .username-disclaimer {
+      color: #d3d8d6;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
     #usernameInput {
@@ -177,6 +191,7 @@
     <img src="https://carzzyapps.github.io/Rhythm-Runner/rhythm-dj.png" style="width: 60px;" alt="Rhythm Runner Icon">
     <h2 id="title">RHYTHM RUNNER</h2>
     <p><b>JUMP</b> spikes | <b>DUCK</b> drones</p>
+    <p class="username-notice">Inappropriate or invalid usernames will be replaced with a randomly generated name. Scores are saved to Firebase and appear on the leaderboard.</p>
 
     <button id="startBtn" class="menu-btn">START GAME</button><br>
     <button id="changeUsernameBtn" class="menu-btn">CHANGE USERNAME</button>
@@ -185,11 +200,7 @@
   <!-- USERNAME PROMPT -->
   <div id="usernamePrompt">
     <h3>ENTER USERNAME</h3>
-    If you already have one, make sure not to misspell it. (<a href="https://carzzyapps.github.io/Leaderboards/RR"
-      style="color: #00d1b2" target="_blank" title="Opens in a new tab">Check out the Leaderboard</a> to confirm your username).<br><br>
-      To add a new user or switch to a different user, enter "rr", save, and then reenter the username.<br>
-      To change the username of the current user, just enter the new username without first entering "rr".<br><br>
-    <strong style="color: red;">WARNING:</strong> Not following the correct procedures for when and when not to enter "rr" first will result in incorrectly storing the data.<br><br>
+    <p class="username-disclaimer">Use 2–20 letters, numbers, or underscores. Do not use your real name or claim someone else's username. Inappropriate or invalid usernames will be replaced with a randomly generated username. Your scores are saved to Firebase and shown on the <a href="https://www.carzzyapps.com/Leaderboards/RR/" style="color: #00d1b2" target="_blank" rel="noopener" title="Opens in a new tab">leaderboard</a>.</p>
     <input id="usernameInput" type="text" maxlength="20" placeholder="Do not use your real name">
     <button id="saveUsernameBtn" class="menu-btn">SAVE</button>
   </div>
@@ -201,8 +212,20 @@
     <button class="action-btn" id="duckBtn">DUCK</button>
   </div>
 
-  <script>
-    alert('Due to the new leaderboard update, some usernames may have been slightly changed. Check the leaderboard to confirm what your username is before entering it.\nDo not use an existing username unless it is your own.\nDo not use "anonymous" as a username.\n\nFailure to comply with our rules will result in removal from the leaderboard.');
+  <script src="/firebase-config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+
+    if (!window.CARZZY_FIREBASE_CONFIG) {
+      throw new Error("Rhythm Runner Firebase configuration is unavailable.");
+    }
+    const app = initializeApp(window.CARZZY_FIREBASE_CONFIG);
+    const submitRhythmRunnerScore = httpsCallable(
+      getFunctions(app),
+      "submitRhythmRunnerScore"
+    );
+
     // USERNAME SYSTEM
     let username = localStorage.getItem("rr_username") || null;
     // Hide or show change button on load
@@ -216,6 +239,9 @@
       if (username) {
         document.getElementById("usernameDisplay").innerText = "USER: " + username;
         document.getElementById("changeUsernameBtn").style.display = "inline";
+      } else {
+        document.getElementById("usernameDisplay").innerText = "";
+        document.getElementById("changeUsernameBtn").style.display = "none";
       }
     }
 
@@ -224,21 +250,31 @@
       document.getElementById("usernameInput").value = username || "";
     }
 
-    document.getElementById("saveUsernameBtn").onclick = () => {
+    document.getElementById("saveUsernameBtn").onclick = async () => {
       const input = document.getElementById("usernameInput").value.trim();
 
-      if (input.length < 2) {
-        alert("Username must be at least 2 characters");
+      if (input.toUpperCase() === "RR") {
+        username = null;
+        localStorage.removeItem("rr_username");
+        localStorage.removeItem("game_token");
+        document.getElementById("usernamePrompt").style.display = "none";
+        updateUsernameDisplay();
         return;
       }
 
-      username = input.toUpperCase();
-      localStorage.setItem("rr_username", username);
-
-      document.getElementById("usernamePrompt").style.display = "none";
-      updateUsernameDisplay();
-
-      submitScore(username, 0);
+      try {
+        const saved = await submitScore(input, 0);
+        username = saved.username;
+        localStorage.setItem("rr_username", username);
+        document.getElementById("usernamePrompt").style.display = "none";
+        updateUsernameDisplay();
+        if (input && input.toUpperCase() !== username.toUpperCase()) {
+          alert("That username could not be used. Your randomly generated username is " + username + ".");
+        }
+      } catch (error) {
+        console.error("Could not save the Rhythm Runner username.", error);
+        alert("Your username could not be saved. Check your connection and try again.");
+      }
     }
 
     document.getElementById("changeUsernameBtn").onclick = () => {
@@ -247,75 +283,20 @@
 
     updateUsernameDisplay();
 
-// SUBMIT SCORE (username + score)
-  async function submitScore(name, score) {
-    let playerToken = localStorage.getItem('game_token');
-    if (name.toUpperCase() === "RR") {
-      localStorage.removeItem('rr_username');
-      localStorage.removeItem('game_token');
-      return;
-    }
-    // If no token, the GAME makes one (No fetch needed!)
-    if (!playerToken) {
-      syncAccount();
-      playerToken = 't-' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('game_token', playerToken);
-    }
-
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUqQ31FsONw4J5ibyvLFzIoSMvcd8qfkFwbc_j-BXEO0S3pTiqARVZ4mOm5C3rI-7sIA/exec";
-
-    // Now just send the score + token in one go
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      body: JSON.stringify({
-        username: name,
-        score: score,
-        id: playerToken
-      })
-    });
-  }
-
-  async function syncAccount() {
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUqQ31FsONw4J5ibyvLFzIoSMvcd8qfkFwbc_j-BXEO0S3pTiqARVZ4mOm5C3rI-7sIA/exec";
-
-    // 1. Get the name from the input field
-    let nameInput = document.getElementById("usernameInput").value.trim();
-
-    if (nameInput.length < 2) {
-      alert("Username must be at least 2 characters");
-      return;
-    }
-    nameInput = nameInput.toUpperCase();
-    if (nameInput.toUpperCase() === "RR") {
-      localStorage.removeItem('rr_username');
-      localStorage.removeItem('game_token');
-      return;
-    }
-    try {
-      // 2. Fetch the token from the spreadsheet
-      const response = await fetch(`${SCRIPT_URL}?action=getToken&name=${encodeURIComponent(nameInput)}`);
-      const tokenResult = (await response.text()).trim();
-
-      if (tokenResult === "NOT_FOUND" || tokenResult === "") {
-      } else {
-        // 3. SUCCESS: Save BOTH to browser storage
-        localStorage.setItem('game_token', tokenResult);
-        localStorage.setItem('rr_username', nameInput.toUpperCase());
-
-        // 4. Update the game variables and UI
-        username = nameInput.toUpperCase();
-        updateUsernameDisplay();
-
-        // 5. Close the prompt
-        document.getElementById("usernamePrompt").style.display = "none";
-        alert("Success! You are now logged in as " + username);
+    // The callable validates names and persists the best score in Firestore.
+    async function submitScore(name, score) {
+      let playerToken = localStorage.getItem("game_token");
+      if (!playerToken) {
+        playerToken = `rr-${crypto.randomUUID().replaceAll("-", "")}`;
+        localStorage.setItem("game_token", playerToken);
       }
-    } catch (error) {
-      console.error("Sync failed:", error);
-      alert("\nLogin failed. Enter you username as \"RR\" and then reenter your actual username.");
+      const result = await submitRhythmRunnerScore({
+        playerId: playerToken,
+        username: name,
+        score
+      });
+      return result.data;
     }
-  }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -509,7 +490,16 @@
         document.getElementById('best-score').innerText = bestScore;
       }
       if (username) {
-        submitScore(username, score);
+        submitScore(username, score)
+          .then((saved) => {
+            username = saved.username;
+            localStorage.setItem("rr_username", username);
+            updateUsernameDisplay();
+          })
+          .catch((error) => {
+            console.error("Could not save the Rhythm Runner score.", error);
+            alert("Your score could not be saved. Check your connection and try again.");
+          });
       }
 
       document.getElementById('ui-layer').style.display = 'block';

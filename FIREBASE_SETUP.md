@@ -107,6 +107,29 @@ isolated by account on the same device, and Crema Rush progress is namespaced
 by account. Username password recovery is not available yet, so players should
 keep their password safe.
 
+## Rhythm Runner Firebase leaderboard
+
+Rhythm Runner stores each player's best score in the `rhythmRunnerScores`
+collection in the `carzzy-apps` project. A Firebase callable validates score
+submissions and replaces invalid or inappropriate usernames with a randomly
+generated name. The public leaderboard reads the top 100 scores from this
+collection. The admin workspace's **Rhythm Runner leaderboard** section can
+edit or delete any score and can generate a random username from the edit form.
+Existing scores in the previous Google Apps Script leaderboard are not
+automatically imported into Firestore.
+
+Deploy the callable and the root Firestore rules to `carzzy-apps`:
+
+```powershell
+firebase deploy --only functions:submitRhythmRunnerScore,firestore:rules --project carzzy-apps
+```
+
+The admin score editor uses the same game-project `adminUsers/{UID}` allowlist
+as Crema Rush. Sign in to the admin workspace with the matching game-project
+account, create or enable its `adminUsers/{UID}` document, then open
+**Rhythm Runner leaderboard**. Player score submissions are written by the
+callable; direct client writes are denied by Firestore rules.
+
 ## Verify
 
 After publishing the files to GitHub Pages and deploying the rules, submit the
@@ -115,6 +138,13 @@ the admin dashboard and an email is delivered by Formcarry. Submit feedback at
 `/feedback/` and confirm a document with the username, email, rating, reason,
 and timestamp appears under `feedbackSubmissions`. The username should match
 the one shown on the Rhythm Runner leaderboard.
+
+For Rhythm Runner, deploy `submitRhythmRunnerScore` and the root rules, then
+publish the game and leaderboard pages. Try an invalid username, complete a
+game, and confirm the generated name and best score appear in
+`rhythmRunnerScores` and on the public leaderboard. Sign in to the admin
+workspace, open **Rhythm Runner leaderboard**, edit the name or score, and
+confirm the public leaderboard reflects the change.
 
 Open either game while signed out and verify the three choices are shown.
 Continue as a guest and confirm a generated username appears in `usernames`.
@@ -136,8 +166,5 @@ project's Firebase Authentication email/password sign-in only
 through the Firebase console or another trusted process, and use the feedback
 project's Firebase config in the admin app.
 
-## Next backend candidates
-
-The repository also contains an in-memory `api/score.js` implementation, but no
-checked-in frontend currently calls it. A Firestore leaderboard should be added
-once the target game and its score submission contract are identified.
+The `api/score.js` endpoint remains an in-memory stub for other potential game
+integrations; Rhythm Runner uses its Firebase callable and Firestore collection.
