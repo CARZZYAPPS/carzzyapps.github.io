@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crema Rush Leaderboard | Carzzy Apps</title>
+  <meta name="description" content="See the global Crema Rush leaderboard and compare scores from both game versions.">
+  <meta name="keywords" content="Crema Rush leaderboard, coffee shop game, global scores">
+  <meta name="author" content="Avis, DeBus">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="color-scheme" content="dark">
+  <meta name="application-name" content="Carzzy Apps">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Carzzy Apps">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Crema Rush Leaderboard | Carzzy Apps">
+  <meta property="og:description" content="See the global Crema Rush leaderboard and compare scores from both game versions.">
+  <meta property="og:url" content="https://www.carzzyapps.com/Leaderboards/Crema-Rush/">
+  <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+  <meta property="og:image:alt" content="Carzzy Apps logo">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Crema Rush Leaderboard | Carzzy Apps">
+  <meta name="twitter:description" content="See the global Crema Rush leaderboard and compare scores from both game versions.">
+  <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
+  <meta name="twitter:image:alt" content="Carzzy Apps logo">
+  <link rel="canonical" href="https://www.carzzyapps.com/Leaderboards/Crema-Rush/">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <style>
+    body {
+      margin: 0;
+      padding: 0 0 24px;
+      background: #0a0a0a;
+      color: white;
+      font-family: "Segoe UI", sans-serif;
+      text-align: center;
+      user-select: none;
+    }
+
+    h2 {
+      margin: 100px 16px 40px;
+      color: #00d1b2;
+      font-size: 32px;
+    }
+
+    p {
+      margin: 0 16px 24px;
+    }
+
+    a {
+      color: #00d1b2;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin: 0 16px 24px;
+      flex-wrap: wrap;
+    }
+
+    .actions a,
+    .actions button {
+      padding: 9px 14px;
+      border: 1px solid #00d1b2;
+      border-radius: 6px;
+      background: transparent;
+      color: #00d1b2;
+      font: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .actions a:hover,
+    .actions button:hover {
+      background: rgba(0, 209, 178, 0.12);
+    }
+
+    table {
+      width: 90%;
+      max-width: 700px;
+      margin: 20px auto 0;
+      border: #00d1b2 solid 1px;
+      border-collapse: collapse;
+      font-size: 18px;
+      box-shadow: 0 0 15px rgba(0, 209, 178, 0.5);
+    }
+
+    thead {
+      background: rgba(0, 209, 178, 0.1);
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #00d1b2;
+    }
+
+    tr:hover {
+      background: rgba(0, 209, 178, 0.2);
+    }
+
+    th {
+      color: #00d1b2;
+      font-size: 20px;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(0, 209, 178, 0.1);
+    }
+
+    #loading {
+      margin: 30px 16px;
+      color: #00d1b2;
+      font-size: 20px;
+    }
+
+    footer {
+      margin: 50px 16px 35px;
+      color: #777;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 480px) {
+      h2 {
+        font-size: 25px;
+      }
+
+      table {
+        width: calc(100% - 24px);
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        padding: 9px 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script src="/nav-bar.js"></script>
+
+  <h2>CREMA RUSH — GLOBAL LEADERBOARD</h2>
+  <p>Scores from both versions of Crema Rush share this leaderboard.</p>
+  <div class="actions">
+    <a href="/Crema-Rush/">Play Crema Rush</a>
+    <button id="refresh" type="button">Refresh scores</button>
+  </div>
+  <div id="loading" role="status" aria-live="polite">Loading leaderboard...</div>
+  <table hidden id="leaderboardTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Version</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard"></tbody>
+  </table>
+  <footer>Avis &amp; DeBus v1.0.0 PRO</footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      collection,
+      getDocs,
+      getFirestore,
+      limit,
+      orderBy,
+      query
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    const loading = document.getElementById("loading");
+    const table = document.getElementById("leaderboardTable");
+    const tbody = document.getElementById("leaderboard");
+    const refresh = document.getElementById("refresh");
+
+    function showError(message) {
+      loading.textContent = message;
+      loading.hidden = false;
+      table.hidden = true;
+    }
+
+    async function loadLeaderboard() {
+      refresh.disabled = true;
+      loading.textContent = "Loading leaderboard...";
+      loading.hidden = false;
+      table.hidden = true;
+      try {
+        const config = window.CARZZY_FIREBASE_CONFIG;
+        if (!config || !config.projectId) {
+          throw new Error("The Crema Rush score service is not configured.");
+        }
+        const db = getFirestore(initializeApp(config));
+        const scores = await getDocs(query(
+          collection(db, "cremaRushLeaderboard"),
+          orderBy("score", "desc"),
+          limit(100)
+        ));
+        tbody.replaceChildren();
+        scores.docs.forEach((scoreDoc, index) => {
+          const entry = scoreDoc.data();
+          const row = document.createElement("tr");
+          const rank = document.createElement("td");
+          const username = document.createElement("td");
+          const version = document.createElement("td");
+          const score = document.createElement("td");
+          rank.textContent = String(index + 1);
+          username.textContent = typeof entry.username === "string" ? entry.username : "Player";
+          version.textContent = entry.version === "yes-graphics" ? "Graphics" : "No graphics";
+          score.textContent = Number.isSafeInteger(entry.score)
+            ? entry.score.toLocaleString()
+            : "—";
+          row.append(rank, username, version, score);
+          tbody.append(row);
+        });
+        loading.textContent = scores.empty ? "No scores yet. Play a shift to join the leaderboard!" : "";
+        loading.hidden = !scores.empty;
+        table.hidden = scores.empty;
+      } catch (error) {
+        console.error("Unable to load the Crema Rush leaderboard.", error);
+        showError("Failed to load the leaderboard. Please try again.");
+      } finally {
+        refresh.disabled = false;
+      }
+    }
+
+    refresh.addEventListener("click", loadLeaderboard);
+    loadLeaderboard();
+  </script>
+  <script data-goatcounter="https://carzzyapps.goatcounter.com/count"
+    async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

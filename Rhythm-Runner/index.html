@@ -191,7 +191,7 @@
     <img src="https://carzzyapps.github.io/Rhythm-Runner/rhythm-dj.png" style="width: 60px;" alt="Rhythm Runner Icon">
     <h2 id="title">RHYTHM RUNNER</h2>
     <p><b>JUMP</b> spikes | <b>DUCK</b> drones</p>
-    <p class="username-notice">Inappropriate or invalid usernames will be replaced with a randomly generated name. Scores are saved to Firebase and appear on the leaderboard.</p>
+    <p class="username-notice">Inappropriate or invalid usernames will be replaced with a randomly generated name. Scores are saved and appear on the leaderboard.</p>
 
     <button id="startBtn" class="menu-btn">START GAME</button><br>
     <button id="changeUsernameBtn" class="menu-btn">CHANGE USERNAME</button>
@@ -200,7 +200,7 @@
   <!-- USERNAME PROMPT -->
   <div id="usernamePrompt">
     <h3>ENTER USERNAME</h3>
-    <p class="username-disclaimer">Use 2–20 letters, numbers, or underscores. Do not use your real name or claim someone else's username. Inappropriate or invalid usernames will be replaced with a randomly generated username. Your scores are saved to Firebase and shown on the <a href="https://www.carzzyapps.com/Leaderboards/RR/" style="color: #00d1b2" target="_blank" rel="noopener" title="Opens in a new tab">leaderboard</a>.</p>
+    <p class="username-disclaimer">Use 2–20 letters, numbers, or underscores. Do not use your real name or claim someone else's username. Inappropriate or invalid usernames will be replaced with a randomly generated username. Your scores are saved and shown on the <a href="https://www.carzzyapps.com/Leaderboards/RR/" style="color: #00d1b2" target="_blank" rel="noopener" title="Opens in a new tab">leaderboard</a>.</p>
     <input id="usernameInput" type="text" maxlength="20" placeholder="Do not use your real name">
     <button id="saveUsernameBtn" class="menu-btn">SAVE</button>
   </div>
@@ -215,24 +215,31 @@
   <script src="/firebase-config.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
 
     if (!window.CARZZY_FIREBASE_CONFIG) {
       throw new Error("Rhythm Runner Firebase configuration is unavailable.");
     }
+
     const app = initializeApp(window.CARZZY_FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
     const submitRhythmRunnerScore = httpsCallable(
       getFunctions(app),
       "submitRhythmRunnerScore"
     );
 
-    // USERNAME SYSTEM
-    let username = localStorage.getItem("rr_username") || null;
-    // Hide or show change button on load
-    if (!username) {
-      document.getElementById("changeUsernameBtn").style.display = "none";
-    } else {
-      document.getElementById("changeUsernameBtn").style.display = "inline";
+    const LEGACY_SCORE_URL = "https://script.google.com/macros/s/AKfycbyUqQ31FsONw4J5ibyvLFzIoSMvcd8qfkFwbc_j-BXEO0S3pTiqARVZ4mOm5C3rI-7sIA/exec";
+    const RR_USERNAME_KEY = "rr_username";
+    const RR_LEGACY_IMPORT_KEY = "rr_legacy_imported";
+
+    let username = localStorage.getItem(RR_USERNAME_KEY) || null;
+    let currentAuthUser = null;
+
+    function normalizeLegacyUsername(value) {
+      return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
     }
 
     function updateUsernameDisplay() {
@@ -250,12 +257,88 @@
       document.getElementById("usernameInput").value = username || "";
     }
 
+    async function loadAuthUsername() {
+      if (!auth.currentUser) return null;
+      try {
+        const profileSnap = await getDoc(doc(db, "usernames", auth.currentUser.uid));
+        const profile = profileSnap.data();
+        if (profile && typeof profile.username === "string" && profile.username.trim()) {
+          username = profile.username.trim();
+          localStorage.setItem(RR_USERNAME_KEY, username);
+          return username;
+        }
+      } catch (error) {
+        console.error("Could not read the signed-in username.", error);
+      }
+      if (auth.currentUser.displayName) {
+        username = auth.currentUser.displayName.trim();
+        localStorage.setItem(RR_USERNAME_KEY, username);
+      }
+      return username;
+    }
+
+    async function importLegacyScoresForUser() {
+      if (sessionStorage.getItem(RR_LEGACY_IMPORT_KEY) === "1") return;
+      if (!username) return;
+
+      try {
+        const response = await fetch(`${LEGACY_SCORE_URL}?action=getScores`, { cache: "no-store" });
+        if (!response.ok) return;
+        const rows = await response.json();
+        const normalizedCurrent = normalizeLegacyUsername(username);
+
+        for (const row of Array.isArray(rows) ? rows : []) {
+          const legacyName = String(row && row.username || "").trim();
+          if (!legacyName || !Number.isFinite(Number(row.score))) continue;
+          if (normalizeLegacyUsername(legacyName) !== normalizedCurrent) continue;
+
+          const score = Number(row.score);
+          if (!Number.isFinite(score) || score <= 0) continue;
+          await submitScore(username, score);
+        }
+
+        sessionStorage.setItem(RR_LEGACY_IMPORT_KEY, "1");
+      } catch (error) {
+        console.warn("Could not import legacy Rhythm Runner scores.", error);
+      }
+    }
+
+    async function saveUsernameInAuthSystem(value) {
+      const nextUsername = value.trim();
+      if (!nextUsername) return null;
+
+      if (auth.currentUser) {
+        const usernamesRef = collection(db, "usernames");
+        const lower = nextUsername.toLowerCase();
+        const nameQuery = query(usernamesRef, where("usernameLower", "==", lower));
+        const matches = await getDocs(nameQuery);
+        const isTakenByAnotherUser = matches.docs.some((docSnap) => docSnap.id !== auth.currentUser.uid && docSnap.data().uid !== auth.currentUser.uid);
+
+        if (isTakenByAnotherUser) {
+          throw new Error("taken");
+        }
+
+        await setDoc(doc(db, "usernames", auth.currentUser.uid), {
+          uid: auth.currentUser.uid,
+          guest: false,
+          username: nextUsername,
+          usernameLower: lower
+        }, { merge: true });
+
+        await updateProfile(auth.currentUser, { displayName: nextUsername });
+      }
+
+      username = nextUsername;
+      localStorage.setItem(RR_USERNAME_KEY, username);
+      return username;
+    }
+
     document.getElementById("saveUsernameBtn").onclick = async () => {
       const input = document.getElementById("usernameInput").value.trim();
 
       if (input.toUpperCase() === "RR") {
         username = null;
-        localStorage.removeItem("rr_username");
+        localStorage.removeItem(RR_USERNAME_KEY);
         localStorage.removeItem("game_token");
         document.getElementById("usernamePrompt").style.display = "none";
         updateUsernameDisplay();
@@ -263,33 +346,52 @@
       }
 
       try {
-        const saved = await submitScore(input, 0);
-        username = saved.username;
-        localStorage.setItem("rr_username", username);
+        const saved = await saveUsernameInAuthSystem(input);
+        if (!saved) {
+          throw new Error("Username cannot be empty.");
+        }
+
         document.getElementById("usernamePrompt").style.display = "none";
         updateUsernameDisplay();
-        if (input && input.toUpperCase() !== username.toUpperCase()) {
-          alert("That username could not be used. Your randomly generated username is " + username + ".");
+        await importLegacyScoresForUser();
+
+        if (input && input.toUpperCase() !== saved.toUpperCase()) {
+          alert("That username could not be used. Your randomly generated username is " + saved + ".");
         }
       } catch (error) {
+        const message = error && error.message === "taken"
+          ? "That username is already taken. Please choose another one."
+          : "Your username could not be saved. Check your connection and try again.";
         console.error("Could not save the Rhythm Runner username.", error);
-        alert("Your username could not be saved. Check your connection and try again.");
+        alert(message);
       }
-    }
+    };
 
     document.getElementById("changeUsernameBtn").onclick = () => {
       askForUsername();
     };
 
+    onAuthStateChanged(auth, async (user) => {
+      currentAuthUser = user;
+      if (user) {
+        await loadAuthUsername();
+        await importLegacyScoresForUser();
+      } else {
+        username = localStorage.getItem(RR_USERNAME_KEY) || null;
+        await importLegacyScoresForUser();
+      }
+      updateUsernameDisplay();
+    });
+
     updateUsernameDisplay();
 
-    // The callable validates names and persists the best score in Firestore.
     async function submitScore(name, score) {
-      let playerToken = localStorage.getItem("game_token");
+      let playerToken = currentAuthUser ? currentAuthUser.uid : localStorage.getItem("game_token");
       if (!playerToken) {
         playerToken = `rr-${crypto.randomUUID().replaceAll("-", "")}`;
         localStorage.setItem("game_token", playerToken);
       }
+
       const result = await submitRhythmRunnerScore({
         playerId: playerToken,
         username: name,

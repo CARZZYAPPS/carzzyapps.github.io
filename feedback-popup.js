@@ -210,15 +210,11 @@
     document.body.append(launcher);
   }
 
-  window.addEventListener("pageshow", () => showFeedbackPopup());
-
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
       addHomepageLauncher();
-      showFeedbackPopup();
     }, { once: true });
   } else {
     addHomepageLauncher();
-    showFeedbackPopup();
   }
 })();

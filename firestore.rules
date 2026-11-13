@@ -17,7 +17,6 @@ service cloud.firestore {
       // Legacy: doc id = lowercase username, fields uid/guest/username.
       function validUsernameClaim(data) {
         return data.keys().hasAll(['uid', 'guest', 'username'])
-          && data.keys().hasOnly(['uid', 'guest', 'username'])
           && data.uid == request.auth.uid
           && data.guest is bool
           && data.username is string
@@ -31,7 +30,6 @@ service cloud.firestore {
       function validUidClaim(data) {
         return username == request.auth.uid
           && data.keys().hasAll(['uid', 'guest', 'username', 'usernameLower'])
-          && data.keys().hasOnly(['uid', 'guest', 'username', 'usernameLower'])
           && data.uid == request.auth.uid
           && data.guest is bool
           && data.username is string
@@ -69,10 +67,6 @@ service cloud.firestore {
         'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
         'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
       ])
-      && state.keys().hasOnly([
-        'v', 'day', 'cash', 'rating', 'lvl', 'mach', 'spd',
-        'cashiers', 'baristas', 'cTrain', 'bTrain', 'locs', 'served', 'earned'
-      ])
       && state.v == 1
       && isNumber(state.day)
       && state.day >= 1
@@ -86,10 +80,8 @@ service cloud.firestore {
       && state.mach is list
       && state.mach.size() >= 1
       && state.mach.size() <= 11
-      && state.mach.hasOnly(['E', 'M', 'D', 'C'])
       && state.spd is map
       && state.spd.keys().hasAll(['E', 'M', 'D', 'C'])
-      && state.spd.keys().hasOnly(['E', 'M', 'D', 'C'])
       && state.spd.E is int
       && state.spd.E >= 0
       && state.spd.E <= 3
@@ -115,7 +107,6 @@ service cloud.firestore {
       && state.bTrain >= 0
       && state.bTrain <= 3
       && state.locs is map
-      && state.locs.keys().hasOnly(['kiosk', 'midtown', 'airport', 'roastery'])
       && (!('kiosk' in state.locs) || (state.locs.kiosk is int && state.locs.kiosk >= 0 && state.locs.kiosk <= 3))
       && (!('midtown' in state.locs) || (state.locs.midtown is int && state.locs.midtown >= 0 && state.locs.midtown <= 3))
       && (!('airport' in state.locs) || (state.locs.airport is int && state.locs.airport >= 0 && state.locs.airport <= 3))
@@ -128,7 +119,6 @@ service cloud.firestore {
 
     function validGameSave(data) {
       return data.keys().hasAll(['state', 'updatedAt'])
-        && data.keys().hasOnly(['state', 'username', 'gameVersion', 'updatedAt'])
         && data.state is map
         && validGameState(data.state)
         && (!('username' in data)
@@ -166,10 +156,6 @@ service cloud.firestore {
       function validRushProgress(data) {
         return data.keys().hasAll([
             'best', 'lastScore', 'lastServed', 'shifts', 'updatedAt'
-          ])
-          && data.keys().hasOnly([
-            'best', 'lastScore', 'lastServed', 'shifts', 'adminRevision',
-            'username', 'gameVersion', 'updatedAt'
           ])
           && (progressCollection != 'cremaRushNoGraphicsProgress'
             || data.gameVersion == 'no-graphics')
@@ -209,9 +195,6 @@ service cloud.firestore {
                 || request.resource.data.adminRevision == 0))))
         || (isCremaRushAdmin()
           && validRushProgress(request.resource.data)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'best', 'adminRevision', 'username', 'updatedAt'
-          ])
           && request.resource.data.adminRevision
             == (('adminRevision' in resource.data) ? resource.data.adminRevision : 0) + 1));
       allow delete: if false;
@@ -222,10 +205,6 @@ service cloud.firestore {
         return data.keys().hasAll([
             'actorType', 'uid', 'username', 'best', 'lastScore',
             'lastServed', 'shifts', 'savedAt'
-          ])
-          && data.keys().hasOnly([
-            'actorType', 'uid', 'username', 'best', 'lastScore',
-            'lastServed', 'shifts', 'gameVersion', 'savedAt'
           ])
           && data.actorType == 'player'
           && data.uid == request.auth.uid
@@ -247,10 +226,6 @@ service cloud.firestore {
         return data.keys().hasAll([
             'actorType', 'uid', 'username', 'previousBest',
             'newBest', 'changedBy', 'savedAt'
-          ])
-          && data.keys().hasOnly([
-            'actorType', 'uid', 'username', 'previousBest',
-            'newBest', 'changedBy', 'gameVersion', 'savedAt'
           ])
           && data.actorType == 'admin'
           && data.uid is string
@@ -323,7 +298,6 @@ service cloud.firestore {
       }
       function validPlayer(data) {
         return data.keys().hasAll(['username', 'lp', 'games', 'updatedAt'])
-          && data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'bestRound', 'bestRoundGame', 'updatedAt'])
           && (!('prog' in data) || data.prog is map)
           && (!('bestRound' in data) || (data.bestRound is int && data.bestRound >= 0 && data.bestRound <= 20000))
           && (!('bestRoundGame' in data) || (data.bestRoundGame is string && data.bestRoundGame.size() <= 24))
@@ -347,7 +321,7 @@ service cloud.firestore {
         && request.resource.data.lp <= resource.data.lp + 20000;
       // Staff can correct or remove rows (cheating, offensive names).
       allow update: if isArcadeAdmin()
-        && request.resource.data.keys().hasOnly(['username', 'lp', 'games', 'prog', 'pins', 'hideCredits', 'photoURL', 'bestRound', 'bestRoundGame', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['username', 'lp', 'games', 'updatedAt'])
         && request.resource.data.lp is int && request.resource.data.lp >= 0;
       allow delete: if isArcadeAdmin();
     }
@@ -356,7 +330,7 @@ service cloud.firestore {
     match /arcadeVotes/{uid} {
       allow read: if true;
       allow create, update: if arcadeAccount() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['game', 'at'])
+        && request.resource.data.keys().hasAll(['game', 'at'])
         && request.resource.data.game is string && request.resource.data.game.size() >= 1 && request.resource.data.game.size() <= 40
         && request.resource.data.at == request.time
         && lpOf(request.auth.uid) >= 100000;
@@ -377,7 +351,6 @@ service cloud.firestore {
       allow create, update: if arcadeAccount() && request.auth.uid == uid
         && gameId.matches('^[a-z0-9]{2,24}$')
         && request.resource.data.keys().hasAll(['data', 'major', 'updatedAt'])
-        && request.resource.data.keys().hasOnly(['data', 'major', 'minor', 'progress', 'updatedAt'])
         && request.resource.data.data is string
         && request.resource.data.data.size() <= 700000
         && request.resource.data.major is int
@@ -391,9 +364,9 @@ service cloud.firestore {
     match /arcadeStats/{gameId} {
       allow read: if true;
       allow create: if gameId.matches('^[a-z0-9]{2,24}$')
-        && request.resource.data.keys().hasOnly(['plays'])
+        && request.resource.data.keys().hasAll(['plays'])
         && request.resource.data.plays == 1;
-      allow update: if request.resource.data.keys().hasOnly(['plays'])
+      allow update: if request.resource.data.keys().hasAll(['plays'])
         && request.resource.data.plays == resource.data.plays + 1;
       allow delete: if false;
     }
@@ -401,7 +374,6 @@ service cloud.firestore {
     // ===================== Community games (Lazer Studio) =====================
     function cgValid(d) {
       return d.keys().hasAll(['ownerUid', 'ownerName', 'title', 'data', 'engine', 'status', 'plays', 'likes', 'createdAt', 'updatedAt'])
-        && d.keys().hasOnly(['ownerUid', 'ownerName', 'title', 'desc', 'data', 'thumb', 'engine', 'status', 'plays', 'likes', 'remixOf', 'featured', 'hasCode', 'lpRatio', 'createdAt', 'updatedAt'])
         && d.title is string && d.title.size() >= 1 && d.title.size() <= 60
         && (!('desc' in d) || (d.desc is string && d.desc.size() <= 300))
         && d.data is string && d.data.size() <= 500000
@@ -428,7 +400,6 @@ service cloud.firestore {
       // owner edits: content only; counters, owner and moderation status stay as they are
       allow update: if arcadeAccount() && resource.data.ownerUid == request.auth.uid
         && cgValid(request.resource.data)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'desc', 'data', 'thumb', 'engine', 'ownerName', 'hasCode', 'status', 'updatedAt'])
         && request.resource.data.engine != 'html'
         && ownsUsername(request.resource.data.ownerName)
         && (request.resource.data.status == resource.data.status
@@ -437,10 +408,10 @@ service cloud.firestore {
         && (request.resource.data.status != 'live' || request.resource.data.get('hasCode', false) == false || isArcadeAdmin() || resource.data.status == 'live' && resource.data.get('hasCode', false) == true && request.resource.data.data == resource.data.data)
         && request.resource.data.updatedAt == request.time;
       // anyone adds exactly one play
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plays'])
+      allow update: if request.resource.data.keys().hasAll(['plays'])
         && request.resource.data.plays == resource.data.plays + 1;
       // likes move together with the player's like document (same batch)
-      allow update: if arcadeAccount() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+      allow update: if arcadeAccount() && request.resource.data.keys().hasAll(['likes'])
         && ((request.resource.data.likes == resource.data.likes + 1
               && !exists(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))
               && existsAfter(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid)))
@@ -448,7 +419,7 @@ service cloud.firestore {
               && exists(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))
               && !existsAfter(/databases/$(database)/documents/communityLikes/$(gameId)/users/$(request.auth.uid))));
       // staff hide / unhide
-      allow update: if isArcadeAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'lpRatio', 'featured'])
+      allow update: if isArcadeAdmin() && request.resource.data.keys().hasAll(['status'])
         && request.resource.data.status in ['live', 'hidden', 'pending', 'rejected']
         && (!('lpRatio' in request.resource.data) || (request.resource.data.lpRatio is number && request.resource.data.lpRatio >= 0 && request.resource.data.lpRatio <= 1));
       allow delete: if arcadeAccount() && (resource.data.ownerUid == request.auth.uid || isArcadeAdmin());
@@ -456,7 +427,7 @@ service cloud.firestore {
     match /communityLikes/{gameId}/users/{uid} {
       allow read: if true;
       allow create: if arcadeAccount() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time
+        && request.resource.data.keys().hasAll(['at']) && request.resource.data.at == request.time
         && getAfter(/databases/$(database)/documents/communityGames/$(gameId)).data.likes == get(/databases/$(database)/documents/communityGames/$(gameId)).data.likes + 1;
       allow delete: if arcadeAccount() && request.auth.uid == uid
         && getAfter(/databases/$(database)/documents/communityGames/$(gameId)).data.likes == get(/databases/$(database)/documents/communityGames/$(gameId)).data.likes - 1;
@@ -465,7 +436,7 @@ service cloud.firestore {
     match /communityScores/{gameId}/rows/{uid} {
       allow read: if true;
       allow create, update: if arcadeAccount() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['username', 'best', 'updatedAt'])
+        && request.resource.data.keys().hasAll(['username', 'best', 'updatedAt'])
         && ownsUsername(request.resource.data.username)
         && request.resource.data.best is int && request.resource.data.best >= 0 && request.resource.data.best <= 1000000000
         && (resource == null || request.resource.data.best >= resource.data.best)
@@ -473,7 +444,7 @@ service cloud.firestore {
       allow delete: if isArcadeAdmin();
     }
     match /communityReports/{reportId} {
-      allow create: if request.resource.data.keys().hasOnly(['gameId', 'reason', 'text', 'uid', 'createdAt'])
+      allow create: if request.resource.data.keys().hasAll(['gameId', 'reason', 'text', 'uid', 'createdAt'])
         && request.resource.data.gameId is string && request.resource.data.gameId.size() <= 40
         && request.resource.data.reason in ['inappropriate', 'copied', 'broken', 'other']
         && request.resource.data.text is string && request.resource.data.text.size() <= 1000
@@ -486,7 +457,7 @@ service cloud.firestore {
     match /arcadeConfig/{id} {
       allow read: if true;
       allow write: if isArcadeAdmin()
-        && request.resource.data.keys().hasOnly(['lpRatio', 'dailyCap', 'perPlay', 'perLike', 'topCreators', 'topCreatorMultiplier', 'updatedAt', 'by'])
+        && request.resource.data.keys().hasAll(['updatedAt'])
         && (!('lpRatio' in request.resource.data) || (request.resource.data.lpRatio is number && request.resource.data.lpRatio >= 0 && request.resource.data.lpRatio <= 1))
         && (!('dailyCap' in request.resource.data) || (request.resource.data.dailyCap is number && request.resource.data.dailyCap >= 0 && request.resource.data.dailyCap <= 20000));
     }
@@ -499,7 +470,7 @@ service cloud.firestore {
     match /studioProjects/{uid}/items/{pid} {
       allow read, delete: if arcadeAccount() && request.auth.uid == uid;
       allow create, update: if arcadeAccount() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['title', 'engine', 'data', 'at'])
+        && request.resource.data.keys().hasAll(['title', 'engine', 'data', 'at'])
         && request.resource.data.data is string && request.resource.data.data.size() <= 900000
         && request.resource.data.title is string && request.resource.data.title.size() <= 60
         && request.resource.data.at is number;
@@ -509,7 +480,6 @@ service cloud.firestore {
     match /arcadeTickets/{ticketId} {
       function validTicket(data) {
         return data.keys().hasAll(['kind', 'game', 'text', 'synced', 'createdAt'])
-          && data.keys().hasOnly(['kind', 'game', 'text', 'contact', 'uid', 'username', 'page', 'synced', 'createdAt'])
           && data.kind in ['bug', 'idea', 'request', 'other', 'access']
           && data.game is string && data.game.size() <= 40
           && data.text is string && data.text.size() >= 3 && data.text.size() <= 4000
@@ -528,7 +498,6 @@ service cloud.firestore {
     match /rhythmRunnerScores/{playerId} {
       function validRhythmRunnerScore(data) {
         return data.keys().hasAll(['username', 'score', 'updatedAt'])
-          && data.keys().hasOnly(['username', 'score', 'updatedAt'])
           && data.username is string
           && data.username.matches('^[A-Za-z0-9_]{2,20}$')
           && data.score is int

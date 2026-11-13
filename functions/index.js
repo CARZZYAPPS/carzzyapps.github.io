@@ -250,9 +250,20 @@ function generateRhythmRunnerUsername() {
 
 exports.submitRhythmRunnerScore = onCall(async (request) => {
   const { playerId, username, score } = request.data || {};
+  let resolvedPlayerId = typeof playerId === "string" ? playerId : null;
+  let resolvedUsername = typeof username === "string" ? username : "";
+
+  if (request.auth && request.auth.uid) {
+    resolvedPlayerId = request.auth.uid;
+    const profileSnap = await db.collection("usernames").doc(request.auth.uid).get();
+    if (profileSnap.exists && typeof profileSnap.data().username === "string") {
+      resolvedUsername = profileSnap.data().username;
+    }
+  }
+
   if (
-    typeof playerId !== "string" ||
-    !/^[A-Za-z0-9_-]{8,64}$/.test(playerId) ||
+    typeof resolvedPlayerId !== "string" ||
+    !/^[A-Za-z0-9_-]{8,64}$/.test(resolvedPlayerId) ||
     !Number.isSafeInteger(score) ||
     score < 0 ||
     score > 2147483647
@@ -260,10 +271,10 @@ exports.submitRhythmRunnerScore = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "The player ID or score is invalid.");
   }
 
-  const safeUsername = isAppropriateRhythmRunnerUsername(username)
-    ? username.toUpperCase()
+  const safeUsername = isAppropriateRhythmRunnerUsername(resolvedUsername)
+    ? resolvedUsername.toUpperCase()
     : generateRhythmRunnerUsername();
-  const scoreRef = db.collection("rhythmRunnerScores").doc(playerId);
+  const scoreRef = db.collection("rhythmRunnerScores").doc(resolvedPlayerId);
 
   try {
     const savedScore = await db.runTransaction(async (transaction) => {
