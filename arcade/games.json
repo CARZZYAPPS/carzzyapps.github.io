@@ -85,15 +85,15 @@
     {
       "id": "heist",
       "name": "Heist Planner",
-      "version": "1.0",
+      "version": "2.0",
       "path": "/arcade/heist-planner/",
-      "hook": "Draw every crew member's moves on a blueprint timeline, hit play, and watch the heist unfold. Slip past patrols and cameras, grab the loot, and get out clean.",
+      "hook": "Plot every crew member's moves on a blueprint, scrub the timeline to see exactly where guards, cameras and lasers will be, then hit play and watch the heist unfold. 15 jobs, 4 specialists.",
       "categories": [
         "puzzle",
         "strategy"
       ],
       "ratio": 0.04,
-      "scoreLabel": "clean score",
+      "scoreLabel": "heist score",
       "accent": [
         "#35e0ff",
         "#ffc53d"
