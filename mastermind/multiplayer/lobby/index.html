@@ -1,65 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-    <meta charset="utf-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mastermind Multiplayer Lobby | Carzzy Apps</title>
-
-    <meta name="description" content="Join or create an online multiplayer room to play Mastermind with another person.">
-    <meta name="keywords" content="Mastermind lobby, multiplayer puzzle game, online Mastermind">
-    <meta name="author" content="Avis, DeBus">
-    <meta name="robots" content="index, follow, max-image-preview:large">
-    <meta name="theme-color" content="#0a0a0a">
-    <meta name="color-scheme" content="dark">
-    <meta name="application-name" content="Carzzy Apps">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Carzzy Apps">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:title" content="Mastermind Multiplayer Lobby | Carzzy Apps">
-    <meta property="og:description" content="Join or create an online multiplayer room to play Mastermind with another person.">
-    <meta property="og:url" content="https://www.carzzyapps.com/mastermind/multiplayer/lobby/">
-    <meta property="og:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta property="og:image:alt" content="Carzzy Apps logo">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Mastermind Multiplayer Lobby | Carzzy Apps">
-    <meta name="twitter:description" content="Join or create an online multiplayer room to play Mastermind with another person.">
-    <meta name="twitter:image" content="https://www.carzzyapps.com/Carzzy%20Apps%20Logo.png">
-    <meta name="twitter:image:alt" content="Carzzy Apps logo">
-    <link rel="canonical" href="https://www.carzzyapps.com/mastermind/multiplayer/lobby/">
-
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mastermind Multiplayer Lobby | Carzzy Apps</title>
   <style>
-    body {
-      background-color: #0a0a0a; color: #ccc;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      display: flex; justify-content: center;
-      height: 100vh; margin: 0;
-    }
-    #lobby-container { text-align: center; width: 100%; max-width: 400px; padding: 20px; }
-    h2 { font-size: 32px; color: #00d1b2; letter-spacing: 2px; margin-top: 120px; margin-bottom: 30px; font-weight: 700; }
+    body { background: #0a0a0a; color: #eee; font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    #lobby-container { text-align: center; width: 100%; max-width: 420px; padding: 20px; }
+    h2 { font-size: 32px; color: #00d1b2; letter-spacing: 3px; margin: 0 0 10px; text-transform: uppercase; font-weight: 800; text-shadow: 0 0 20px rgba(0, 209, 178, 0.25); }
+    h3 { color: #888; font-size: 16px; font-weight: 400; margin: 0 0 30px; line-height: 1.5; }
+    
     .card {
-      background-color: #121212; border: 1px solid #333; border-radius: 8px;
-      padding: 30px 20px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      background: #121212;
+      border: 1px solid #222;
+      border-top: 3px solid #00d1b2;
+      border-radius: 12px;
+      padding: 40px 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: transform 0.3s, box-shadow 0.3s;
     }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 35px rgba(0, 209, 178, 0.12);
+    }
+    
     button {
-      background-color: #00d1b2; color: #0a0a0a; border: none; padding: 16px 36px;
-      font-weight: bold; font-family: inherit; border-radius: 4px; cursor: pointer;
-      text-transform: uppercase; letter-spacing: 1.5px; font-size: 1.1rem;
-      transition: background 0.2s;
+      background: #00d1b2;
+      color: #0a0a0a;
+      border: none;
+      padding: 16px 40px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0, 209, 178, 0.3);
+      width: 100%;
     }
-    button:hover { background-color: #00b59b; }
-    button:disabled { background-color: #555; color: #aaa; cursor: not-allowed; }
+    button:hover {
+      background: #00b59b;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 209, 178, 0.5);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      background: #333;
+      color: #777;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
   </style>
 </head>
 <body>
 
   <script src="/nav-bar.js"></script>
   <div id="lobby-container">
-    <h2>MULTIPLAYER MASTERMIND</h2>
-    <h3 style="color: #00d1b2; font-size: 24px;">Play Mastermind online against other people!</h3>
+    <h2>Multiplayer Mastermind</h2>
+    <h3>Play Mastermind online against other players!</h3>
     <div class="card">
       <button id="play-btn">Join Lobby</button>
     </div>
@@ -82,26 +84,21 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
-
     const playBtn = document.getElementById('play-btn');
 
     playBtn.addEventListener('click', async () => {
       try {
         playBtn.disabled = true;
+        playBtn.innerText = "Searching...";
 
-        // Step 1: Sign in anonymously
         const cred = await signInAnonymously(auth);
-        const playerUid = cred.user.uid;
+        const lobbyId = await findOrHostMatch(cred.user.uid);
 
-        // Step 2: Matchmake or host a new lobby
-        const lobbyId = await findOrHostMatch(playerUid);
-
-        // Step 3: Redirect straight to multiplayer.html
         window.location.href = `/mastermind/multiplayer?lobbyId=${lobbyId}`;
       } catch (error) {
-        console.error("Matchmaking failed: ", error);
+        console.error("Matchmaking failed:", error);
         playBtn.disabled = false;
-        playBtn.innerText = "Play Game";
+        playBtn.innerText = "Join Lobby";
         alert("Failed to join game. Please try again!");
       }
     });
@@ -111,20 +108,14 @@
       const waitingQuery = query(lobbiesRef, orderByChild('status'), equalTo('waiting'), limitToFirst(5));
       const snapshot = await get(waitingQuery);
       const lobbies = snapshot.val();
-      
+
       if (lobbies) {
         for (const lobbyId of Object.keys(lobbies)) {
-          const lobbyPlayersRef = ref(db, `lobbies/${lobbyId}/players`);
-          
-          const result = await runTransaction(lobbyPlayersRef, (currentPlayers) => {
-            if (!currentPlayers) {
-              return { [playerId]: true };
-            }
-            if (Object.keys(currentPlayers).length >= 2) {
-              return; // Abort if lobby is full
-            }
-            currentPlayers[playerId] = true;
-            return currentPlayers;
+          const result = await runTransaction(ref(db, `lobbies/${lobbyId}/players`), (players) => {
+            if (!players) return { [playerId]: true };
+            if (Object.keys(players).length >= 2) return;
+            players[playerId] = true;
+            return players;
           });
 
           if (result.committed) {
@@ -134,10 +125,10 @@
         }
       }
 
-      // If no open lobbies, host a brand-new one
       const newLobbyRef = push(lobbiesRef);
       await set(newLobbyRef, {
-        host: playerId, status: 'waiting',
+        host: playerId,
+        status: 'waiting',
         players: { [playerId]: true }
       });
       return newLobbyRef.key;
