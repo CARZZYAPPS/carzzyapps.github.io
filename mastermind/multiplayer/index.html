@@ -253,7 +253,7 @@
   const urlParams = new URLSearchParams(window.location.search), lobbyId = urlParams.get('lobbyId');
 
   if (!lobbyId) {
-    document.getElementById("status-text").innerHTML = 'Missing or invalid lobby ID.<br><br><a href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a>';
+    document.getElementById("status-text").innerHTML = 'Missing or invalid lobby ID.<br><br><a style="text-align: center;" href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a>';
   } else {
     const app = initializeApp(config), db = getDatabase(app), auth = getAuth(app);
 
