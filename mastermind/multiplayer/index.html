@@ -175,7 +175,7 @@
     
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, update, onDisconnect, goOffline } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   // Rules Modal logic
@@ -185,6 +185,7 @@
   };
   window.closeRules = () => {
     localStorage.setItem("skipMPMastermindRules", document.getElementById("dont-show").checked ? "true" : "false");
+    document.getElementById("rules").style.none = "none";
     document.getElementById("rules").style.display = "none";
   };
   window.addEventListener('load', () => {
@@ -192,7 +193,6 @@
     else window.showRules();
   });
 
-  // 1. ALWAYS GENERATE THE PLAYING BOARD AND PICKER PANEL (Runs unconditionally)
   const COLORS = ["red", "blue", "green", "yellow", "black", "white"];
   let secret = [], currentGuess = [], turn = 0, selectedIdx = 0, playerUid = "", role = "", gameOver = false, lastPlayerCount = 0;
 
@@ -215,7 +215,6 @@
     const btn = document.createElement("div"); btn.className = "picker-btn"; btn.style.backgroundColor = c; btn.onclick = () => chooseColor(c); picker.appendChild(btn);
   });
 
-  // Global game helpers
   function chooseColor(color) {
     currentGuess[selectedIdx] = color;
     const isSecret = (role === "Codemaker" && !secret.length);
@@ -245,7 +244,6 @@
 
   window.closeEndModal = () => document.getElementById("end-modal").style.display = "none";
 
-  // 2. CHECK LOBBY VALIDITY & CONNECT TO FIREBASE
   const config = {
     apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com",
     projectId: "carzzy-apps", databaseURL: "https://carzzy-apps-default-rtdb.firebaseio.com", appId: "1:716862658931:web:2d987c92c3021837dc0d06"
@@ -254,12 +252,17 @@
 
   if (!lobbyId) {
     document.getElementById("status-text").innerHTML = `
-            <div style="text-align: center;">
-              Missing or invalid lobby ID.<br><br>
-              <a href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a>
-            </div>`;
+      <div style="text-align: center;">
+        Missing or invalid lobby ID.<br><br>
+        <a href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a>
+      </div>`;
   } else {
     const app = initializeApp(config), db = getDatabase(app), auth = getAuth(app);
+
+    // Edit 1: Disconnect immediately when navigating away or closing page
+    window.addEventListener("pagehide", () => {
+      goOffline(db);
+    });
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) await signInAnonymously(auth);
@@ -271,6 +274,7 @@
       }
     });
 
+    // Edit 2: Handle 'waiting' transitions & cleanly reset game when opponent leaves
     function listenToLobby() {
       onValue(ref(db, `lobbies/${lobbyId}`), async (snap) => {
         const lobby = snap.val();
@@ -288,8 +292,12 @@
         const uids = Object.keys(lobby.players || {});
 
         if (lobby.status === 'playing' && uids.length < 2) {
-          alert("Your opponent disconnected!");
-          await update(ref(db, `lobbies/${lobbyId}`), { status: 'waiting', secret: null, guesses: null, rematchRequests: null });
+          await update(ref(db, `lobbies/${lobbyId}`), { 
+            status: 'waiting', 
+            secret: null, 
+            guesses: null, 
+            rematchRequests: null 
+          });
           return;
         }
 
@@ -305,8 +313,25 @@
         }
 
         if (playerUid === lobby.host && lobby.status === 'waiting' && uids.length === 2) {
-          await update(ref(db, `lobbies/${lobbyId}`), { status: 'playing', codemaker: uids[Math.floor(Math.random() * uids.length)] });
+          await update(ref(db, `lobbies/${lobbyId}`), { 
+            status: 'playing', 
+            codemaker: uids[Math.floor(Math.random() * uids.length)] 
+          });
           return;
+        }
+
+        if (lobby.status === 'waiting') {
+          resetLocalBoard();
+          disableInput();
+          if (uids.length === 1) {
+            document.getElementById("status-text").innerHTML = `
+              Opponent disconnected! Waiting for a new player...
+              <button id="invite-btn" style="display: block; margin: 15px auto 0 auto; background: #00d1b2; color: #0a0a0a;">Invite a Player</button>
+            `;
+            setupInviteButton();
+          } else {
+            document.getElementById("status-text").innerText = "Waiting for opponent...";
+          }
         }
 
         if (lobby.status === 'playing') {
@@ -349,6 +374,21 @@
           }
         }
       });
+    }
+
+    function setupInviteButton() {
+      const inviteBtn = document.getElementById("invite-btn");
+      if (inviteBtn) {
+        inviteBtn.onclick = async () => {
+          const shareData = { title: "Play Mastermind!", text: "Join my game!", url: window.location.href };
+          if (navigator.share) {
+            try { await navigator.share(shareData); } catch (err) { console.warn(err); }
+          } else {
+            try { await navigator.clipboard.writeText(window.location.href); alert("Link copied!"); }
+            catch (err) { alert("Copy the URL from your browser's address bar!"); }
+          }
+        };
+      }
     }
 
     function activateSetupRow() {
@@ -458,20 +498,10 @@
       const statusBtn = document.getElementById("status-rematch-btn"); if (statusBtn) { statusBtn.innerText = "Rematch"; statusBtn.disabled = false; }
     }
 
-    const inviteBtn = document.getElementById("invite-btn");
-    if (inviteBtn) {
-      inviteBtn.addEventListener("click", async () => {
-        const shareData = { title: "Play Mastermind!", text: "Join my game!", url: window.location.href };
-        if (navigator.share) {
-          try { await navigator.share(shareData); } catch (err) { console.warn(err); }
-        } else {
-          try { await navigator.clipboard.writeText(window.location.href); alert("Link copied!"); }
-          catch (err) { alert("Copy the URL from your browser's address bar!"); }
-        }
-      });
-    }
+    setupInviteButton();
   }
 </script>
+
 
 
 </body>
