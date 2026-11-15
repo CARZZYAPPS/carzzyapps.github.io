@@ -83,8 +83,21 @@ export const ENGINES = {
     }
   },
   crane: {
-    id: "crane", name: "Crane", status: "soon", icon: "🏗️",
-    tag: "Harbor Rush's physics crane. Build your own ports, ships and cargo puzzles. Coming soon."
+    id: "crane", name: "Crane", status: "ready", icon: "🏗️",
+    tag: "Harbor Rush's physics crane. Build your own ports, ships and cargo puzzles on the real engine — no code.",
+    play(host, project, opts) {
+      opts = opts || {};
+      const f = frame(host, project.title, "/arcade/engines/crane/play.html"), key = "cranekit." + (opts.gameId || "test"), rep = reporter(opts, 20000);
+      let saved = null; if (opts.gameId) { try { saved = localStorage.getItem(key); } catch (e) {} }
+      const onMsg = (e) => {
+        if (e.source !== f.contentWindow || !e.data) return;
+        if (e.data.type === "crane-ready") f.contentWindow.postMessage({ type: "crane-pack", project, save: saved, persist: !!opts.gameId, gameId: opts.gameId || "test" }, "*");
+        if (e.data.type === "crane-score") rep(e.data.score);
+        if (e.data.type === "crane-save" && opts.gameId && typeof e.data.data === "string" && e.data.data.length < 2000000) { try { localStorage.setItem(key, e.data.data); } catch (e2) {} }
+      };
+      window.addEventListener("message", onMsg);
+      return { destroy() { window.removeEventListener("message", onMsg); f.remove(); }, pause() {}, sandboxed: true };
+    }
   }
 };
 export const ENGINE_ORDER = ["studio2d", "rush", "custom", "crane"];

@@ -37,6 +37,8 @@ async function home() {
       $$("[data-cs]", box).forEach((b) => (b.onclick = () => newProject(CUSTOM_STARTERS[b.dataset.cs].make()))); return; }
     if (engine === "rush") { import("/arcade/engines/rush/kit.js").then((K) => { box.innerHTML = Object.keys(K.STARTERS).map((k) => `<button class="start" data-rs="${k}"><img alt="" src="${K.STARTERS[k].img || K.thumb(K.STARTERS[k].make())}"><div><b>${esc(K.STARTERS[k].name)}</b><small>${esc(K.STARTERS[k].blurb)}</small></div></button>`).join("");
       $$("[data-rs]", box).forEach((b) => (b.onclick = async () => { b.disabled = true; try { newProject(await K.STARTERS[b.dataset.rs].make()); } catch (e) { b.disabled = false; toast("Couldn't load that starter. Try again."); } })); }).catch(() => { box.innerHTML = '<p class="hint">The Rush kit is still loading. Try again in a moment.</p>'; }); return; }
+    if (engine === "crane") { import("/arcade/engines/crane/kit.js").then((K) => { box.innerHTML = Object.keys(K.STARTERS).map((k) => `<button class="start" data-cr="${k}"><img alt="" src="${K.STARTERS[k].img || K.thumb(K.STARTERS[k].make())}"><div><b>${esc(K.STARTERS[k].name)}</b><small>${esc(K.STARTERS[k].blurb)}</small></div></button>`).join("");
+      $$("[data-cr]", box).forEach((b) => (b.onclick = async () => { b.disabled = true; try { newProject(await K.STARTERS[b.dataset.cr].make()); } catch (e) { b.disabled = false; toast("Couldn't load that starter. Try again."); } })); }).catch(() => { box.innerHTML = '<p class="hint">The Crane kit is still loading. Try again in a moment.</p>'; }); return; }
     box.innerHTML = Object.keys(STARTERS).map((k) => `<button class="start" data-s="${k}"><img alt="" data-k="${k}"><div><b>${esc(STARTERS[k].name)}</b><small>${esc(STARTERS[k].blurb)}</small></div></button>`).join("");
     $$("img[data-k]", box).forEach((im) => { const p = STARTERS[im.dataset.k].make(); im.src = E.renderLevel(p, 0, 320, 180, { focusPlayer: true }).toDataURL(); });
     $$("[data-s]", box).forEach((b) => (b.onclick = () => newProject(STARTERS[b.dataset.s].make())));
@@ -74,6 +76,7 @@ async function editor(id) {
   ensureArr();
   if (P.engine === "custom") { window.addEventListener("beforeunload", () => { if (dirty) flush(); }); return customEditor(); }
   if (P.engine === "rush") { const K = await import("/arcade/engines/rush/kit.js"); window.addEventListener("beforeunload", () => { if (dirty) flush(); }); return K.editor(app, P, { save: () => mark(), test: () => testPlay(), publish: () => doPublish(), back: () => (location.href = "/arcade/studio/"), setTitle: (t) => { P.title = t; mark(); } }); }
+  if (P.engine === "crane") { const K = await import("/arcade/engines/crane/kit.js"); window.addEventListener("beforeunload", () => { if (dirty) flush(); }); return K.editor(app, P, { save: () => mark(), test: () => testPlay(), publish: () => doPublish(), back: () => (location.href = "/arcade/studio/"), setTitle: (t) => { P.title = t; mark(); } }); }
   document.body.classList.add("ed");
   app.innerHTML = `<div class="ed-wrap">
     <div class="ed-top"><a class="ib sm" href="/arcade/studio/" title="Back">◀</a><input class="ttl" id="ttl" maxlength="60" value="${esc(P.title)}" aria-label="Game title"><span class="stat" id="stat">Saved</span>
@@ -408,7 +411,7 @@ function testPlay() {
 }
 async function doPublish() {
   await flush();
-  const errs = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).validate(P) : P.engine === "custom" ? customValidate(P) : E.validate(P);
+  const errs = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).validate(P) : P.engine === "crane" ? (await import("/arcade/engines/crane/kit.js")).validate(P) : P.engine === "custom" ? customValidate(P) : E.validate(P);
   if (errs.length) { dialog(`<h3>Almost there</h3><p class="hint">Fix these before publishing:</p><ul>${errs.map((e) => `<li>${esc(e)}</li>`).join("")}</ul><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>OK</button></div>`, (d, c) => ($("[data-x]", d).onclick = c)); return; }
   if (!LZ.signedIn()) { dialog(`<h3>Sign in to publish</h3><p class="hint">Your game goes up under your Carzzy Apps username, with its own leaderboard. You earn creator LP when people play it.</p><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>Not now</button><button class="ib pri" data-s>Sign in</button></div>`, (d, c) => { $("[data-x]", d).onclick = c; $("[data-s]", d).onclick = () => { c(); LZ.openAccount("signin"); }; }); return; }
   const close = dialog(`<h3>${P.pubId ? "Update your published game" : "Publish to the Community"}</h3><p class="hint">${P.pubId ? "Players get the new version right away. Scores and likes stay." : "Anyone can play it, like it and remix it. You can update it any time."}</p>
@@ -419,7 +422,7 @@ async function doPublish() {
     $("[data-go]", d).onclick = async (ev) => {
       const btn = ev.target; btn.disabled = true; btn.textContent = "Publishing…"; P.title = $("#pt", d).value.trim() || "Untitled"; P.desc = $("#pdsc", d).value.trim();
       try {
-        const thumb = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).thumb(P) : P.engine === "custom" ? (P.thumb || CUSTOM_STARTERS.upload.img) : E.renderLevel(P, 0, 320, 180, { focusPlayer: true }).toDataURL("image/jpeg", 0.8);
+        const thumb = P.engine === "rush" ? (await import("/arcade/engines/rush/kit.js")).thumb(P) : P.engine === "crane" ? (await import("/arcade/engines/crane/kit.js")).thumb(P) : P.engine === "custom" ? (P.thumb || CUSTOM_STARTERS.upload.img) : E.renderLevel(P, 0, 320, 180, { focusPlayer: true }).toDataURL("image/jpeg", 0.8);
         const res = await C.publish(P, thumb, P.pubId), id = res.id; P.pubId = id; await flush(); c();
         const link = `/arcade/community/play/?id=${encodeURIComponent(id)}`;
         if (res.status === "pending") dialog(`<h3>Sent for review</h3><p class="hint">Games with code are checked by Lazer Arcade staff before they go public. It shows up in the Community once it's approved. You can keep editing; each update goes back into review.</p><div class="row2" style="justify-content:flex-end"><button class="ib" data-x>Keep editing</button><a class="ib pri" href="${link}">Preview</a></div>`, (d2, c2) => ($("[data-x]", d2).onclick = c2));
