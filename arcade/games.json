@@ -66,7 +66,11 @@
       "version": "3.0",
       "path": "/arcade/harbor-rush/",
       "hook": "Swing a real crane over a stacked ship. Dig out exactly what each truck wants and land every box dead center, through wind, frozen reefers and a night shift with hazmat.",
-      "categories": ["arcade", "puzzle", "time"],
+      "categories": [
+        "arcade",
+        "puzzle",
+        "time"
+      ],
       "ratio": 0.04,
       "scoreLabel": "level score",
       "accent": [
@@ -75,6 +79,27 @@
       ],
       "thumb": "/arcade/img/harbor-rush.jpg",
       "released": "2026-11-08",
+      "earlyAccess": true,
+      "eaBoost": 1.5
+    },
+    {
+      "id": "heist",
+      "name": "Heist Planner",
+      "version": "1.0",
+      "path": "/arcade/heist-planner/",
+      "hook": "Draw every crew member's moves on a blueprint timeline, hit play, and watch the heist unfold. Slip past patrols and cameras, grab the loot, and get out clean.",
+      "categories": [
+        "puzzle",
+        "strategy"
+      ],
+      "ratio": 0.04,
+      "scoreLabel": "clean score",
+      "accent": [
+        "#35e0ff",
+        "#ffc53d"
+      ],
+      "thumb": "/arcade/img/heist-planner.jpg",
+      "released": "2026-11-19",
       "earlyAccess": true,
       "eaBoost": 1.5
     }

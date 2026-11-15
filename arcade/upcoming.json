@@ -1,19 +1,8 @@
 {
   "items": [
     {
-      "name": "Heist Planner",
-      "status": "next",
-      "hook": "Draw every crew member's moves on a blueprint timeline, hit play, and watch the heist unfold. Tweak and rerun until it's flawless.",
-      "categories": [
-        "puzzle",
-        "strategy"
-      ],
-      "launch": "2026-11-19T12:00:00-05:00",
-      "earlyAccess": true
-    },
-    {
       "name": "Food Truck Wars",
-      "status": "queued",
+      "status": "next",
       "hook": "Drive a truck around a living city, pick the hungriest corner for the hour, serve fast, and fight rivals for the best spots.",
       "categories": [
         "tycoon",

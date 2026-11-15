@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex,nofollow">
+<title>Heist Planner | Lazer Arcade</title>
+<meta name="description" content="Draw every crew member's moves on a blueprint timeline, hit play, and watch the heist unfold. Slip past patrols and cameras, grab the loot, and get out clean.">
+<link rel="icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<script>window.LZ_GAME="heist";</script>
+<script type="module" src="/arcade/lz.js"></script>
+<style>
+:root{--bg:#070d1a;--floor:#0e1830;--line:#1d3a6b;--wall:#24467f;--cy:#35e0ff;--gold:#ffc53d;--good:#39e08a;--bad:#ff5566;--mut:#7d93b8;--wh:#eaf2ff;--disp:'Chakra Petch','Impact',sans-serif;--body:'Oswald','Arial Narrow',sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--wh);font-family:var(--body);overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+.hide{display:none!important}
+/* top HUD */
+#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 9px) 12px 0;display:flex;gap:8px;align-items:flex-start;pointer-events:none;z-index:5}
+.pill{background:rgba(10,18,36,.82);border:1.5px solid rgba(53,224,255,.18);border-radius:13px;padding:6px 11px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#hLvl b{font:15px var(--disp);letter-spacing:.5px;color:var(--cy);white-space:nowrap;display:block;line-height:1.1}
+#hLvl small{font-size:11px;color:var(--mut);font-weight:600}
+#hObj{margin-left:auto;text-align:right;max-width:52vw}
+#hObj b{font:13px var(--disp);color:var(--gold);display:block;line-height:1.15}
+#hObj small{font-size:11px;color:var(--mut);font-weight:600}
+#hMenu{pointer-events:auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font:16px var(--disp);color:var(--cy)}
+/* banner (objective / caught reason) */
+#banner{position:fixed;left:50%;top:21%;transform:translateX(-50%);z-index:7;pointer-events:none;text-align:center;opacity:0;transition:opacity .25s}
+#banner.on{opacity:1}
+#banner b{font:28px var(--disp);letter-spacing:1px;display:block;text-shadow:0 3px 14px #000}
+#banner small{font:600 14px var(--body);color:var(--wh)}
+/* timeline */
+#tl{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 96px);z-index:5;pointer-events:none}
+#tlbar{height:30px;background:rgba(10,18,36,.82);border:1.5px solid rgba(53,224,255,.16);border-radius:10px;position:relative;overflow:hidden}
+.tlrow{position:absolute;height:7px;border-radius:4px;opacity:.85}
+#tlhead{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;box-shadow:0 0 8px #fff;opacity:0}
+#tltime{position:absolute;right:7px;top:5px;font:700 12px var(--disp);color:var(--mut)}
+/* bottom controls */
+#ctl{position:fixed;left:0;right:0;bottom:0;padding:9px 12px calc(env(safe-area-inset-bottom) + 12px);display:flex;align-items:center;gap:8px;z-index:6;pointer-events:none;flex-wrap:wrap}
+#ctl>*{pointer-events:auto}
+.crewtabs{display:flex;gap:6px}
+.ct{width:40px;height:44px;border-radius:12px;border:2px solid rgba(255,255,255,.14);background:rgba(10,18,36,.8);display:grid;place-items:center;font:800 16px var(--disp);position:relative}
+.ct.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.12)}
+.ct i{position:absolute;right:-3px;top:-3px;width:12px;height:12px;border-radius:50%;background:var(--gold);font-size:9px;color:#000;display:grid;place-items:center;font-style:normal}
+.btn{height:44px;padding:0 14px;border-radius:12px;background:rgba(10,18,36,.8);border:2px solid rgba(255,255,255,.14);font:700 14px var(--disp);letter-spacing:.4px;display:flex;align-items:center;gap:6px;color:var(--wh)}
+.btn:disabled{opacity:.35}
+.btn.sm{height:38px;padding:0 11px;font-size:13px}
+.spacer{flex:1}
+#bPlay{margin-left:auto;height:54px;padding:0 24px;border-radius:15px;background:var(--good);color:#06230f;border:0;font:800 19px var(--disp);box-shadow:0 5px 0 #1c9c5a}
+#bPlay:disabled{background:#2a3b57;color:#6b80a6;box-shadow:0 5px 0 #141f33}
+#bPlay.stop{background:var(--bad);color:#2a0609;box-shadow:0 5px 0 #a8303c}
+.edit{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 150px);z-index:6;display:flex;gap:7px}
+/* modals */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(5,9,18,.82);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:grid;place-items:center;padding:22px}
+.card{width:100%;max-width:400px;background:linear-gradient(180deg,#0f1c38,#0b1428);border:1.5px solid rgba(53,224,255,.22);border-radius:22px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.card h1{font:800 26px var(--disp);margin:0 0 2px;letter-spacing:.5px}
+.card .k{font:700 12px var(--disp);letter-spacing:2px;color:var(--cy);text-transform:uppercase;margin-bottom:10px}
+.card p{color:#c2d2ee;line-height:1.5;margin:8px 0;font-size:15px}
+.big{width:100%;height:56px;border-radius:15px;background:var(--cy);color:#042233;font:800 18px var(--disp);letter-spacing:.5px;margin-top:14px;box-shadow:0 5px 0 #1b93ad}
+.big.gold{background:var(--gold);box-shadow:0 5px 0 #b8841f;color:#2a1c00}
+.ghost{width:100%;height:48px;border-radius:14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.16);font:700 15px var(--disp);margin-top:9px;color:var(--wh)}
+.stars{font-size:30px;letter-spacing:4px;text-align:center;margin:6px 0 2px}
+.score{text-align:center;font:800 40px var(--disp);color:var(--gold);line-height:1}
+.score small{display:block;font:600 12px var(--body);color:var(--mut);letter-spacing:2px}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:6px}
+.lvb{aspect-ratio:1;border-radius:13px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;font:800 19px var(--disp)}
+.lvb.done{border-color:rgba(57,224,138,.5);background:rgba(57,224,138,.1)}
+.lvb.lock{opacity:.4}
+.lvb .s{font-size:10px;color:var(--gold);letter-spacing:1px;height:12px}
+.tips{font-size:13px;color:var(--mut);text-align:center;margin-top:10px;line-height:1.4}
+.ribbon{display:inline-block;font:700 11px var(--disp);letter-spacing:1.5px;text-transform:uppercase;color:#07263a;background:var(--gold);padding:3px 9px;border-radius:7px;margin-bottom:8px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud">
+  <button id="hMenu" class="pill">☰</button>
+  <div id="hLvl" class="pill"><b>Heist 1</b><small>Warehouse</small></div>
+  <div id="hObj" class="pill"><b>—</b><small>objective</small></div>
+</div>
+
+<div id="banner"><b></b><small></small></div>
+
+<div id="tl"><div id="tlbar"><div id="tlhead"></div><div id="tltime">0.0s</div></div></div>
+
+<div class="edit hide" id="edit">
+  <button class="btn sm" id="bWait">⏱ Wait +0.5s</button>
+  <button class="btn sm" id="bDel">✕ Delete</button>
+</div>
+
+<div id="ctl">
+  <div class="crewtabs" id="crewtabs"></div>
+  <button class="btn sm" id="bUndo">↶ Undo</button>
+  <button class="btn sm" id="bClear">⌫ Clear</button>
+  <div class="spacer"></div>
+  <button class="btn sm hide" id="bSpeed">▶▶ 1×</button>
+  <button id="bPlay">▶ PLAY</button>
+</div>
+
+<!-- Briefing -->
+<div class="modal hide" id="mBrief"><div class="card">
+  <div class="ribbon" id="brRib">Heist 1</div>
+  <h1 id="brName">Warehouse</h1>
+  <p id="brText"></p>
+  <p class="tips" id="brTip"></p>
+  <button class="big" id="brGo">PLAN THE HEIST</button>
+</div></div>
+
+<!-- Result -->
+<div class="modal hide" id="mEnd"><div class="card">
+  <div class="k" id="enK">Heist complete</div>
+  <div class="stars" id="enStars">★★★</div>
+  <div class="score" id="enScore">0<small>LAZER POINTS</small></div>
+  <p id="enText" style="text-align:center"></p>
+  <button class="big gold" id="enNext">NEXT HEIST ▶</button>
+  <button class="ghost" id="enReplay">Watch replay</button>
+  <button class="ghost" id="enMenu">All heists</button>
+</div></div>
+
+<!-- Level select / menu -->
+<div class="modal hide" id="mMenu"><div class="card">
+  <div class="k">Lazer Arcade · Heist Planner</div>
+  <h1 style="margin-bottom:10px">Choose a heist</h1>
+  <div class="lvgrid" id="lvGrid"></div>
+  <div class="tips" id="menuTot"></div>
+  <button class="ghost" id="mClose">Close</button>
+  <button class="ghost" id="mArcade">← Back to Lazer Arcade</button>
+</div></div>
+
+<script>
+"use strict";
+/* ========================================================================
+   HEIST PLANNER — plan-and-simulate stealth puzzle
+   Draw each crew member's path on the blueprint, insert timed waits,
+   hit PLAY and watch it run against patrolling guards and sweeping cameras.
+   Pure data-driven: the sim only moves dots the player placed. No eval, no code.
+   ===================================================================== */
+var cv=document.getElementById("cv"),ctx=cv.getContext("2d"),DPR=Math.min(2,window.devicePixelRatio||1);
+var W=0,H=0;
+function resize(){W=cv.clientWidth;H=cv.clientHeight;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);}
+window.addEventListener("resize",resize);resize();
+var $=function(s){return document.querySelector(s);};
+function show(el,on){el.classList.toggle("hide",!on);}
+var CREW_SP=2.3;            // tiles per second
+var CREW_COL=["#35e0ff","#ff9d3d","#c58cff"];
+
+/* ---------------- LEVELS ----------------
+   map rows: '#'=wall '.'=floor '1'/'2'/'3'=crew start '$'=loot 'E'=exit
+             'H'=hiding shadow  'D'=door(locked wall)  'K'=keycard switch
+   guards: {p:[[c,r],...], sp, hold, range, half}  (patrol loop of tile centres)
+   cams:   {c,r,a,sweep,period,range,half}
+*/
+var LEVELS=[
+ {name:"Warehouse",cat:"Warehouse",par:9,
+  text:"One guard walks a lane on the left. Keep to the right, grab the cash, and slip out the bottom.",
+  tip:"Tap the floor to drop waypoints, then tap PLAY to watch it run.",
+  map:["#########","#1....$.#","#.......#","#.......#","#.......#","#.....E.#","#########"],
+  guards:[{p:[[2,1],[2,5]],sp:1.5,range:3,half:24}],cams:[]},
+
+ {name:"Back Office",cat:"Office",par:12,
+  text:"A camera sweeps the room. Wait for it to look away, then cross. Add a Wait at a waypoint to stall.",
+  tip:"Select a waypoint and tap Wait to pause there until the camera turns.",
+  map:["###########","#1........#","#.........#","#....$....#","#.........#","#........E#","###########"],
+  guards:[],cams:[{c:5,r:0,a:90,sweep:70,period:5,range:5,half:26}]},
+
+ {name:"Vault Row",cat:"Bank",par:14,
+  text:"Two guards pace parallel halls. Grab both bundles between passes, then reach the exit.",
+  tip:"A red segment crosses a wall. PLAY unlocks once every path is clear.",
+  map:["###########","#1.......E#","#.........#","#$.......$#","#.........#","#.........#","###########"],
+  guards:[{p:[[3,2],[7,2]],sp:1.8,range:3,half:22},{p:[[7,4],[3,4]],sp:1.8,range:3,half:22}],cams:[]},
+
+ {name:"The Gallery",cat:"Museum",par:16,
+  text:"A guard roams the hall while cameras watch the ends. Duck into shadow (dark tiles) — cones can't see you there.",
+  tip:"Dark floor tiles are hiding spots. Pause in one to let a cone sweep past.",
+  map:["###########","#1.......E#","#.H.....H.#","#.........#","#....$....#","#.H.....H.#","#.........#","###########"],
+  guards:[{p:[[1,6],[9,6]],sp:1.7,range:3,half:26}],cams:[{c:1,r:3,a:0,sweep:55,period:4.5,range:4,half:22},{c:9,r:3,a:180,sweep:55,period:4.5,range:4,half:22}]},
+
+ {name:"Two Thieves",cat:"Penthouse",par:18,
+  text:"A second thief joins. Switch crew tabs to plan each one. Grab every diamond and get both out an exit.",
+  tip:"Each thief needs a path ending on an exit. Use the number tabs, bottom-left.",
+  map:["###########","#1.......2#","#.........#","#$...$...$#","#.........#","#....E....#","#..##.##..#","#E.......E#","###########"],
+  guards:[{p:[[5,2],[5,5]],sp:1.8,range:3,half:24}],cams:[]},
+
+ {name:"Night Shift",cat:"Bank",par:20,
+  text:"A keycard (◆) unlocks the barred door (▦). Send one thief to the switch while the other lines up the grab.",
+  tip:"Any thief touching the keycard opens every locked door for the whole crew.",
+  map:["#############","#1.........E#","#...........#","#..K##D##$..#","#...........#","#2.........E#","#############"],
+  guards:[{p:[[6,1],[6,5]],sp:1.9,range:3,half:22}],cams:[]},
+
+ {name:"Crossfire",cat:"Casino",par:22,
+  text:"Four cameras cover the pit in a rhythm. Read the sweep, stage in the shadows, and thread the gaps.",
+  tip:"Watch a full run before you touch anything — learn the rhythm, then plan to it.",
+  map:["#############","#1.........E#","#.H.......H.#","#...$...$...#","#...........#","#.....H.....#","#...........#","#...$...$...#","#.H.......H.#","#2.........E#","#############"],
+  guards:[],cams:[{c:4,r:0,a:90,sweep:60,period:4,range:4,half:20},{c:8,r:0,a:90,sweep:60,period:4.6,range:4,half:20},{c:1,r:5,a:0,sweep:55,period:5.5,range:4,half:20},{c:11,r:5,a:180,sweep:55,period:5.5,range:4,half:20}]},
+
+ {name:"The Long Hall",cat:"Museum",par:24,
+  text:"Guards march long loops with a pause at each end. Match their pauses with your own to stay in the blind spot.",
+  tip:"A guard that stops still sees straight ahead. Move when he turns, not before.",
+  map:["#############","#1.........2#","#...........#","#.$.......$.#","#...........#","#....###....#","#...........#","#.$.......$.#","#...........#","#E.........E#","#############"],
+  guards:[{p:[[1,1],[11,1]],sp:2,hold:1.1,range:4,half:20},{p:[[11,8],[1,8]],sp:2,hold:1.1,range:4,half:20}],cams:[]},
+
+ {name:"Smash & Grab",cat:"Jewelers",par:26,
+  text:"Three thieves, several vaults, tight timing. Stagger your waits so nobody meets a cone at the same moment.",
+  tip:"Three crew now. The timeline bar shows when each one is moving.",
+  map:["#############","#1....$....3#","#...........#","#.H.$...$.H.#","#...........#","#....###....#","#...........#","#.$.......$.#","#...........#","#2...H.H....#","#.....E.....#","#############"],
+  guards:[{p:[[6,1],[6,4]],sp:2,range:3,half:22},{p:[[1,6],[1,9]],sp:1.7,range:3,half:22},{p:[[11,9],[11,6]],sp:1.7,range:3,half:22}],cams:[{c:6,r:7,a:90,sweep:360,period:6,range:3,half:30}]},
+
+ {name:"The Big Score",cat:"Vault",par:30,
+  text:"Cameras, patrols, locked doors and a rotating eye on the prize. Everything you've learned, one clean plan.",
+  tip:"Take your time — rerun as often as you like. Only the clean run counts.",
+  map:["###############","#1....K.K....3#","#.H.........H.#","#............E#","#....#####....#","#..$.#...#.$..#","#....#.D.#....#","#..$.#...#.$..#","#....#####....#","#............E#","#.H.........H.#","#2....E.E....E#","###############"],
+  guards:[{p:[[1,3],[1,10]],sp:2,range:3.2,half:22},{p:[[13,10],[13,3]],sp:2,range:3.2,half:22},{p:[[6,2],[6,3]],sp:1.6,range:3,half:22}],
+  cams:[{c:7,r:6,a:0,sweep:360,period:7,range:2.8,half:30},{c:1,r:0,a:90,sweep:50,period:5,range:4,half:20},{c:13,r:0,a:90,sweep:50,period:5,range:4,half:20}]},
+];
+
+/* ---------------- parse map ---------------- */
+function parse(L){
+  var rows=L.map,h=rows.length,w=rows[0].length;
+  var wall=[],hide=[],door=[],loot=[],exits=[],starts=[],keys=[];
+  for(var r=0;r<h;r++){wall.push([]);hide.push([]);door.push([]);
+    for(var c=0;c<w;c++){var ch=rows[r][c];
+      wall[r].push(ch==="#");hide[r].push(ch==="H");door[r].push(ch==="D");
+      if(ch==="$")loot.push({c:c,r:r,taken:false});
+      else if(ch==="E")exits.push({c:c,r:r});
+      else if(ch==="K")keys.push({c:c,r:r});
+      else if(ch>="1"&&ch<="3")starts[+ch-1]={c:c,r:r};
+    }}
+  return {w:w,h:h,wall:wall,hide:hide,door:door,loot:loot,exits:exits,starts:starts.filter(Boolean),keys:keys,raw:rows};
+}
+
+/* ---------------- state ---------------- */
+var G=null;           // save: {done:{idx:{stars,score}}, total}
+var LV=null,M=null;   // current level + parsed
+var crews=[];         // [{col, path:[{c,r,wait}], start}]
+var sel=0;            // active crew
+var selWp=-1;         // selected waypoint index (within sel crew, >=1 since 0 is start)
+var mode="plan";      // plan | run | done
+var simT=0,simDur=0,simSpeed=1,caught=null,won=false;
+var cam={ox:0,oy:0,ts:40};
+var SAVEKEY="heist-planner-v1";
+
+function load(){try{var d=JSON.parse(localStorage.getItem(SAVEKEY));if(d&&d.done)return d;}catch(e){}return {done:{},total:0};}
+function save(){try{localStorage.setItem(SAVEKEY,JSON.stringify(G));}catch(e){}if(window.LZ_GAME&&window.LZ)try{LZ.save(LZ_GAME);}catch(e){}}
+
+/* ---------------- geometry helpers ---------------- */
+function tileWall(c,r){if(c<0||r<0||c>=M.w||r>=M.h)return true;return M.wall[r][c]||(M.door[r][c]&&!G._doorsOpen);}
+function hideAt(x,y){var c=Math.floor(x),r=Math.floor(y);if(c<0||r<0||c>=M.w||r>=M.h)return false;return M.hide[r][c];}
+// sample a line for wall blocking (LOS) or path validity
+function lineHitsWall(x0,y0,x1,y1){
+  var dx=x1-x0,dy=y1-y0,d=Math.hypot(dx,dy),n=Math.max(1,Math.ceil(d*6));
+  for(var i=0;i<=n;i++){var t=i/n,x=x0+dx*t,y=y0+dy*t;if(tileWall(Math.floor(x),Math.floor(y)))return true;}
+  return false;
+}
+/* ---------------- crew plan model ---------------- */
+function initCrews(){
+  crews=M.starts.map(function(s,i){return {col:CREW_COL[i],start:{c:s.c,r:s.r},path:[{x:s.c+0.5,y:s.r+0.5,wait:0,anchor:true}]};});
+  sel=0;selWp=-1;
+}
+function addWp(x,y){var p=crews[sel].path;p.push({x:x,y:y,wait:0});selWp=p.length-1;}
+function crewDur(cw){var t=0,p=cw.path;for(var i=1;i<p.length;i++){t+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y)/CREW_SP+ (p[i-1].wait||0);}t+=p[p.length-1].wait||0;return t;}
+// position of a crew at time t along its path (returns {x,y,done,moving})
+function crewAt(cw,t){
+  var p=cw.path;if(p.length===1)return {x:p[0].x,y:p[0].y,done:true,moving:false};
+  var acc=0;
+  for(var i=0;i<p.length;i++){
+    if(p[i].wait){ if(t<acc+p[i].wait)return {x:p[i].x,y:p[i].y,done:false,moving:false}; acc+=p[i].wait; }
+    if(i<p.length-1){
+      var seg=Math.hypot(p[i+1].x-p[i].x,p[i+1].y-p[i].y)/CREW_SP;
+      if(t<acc+seg){var f=seg?(t-acc)/seg:1;return {x:p[i].x+(p[i+1].x-p[i].x)*f,y:p[i].y+(p[i+1].y-p[i].y)*f,done:false,moving:true};}
+      acc+=seg;
+    }
+  }
+  var last=p[p.length-1];return {x:last.x,y:last.y,done:true,moving:false};
+}
+function pathValid(cw){var p=cw.path;for(var i=1;i<p.length;i++){if(lineHitsWall(p[i-1].x,p[i-1].y,p[i].x,p[i].y))return false;}return true;}
+function allValid(){return crews.every(pathValid);}
+function onExit(pt){return M.exits.some(function(e){return Math.abs(pt.x-(e.c+0.5))<0.55&&Math.abs(pt.y-(e.r+0.5))<0.55;});}
+
+/* ---------------- guards & cameras ---------------- */
+function guardAt(g,t){
+  var pts=g.p.map(function(a){return {x:a[0]+0.5,y:a[1]+0.5};});
+  // build loop: forward then back (ping-pong) with holds at each node
+  var segs=[],i;
+  function push(a,b){segs.push({a:a,b:b,len:Math.hypot(b.x-a.x,b.y-a.y)/g.sp});}
+  for(i=0;i<pts.length-1;i++)push(pts[i],pts[i+1]);
+  for(i=pts.length-1;i>0;i--)push(pts[i],pts[i-1]);
+  var hold=g.hold||0;
+  var cycle=segs.reduce(function(s,x){return s+x.len;},0)+hold*(pts.length-1)*2;
+  if(cycle<=0)return {x:pts[0].x,y:pts[0].y,ang:0};
+  var tt=t%cycle,ang=0,node=0;
+  for(i=0;i<segs.length;i++){
+    if(hold){ if(tt<hold){var pv=segs[i].a,nx=segs[i].b;return {x:pv.x,y:pv.y,ang:Math.atan2(nx.y-pv.y,nx.x-pv.x)};} tt-=hold; }
+    if(tt<segs[i].len){var f=segs[i].len?tt/segs[i].len:1,a=segs[i].a,b=segs[i].b;return {x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,ang:Math.atan2(b.y-a.y,b.x-a.x)};}
+    tt-=segs[i].len;
+  }
+  return {x:pts[0].x,y:pts[0].y,ang:0};
+}
+function camAng(cm,t){return (cm.a+cm.sweep*Math.sin(t/cm.period*Math.PI*2))*Math.PI/180;}
+function losBlocked(x0,y0,x1,y1){ // like lineHitsWall but ignores the emitter and target tiles
+  var dx=x1-x0,dy=y1-y0,d=Math.hypot(dx,dy),n=Math.max(2,Math.ceil(d*6));
+  for(var i=1;i<n;i++){var t=i/n,x=x0+dx*t,y=y0+dy*t;if(tileWall(Math.floor(x),Math.floor(y)))return true;}
+  return false;
+}
+function sees(ex,ey,ang,range,half,tx,ty){
+  var dx=tx-ex,dy=ty-ey,d=Math.hypot(dx,dy);
+  if(d>range||d<0.01)return false;
+  var da=Math.atan2(dy,dx)-ang;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;
+  if(Math.abs(da)>half*Math.PI/180)return false;
+  if(hideAt(tx,ty))return false;
+  return !losBlocked(ex,ey,tx,ty);
+}
+// detection across the whole sim for current plans → returns {t,x,y} or null
+function detect(){
+  var dt=1/30;
+  for(var t=0;t<=simDur+0.001;t+=dt){
+    // doors open state at time t
+    G._doorsOpen=M.keys.length?crews.some(function(cw){for(var k=0;k<M.keys.length;k++){var kp=M.keys[k];var pos=crewAtUpTo(cw,t,kp);if(pos)return true;}return false;}):true;
+    for(var ci=0;ci<crews.length;ci++){
+      var p=crewAt(crews[ci],t);if(p.done&&t>crewDur(crews[ci])+0.001)continue;
+      for(var gi=0;gi<LV.guards.length;gi++){var g=guardAt(LV.guards[gi],t);if(sees(g.x,g.y,g.ang,LV.guards[gi].range,LV.guards[gi].half,p.x,p.y))return {t:t,x:p.x,y:p.y};}
+      for(var mi=0;mi<LV.cams.length;mi++){var cm=LV.cams[mi];if(sees(cm.c+0.5,cm.r+0.5,camAng(cm,t),cm.range,cm.half,p.x,p.y))return {t:t,x:p.x,y:p.y};}
+    }
+  }
+  return null;
+}
+// has crew cw touched point kp by time t?
+function crewAtUpTo(cw,t,kp){var step=0.06;for(var s=0;s<=t;s+=step){var p=crewAt(cw,s);if(Math.abs(p.x-(kp.c+0.5))<0.5&&Math.abs(p.y-(kp.r+0.5))<0.5)return true;}return false;}
+
+/* ---------------- run / evaluate ---------------- */
+function canPlay(){return allValid()&&crews.every(function(cw){return cw.path.length>1;});}
+function startRun(){
+  if(!canPlay())return;
+  simDur=Math.max.apply(null,crews.map(crewDur));simT=0;mode="run";caught=null;won=false;selWp=-1;
+  caught=detect();          // precompute outcome (deterministic)
+  show($("#edit"),false);refreshCtl();banner("",false);
+  // evaluate win if not caught
+  if(!caught){
+    // collect loot + check all on exit at end
+    M.loot.forEach(function(l){l.taken=false;});
+    crews.forEach(function(cw){ sampleLoot(cw); });
+    var lootOk=M.loot.every(function(l){return l.taken;});
+    var exitOk=crews.every(function(cw){return onExit(cw.path[cw.path.length-1]);});
+    won=lootOk&&exitOk;
+    wonReason=!lootOk?"Grab every stash before you leave.":!exitOk?"Every thief must finish on an exit.":"";
+  }
+}
+var wonReason="";
+function sampleLoot(cw){var dur=crewDur(cw);for(var s=0;s<=dur;s+=0.05){var p=crewAt(cw,s);M.loot.forEach(function(l){if(Math.abs(p.x-(l.c+0.5))<0.5&&Math.abs(p.y-(l.r+0.5))<0.5)l.taken=true;});}}
+function finishRun(){
+  mode="done";
+  if(caught){banner("CAUGHT",false,"A cone swept over your crew. Adjust the timing and run it again.");setTimeout(function(){banner("",false);mode="plan";refreshCtl();},10);return;}
+  if(!won){banner("ALMOST",false,wonReason);mode="plan";refreshCtl();return;}
+  // score
+  var tUsed=simDur;
+  var timeBonus=Math.max(0,Math.round((LV.par-tUsed)*40));
+  var stars=1+(tUsed<=LV.par?1:0)+(tUsed<=LV.par*0.72?1:0);
+  var score=1000+timeBonus+stars*250;
+  var idx=LEVELS.indexOf(LV),prev=G.done[idx];
+  if(!prev||score>prev.score){G.done[idx]={stars:stars,score:score};}
+  recomputeTotal();save();
+  submit(idx,score,stars);
+  openEnd(stars,score,prev);
+}
+function recomputeTotal(){var t=0;for(var k in G.done)t+=G.done[k].score;G.total=t;}
+
+/* ---------------- arcade ---------------- */
+var LZR=0.04,LZM=1;
+function lzBoot(){return new Promise(function(res){if(!window.LZ_GAME)return res();var done=false,fin=function(){if(!done){done=true;res();}};
+  var go=function(){LZ.boot(LZ_GAME,{localKey:SAVEKEY,major:1,minor:0,progressOf:function(d){try{var g=JSON.parse(d);return g.total||0;}catch(e){return 0;}}}).then(function(){
+    Promise.all([LZ.gameInfo(LZ_GAME).then(function(g){LZR=g.ratio||LZR;window.LZ_EA=!!(g.released&&LZ.today&&LZ.today()<g.released);}),LZ.multiplier?LZ.multiplier(LZ_GAME).then(function(m){LZM=m||1;}):0]).then(fin,fin);},fin);};
+  if(window.LZ)go();else window.addEventListener("lz-ready",go,{once:true});setTimeout(fin,3500);});}
+function submit(idx,score,stars){if(window.LZ_GAME&&window.LZ&&score>0)try{LZ.endSession(LZ_GAME,score,{level:idx+1,stars:stars});}catch(e){}}
+
+/* ---------------- camera / layout ---------------- */
+function layout(){
+  var padT=86,padB=168,padX=16;
+  var availW=W-padX*2,availH=H-padT-padB;
+  cam.ts=Math.max(16,Math.min(availW/M.w,availH/M.h));
+  cam.ox=(W-M.w*cam.ts)/2;cam.oy=padT+(availH-M.h*cam.ts)/2;
+}
+function w2s(x,y){return [cam.ox+x*cam.ts,cam.oy+y*cam.ts];}
+function s2w(sx,sy){return [(sx-cam.ox)/cam.ts,(sy-cam.oy)/cam.ts];}
+
+/* ---------------- rendering ---------------- */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  if(!M){return;}
+  layout();
+  var ts=cam.ts;
+  // floor + grid
+  for(var r=0;r<M.h;r++)for(var c=0;c<M.w;c++){
+    var s=w2s(c,r);
+    if(M.wall[r][c]){ctx.fillStyle="#1b3461";ctx.fillRect(s[0],s[1],ts+.5,ts+.5);ctx.fillStyle="#24467f";ctx.fillRect(s[0]+1,s[1]+1,ts-3,ts-3);}
+    else{
+      var door=M.door[r][c]&&!G._doorsOpen;
+      ctx.fillStyle=M.hide[r][c]?"#070e1d":(door?"#3a2740":"#0e1830");
+      ctx.fillRect(s[0],s[1],ts+.5,ts+.5);
+      ctx.strokeStyle="rgba(53,224,255,.08)";ctx.lineWidth=1;ctx.strokeRect(s[0]+.5,s[1]+.5,ts,ts);
+      if(M.hide[r][c]){ctx.strokeStyle="rgba(120,150,200,.25)";for(var d=-ts;d<ts;d+=6){ctx.beginPath();ctx.moveTo(s[0]+Math.max(0,d),s[1]+Math.max(0,-d));ctx.lineTo(s[0]+Math.min(ts,d+ts),s[1]+Math.min(ts,ts-d));ctx.stroke();}}
+      if(door){ctx.strokeStyle="#c58cff";ctx.lineWidth=2;for(var dd=4;dd<ts;dd+=6){ctx.beginPath();ctx.moveTo(s[0]+dd,s[1]+2);ctx.lineTo(s[0]+dd,s[1]+ts-2);ctx.stroke();}}
+    }
+  }
+  // keycards
+  M.keys.forEach(function(k){var s=w2s(k.c+.5,k.r+.5);ctx.fillStyle=G._doorsOpen?"#3a5":"#c58cff";ctx.beginPath();ctx.moveTo(s[0],s[1]-ts*.26);ctx.lineTo(s[0]+ts*.26,s[1]);ctx.lineTo(s[0],s[1]+ts*.26);ctx.lineTo(s[0]-ts*.26,s[1]);ctx.closePath();ctx.fill();});
+  // exits
+  M.exits.forEach(function(e){var s=w2s(e.c,e.r);ctx.fillStyle="rgba(57,224,138,.16)";ctx.fillRect(s[0]+2,s[1]+2,ts-4,ts-4);ctx.strokeStyle="#39e08a";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.strokeRect(s[0]+3,s[1]+3,ts-6,ts-6);ctx.setLineDash([]);ctx.fillStyle="#39e08a";ctx.font="700 "+(ts*.3|0)+"px var(--disp)";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("EXIT",s[0]+ts/2,s[1]+ts/2);});
+  // loot
+  M.loot.forEach(function(l){if(l.taken&&mode!=="plan")return;var s=w2s(l.c+.5,l.r+.5);var pul=1+.1*Math.sin(Date.now()/300);ctx.fillStyle="#ffc53d";ctx.beginPath();ctx.arc(s[0],s[1],ts*.2*pul,0,7);ctx.fill();ctx.fillStyle="#7a5a10";ctx.font="700 "+(ts*.24|0)+"px var(--disp)";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("$",s[0],s[1]+1);});
+
+  var t=mode==="run"?simT:0;
+  // cones (draw under crew)
+  if(mode!=="plan"||true){
+    LV.guards.forEach(function(g){var G2=guardAt(g,t);drawCone(G2.x,G2.y,G2.ang,g.range,g.half,"#ff5566",coneHot(G2.x,G2.y,g.range,g.half,G2.ang));drawGuard(G2.x,G2.y,"#ff5566");});
+    LV.cams.forEach(function(cm){var a=camAng(cm,t);drawCone(cm.c+.5,cm.r+.5,a,cm.range,cm.half,"#ff8c3d",coneHot(cm.c+.5,cm.r+.5,cm.range,cm.half,a));var s=w2s(cm.c+.5,cm.r+.5);ctx.fillStyle="#ff8c3d";ctx.fillRect(s[0]-ts*.12,s[1]-ts*.12,ts*.24,ts*.24);});
+  }
+  // paths
+  crews.forEach(function(cw,ci){drawPath(cw,ci===sel);});
+  // crew tokens
+  crews.forEach(function(cw,ci){
+    var pos=mode==="run"?crewAt(cw,simT):cw.path[0];
+    var s=w2s(pos.x,pos.y);
+    ctx.fillStyle=cw.col;ctx.beginPath();ctx.arc(s[0],s[1],ts*.26,0,7);ctx.fill();
+    ctx.fillStyle="#061018";ctx.font="800 "+(ts*.3|0)+"px var(--disp)";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(String(ci+1),s[0],s[1]+1);
+    if(mode==="run"&&caught&&Math.abs(simT-caught.t)<0.1&&Math.hypot(pos.x-caught.x,pos.y-caught.y)<0.3){ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.beginPath();ctx.arc(s[0],s[1],ts*.4,0,7);ctx.stroke();}
+  });
+  // caught marker
+  if(mode==="run"&&caught&&simT>=caught.t){var s=w2s(caught.x,caught.y);ctx.strokeStyle="#ff2d4d";ctx.lineWidth=3;ctx.beginPath();ctx.arc(s[0],s[1],ts*.5*(1+.4*Math.sin(Date.now()/120)),0,7);ctx.stroke();}
+}
+function coneHot(ex,ey,range,half,ang){ // is any crew token currently seen (for colouring)
+  for(var ci=0;ci<crews.length;ci++){var p=mode==="run"?crewAt(crews[ci],simT):null;if(p&&sees(ex,ey,ang,range,half,p.x,p.y))return true;}return false;
+}
+function drawCone(x,y,ang,range,half,col,hot){
+  var s=w2s(x,y),ts=cam.ts,ha=half*Math.PI/180;
+  ctx.fillStyle=hexA(col,hot?.42:.2);
+  ctx.beginPath();ctx.moveTo(s[0],s[1]);ctx.arc(s[0],s[1],range*ts,ang-ha,ang+ha);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=hexA(col,hot?.9:.5);ctx.lineWidth=1.5;ctx.stroke();
+}
+function drawGuard(x,y,col){var s=w2s(x,y),ts=cam.ts;ctx.fillStyle=col;ctx.beginPath();ctx.arc(s[0],s[1],ts*.22,0,7);ctx.fill();ctx.fillStyle="#2a0609";ctx.beginPath();ctx.arc(s[0],s[1],ts*.09,0,7);ctx.fill();}
+function hexA(hex,a){var h=hex.replace("#","");var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return "rgba("+r+","+g+","+b+","+a+")";}
+function drawPath(cw,active){
+  var p=cw.path,ts=cam.ts;if(p.length<1)return;
+  ctx.lineWidth=active?4:3;ctx.lineJoin="round";
+  for(var i=1;i<p.length;i++){
+    var bad=lineHitsWall(p[i-1].x,p[i-1].y,p[i].x,p[i].y);
+    ctx.strokeStyle=bad?"#ff3344":hexA(cw.col,active?.95:.4);
+    if(!active&&!bad)ctx.setLineDash([4,5]);else ctx.setLineDash([]);
+    var a=w2s(p[i-1].x,p[i-1].y),b=w2s(p[i].x,p[i].y);
+    ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // waypoint dots
+  for(var j=1;j<p.length;j++){var s=w2s(p[j].x,p[j].y);
+    ctx.fillStyle=active?cw.col:hexA(cw.col,.5);ctx.beginPath();ctx.arc(s[0],s[1],active&&j===selWp?ts*.17:ts*.11,0,7);ctx.fill();
+    if(active&&j===selWp){ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.beginPath();ctx.arc(s[0],s[1],ts*.22,0,7);ctx.stroke();}
+    if(p[j].wait){ctx.fillStyle="#fff";ctx.font="700 "+(ts*.22|0)+"px var(--disp)";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("⏱"+p[j].wait.toFixed(1),s[0],s[1]-ts*.3);}
+  }
+}
+
+/* ---------------- loop ---------------- */
+var last=0;
+function frame(ts){
+  requestAnimationFrame(frame);var dt=Math.min(.05,(ts-(last||ts))/1000);last=ts;
+  if(mode==="run"){simT+=dt*simSpeed;
+    // doors open live for rendering
+    G._doorsOpen=M.keys.length?crews.some(function(cw){return crewAtUpTo(cw,Math.min(simT,crewDur(cw)),M.keys[0]);}):true;
+    updTimeline();
+    if(caught&&simT>=caught.t+0.5){finishRun();}
+    else if(simT>=simDur+0.4){finishRun();}
+  }
+  draw();
+}
+requestAnimationFrame(frame);
+
+/* ---------------- timeline ---------------- */
+function buildTimeline(){
+  var bar=$("#tlbar");bar.querySelectorAll(".tlrow").forEach(function(e){e.remove();});
+  var dur=Math.max.apply(null,crews.map(crewDur).concat([1]));
+  crews.forEach(function(cw,i){var d=crewDur(cw);var row=document.createElement("div");row.className="tlrow";row.style.left="6px";row.style.width=(d/dur*96)+"%";row.style.top=(5+i*8)+"px";row.style.background=cw.col;bar.appendChild(row);});
+}
+function updTimeline(){
+  var dur=Math.max.apply(null,crews.map(crewDur).concat([1]));
+  $("#tlhead").style.opacity=mode==="run"?1:0;
+  $("#tlhead").style.left=(6+Math.min(simT,dur)/dur*(($("#tlbar").clientWidth-12)))+"px";
+  $("#tltime").textContent=(mode==="run"?simT:dur).toFixed(1)+"s";
+}
+
+/* ---------------- UI / input ---------------- */
+function banner(title,persist,sub){var b=$("#banner");if(!title){b.classList.remove("on");return;}b.querySelector("b").textContent=title;b.querySelector("b").style.color=title==="CAUGHT"?"#ff5566":title==="CLEAN!"?"#39e08a":"#ffc53d";b.querySelector("small").textContent=sub||"";b.classList.add("on");if(!persist)setTimeout(function(){b.classList.remove("on");},2200);}
+function refreshCtl(){
+  var running=mode==="run";
+  show($("#bSpeed"),running);
+  $("#bPlay").textContent=running?"◼ STOP":"▶ PLAY";
+  $("#bPlay").classList.toggle("stop",running);
+  $("#bPlay").disabled=!running&&!canPlay();
+  $("#bUndo").disabled=running||crews[sel].path.length<2;
+  $("#bClear").disabled=running||crews[sel].path.length<2;
+  document.querySelectorAll(".ct").forEach(function(t,i){t.classList.toggle("on",i===sel);var hasLoot=false;t.querySelector("i")&&t.querySelector("i").remove();});
+  show($("#edit"),!running&&selWp>=1);
+  if(selWp>=1)$("#bWait").textContent="⏱ Wait "+(((crews[sel].path[selWp].wait||0)+0.5).toFixed(1))+"s";
+}
+function buildCrewTabs(){
+  var box=$("#crewtabs");box.innerHTML="";
+  if(crews.length<2){return;}
+  crews.forEach(function(cw,i){var b=document.createElement("button");b.className="ct";b.style.color=cw.col;b.textContent=i+1;b.onclick=function(){sel=i;selWp=-1;refreshCtl();};box.appendChild(b);});
+}
+// input
+var dragWp=null,downAt=null;
+function evPos(e){var r=cv.getBoundingClientRect();var t=e.touches?e.touches[0]:e;return [t.clientX-r.left,t.clientY-r.top];}
+function nearestWp(wx,wy){var p=crews[sel].path,best=-1,bd=0.5;for(var i=1;i<p.length;i++){var d=Math.hypot(p[i].x-wx,p[i].y-wy);if(d<bd){bd=d;best=i;}}return best;}
+function down(e){
+  if(mode==="run")return;
+  var sp=evPos(e),wp=s2w(sp[0],sp[1]);
+  if(wp[0]<0||wp[1]<0||wp[0]>M.w||wp[1]>M.h)return;
+  var hit=nearestWp(wp[0],wp[1]);
+  downAt={sx:sp[0],sy:sp[1],wx:wp[0],wy:wp[1],hit:hit,moved:false};
+  if(hit>=1){selWp=hit;dragWp=hit;refreshCtl();}
+}
+function move(e){
+  if(!downAt||mode==="run")return;
+  var sp=evPos(e);if(Math.hypot(sp[0]-downAt.sx,sp[1]-downAt.sy)>6)downAt.moved=true;
+  if(dragWp){e.preventDefault&&e.preventDefault();var wp=s2w(sp[0],sp[1]);var cc=Math.max(0.5,Math.min(M.w-0.5,wp[0])),rr=Math.max(0.5,Math.min(M.h-0.5,wp[1]));crews[sel].path[dragWp].x=cc;crews[sel].path[dragWp].y=rr;}
+}
+function up(e){
+  if(!downAt||mode==="run"){downAt=null;dragWp=null;return;}
+  if(!downAt.moved){
+    if(downAt.hit>=1){selWp=downAt.hit;}         // selected a waypoint
+    else{                                        // add new waypoint on floor
+      var c=Math.floor(downAt.wx),r=Math.floor(downAt.wy);
+      if(c>=0&&r>=0&&c<M.w&&r<M.h&&!M.wall[r][c]){addWp(downAt.wx,downAt.wy);}
+    }
+  }
+  dragWp=null;downAt=null;refreshCtl();buildTimeline();
+}
+cv.addEventListener("mousedown",down);cv.addEventListener("mousemove",move);window.addEventListener("mouseup",up);
+cv.addEventListener("touchstart",down,{passive:false});cv.addEventListener("touchmove",move,{passive:false});window.addEventListener("touchend",up);
+
+/* buttons */
+$("#bPlay").onclick=function(){if(mode==="run"){mode="plan";refreshCtl();}else startRun();if(mode==="run")refreshCtl();};
+$("#bUndo").onclick=function(){var p=crews[sel].path;if(p.length>1){p.pop();selWp=-1;refreshCtl();buildTimeline();}};
+$("#bClear").onclick=function(){crews[sel].path=[crews[sel].path[0]];selWp=-1;refreshCtl();buildTimeline();};
+$("#bWait").onclick=function(){if(selWp>=1){var w=crews[sel].path[selWp];w.wait=Math.min(5,(w.wait||0)+0.5);refreshCtl();buildTimeline();}};
+$("#bDel").onclick=function(){if(selWp>=1){crews[sel].path.splice(selWp,1);selWp=-1;refreshCtl();buildTimeline();}};
+$("#bSpeed").onclick=function(){simSpeed=simSpeed===1?2:1;$("#bSpeed").textContent="▶▶ "+simSpeed+"×";};
+
+/* ---------------- level flow ---------------- */
+function openLevel(idx){
+  LV=LEVELS[idx];M=parse(LV);G._doorsOpen=!M.keys.length;initCrews();layout();buildCrewTabs();buildTimeline();
+  mode="plan";simT=0;caught=null;won=false;banner("",false);
+  $("#hLvl").querySelector("b").textContent="Heist "+(idx+1);
+  $("#hLvl").querySelector("small").textContent=LV.cat;
+  var objs=[];if(M.loot.length)objs.push(M.loot.length+" stash"+(M.loot.length>1?"es":""));objs.push(crews.length>1?crews.length+" thieves out":"escape");
+  $("#hObj").querySelector("b").textContent="Grab "+(M.loot.length)+" · get out";
+  $("#hObj").querySelector("small").textContent="par "+LV.par+"s";
+  // briefing
+  $("#brRib").textContent="Heist "+(idx+1);$("#brName").textContent=LV.name;$("#brText").textContent=LV.text;$("#brTip").textContent="💡 "+LV.tip;
+  show($("#mBrief"),true);show($("#mEnd"),false);show($("#mMenu"),false);
+  refreshCtl();
+}
+$("#brGo").onclick=function(){show($("#mBrief"),false);};
+function openEnd(stars,score,prev){
+  banner("CLEAN!",false,"");
+  $("#enStars").textContent="★★★★★".slice(0,stars)+"☆☆☆".slice(0,3-stars);
+  $("#enScore").firstChild.textContent=score;
+  var idx=LEVELS.indexOf(LV);
+  var msg="You pulled it off in "+simDur.toFixed(1)+"s (par "+LV.par+").";
+  if(window.LZ_EA)msg+=" Early-access points are held and paid 1.5× at launch.";
+  else if(LZM>1)msg+=" Game of the Day — points doubled!";
+  $("#enText").textContent=msg;
+  var hasNext=idx+1<LEVELS.length;
+  $("#enNext").textContent=hasNext?"NEXT HEIST ▶":"ALL HEISTS ✓";
+  show($("#mEnd"),true);
+}
+$("#enNext").onclick=function(){var idx=LEVELS.indexOf(LV);show($("#mEnd"),false);if(idx+1<LEVELS.length)openLevel(idx+1);else openMenu();};
+$("#enReplay").onclick=function(){show($("#mEnd"),false);startRun();refreshCtl();};
+$("#enMenu").onclick=function(){show($("#mEnd"),false);openMenu();};
+$("#hMenu").onclick=openMenu;
+$("#mClose").onclick=function(){show($("#mMenu"),false);};
+$("#mArcade").onclick=function(){save();location.href="/arcade/";};
+function openMenu(){
+  var grid=$("#lvGrid");grid.innerHTML="";
+  LEVELS.forEach(function(L,i){
+    var done=G.done[i];var locked=i>0&&!G.done[i-1];
+    var b=document.createElement("button");b.className="lvb"+(done?" done":"")+(locked?" lock":"");
+    b.innerHTML=(i+1)+'<span class="s">'+(done?"★".repeat(done.stars):"")+"</span>";
+    if(!locked)b.onclick=function(){show($("#mMenu"),false);openLevel(i);};
+    grid.appendChild(b);
+  });
+  $("#menuTot").textContent="Total "+(G.total||0)+" LP earned across "+Object.keys(G.done).length+" / "+LEVELS.length+" heists";
+  show($("#mMenu"),true);show($("#mBrief"),false);show($("#mEnd"),false);
+}
+
+/* ---------------- test hook ---------------- */
+window.__H={st:function(){return {lv:LEVELS.indexOf(LV),mode:mode,caught:caught,won:won,dur:simDur,total:G&&G.total,done:G&&G.done,nc:crews.length,valid:allValid(),canPlay:canPlay()};},
+  open:function(i){openLevel(i);show($("#mBrief"),false);},
+  setPath:function(ci,pts){sel=ci;crews[ci].path=[crews[ci].path[0]].concat(pts.map(function(p){return {x:p[0],y:p[1],wait:p[2]||0};}));buildTimeline();refreshCtl();},
+  play:function(){startRun();},
+  finish:function(){finishRun();},
+  detect:function(){simDur=Math.max.apply(null,crews.map(crewDur));return detect();}};
+
+/* ---------------- boot ---------------- */
+lzBoot().then(function(){
+  G=load();recomputeTotal();
+  // resume at first unsolved, else menu
+  var first=0;while(first<LEVELS.length&&G.done[first])first++;
+  if(first>=LEVELS.length){openMenu();}
+  else openLevel(first);
+});
+</script>
+</body>
+</html>
