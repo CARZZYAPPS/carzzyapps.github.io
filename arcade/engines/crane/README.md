@@ -17,4 +17,4 @@ A project's data model (`project.pack`):
   ports: [ { id, name, tag, need, th:{sky:[a,b],sea:[a,b],quay,quay2,crane,hull,city,night?,snow?}, rules:["wind"|"reefer"|"hazmat"|"night"],
             lv: [ { c,h,f,y,l,n,p,k,par, w?,r?,pw?,z?,tut? } ] } ] }
 ```
-Next: hand-placed starting stacks and custom crane/container art.
+Next: custom crane/container art and cargo-type colors (hand-placed stacks: done).

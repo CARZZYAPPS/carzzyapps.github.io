@@ -124,3 +124,17 @@ body.ed .nav{display:none}
 @media(max-width:860px){.grid2[style]{grid-template-columns:1fr!important}}
 .row2.v3>.fld{min-width:64px}
 .rule .fl{align-self:center}
+
+/* Crane kit — ship stack painter */
+.paint{margin-top:10px;border-top:1px solid var(--line,#24305a);padding-top:8px}
+.paint summary{cursor:pointer;font:700 13px var(--display);color:var(--muted,#9aa6c8)}
+.palette{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.sw-btn{width:30px;height:30px;border-radius:8px;border:2px solid rgba(255,255,255,.18);cursor:pointer;color:#111;font-weight:800}
+.sw-btn.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.sw-btn.er{background:#2a3350;color:#fff}
+.shipgrid{display:grid;gap:3px;background:#0e1830;padding:6px;border-radius:10px;max-width:360px}
+.shipgrid .cell{aspect-ratio:1.6;border-radius:4px;cursor:pointer;border:1px solid rgba(255,255,255,.06)}
+.shipgrid .cell.empty{background:rgba(255,255,255,.03)}
+.shipgrid .cell.next{background:rgba(255,255,255,.07);outline:1px dashed rgba(255,255,255,.25)}
+.shipgrid .cell.box{box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.warn{color:#ffb020;font-weight:700}

@@ -304,6 +304,13 @@ function shipTypes(R){
   return function(){var r=R();if(LV.rules.reefer&&r<(p.r||0))return 'reef';r=R();if(LV.rules.hazmat&&r<(p.z||0))return 'haz';return COLOR_ORDER[Math.floor(R()*k)];};
 }
 function fillShip(R){
+  var _ap=LV.p;
+  if(_ap.ship&&_ap.ship.length&&!LV.endless){
+    var _sh=LV.L.slots.filter(function(s){return s.kind==='ship';});
+    for(var _c=0;_c<_sh.length&&_c<_ap.ship.length;_c++){var _col=_ap.ship[_c]||[];
+      for(var _r=0;_r<_col.length&&_sh[_c].stack.length<_sh[_c].max;_r++){if(TYPES[_col[_r]])_sh[_c].stack.push(mkBox(_col[_r]));}}
+    return;
+  }
   var p=LV.p,ships=LV.L.slots.filter(function(s){return s.kind==='ship';}),tot=Math.max(p.n+3,Math.round(ships.length*p.h*p.f)),tf=shipTypes(R);
   if(LV.endless)tot=Math.round(ships.length*p.h*p.f);
   for(var i=0;i<tot;i++){var room=ships.filter(function(s){return s.stack.length<s.max;});if(!room.length)break;

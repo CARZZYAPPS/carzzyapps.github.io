@@ -7,6 +7,10 @@ const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&":
 const nid = (p) => p + Date.now().toString(36).slice(-4) + Math.floor(Math.random() * 100);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
+export const TYPE_META = { red: ["#e5483b", "Red"], blue: ["#2f8ff0", "Blue"], green: ["#2fbf6a", "Green"], yellow: ["#ffc61a", "Yellow"], purple: ["#8a5cf0", "Purple"], orange: ["#ff8a2a", "Orange"], reef: ["#eef4f8", "Reefer"], haz: ["#ffd23a", "Hazmat"] };
+const COLOR_ORDER = ["red", "blue", "green", "yellow", "purple", "orange"];
+function availTypes(pt, l) { const t = COLOR_ORDER.slice(0, Math.min(6, l.k || 4)); if ((pt.rules || []).includes("reefer")) t.push("reef"); if ((pt.rules || []).includes("hazmat")) t.push("haz"); return t; }
+function shipCount(l) { return (l.ship || []).reduce((a, c) => a + (c ? c.length : 0), 0); }
 export const RULES = { wind: "Wind — gusts shove the load sideways", reefer: "Reefers — refrigerated boxes thaw off-ship", hazmat: "Hazmat — clang a hazmat box, lose a heart", night: "Night shift — dark harbor" };
 const THEME_FIELDS = [["sky", "Sky top"], ["sky2", "Sky bottom"], ["sea", "Sea top"], ["sea2", "Sea deep"], ["quay", "Quay"], ["quay2", "Quay shade"], ["crane", "Crane"], ["hull", "Ship hull"], ["city", "Skyline"]];
 
@@ -78,7 +82,7 @@ function thumbSVG(th, label) {
 export function thumb(P) { const pk = P.pack || {}, pt = (pk.ports || [])[0] || {}; return thumbSVG(pt.th || THEMES.day, (pk.titleMain || P.title || "PORT").replace(/<[^>]+>/g, "").split(" ")[0].toUpperCase()); }
 
 export function editor(app, P, hooks) {
-  let tab = "game", selPort = 0;
+  let tab = "game", selPort = 0, brush = "red";
   const pk = P.pack = P.pack || {}; pk.ports = pk.ports || [port()]; if (pk.noEndless == null) pk.noEndless = true;
   const save = () => hooks.save();
   document.body.classList.add("ed");
@@ -182,6 +186,7 @@ export function editor(app, P, hooks) {
       ${rules.includes("reefer") ? `<div class="row2">${rng("ports." + selPort + ".lv." + j + ".r", l.r || 0.3, 0, 0.6, 0.05, "Reefer share")}${num("ports." + selPort + ".lv." + j + ".pw", l.pw || 1, 0, 4, 1, "Powered slots")}</div>` : ""}
       ${rules.includes("hazmat") ? `<div class="row2">${rng("ports." + selPort + ".lv." + j + ".z", l.z || 0.2, 0, 0.5, 0.02, "Hazmat share")}</div>` : ""}
       <label class="chk"><input type="checkbox" data-k="ports.${selPort}.lv.${j}.tut" ${l.tut ? "checked" : ""}> Show the tutorial hints on this level</label>
+      ${painter(pt, l, j)}
     </div>`).join("");
     return `<div style="max-width:720px"><div class="card2" style="margin-bottom:10px">${pick}<p class="hint">The engine builds the dock from these numbers — no two levels look alike. Bigger ships and more trucks with less time = harder. Tap Test up top to play your changes.</p></div>
       ${rows}<button class="ib pri" id="addLv">+ Add level</button></div>`;
@@ -191,7 +196,42 @@ export function editor(app, P, hooks) {
     const pt = pk.ports[selPort];
     const addL = $("#addLv", root); if (addL) addL.onclick = () => { const last = pt.lv[pt.lv.length - 1] || lvl(); pt.lv.push(Object.assign({}, last, { n: Math.min(30, (last.n || 8) + 2), par: (last.par || 140) + 20, tut: 0 })); save(); render(); };
     $$("[data-dell]", root).forEach((el) => (el.onclick = () => { if (pt.lv.length < 2) return; pt.lv.splice(+el.dataset.dell, 1); save(); render(); }));
-    $$("[data-dupl]", root).forEach((el) => (el.onclick = () => { const j = +el.dataset.dupl; pt.lv.splice(j + 1, 0, Object.assign({}, pt.lv[j])); save(); render(); }));
+    $$("[data-dupl]", root).forEach((el) => (el.onclick = () => { const j = +el.dataset.dupl; const cp = JSON.parse(JSON.stringify(pt.lv[j])); pt.lv.splice(j + 1, 0, cp); save(); render(); }));
+    // c/h sliders also re-render so the painter grid resizes
+    $$('[data-k$=".c"],[data-k$=".h"]', root).forEach((el) => el.addEventListener("change", () => render()));
+    // painter: brush picker
+    $$("[data-brush]", root).forEach((el) => (el.onclick = () => { brush = el.dataset.brush; render(); }));
+    // painter: author on/off
+    $$("[data-author]", root).forEach((el) => (el.onchange = () => { const L = pt.lv[+el.dataset.author]; if (el.checked) { L.ship = []; for (let c = 0; c < L.c; c++) L.ship.push([]); } else delete L.ship; save(); render(); }));
+    // painter: cell clicks
+    $$(".shipgrid", root).forEach((g) => { const L = pt.lv[+g.dataset.lv]; $$(".cell", g).forEach((cell) => (cell.onclick = () => {
+      const c = +cell.dataset.c, r = +cell.dataset.r; L.ship[c] = L.ship[c] || []; const col = L.ship[c];
+      if (r < col.length) { col.length = r; if (brush !== "" && r < L.h) col.push(brush); }
+      else if (r === col.length && brush !== "") { if (col.length < L.h) col.push(brush); }
+      save(); render();
+    })); });
+  }
+  function painter(pt, l, j) {
+    const authored = !!l.ship;
+    const cols = l.c, rows = l.h, types = availTypes(pt, l);
+    const pal = types.map((t) => `<button type="button" class="sw-btn ${t === brush ? "on" : ""}" data-brush="${t}" title="${esc(TYPE_META[t][1])}" style="background:${TYPE_META[t][0]}"></button>`).join("") + `<button type="button" class="sw-btn er ${brush === "" ? "on" : ""}" data-brush="" title="Eraser">⌫</button>`;
+    let grid = "";
+    if (authored) {
+      grid = `<div class="shipgrid" data-lv="${j}" style="grid-template-columns:repeat(${cols},1fr)">`;
+      for (let r = rows - 1; r >= 0; r--) for (let c = 0; c < cols; c++) {
+        const col = l.ship[c] || [], t = col[r], top = col.length, cls = r === top ? "next" : r < top ? "box" : "empty";
+        grid += `<div class="cell ${cls}" data-c="${c}" data-r="${r}" ${t ? `style="background:${TYPE_META[t] ? TYPE_META[t][0] : "#888"}"` : ""}></div>`;
+      }
+      grid += `</div>`;
+    }
+    const need = l.n, have = authored ? shipCount(l) : "—";
+    const warn = authored && shipCount(l) < need ? `<span class="warn">Only ${shipCount(l)} boxes for ${need} trucks — add more.</span>` : "";
+    return `<details class="paint" ${authored ? "open" : ""}><summary>Starting stacks ${authored ? "(hand-placed)" : "(random fill)"}</summary>
+      <label class="chk" style="margin:6px 0"><input type="checkbox" data-author="${j}" ${authored ? "checked" : ""}> Hand-place the ship's containers for this level</label>
+      ${authored ? `<div class="palette">${pal}</div>
+        <p class="hint" style="margin:4px 0">Tap the lowest empty slot in a column to stack a box; tap a box to clear it and everything above. Boxes: <b>${have}</b> for ${need} trucks. ${warn}</p>
+        ${grid}` : `<p class="hint">The engine fills the ship at random from your color count and rules. Turn this on to design the exact starting stacks — handy for set-piece puzzles.</p>`}
+    </details>`;
   }
   function helpTab() {
     return `<div class="card2" style="max-width:680px"><h3>How the Crane engine plays</h3>
@@ -203,7 +243,7 @@ export function editor(app, P, hooks) {
         <li><b>Rules</b> — turn on Wind, Reefers, Hazmat or Night to change the challenge. Extra sliders appear per level when a rule is on.</li>
         <li><b>★ to unlock</b> — gates later ports behind stars earned on earlier ones.</li>
       </ul>
-      <p class="hint">Coming next to the kit: hand-placed starting stacks, and custom crane &amp; container art.</p></div>`;
+      <p class="hint"><b>New:</b> hand-place the ship's starting stacks per level (Levels tab → Starting stacks). Coming next: custom crane &amp; container art.</p></div>`;
   }
   render();
 }
