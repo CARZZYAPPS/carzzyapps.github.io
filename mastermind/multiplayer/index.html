@@ -272,7 +272,7 @@
         const lobby = snap.val();
         
         if (!lobby) {
-          document.getElementById("status-text").innerHTML = 'This lobby does not exist or has expired.<br><br><a href="/mastermind/multiplayer/lobby/"><button style="display: block; margin: 15px auto 0 auto;">Create Match</button></a>';
+          document.getElementById("status-text").innerHTML = 'This lobby does not exist or has expired.<br><br><a style="display: block; margin: 15px auto 0 auto;" href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a>';
           return;
         }
 
