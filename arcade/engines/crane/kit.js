@@ -11,6 +11,9 @@ export const TYPE_META = { red: ["#e5483b", "Red"], blue: ["#2f8ff0", "Blue"], g
 const COLOR_ORDER = ["red", "blue", "green", "yellow", "purple", "orange"];
 function availTypes(pt, l) { const t = COLOR_ORDER.slice(0, Math.min(6, l.k || 4)); if ((pt.rules || []).includes("reefer")) t.push("reef"); if ((pt.rules || []).includes("hazmat")) t.push("haz"); return t; }
 function shipCount(l) { return (l.ship || []).reduce((a, c) => a + (c ? c.length : 0), 0); }
+function typeColor(pk, t) { const o = pk.types && pk.types[t]; return (o && o.c) || (TYPE_META[t] ? TYPE_META[t][0] : "#888"); }
+function typeName(pk, t) { const o = pk.types && pk.types[t]; return (o && o.n) || (TYPE_META[t] ? TYPE_META[t][1] : t); }
+function darken(hex, f) { const h = String(hex).replace("#", ""); if (h.length < 6) return hex; const n = parseInt(h, 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255, k = 1 - (f == null ? 0.42 : f); const x = (v) => Math.round(v * k).toString(16).padStart(2, "0"); return "#" + x(r) + x(g) + x(b); }
 export const RULES = { wind: "Wind — gusts shove the load sideways", reefer: "Reefers — refrigerated boxes thaw off-ship", hazmat: "Hazmat — clang a hazmat box, lose a heart", night: "Night shift — dark harbor" };
 const THEME_FIELDS = [["sky", "Sky top"], ["sky2", "Sky bottom"], ["sea", "Sea top"], ["sea2", "Sea deep"], ["quay", "Quay"], ["quay2", "Quay shade"], ["crane", "Crane"], ["hull", "Ship hull"], ["city", "Skyline"]];
 
@@ -91,7 +94,7 @@ export function editor(app, P, hooks) {
       <input class="ttl" id="ttl" maxlength="60" value="${esc(P.title)}" aria-label="Game title">
       <span id="stat" class="hint"></span><span class="sp" style="flex:1"></span>
       <button class="ib go" id="test">▶ Test</button><button class="ib pri" id="pub">Publish ▸</button></div>
-    <div class="tabs2" id="tabs">${[["game", "Game"], ["ports", "Ports"], ["levels", "Levels"], ["help", "How it plays"]].map(([t, n]) => `<button data-t="${t}" class="${t === tab ? "on" : ""}">${n}</button>`).join("")}</div>
+    <div class="tabs2" id="tabs">${[["game", "Game"], ["ports", "Ports"], ["levels", "Levels"], ["cargo", "Cargo"], ["help", "How it plays"]].map(([t, n]) => `<button data-t="${t}" class="${t === tab ? "on" : ""}">${n}</button>`).join("")}</div>
     <div class="ed-body" id="body"><div id="pane" class="pane"></div></div></div>`;
   $("#ttl").oninput = (e) => { hooks.setTitle(e.target.value || "Untitled"); };
   $("#test").onclick = hooks.test; $("#pub").onclick = hooks.publish;
@@ -122,11 +125,13 @@ export function editor(app, P, hooks) {
     if (tab === "game") p.innerHTML = gameTab();
     else if (tab === "ports") p.innerHTML = portsTab();
     else if (tab === "levels") p.innerHTML = levelsTab();
+    else if (tab === "cargo") p.innerHTML = cargoTab();
     else p.innerHTML = helpTab();
     wire(p);
     if (tab === "ports") wirePorts(p);
     if (tab === "levels") wireLevels(p);
     if (tab === "game") wireGame(p);
+    if (tab === "cargo") wireCargo(p);
   }
   function gameTab() {
     return `<div class="card2" style="max-width:720px"><h3>Your game</h3>
@@ -214,13 +219,13 @@ export function editor(app, P, hooks) {
   function painter(pt, l, j) {
     const authored = !!l.ship;
     const cols = l.c, rows = l.h, types = availTypes(pt, l);
-    const pal = types.map((t) => `<button type="button" class="sw-btn ${t === brush ? "on" : ""}" data-brush="${t}" title="${esc(TYPE_META[t][1])}" style="background:${TYPE_META[t][0]}"></button>`).join("") + `<button type="button" class="sw-btn er ${brush === "" ? "on" : ""}" data-brush="" title="Eraser">⌫</button>`;
+    const pal = types.map((t) => `<button type="button" class="sw-btn ${t === brush ? "on" : ""}" data-brush="${t}" title="${esc(typeName(pk, t))}" style="background:${typeColor(pk, t)}"></button>`).join("") + `<button type="button" class="sw-btn er ${brush === "" ? "on" : ""}" data-brush="" title="Eraser">⌫</button>`;
     let grid = "";
     if (authored) {
       grid = `<div class="shipgrid" data-lv="${j}" style="grid-template-columns:repeat(${cols},1fr)">`;
       for (let r = rows - 1; r >= 0; r--) for (let c = 0; c < cols; c++) {
         const col = l.ship[c] || [], t = col[r], top = col.length, cls = r === top ? "next" : r < top ? "box" : "empty";
-        grid += `<div class="cell ${cls}" data-c="${c}" data-r="${r}" ${t ? `style="background:${TYPE_META[t] ? TYPE_META[t][0] : "#888"}"` : ""}></div>`;
+        grid += `<div class="cell ${cls}" data-c="${c}" data-r="${r}" ${t ? `style="background:${typeColor(pk, t)}"` : ""}></div>`;
       }
       grid += `</div>`;
     }
@@ -232,6 +237,25 @@ export function editor(app, P, hooks) {
         <p class="hint" style="margin:4px 0">Tap the lowest empty slot in a column to stack a box; tap a box to clear it and everything above. Boxes: <b>${have}</b> for ${need} trucks. ${warn}</p>
         ${grid}` : `<p class="hint">The engine fills the ship at random from your color count and rules. Turn this on to design the exact starting stacks — handy for set-piece puzzles.</p>`}
     </details>`;
+  }
+  function cargoTab() {
+    pk.types = pk.types || {};
+    const rows = COLOR_ORDER.map((t) => {
+      const c = typeColor(pk, t), n = typeName(pk, t);
+      return `<div class="crow"><span class="cbox" style="background:${c}"></span>
+        <input class="cname" data-cname="${t}" value="${esc(n)}" maxlength="18">
+        <input type="color" data-ccol="${t}" value="${esc(c)}">
+        <button class="ib xs" data-creset="${t}" title="Reset">↺</button></div>`;
+    }).join("");
+    return `<div class="card2" style="max-width:560px"><h3>Cargo colors</h3>
+      <p class="hint">Recolor and rename the six container types. Reefer and hazmat keep their special look and rules. These apply across every port.</p>
+      <div class="cargolist">${rows}</div>
+      <p class="hint" style="margin-top:10px">Shapes stay the same so colors remain easy to tell apart. Custom crane &amp; ship art is coming to the kit next.</p></div>`;
+  }
+  function wireCargo(root) {
+    $$("[data-ccol]", root).forEach((el) => (el.oninput = () => { const t = el.dataset.ccol; pk.types[t] = Object.assign({}, pk.types[t], { c: el.value, d: darken(el.value) }); const box = el.parentNode.querySelector(".cbox"); if (box) box.style.background = el.value; save(); }));
+    $$("[data-cname]", root).forEach((el) => (el.oninput = () => { const t = el.dataset.cname; pk.types[t] = Object.assign({}, pk.types[t], { n: el.value || TYPE_META[t][1] }); save(); }));
+    $$("[data-creset]", root).forEach((el) => (el.onclick = () => { delete pk.types[el.dataset.creset]; save(); render(); }));
   }
   function helpTab() {
     return `<div class="card2" style="max-width:680px"><h3>How the Crane engine plays</h3>

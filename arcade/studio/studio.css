@@ -138,3 +138,10 @@ body.ed .nav{display:none}
 .shipgrid .cell.next{background:rgba(255,255,255,.07);outline:1px dashed rgba(255,255,255,.25)}
 .shipgrid .cell.box{box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
 .warn{color:#ffb020;font-weight:700}
+
+/* Crane kit — cargo colors */
+.cargolist{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.crow{display:flex;align-items:center;gap:8px}
+.crow .cbox{width:26px;height:26px;border-radius:7px;flex:none;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.crow .cname{flex:1;min-width:0}
+.crow input[type=color]{width:40px;height:30px;padding:0;border:0;background:none}
