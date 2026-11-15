@@ -172,11 +172,13 @@
     <h3 id="end-title"></h3><div id="end-message"></div>
     <div style="margin-top: 20px;"><button id="rematch-btn" onclick="triggerRematch()">Rematch</button></div>
 </div></div>
+    
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, set, update, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
+  // Rules Modal logic
   window.showRules = () => {
     document.getElementById("rules").style.display = "flex";
     document.getElementById("dont-show").checked = localStorage.getItem("skipMPMastermindRules") !== "false";
@@ -190,6 +192,60 @@
     else window.showRules();
   });
 
+  // 1. ALWAYS GENERATE THE PLAYING BOARD AND PICKER PANEL (Runs unconditionally)
+  const COLORS = ["red", "blue", "green", "yellow", "black", "white"];
+  let secret = [], currentGuess = [], turn = 0, selectedIdx = 0, playerUid = "", role = "", gameOver = false, lastPlayerCount = 0;
+
+  const board = document.getElementById("board");
+  for (let t = 0; t < 10; t++) {
+    const row = document.createElement("div"); row.className = "row"; row.id = `row-${t}`;
+    const pegs = document.createElement("div"); pegs.style.display = "flex"; pegs.style.gap = "10px";
+    for (let i = 0; i < 4; i++) {
+      const peg = document.createElement("div"); peg.className = "peg"; peg.id = `peg-${t}-${i}`; pegs.appendChild(peg);
+    }
+    const feed = document.createElement("div"); feed.className = "feedback"; feed.id = `feed-${t}`;
+    for (let i = 0; i < 4; i++) {
+      const key = document.createElement("div"); key.className = "key-peg"; feed.appendChild(key);
+    }
+    row.append(pegs, feed); board.appendChild(row);
+  }
+
+  const picker = document.getElementById("picker");
+  COLORS.forEach(c => {
+    const btn = document.createElement("div"); btn.className = "picker-btn"; btn.style.backgroundColor = c; btn.onclick = () => chooseColor(c); picker.appendChild(btn);
+  });
+
+  // Global game helpers
+  function chooseColor(color) {
+    currentGuess[selectedIdx] = color;
+    const isSecret = (role === "Codemaker" && !secret.length);
+    const pegId = isSecret ? `secret-peg-${selectedIdx}` : `peg-${turn}-${selectedIdx}`;
+    const peg = document.getElementById(pegId);
+    if (peg) {
+      peg.style.backgroundColor = color;
+      if (isSecret) selectSecretPeg((selectedIdx + 1) % 4); else selectPeg((selectedIdx + 1) % 4);
+    }
+  }
+
+  function selectPeg(idx) {
+    document.querySelectorAll(".row.active .peg").forEach(p => p.classList.remove("selected"));
+    selectedIdx = idx; document.getElementById(`peg-${turn}-${selectedIdx}`).classList.add("selected");
+    for (let i = 0; i < 4; i++) document.getElementById(`peg-${turn}-${i}`).onclick = () => selectPeg(i);
+  }
+
+  function selectSecretPeg(idx) {
+    document.querySelectorAll("#secret-code-display .peg").forEach(p => p.classList.remove("selected"));
+    selectedIdx = idx; const activePeg = document.getElementById(`secret-peg-${selectedIdx}`); if (activePeg) activePeg.classList.add("selected");
+  }
+
+  function disableInput() {
+    picker.style.display = "none"; document.getElementById("submit-btn").style.display = "none";
+    document.querySelectorAll(".row").forEach(r => r.classList.remove("active"));
+  }
+
+  window.closeEndModal = () => document.getElementById("end-modal").style.display = "none";
+
+  // 2. CHECK LOBBY VALIDITY & CONNECT TO FIREBASE
   const config = {
     apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com",
     projectId: "carzzy-apps", databaseURL: "https://carzzy-apps-default-rtdb.firebaseio.com", appId: "1:716862658931:web:2d987c92c3021837dc0d06"
@@ -200,27 +256,6 @@
     document.getElementById("status-text").innerHTML = 'Missing or invalid lobby ID.<br><br><a href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a>';
   } else {
     const app = initializeApp(config), db = getDatabase(app), auth = getAuth(app);
-    const COLORS = ["red", "blue", "green", "yellow", "black", "white"];
-    let secret = [], currentGuess = [], turn = 0, selectedIdx = 0, playerUid = "", role = "", gameOver = false, lastPlayerCount = 0;
-
-    const board = document.getElementById("board");
-    for (let t = 0; t < 10; t++) {
-      const row = document.createElement("div"); row.className = "row"; row.id = `row-${t}`;
-      const pegs = document.createElement("div"); pegs.style.display = "flex"; pegs.style.gap = "10px";
-      for (let i = 0; i < 4; i++) {
-        const peg = document.createElement("div"); peg.className = "peg"; peg.id = `peg-${t}-${i}`; pegs.appendChild(peg);
-      }
-      const feed = document.createElement("div"); feed.className = "feedback"; feed.id = `feed-${t}`;
-      for (let i = 0; i < 4; i++) {
-        const key = document.createElement("div"); key.className = "key-peg"; feed.appendChild(key);
-      }
-      row.append(pegs, feed); board.appendChild(row);
-    }
-
-    const picker = document.getElementById("picker");
-    COLORS.forEach(c => {
-      const btn = document.createElement("div"); btn.className = "picker-btn"; btn.style.backgroundColor = c; btn.onclick = () => chooseColor(c); picker.appendChild(btn);
-    });
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) await signInAnonymously(auth);
@@ -232,103 +267,80 @@
       }
     });
 
-   function listenToLobby() {
-  onValue(ref(db, `lobbies/${lobbyId}`), async (snap) => {
-    const lobby = snap.val(); 
-    
-    // 1. Check if the lobby ID is invalid or has expired
-    if (!lobby) {
-      document.getElementById("status-text").innerHTML = `
-        This lobby does not exist or has expired.<br><br>
-        <a href="/mastermind/multiplayer/lobby/"><button style="margin-top: 10px;">Create Match</button></a>
-      `;
-      return;
-    }
+    function listenToLobby() {
+      onValue(ref(db, `lobbies/${lobbyId}`), async (snap) => {
+        const lobby = snap.val();
+        
+        if (!lobby) {
+          document.getElementById("status-text").innerHTML = 'This lobby does not exist or has expired.<br><br><a href="/mastermind/multiplayer/lobby/"><button style="margin-top: 10px;">Create Match</button></a>';
+          return;
+        }
 
-    const uids = Object.keys(lobby.players || {});
+        const uids = Object.keys(lobby.players || {});
 
-    // 2. Revert to waiting and alert if opponent leaves mid-game
-    if (lobby.status === 'playing' && uids.length < 2) {
-      alert("Your opponent disconnected!");
-      await update(ref(db, `lobbies/${lobbyId}`), { 
-        status: 'waiting', 
-        secret: null, 
-        guesses: null, 
-        rematchRequests: null 
-      });
-      return;
-    }
+        if (lobby.status === 'playing' && uids.length < 2) {
+          alert("Your opponent disconnected!");
+          await update(ref(db, `lobbies/${lobbyId}`), { status: 'waiting', secret: null, guesses: null, rematchRequests: null });
+          return;
+        }
 
-    // 3. Dynamic presence management
-    if (uids.length !== lastPlayerCount) {
-      lastPlayerCount = uids.length;
-      if (uids.length === 1 && uids[0] === playerUid) {
-        onDisconnect(ref(db, `lobbies/${lobbyId}/players/${playerUid}`)).cancel();
-        onDisconnect(ref(db, `lobbies/${lobbyId}`)).remove();
-      } else {
-        onDisconnect(ref(db, `lobbies/${lobbyId}`)).cancel();
-        onDisconnect(ref(db, `lobbies/${lobbyId}/players/${playerUid}`)).remove();
-      }
-    }
-
-    // 4. Host starts the game once 2 players are present
-    if (playerUid === lobby.host && lobby.status === 'waiting' && uids.length === 2) {
-      const randomCodemaker = uids[Math.floor(Math.random() * uids.length)];
-      await update(ref(db, `lobbies/${lobbyId}`), { status: 'playing', codemaker: randomCodemaker });
-      return;
-    }
-
-    // 5. Active gameplay states
-    if (lobby.status === 'playing') {
-      role = playerUid === lobby.codemaker ? "Codemaker" : "Codebreaker";
-      document.getElementById("role-title").innerText = `Mastermind`;
-
-      const requests = lobby.rematchRequests ? Object.keys(lobby.rematchRequests) : [];
-      if (requests.length === 1 && !lobby.rematchRequests[playerUid]) {
-        document.getElementById("end-message").innerHTML += `<p style="color:#00d1b2;font-weight:bold;">Opponent wants a rematch!</p>`;
-      } else if (requests.length === 2 && playerUid === lobby.host) {
-        const nextCodemaker = uids.find(uid => uid !== lobby.codemaker) || uids[0];
-        await update(ref(db, `lobbies/${lobbyId}`), { 
-          secret: null, 
-          guesses: null, 
-          codemaker: nextCodemaker, 
-          status: 'playing', 
-          rematchRequests: null 
-        }); 
-        return;
-      }
-
-      const hasRequestedRematch = !!(lobby.rematchRequests && lobby.rematchRequests[playerUid]);
-      if (lobby.guesses) syncBoard(lobby.guesses, hasRequestedRematch); else resetLocalBoard();
-      
-      if (role === "Codemaker") {
-        if (!lobby.secret) {
-          document.getElementById("status-text").innerText = "You are the Codemaker! Create a code and click Submit.";
-          activateSetupRow();
-        } else {
-          secret = lobby.secret;
-          if (!gameOver) {
-            document.getElementById("status-text").innerText = "Secret code confirmed. Waiting for Codebreaker to guess...";
-            disableInput();
+        if (uids.length !== lastPlayerCount) {
+          lastPlayerCount = uids.length;
+          if (uids.length === 1 && uids[0] === playerUid) {
+            onDisconnect(ref(db, `lobbies/${lobbyId}/players/${playerUid}`)).cancel();
+            onDisconnect(ref(db, `lobbies/${lobbyId}`)).remove();
+          } else {
+            onDisconnect(ref(db, `lobbies/${lobbyId}`)).cancel();
+            onDisconnect(ref(db, `lobbies/${lobbyId}/players/${playerUid}`)).remove();
           }
-          renderSecretDisplay(lobby.secret);
         }
-      } else {
-        if (lobby.secret) { 
-          secret = lobby.secret; 
-          if (!gameOver) { 
-            document.getElementById("status-text").innerText = `Crack the code! Turn: ${turn + 1}/10`; 
-            activateGuessRow(); 
-          } 
-        } else { 
-          document.getElementById("status-text").innerText = "You are the Codebreaker! Waiting for Codemaker to make the code..."; 
-          disableInput(); 
-        }
-      }
-    }
-  });
-}
 
+        if (playerUid === lobby.host && lobby.status === 'waiting' && uids.length === 2) {
+          await update(ref(db, `lobbies/${lobbyId}`), { status: 'playing', codemaker: uids[Math.floor(Math.random() * uids.length)] });
+          return;
+        }
+
+        if (lobby.status === 'playing') {
+          role = playerUid === lobby.codemaker ? "Codemaker" : "Codebreaker";
+          document.getElementById("role-title").innerText = "Mastermind";
+          const requests = lobby.rematchRequests ? Object.keys(lobby.rematchRequests) : [];
+          if (requests.length === 1 && !lobby.rematchRequests[playerUid]) {
+            document.getElementById("end-message").innerHTML += '<p style="color:#00d1b2;font-weight:bold;">Opponent wants a rematch!</p>';
+          } else if (requests.length === 2 && playerUid === lobby.host) {
+            await update(ref(db, `lobbies/${lobbyId}`), { secret: null, guesses: null, codemaker: uids.find(uid => uid !== lobby.codemaker) || uids[0], status: 'playing', rematchRequests: null });
+            return;
+          }
+
+          const hasRematch = !!(lobby.rematchRequests && lobby.rematchRequests[playerUid]);
+          if (lobby.guesses) syncBoard(lobby.guesses, hasRematch); else resetLocalBoard();
+
+          if (role === "Codemaker") {
+            if (!lobby.secret) {
+              document.getElementById("status-text").innerText = "You are the Codemaker! Create a code and click Submit.";
+              activateSetupRow();
+            } else {
+              secret = lobby.secret;
+              if (!gameOver) {
+                document.getElementById("status-text").innerText = "Secret code confirmed. Waiting for Codebreaker to guess...";
+                disableInput();
+              }
+              renderSecretDisplay(lobby.secret);
+            }
+          } else {
+            if (lobby.secret) {
+              secret = lobby.secret;
+              if (!gameOver) {
+                document.getElementById("status-text").innerText = `Crack the code! Turn: ${turn + 1}/10`;
+                activateGuessRow();
+              }
+            } else {
+              document.getElementById("status-text").innerText = "You are the Codebreaker! Waiting for Codemaker...";
+              disableInput();
+            }
+          }
+        }
+      });
+    }
 
     function activateSetupRow() {
       const display = document.getElementById("secret-code-display"); display.style.display = "flex";
@@ -343,11 +355,6 @@
         if (currentGuess.includes(null)) return alert("Select all 4 secret colors first!");
         await set(ref(db, `lobbies/${lobbyId}/secret`), currentGuess);
       };
-    }
-
-    function selectSecretPeg(idx) {
-      document.querySelectorAll("#secret-code-display .peg").forEach(p => p.classList.remove("selected"));
-      selectedIdx = idx; const activePeg = document.getElementById(`secret-peg-${selectedIdx}`); if (activePeg) activePeg.classList.add("selected");
     }
 
     function activateGuessRow() {
@@ -367,28 +374,6 @@
       };
     }
 
-    function selectPeg(idx) {
-      document.querySelectorAll(".row.active .peg").forEach(p => p.classList.remove("selected"));
-      selectedIdx = idx; document.getElementById(`peg-${turn}-${selectedIdx}`).classList.add("selected");
-      for (let i = 0; i < 4; i++) document.getElementById(`peg-${turn}-${i}`).onclick = () => selectPeg(i);
-    }
-
-    function chooseColor(color) {
-      currentGuess[selectedIdx] = color;
-      const isSecret = (role === "Codemaker" && !secret.length);
-      const pegId = isSecret ? `secret-peg-${selectedIdx}` : `peg-${turn}-${selectedIdx}`;
-      const peg = document.getElementById(pegId);
-      if (peg) {
-        peg.style.backgroundColor = color;
-        if (isSecret) selectSecretPeg((selectedIdx + 1) % 4); else selectPeg((selectedIdx + 1) % 4);
-      }
-    }
-
-    function disableInput() {
-      picker.style.display = "none"; document.getElementById("submit-btn").style.display = "none";
-      document.querySelectorAll(".row").forEach(r => r.classList.remove("active"));
-    }
-
     function showEndModal(title, msg, codeColors) {
       document.getElementById("end-title").innerText = title;
       const msgEl = document.getElementById("end-message"); msgEl.innerHTML = `<p>${msg}</p>`;
@@ -401,7 +386,6 @@
       }
       document.getElementById("end-modal").style.display = "flex";
     }
-    window.closeEndModal = () => document.getElementById("end-modal").style.display = "none";
 
     function syncBoard(guesses, hasRematch) {
       let cracked = false;
@@ -468,7 +452,7 @@
     const inviteBtn = document.getElementById("invite-btn");
     if (inviteBtn) {
       inviteBtn.addEventListener("click", async () => {
-        const shareData = { title: "Play Mastermind!", text: "Join my multiplayer Mastermind game!", url: window.location.href };
+        const shareData = { title: "Play Mastermind!", text: "Join my game!", url: window.location.href };
         if (navigator.share) {
           try { await navigator.share(shareData); } catch (err) { console.warn(err); }
         } else {
@@ -479,6 +463,7 @@
     }
   }
 </script>
+
 
 </body>
 </html>
