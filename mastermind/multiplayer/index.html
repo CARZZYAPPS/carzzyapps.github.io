@@ -178,14 +178,12 @@
   import { getDatabase, ref, onValue, set, update, onDisconnect, goOffline } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  // Rules Modal logic
   window.showRules = () => {
     document.getElementById("rules").style.display = "flex";
     document.getElementById("dont-show").checked = localStorage.getItem("skipMPMastermindRules") !== "false";
   };
   window.closeRules = () => {
     localStorage.setItem("skipMPMastermindRules", document.getElementById("dont-show").checked ? "true" : "false");
-    document.getElementById("rules").style.none = "none";
     document.getElementById("rules").style.display = "none";
   };
   window.addEventListener('load', () => {
@@ -195,6 +193,7 @@
 
   const COLORS = ["red", "blue", "green", "yellow", "black", "white"];
   let secret = [], currentGuess = [], turn = 0, selectedIdx = 0, playerUid = "", role = "", gameOver = false, lastPlayerCount = 0;
+  let hadOpponent = false; // Tracks if an opponent joined previously
 
   const board = document.getElementById("board");
   for (let t = 0; t < 10; t++) {
@@ -259,7 +258,6 @@
   } else {
     const app = initializeApp(config), db = getDatabase(app), auth = getAuth(app);
 
-    // Edit 1: Disconnect immediately when navigating away or closing page
     window.addEventListener("pagehide", () => {
       goOffline(db);
     });
@@ -274,29 +272,26 @@
       }
     });
 
-    // Edit 2: Handle 'waiting' transitions & cleanly reset game when opponent leaves
     function listenToLobby() {
       onValue(ref(db, `lobbies/${lobbyId}`), async (snap) => {
         const lobby = snap.val();
         
         if (!lobby) {
           document.getElementById("status-text").innerHTML = `
-            <div style="text-align: center;">
-              This lobby does not exist or has expired.<br><br>
-              <a href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a>
-            </div>
+            <div style="text-align: center;">This lobby does not exist or has expired.<br><br><a href="/mastermind/multiplayer/lobby/"><button>Create Match</button></a></div>
           `;
           return;
         }
 
         const uids = Object.keys(lobby.players || {});
 
+        if (uids.length === 2) {
+          hadOpponent = true; // Two players are connected
+        }
+
         if (lobby.status === 'playing' && uids.length < 2) {
           await update(ref(db, `lobbies/${lobbyId}`), { 
-            status: 'waiting', 
-            secret: null, 
-            guesses: null, 
-            rematchRequests: null 
+            status: 'waiting', secret: null, guesses: null, rematchRequests: null 
           });
           return;
         }
@@ -314,8 +309,7 @@
 
         if (playerUid === lobby.host && lobby.status === 'waiting' && uids.length === 2) {
           await update(ref(db, `lobbies/${lobbyId}`), { 
-            status: 'playing', 
-            codemaker: uids[Math.floor(Math.random() * uids.length)] 
+            status: 'playing', codemaker: uids[Math.floor(Math.random() * uids.length)] 
           });
           return;
         }
@@ -323,15 +317,18 @@
         if (lobby.status === 'waiting') {
           resetLocalBoard();
           disableInput();
-          if (uids.length === 1) {
+          if (hadOpponent && uids.length === 1) {
             document.getElementById("status-text").innerHTML = `
               Opponent disconnected! Waiting for a new player...
               <button id="invite-btn" style="display: block; margin: 15px auto 0 auto; background: #00d1b2; color: #0a0a0a;">Invite a Player</button>
             `;
-            setupInviteButton();
           } else {
-            document.getElementById("status-text").innerText = "Waiting for opponent...";
+            document.getElementById("status-text").innerHTML = `
+              Waiting for opponent...
+              <button id="invite-btn" style="display: block; margin: 15px auto 0 auto; background: #00d1b2; color: #0a0a0a;">Invite a Player</button>
+            `;
           }
+          setupInviteButton();
         }
 
         if (lobby.status === 'playing') {
