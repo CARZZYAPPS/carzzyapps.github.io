@@ -210,7 +210,7 @@ async function multiplier(id) {
 function activeEvents(x, day) { day = day || today(); return x.events.filter((e) => e.start <= day && day <= e.end); }
 
 function progKey() { return "lz.prog." + (state.user ? state.user.uid : "guest"); }
-function blankProg() { return { days: {}, ach: {}, claims: {} }; }
+function blankProg() { return { days: {}, ach: {}, claims: {}, tBest: 0 }; }
 function getProg() { return Object.assign(blankProg(), ls.get(progKey(), {})); }
 function setProg(p) {
   const keys = Object.keys(p.days).sort(); if (keys.length > 400) keys.slice(0, keys.length - 400).forEach((k) => delete p.days[k]);
@@ -222,8 +222,9 @@ function mergeProg(a, b) {
     if (!p) return;
     Object.entries(p.days || {}).forEach(([d, v]) => {
       const o = out.days[d] || { g: [], n: 0, lp: 0, t: 0 };
-      out.days[d] = { g: Array.from(new Set(o.g.concat(v.g || []))), n: Math.max(o.n, v.n || 0), lp: Math.max(o.lp, v.lp || 0), t: Math.max(o.t, v.t || 0) };
+      out.days[d] = { g: Array.from(new Set(o.g.concat(v.g || []))), n: Math.max(o.n, v.n || 0), lp: Math.max(o.lp, v.lp || 0), t: Math.max(o.t, v.t || 0), sec: Math.max(o.sec || 0, v.sec || 0) };
     });
+    out.tBest = Math.max(out.tBest || 0, p.tBest || 0);
     Object.assign(out.ach, p.ach || {}); Object.assign(out.claims, p.claims || {});
   });
   return out;
@@ -250,6 +251,7 @@ function measure(type, days, target, gameCount) {
     case "lpInDay": return list.reduce((a, [, v]) => Math.max(a, v.lp), 0);
     case "distinctGamesInDay": return list.reduce((a, [, v]) => Math.max(a, v.g.length), 0);
     case "allGames": return new Set(list.flatMap(([, v]) => v.g)).size;
+    case "playHours": return Math.floor(Object.values(days).reduce((a, v) => a + (v.sec || 0), 0) / 3600);
     case "streak": {
       const ns = list.map(([d]) => dayNum(d)).sort((a, b) => a - b); let best = 0, run = 0, prev = null;
       ns.forEach((n) => { run = prev !== null && n === prev + 1 ? run + 1 : 1; best = Math.max(best, run); prev = n; });
@@ -282,7 +284,7 @@ async function recordSession(id, lp, isGotd) {
   const [x, c] = await Promise.all([extras(), catalog()]);
   const p = getProg(), d = today(), n = c.games.length;
   const o = p.days[d] || { g: [], n: 0, lp: 0, t: 0 };
-  p.days[d] = { g: Array.from(new Set(o.g.concat(id))), n: o.n + 1, lp: o.lp + lp, t: o.t || (isGotd ? 1 : 0) };
+  p.days[d] = { g: Array.from(new Set(o.g.concat(id))), n: o.n + 1, lp: o.lp + lp, t: o.t || (isGotd ? 1 : 0), sec: o.sec || 0 };
   const won = [];
   x.achievements.forEach((a) => {
     const target = a.type === "allGames" ? n : a.target;
@@ -700,6 +702,51 @@ const LZ = {
 };
 window.LZ = LZ;
 window.dispatchEvent(new CustomEvent("lz-ready"));
+// ---------------- Play-time tracking ----------------
+// Accrues active (visible) seconds into prog.days[today].sec and tracks the longest
+// continuous session in prog.tBest. Persisted inside prog on the leaderboard row.
+let tPend = 0, tRun = 0, tBestSeen = 0, tLast = Date.now(), tHidAt = 0, tBusy = false, tStarted = false;
+function startTime() {
+  if (tStarted) return; tStarted = true;
+  try { tBestSeen = getProg().tBest || 0; } catch (e) {}
+  setInterval(() => {
+    const now = Date.now();
+    if (document.visibilityState === "visible") { const dt = (now - tLast) / 1000; if (dt > 0 && dt < 4) { tPend += dt; tRun += dt; } if (tPend >= 90) flushTime(); }
+    tLast = now;
+  }, 1000);
+  document.addEventListener("visibilitychange", () => { const now = Date.now(); if (document.hidden) { tHidAt = now; flushTime(); } else { if (tHidAt && now - tHidAt > 120000) tRun = 0; tLast = now; } });
+  window.addEventListener("pagehide", () => flushTime());
+  window.addEventListener("beforeunload", () => flushTime());
+}
+async function flushTime() {
+  const delta = Math.floor(tPend), run = Math.floor(tRun);
+  if (delta < 1 && run <= tBestSeen) return;
+  if (delta >= 1) tPend -= delta;
+  const p = getProg(), d = today(), o = p.days[d] || { g: [], n: 0, lp: 0, t: 0 };
+  o.sec = (o.sec || 0) + delta; p.days[d] = o;
+  p.tBest = Math.max(p.tBest || 0, run);
+  setProg(p);
+  const newBest = run > tBestSeen; tBestSeen = Math.max(tBestSeen, run);
+  try {
+    const x = await extras(), won = [];
+    x.achievements.forEach((a) => { if (a.type === "playHours" && !p.ach[a.id] && measure(a.type, p.days, a.target) >= a.target) { p.ach[a.id] = d; won.push(a); } });
+    if (won.length) { setProg(p); const b = won.reduce((a, w) => a + (w.bonus || 0), 0); creditBonus(b).catch(() => {}); won.forEach((w, i) => setTimeout(() => toast(`Achievement unlocked: ${w.name} · +${fmt(w.bonus)} LP`), i * 3800)); }
+  } catch (e) {}
+  if (signedIn() && !tBusy && (delta >= 1 || newBest)) {
+    tBusy = true;
+    try { await addTime(); } catch (e) { tPend += delta; } finally { tBusy = false; }
+  }
+}
+async function addTime() {
+  const uid = state.user.uid, ref = doc(db, "arcadePlayers", uid);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref); if (!snap.exists()) return; // row is created on first LP; until then time stays local
+    const cur = snap.data();
+    tx.set(ref, keepExtras(cur, { username: state.username, lp: cur.lp || 0, games: cur.games || {}, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() }));
+  });
+}
+readyP.then(startTime);
+
 // One site visit per browser session (feeds creator earnings).
 try { if (!sessionStorage.getItem("cz.visit")) { sessionStorage.setItem("cz.visit", "1"); setDoc(doc(db, "arcadeStats", "site"), { plays: increment(1) }, { merge: true }).catch(() => {}); } } catch (e) {}
 export default LZ;

@@ -9,7 +9,7 @@ export function nextTier(tiers, lp) { return tiers.find((x) => (lp || 0) < x.lp)
 export function rankIndex(tiers, id) { return tiers.findIndex((t) => t.id === id); }
 export function hasTier(tiers, lp, id) { const t = tierOf(tiers, lp); return !!t && rankIndex(tiers, t.id) >= rankIndex(tiers, id); }
 
-const ICON = { play: "▶", crown: "♛", bolt: "⚡", fire: "🔥", run: "🏃", cal: "📅", star: "★", swap: "⇄", map: "🗺", grid: "▦" };
+const ICON = { clock: "⏱", play: "▶", crown: "♛", bolt: "⚡", fire: "🔥", run: "🏃", cal: "📅", star: "★", swap: "⇄", map: "🗺", grid: "▦" };
 const esc = (s) => LZ.esc(String(s == null ? "" : s));
 
 // Name + badges for a leaderboard row: role badge first, then tier, then up to 3 pinned achievements.

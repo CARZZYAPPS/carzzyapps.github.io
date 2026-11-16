@@ -31,7 +31,13 @@
 .pod.p1{padding-top:30px;border-color:rgba(255,210,63,.5);box-shadow:0 0 50px rgba(255,210,63,.12)} .pod.p1 .av{background:linear-gradient(135deg,#ffe58a,#ffb21f);width:68px;height:68px}
 .pod.p2 .av{background:linear-gradient(135deg,#eef0ff,#9aa2d8)} .pod.p3 .av{background:linear-gradient(135deg,#ffc29b,#e2703a)}
 .pod.p1 .crown{color:var(--gold)}
-.you{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;margin-bottom:18px;flex-wrap:wrap}
+.you{display:flex;flex-direction:column;gap:12px;padding:16px 20px;margin-bottom:18px}
+.yhead{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.tstats{display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-top:1px solid rgba(255,255,255,.08);padding-top:12px}
+.tstats .ts{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 14px;min-width:120px}
+.tstats .ts b{font:800 20px var(--display);display:block;line-height:1.1}
+.tstats .ts small{color:var(--mut);font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.tstats .tnote{color:var(--mut);font-size:12px;font-weight:600}
 .you b{font-family:var(--display)}
 .list{overflow:hidden}
 .badge{display:inline-block;margin-left:8px;border-radius:999px;padding:2px 8px;font:800 10px var(--display);letter-spacing:.08em;vertical-align:2px}
@@ -146,8 +152,21 @@ async function you() {
   const m = await LZ.me(); const v = m ? val(m) : 0;
   const r = v ? await LZ.rank(field(), v) : null;
   el.hidden = false;
-  el.innerHTML = v ? `<span>You're <b>#${r || "?"}</b> with <b>${fmt(v)}</b> ${tab === "all" || metric === "lp" ? "LP" : ""}</span><span style="color:var(--mut);font-weight:700">${esc(LZ.username)}</span>`
+  const head = v ? `<span>You're <b>#${r || "?"}</b> with <b>${fmt(v)}</b> ${tab === "all" || metric === "lp" ? "LP" : ""}</span><span style="color:var(--mut);font-weight:700">${esc(LZ.username)}</span>`
     : `<span>Signed in as <b>${esc(LZ.username)}</b>. Finish a round to get on this board.</span><a class="btn sm" href="/arcade/">Play</a>`;
+  el.innerHTML = `<div class="yhead">${head}</div>${timeStats(m)}`;
+}
+function fmtTime(sec) {
+  sec = Math.max(0, Math.round(sec || 0));
+  if (sec < 60) return sec + "s";
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+}
+function timeStats(m) {
+  const prog = (m && m.prog) || {}, days = prog.days || {};
+  const total = Object.values(days).reduce((a, v) => a + (v.sec || 0), 0), best = prog.tBest || 0;
+  if (!total && !best) return `<div class="tstats"><div class="ts"><b>—</b><small>Total time</small></div><div class="ts"><b>—</b><small>Longest session</small></div><span class="tnote">Time played starts counting now.</span></div>`;
+  return `<div class="tstats"><div class="ts"><b>${fmtTime(total)}</b><small>Total time played</small></div><div class="ts"><b>${fmtTime(best)}</b><small>Longest session</small></div></div>`;
 }
 $("#metric").querySelectorAll("button").forEach((b) => (b.onclick = () => { metric = b.dataset.m; render(); }));
 LZ.onChange(() => { render(); paint(); });
