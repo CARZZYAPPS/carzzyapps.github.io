@@ -1,5 +1,13 @@
 {
   "note": "Perk links synced to Firestore arcadeAccess/* by the backend workflow. earlyAccess: shown to Platinum+ until the release date. beta: shown to Diamond+.",
-  "earlyAccess": [],
+  "earlyAccess": [
+    {
+      "id": "heist",
+      "name": "Heist Planner",
+      "path": "/arcade/heist-planner-ea-770fee47f0/",
+      "until": "2026-11-19T12:00:00-05:00",
+      "blurb": "Draw your crew's paths on the blueprint, hit play, and watch the heist unfold. Points are held and paid 1.5x at launch."
+    }
+  ],
   "beta": []
 }
