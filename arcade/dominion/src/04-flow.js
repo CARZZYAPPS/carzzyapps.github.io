@@ -30,8 +30,8 @@ function attackNode(i,auto,ally){
 function startRaid(auto,ev){
   if(S.raidCd>0){toast("Scouts are still looking for a target ("+S.raidCd+"s).");return;}
   if(armySize()<1){toast("You have no soldiers. Recruit some in Army.","bad");return;}
-  var b=pick(bots()),lv=Math.max(1,S.lvl+irnd(-1,1)),tr=pick(["open","cover","high","choke"]);
-  startBattle({mode:"raid",ty:1,lv:lv,tr:tr,sd:(Math.random()*1e9)|0,nm:ev?evNow().nm+" Gauntlet":b.nm+"'s Camp",sub:(ev?"Limited mode · ":"Raid · ")+TERR[tr].nm+" · Lv "+(ev?lv+1:lv),th:ev?(evId()%THEMES.length):W().th,w:S.cur,ecol:enemyCols(),auto:!!auto,bot:b.i,ev:!!ev});
+  var b=pick(bots()),lv=Math.max(1,S.lvl+irnd(-1,1)),tr=pick(["open","cover","high","choke"]),pv=ev?null:netTarget();if(pv){lv=pv.lvl;b={nm:pv.name,i:0};}
+  startBattle({mode:"raid",ty:1,lv:lv,tr:tr,sd:(Math.random()*1e9)|0,nm:ev?evNow().nm+" Gauntlet":b.nm+"'s Camp",sub:(ev?"Limited mode · ":"Raid · ")+TERR[tr].nm+" · Lv "+(ev?lv+1:lv),th:ev?(evId()%THEMES.length):W().th,w:S.cur,ecol:enemyCols(),auto:!!auto,bot:b.i,ev:!!ev,pvp:pv});
 }
 function defendNow(){
   var th=S.threat;if(!th)return;var wd=S.worlds[th.w],n=wd.n[th.n],b=bots()[th.b];
@@ -52,15 +52,19 @@ function battleDone(b){
     S.stats.wins++;qprog("win",1);
     var surv=b.depN?1-deadN/b.depN:1,tf=clamp(1-b.t/b.dur,0,1);
     var score=Math.round(T_SCORE[cfg.ty]*(def?.75:cfg.mode==="raid"?.85:1)*(.72+.2*surv+.16*tf)*(R.auto?.5:1));R.score=score;
+    R.stars=(surv>=.82&&tf>=.35)?3:(surv>=.55||tf>=.2)?2:1;if(R.stars===3)qprog("star3",1);
+    dailySync();if(!S.daily.first){S.daily.first=true;R.first=true;gem(10);}
     var wm=1+.5*(cfg.w||0),lm=1+.06*(cfg.lv-1);
-    var coins=Math.round(T_COIN[cfg.ty]*wm*lm*rnd(.9,1.15)*(def?.5:1)*(S.ally>=0?1.05:1)),xp=Math.round(T_XP[cfg.ty]*(1+.1*(cfg.lv-1))*(def?.6:1)),alloy=def?0:Math.round(T_ALLOY[cfg.ty]*wm)+(cfg.ty===0&&Math.random()<.14?1:0);
-    S.coins+=coins;S.alloy+=alloy;R.items.push([IC.coin,"Coins","+"+fmt(coins)]);if(alloy)R.items.push([IC.alloy,"Alloy","+"+alloy]);R.items.push([IC.xp,"XP","+"+xp]);
+    var coins=Math.round(T_COIN[cfg.ty]*wm*lm*rnd(.9,1.15)*(def?.5:1)*(S.ally>=0?1.05:1)),xp=Math.round(T_XP[cfg.ty]*(1+.1*(cfg.lv-1))*(def?.6:1)*(R.first?2:1)),alloy=def?0:Math.round(T_ALLOY[cfg.ty]*wm)+(cfg.ty===0&&Math.random()<.14?1:0);
+    S.coins+=coins;S.alloy+=alloy;R.items.push([IC.coin,"Coins","+"+fmt(coins)]);if(alloy)R.items.push([IC.alloy,"Alloy","+"+alloy]);R.items.push([IC.xp,R.first?"XP (doubled)":"XP","+"+xp]);if(R.first)R.items.push([IC.gem,"First victory of the day","+10"]);
     if(cfg.mode==="atk"){
-      var wd=S.worlds[cfg.w],n=wd.n[cfg.n];n.o=1;S.stats.capT[cfg.ty]++;S.stats.captures++;qprog("capture",1);
+      var wd=S.worlds[cfg.w],n=wd.n[cfg.n];n.o=1;if(R.stars>(n.st||0)){S.stats.stars+=R.stars-(n.st||0);n.st=R.stars;}
+      while(S.stats.stars>=(S.starPaid+1)*10){S.starPaid++;gem(10);R.items.push([IC.gem,S.starPaid*10+" stars collected","+10"]);}S.stats.capT[cfg.ty]++;S.stats.captures++;qprog("capture",1);
       R.items.push([IC.flag,"Captured",esc(n.nm)]);var mg=milestone(n.ty);if(mg)R.items.push([IC.gem,"First "+TIER[n.ty].toLowerCase()+" captured","+"+mg]);
       if(n.ty===4&&!wd.done){wd.done=true;hit("h1");R.core=true;if(S.worlds.length<=wd.w+1){S.worlds.push(genWorld(wd.w+1));}}
       alertAdd("land","You captured "+n.nm+".");
     }
+    if(cfg.pvp){R.items.push([IC.sword,"Raided a real commander",esc(cfg.pvp.name)]);}
     if(cfg.mode==="raid"){qprog("raid",1);S.raidCd=40;if(cfg.ev){var ep=Math.round(score/25);S.ev.pts+=ep;hit("h14");R.items.push([IC.bolt,"Event points","+"+ep]);}}
     if(def){S.stats.defends++;qprog("defend",1);S.threat=null;R.items.push([IC.shield,"Held",esc(S.worlds[cfg.thr.w].n[cfg.thr.n].nm)]);}
     if(!def){var cp=Math.min(capCap()-S.cap,Math.floor(b.kills*rnd(.1,.3)));if(cp>0){if(S.cap===0)S.capCyc=0;S.cap+=cp;S.capU=Math.max(S.capU,now()+FED_MS);S.stats.captives+=cp;R.items.push([IC.cap,"Captives taken","+"+cp]);}}
@@ -85,11 +89,13 @@ function battleDone(b){
     if(o==="lose")addXP(Math.round(T_XP[cfg.ty]*.15));
   }
   if(armySize()<8&&now()>S.militiaT){var mil=8-armySize();S.army.trooper=(S.army.trooper||0)+mil;S.militiaT=now()+150000;R.items.push([IC.army,"Militia rallied to your banner","+"+mil]);}
+  if(cfg.pvp&&o!=="retreat")netReport(cfg.pvp,win);netPublish();
   checkAch();R.ach=newAch.slice();quiet=false;save();showResults(R);
 }
 function showResults(R){
   var h="",lp=Math.round(R.score*LZR*LZM);
   h+='<div class="ban '+(R.win?"":"lose")+'">'+(R.win?"VICTORY":R.o==="retreat"?"RETREAT":"DEFEAT")+"</div>";
+  if(R.win)h+='<p class="ctr" style="font-size:34px;letter-spacing:6px;margin:-4px 0 2px;color:var(--gold);text-shadow:0 3px 0 #7a4a00">'+"★★★".slice(0,R.stars)+'<span style="color:#3d36b0;text-shadow:none">'+"★★★".slice(R.stars)+"</span></p>";
   h+='<p class="ctr mut sm">'+esc(R.cfg.nm)+"</p>";
   if(R.win)h+='<p class="ctr"><span class="tag g">Battle score '+fmt(R.score)+'</span> <span class="tag c">+'+fmt(lp)+" LP"+(LZ_EA?" held":"")+"</span>"+(R.auto?' <span class="tag">Autopilot: half score</span>':"")+"</p>";
   h+='<div class="lst">';
@@ -183,7 +189,7 @@ function showDefLoss(r){
   snd("lose");
 }
 function showAway(o){
-  var h="<h2>While you were away "+hk("h7")+"</h2><p class=\"ctr sm mut\">Gone for "+dur(o.away)+". You earned nothing while offline.</p><div class=\"lst\">";
+  var h="<h2>While you were away "+hk("h7")+"</h2><p class=\"ctr sm mut\">"+(o.real?"Real commanders came for you.":"Gone for "+dur(o.away)+". You earned nothing while offline.")+"</p><div class=\"lst\">";
   if(!o.raids.length&&!o.auto.length)h+='<div class="li">Nobody attacked. This time.</div>';
   o.raids.forEach(function(r){h+=r.win?'<div class="li good">'+IC.shield+" Held "+esc(r.node)+" against "+esc(r.by)+" <b>+"+r.coins+"</b></div>":'<div class="li bad">'+IC.flag+" "+esc(r.by)+" took "+esc(r.node)+" <b>-"+fmt(r.coins)+"</b></div>";});
   o.auto.forEach(function(a){h+='<div class="li good">'+IC.sword+" Your Advanced General captured "+esc(a.nm)+" <b>+"+a.c+"</b></div>";});

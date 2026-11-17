@@ -13,6 +13,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>window.LZ_GAME="dominion";</script>
 <script type="module" src="/arcade/lz.js"></script>
+<script type="module">
+import {doc,getDoc,setDoc,deleteDoc,addDoc,collection,query,where,orderBy,limit,getDocs,onSnapshot,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+window.FS={doc,getDoc,setDoc,deleteDoc,addDoc,collection,query,where,orderBy,limit,getDocs,onSnapshot,writeBatch,serverTimestamp};window.dispatchEvent(new Event("fs-ready"));
+</script>
 <style>
 :root{--bg:#0a0926;--bg2:#12103c;--pn:#1a1757;--pn2:#241f78;--ln:#3d36b0;--tx:#f5f2ff;--mut:#aea8e6;--gold:#ffcf3a;--gold2:#ff9a1f;--pink:#ff4fa3;--cy:#2fe6ff;--lime:#8dff5a;--red:#ff5468;--org:#ff9a3d;--vio:#a66bff;--me:#ffb629;--me2:#ff5d3a;--disp:'Lilita One','Arial Black',sans-serif;--body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;--sab:env(safe-area-inset-bottom,0px);--sat:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -440,13 +444,13 @@ function fresh(){
     fedU:0,fedQ:1,feedAuto:{on:false,q:1,cap:true,buy:true},cap:0,capU:0,capCyc:0,capFeed:true,
     worlds:[],cur:0,vault:0,raidT:200,threat:null,raidCd:0,chest:null,chestT:90,
     quests:[],qn:0,ach:{},
-    stats:{wins:0,losses:0,battles:0,kills:0,lost:0,spins:0,nearMiss:0,spent:0,buys:0,topups:0,popups:0,popupBuys:0,chests:0,defends:0,defLost:0,nodesLost:0,time:0,feeds:0,captures:0,recruits:0,upgrades:0,puUsed:0,collected:0,gemsSpent:0,spikes:0,alerts:0,hints:0,autoBattles:0,retreats:0,sessions:0,away:0,captives:0,quests:0,lensOpens:0,report:0,gemsEarned:30,capT:[0,0,0,0,0]},
+    stats:{wins:0,losses:0,battles:0,kills:0,lost:0,spins:0,nearMiss:0,spent:0,buys:0,topups:0,popups:0,popupBuys:0,chests:0,defends:0,defLost:0,nodesLost:0,time:0,feeds:0,captures:0,recruits:0,upgrades:0,puUsed:0,collected:0,gemsSpent:0,spikes:0,alerts:0,hints:0,autoBattles:0,retreats:0,sessions:0,away:0,captives:0,quests:0,lensOpens:0,report:0,gemsEarned:30,capT:[0,0,0,0,0],stars:0},
     hooks:{},lens:false,mute:false,
     streak:{d:0,last:"",best:0,freeze:0},shieldU:0,genU:0,lossProt:0,
     ally:-1,allyCd:0,campCd:0,campU:0,
     ev:{id:-1,pts:0,cf:0,cp:0,prem:false},tour:{id:-1,pts:0},
     offers:{starter:true,shownStarter:false,last:0,near:0,siege:{}},alerts:[],alertCfg:{attack:true,land:true,event:true,streak:true,quest:true},
-    chat:[],lastDay:"",tut:0,total:0,lastRank:0,lastDead:{},spinDay:"",mile:{},mq:0,militiaT:0,lastDmg:null};
+    chat:[],lastDay:"",tut:0,total:0,lastRank:0,lastDead:{},spinDay:"",mile:{},mq:0,militiaT:0,lastDmg:null,daily:null,starPaid:0};
 }
 function load(){
   try{var d=JSON.parse(localStorage.getItem(SAVEKEY));if(d&&d.v===VER&&d.worlds){var f=fresh();for(var k in f){if(d[k]===undefined)d[k]=f[k];else if(f[k]&&typeof f[k]==="object"&&!Array.isArray(f[k])&&d[k]&&typeof d[k]==="object"){for(var j in f[k])if(d[k][j]===undefined)d[k][j]=f[k][j];}}return d;}}catch(e){}
@@ -608,7 +612,20 @@ function newQuest(){
   var pool=Object.keys(QT).filter(function(k){return !have[k]&&S.lvl>=(QT[k].lvl||1);}),k=q===0?"win":q===1?"recruit":q===2?"capture":pick(pool);
   return {k:k,n:QT[k].n(q),p:0,c:Math.round(50*Math.pow(1+q,.5)),x:Math.round(22*Math.pow(1+q,.45)),a:q%3===2?1+Math.floor(q/9):0,g:q%5===4?8:0,q:q};
 }
+var DM={win:[5,"Win 5 battles"],capture:[3,"Capture 3 territories"],kills:[60,"Defeat 60 enemy soldiers"],star3:[2,"Earn 3 stars in 2 battles"],raid:[2,"Win 2 raids"],upgrade:[3,"Buy 3 upgrades"],feed:[3,"Feed your army 3 times"],deploy:[25,"Deploy 25 squads"]};
+function dailySync(){
+  var d=dayStr();if(S.daily&&S.daily.day===d)return;
+  var ks=Object.keys(DM).filter(function(k){return k!=="feed"||S.lvl>=2;}),r=rng(hash(S.seed+":"+d));
+  for(var i=ks.length-1;i>0;i--){var j=Math.floor(r()*(i+1)),t=ks[i];ks[i]=ks[j];ks[j]=t;}
+  S.daily={day:d,m:ks.slice(0,3).map(function(k){return{k:k,p:0};}),chest:false,first:false};
+}
+function dailyDone(){return S.daily?S.daily.m.filter(function(m){return m.p>=DM[m.k][0];}).length:0;}
+function dailyChest(){
+  if(!S.daily||S.daily.chest||dailyDone()<3)return;S.daily.chest=true;var c=Math.round(200*(1+.15*(S.lvl-1))),p=pick(Object.keys(PUPS));
+  S.coins+=c;gem(15);S.pu[p]++;hit("h8");hit("h15");snd("jack");toast(IC.chest+" Daily chest: "+IC.gem+" 15, "+IC.coin+" "+fmt(c)+", "+PUPS[p].nm,"gold");dirty();
+}
 function qprog(k,n){
+  if(S.daily)S.daily.m.forEach(function(m){if(m.k===k)m.p=Math.min(DM[k][0],m.p+n);});
   S.quests.forEach(function(q){if(q&&q.k===k&&q.p<q.n){q.p=Math.min(q.n,q.p+n);if(q.p>=q.n)alertAdd("quest","Quest complete: "+QT[q.k].t(q.n));}});
 }
 function questsReady(){return S.quests.filter(function(q){return q&&q.p>=q.n;}).length+(mainQ().f()?1:0);}
@@ -803,7 +820,7 @@ function tick(){
     if(!S.chest){S.chestT--;if(S.chestT<=0){var wd=W();S.chest={w:S.cur,n:irnd(1,wd.n.length-1),exp:now()+75000};S.chestT=irnd(110,200);hit("h15");}}
     else if(now()>S.chest.exp)S.chest=null;
   }
-  if(tickN%5===0){evSync();tourSync();chatTick();if(dayStr()!==S.lastDay){S.lastDay=dayStr();streakSync();if(streakPending&&modalFree()&&!B)showStreak();}checkAch();}
+  if(tickN%5===0){evSync();tourSync();chatTick();dailySync();if(dayStr()!==S.lastDay){S.lastDay=dayStr();streakSync();if(streakPending&&modalFree()&&!B)showStreak();}checkAch();}
   if(tickN%30===0){var rk=myRank();if(S.lastRank&&rk>S.lastRank){alertAdd("event","You dropped to #"+rk+" on the leaderboard.");hit("h13b");}S.lastRank=rk;}
   if(tickN%20===0)dirty();
   if(!B)liveUpdate();
@@ -887,7 +904,8 @@ function spawnEnemy(){
   for(i=0;i<nt;i++)mkStruct(1,L-150-(i===2?55:0),i===2?WD/2:(i?WD/2+115:WD/2-115),15,200*em,false,{dmg:(5+ty)*em,rng:118,cd:1.1});
   if(B.gateInfo){var gt=mkStruct(1,(B.gateInfo.gx+.5)*CELL,(B.gateInfo.gy+2)*CELL,46,(260+60*ty)*em,false,null);gt.gate=true;}
   B.relays.forEach(function(rl){for(var q=0;q<2;q++){var gp=freeSpot(rl.x+rnd(-24,24),rl.y+rnd(-24,24));mkUnit(1,"trooper",gp[0],gp[1],{hold:true});}});
-  var budget=eBudget(ty,cfg.lv)*(raid?.9:1)*(cfg.ev?1.35:1)*(S.stats.wins<3?.75:1),list=rollArmy(budget,cfg.lv,r),gar=ty===0?list.length:Math.ceil(list.length*.68);
+  if(cfg.pvp){B.hq.hp=B.hq.mhp=B.hq.hp*(1+.06*cfg.pvp.fort);if(cfg.pvp.ench){mkStruct(1,L-150,WD/2-115,15,200*em,false,{dmg:(5+cfg.pvp.ench)*em,rng:118,cd:1.1});}}
+  var budget=eBudget(ty,cfg.lv)*(raid?.9:1)*(cfg.ev?1.35:1)*(S.stats.wins<3?.75:1),list=cfg.pvp?pvpArmy(cfg.pvp,budget,r):rollArmy(budget,cfg.lv,r),gar=ty===0?list.length:Math.ceil(list.length*.68);
   for(i=0;i<list.length;i++){
     if(i<gar){var c=CLASSES[list[i]],back=c.ranged||c.heal,p=freeSpot(back?rnd(L-190,L-100):rnd(L*.54,L-180),rnd(45,WD-45));mkUnit(1,list[i],p[0],p[1],{hold:true});}
   }
@@ -904,7 +922,7 @@ function startBattle(cfg){
   closeModal(true);
   B={cfg:cfg,r:rng(cfg.sd),t:0,dur:T_DUR[cfg.ty]*(cfg.mode==="def"?.75:1),units:[],structs:[],shots:[],fx:[],txt:[],cp:5,cpMax:10,sel:null,stance:cfg.mode==="def"?"hold":"charge",
     res:{},dead:{},kills:0,over:false,spd:1,auto:!!cfg.auto,autoT:0,adv:now()<S.genU,chest:null,gotChest:false,waves:[],spiked:false,rageT:0,shieldT:0,
-    grid:new Uint8Array(GX*GY),hi:[],cover:[],obst:[],decals:[],relays:[],bridges:[],corpses:[],gateInfo:null,river:(cfg.th||0)%2===0,shake:0,squads:0,puUsed:0,aiT:1.2,depN:0,pm:playerMults(),em:es(cfg.lv),strikes:[],last:0,endT:0,outcome:null,hintT:0,th:THEMES[cfg.th||0],uiT:0,paused:false};
+    visT:0,sightX:0,ks:0,ksT:0,grid:new Uint8Array(GX*GY),hi:[],cover:[],obst:[],decals:[],relays:[],bridges:[],corpses:[],gateInfo:null,river:(cfg.th||0)%2===0,shake:0,squads:0,puUsed:0,aiT:1.2,depN:0,pm:playerMults(),em:es(cfg.lv),strikes:[],last:0,endT:0,outcome:null,hintT:0,th:THEMES[cfg.th||0],uiT:0,paused:false};
   for(var k in S.army)if(S.army[k]>0)B.res[k]=S.army[k];
   genField();spawnEnemy();
   if(cfg.mode!=="def"&&B.r()<.24){var p=freeSpot(rnd(L*.36,L*.62),rnd(60,WD-60));B.chest={x:p[0],y:p[1]};}
@@ -974,7 +992,7 @@ function kill(e){
   if(e.gate){var gi=B.gateInfo;for(i=0;i<4;i++)B.grid[gi.gx+(gi.gy+i)*GX]=0;bmsg("GATE DOWN!");}
   if(e.struct){B.shake=e.hq?16:8;snd("boom");
     if(e.hq)endBattle(e.side===1?"win":"lose");}
-  else{if(e.side===1){B.kills++;}else if(!e.ally){B.dead[e.cls]=(B.dead[e.cls]||0)+1;}B.corpses.push({u:e,t:0});}
+  else{if(e.side===1){B.kills++;B.ks=B.ksT>0?B.ks+1:1;B.ksT=2.6;if(B.ks===5)bmsg("RAMPAGE!");else if(B.ks===10)bmsg("UNSTOPPABLE!");}else if(!e.ally){B.dead[e.cls]=(B.dead[e.cls]||0)+1;}B.corpses.push({u:e,t:0});}
 }
 function attack(u,tg){
   var c=CLASSES[u.cls];u.t=c.cd*(u.side===0&&B.rageT>0?.7:1);var dmg=u.dmg;
@@ -1053,6 +1071,10 @@ function bStep(dt){
     if(rl.own===1)ro++;});
   B.cp=Math.min(B.cpMax,B.cp+dt/1.45*(1+.3*ro));if(B.rageT>0)B.rageT-=dt;if(B.shieldT>0)B.shieldT-=dt;
   if(B.auto){B.autoT+=dt;aiStep(dt);}
+  B.visT-=dt;if(B.visT<=0){B.visT=.15;var zx=zoneMax()+70,mxu=zx,fr=[];B.units.forEach(function(q){if(q.side===0&&q.hp>0){fr.push(q);if(q.x+175>mxu)mxu=q.x+175;}});if(B.cfg.mode==="def")mxu=Math.max(mxu,B.hq.x+260);B.sightX=mxu;
+    var seen=function(e){if(e.x<zx||(B.cfg.mode==="def"&&e.x<B.hq.x+260))return true;for(var q=0;q<fr.length;q++){var dx=fr[q].x-e.x,dy=fr[q].y-e.y;if(dx*dx+dy*dy<30625)return true;}return false;};
+    B.units.forEach(function(e){if(e.side===1)e.vis=seen(e);});B.structs.forEach(function(e){if(e.side===1&&!e.seen)e.seen=e.hq||seen(e);});}
+  if(B.ksT>0)B.ksT-=dt;
   // waves, ambush
   B.waves.forEach(function(w){if(!w.done&&B.t>=w.t){if(w.ally){w.done=true;var b=ALLIES[S.ally]||ALLIES[0];["guardian","trooper","trooper","ranger","ranger"].forEach(function(k,j){if(CLASSES[k].ul>S.lvl+1)k="trooper";mkUnit(0,k,40,WD/2+(j-2)*26,{ally:true,acol:b.col});});bmsg("ALLIES ARRIVE");}else{spawnWave(w);if(B.cfg.mode!=="def")bmsg("REINFORCEMENTS!");else bmsg("WAVE INCOMING");snd("alert");}}});
   if(B.cfg.mode!=="def"&&!B.spiked&&B.t>B.dur*.28&&B.hq.hp<B.hq.mhp*.75&&(B.cfg.ty>=1||S.stats.wins>4)){
@@ -1201,9 +1223,10 @@ function bDraw(){
   if(B.sel==="strike"){c.fillStyle="rgba(255,154,61,"+(.08+.04*Math.sin(B.t*8))+")";c.fillRect(0,0,L,WD);}
   if(B.chest&&!B.gotChest){c.save();c.translate(B.chest.x,B.chest.y);var bob=Math.sin(B.t*4)*2;c.fillStyle="rgba(255,207,58,.3)";c.beginPath();c.arc(0,0,16+bob,0,TAU);c.fill();c.fillStyle="#c9792a";c.strokeStyle="#5a2f08";c.lineWidth=2;c.beginPath();c.roundRect(-9,-7,18,14,3);c.fill();c.stroke();c.fillStyle="#ffcf3a";c.fillRect(-2,-3,4,6);c.restore();}
   for(i=0;i<B.relays.length;i++){var rl=B.relays[i];c.strokeStyle=rl.p>0?my[0]:rl.p<0?en[0]:"#cfd6ea";c.globalAlpha=.4+Math.abs(rl.p)*.5;c.lineWidth=3;c.beginPath();c.arc(rl.x,rl.y,52,0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=rl.own===1?my[0]:rl.own===-1?en[0]:"#cfd6ea";c.beginPath();c.arc(rl.x,rl.y,7,0,TAU);c.fill();c.strokeStyle="#15122e";c.lineWidth=2;c.stroke();}
-  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(s.hp>0)drawFort(c,s,s.side===0?my[0]:en[0],s.side===0?my[1]:en[1]);}
+  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(s.hp>0&&(s.side===0||s.seen))drawFort(c,s,s.side===0?my[0]:en[0],s.side===0?my[1]:en[1]);}
   if(B.cfg.mode==="def"&&B.hq.aura&&B.hq.hp>0){c.strokeStyle="rgba(255,79,163,"+(.5+.3*Math.sin(B.t*4))+")";c.lineWidth=3;c.setLineDash([6,8]);c.beginPath();c.arc(B.hq.x,B.hq.y,120,0,TAU);c.stroke();c.setLineDash([]);}
-  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0)continue;
+  if(B.sightX<L){c.fillStyle="rgba(4,3,20,.5)";c.fillRect(B.sightX,0,L-B.sightX,WD);}
+  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0||(u.side===1&&!u.vis))continue;
     c.save();c.translate(u.x,u.y);
     if(u.side===0&&B.shieldT>0){c.strokeStyle="rgba(47,230,255,.8)";c.lineWidth=2;c.beginPath();c.arc(0,0,u.r+5,0,TAU);c.stroke();}
     if(u.side===0&&B.rageT>0){c.fillStyle="rgba(255,79,163,.28)";c.beginPath();c.arc(0,0,u.r+6,0,TAU);c.fill();}
@@ -1416,12 +1439,16 @@ function r3Build(){
   R3.dec=[];for(i=0;i<46;i++){var dc=new T.Mesh(G3.shadow,mt("#0a0814",true,.3));dc.material.depthWrite=false;dc.rotation.x=-Math.PI/2;dc.visible=false;root.add(dc);R3.dec.push(dc);}
   var NP=420,pg=new T.BufferGeometry();pg.setAttribute("position",new T.BufferAttribute(new Float32Array(NP*3),3));pg.setAttribute("color",new T.BufferAttribute(new Float32Array(NP*3),3));R3.own.push(pg);
   var pm=new T.PointsMaterial({size:7,vertexColors:true,transparent:true,opacity:.95,depthWrite:false,sizeAttenuation:true});R3.own.push(pm);R3.pts=new T.Points(pg,pm);R3.pts.frustumCulled=false;root.add(R3.pts);R3.np=NP;
+  // fog of war: a dark bank that sits just past what your soldiers can see
+  R3.fog=new T.Group();var fcol="#"+new T.Color(th.g2).multiplyScalar(.16).getHexString();
+  [[40,.16],[40,.3],[40,.44]].forEach(function(f,ix){var fm=new T.Mesh(gB(40,.2,WD+8),mt(fcol,true,f[1]));fm.material.depthWrite=false;fm.position.set(20+ix*40,0,0);R3.fog.add(fm);});
+  var fb=new T.Mesh(gB(L,.2,WD+8),mt(fcol,true,.6));fb.material.depthWrite=false;fb.position.set(120+L/2,0,0);R3.fog.add(fb);R3.fog.position.y=19;root.add(R3.fog);R3.fogX=zoneMax()+80;
   r3Fit();
 }
 function r3Fit(){
-  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?48:38;
-  var tgt=R3.tgt.set(port?14:0,0,port?0:6),dir=(port?new T.Vector3(-.5,1,0):new T.Vector3(0,1,.74)).normalize(),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
-  var pts=[[-L/2,0,-WD/2],[L/2,0,-WD/2],[-L/2,0,WD/2],[L/2,0,WD/2],[L/2-70,70,0],[L/2,30,-WD/2],[L/2,30,WD/2],[-L/2,26,-WD/2],[-L/2,26,WD/2]];
+  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?52:40;
+  var pitch=port?.66:.6,nw=port?.5:.4,tgt=R3.tgt.set(-L/2+L*(port?.44:.4),0,0),dir=new T.Vector3(-Math.cos(pitch),Math.sin(pitch),0),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
+  var pts=[[-L/2,0,-WD*nw],[-L/2,0,WD*nw],[L/2,0,-WD/2],[L/2,0,WD/2],[L/2-70,76,0],[-L/2+10,34,-WD*nw],[-L/2+10,34,WD*nw]];
   for(i=0;i<24;i++){var mid=(lo+hi)/2,ok=true;cam.position.copy(tgt).addScaledVector(dir,mid);cam.lookAt(tgt);cam.updateMatrixWorld();cam.updateProjectionMatrix();
     for(j=0;j<pts.length;j++){R3.v.set(pts[j][0],pts[j][1],pts[j][2]).project(cam);if(Math.abs(R3.v.x)>.975||R3.v.y<-.985||R3.v.y>top){ok=false;break;}}
     if(ok)hi=mid;else lo=mid;}
@@ -1433,7 +1460,10 @@ function r3Pick(px,py){R3.v.set(px/B.cw*2-1,-(py/B.ch)*2+1,.5);R3.ray.setFromCam
 function r3Frame(){
   var i,u,m,my=myCols(),en=B.cfg.ecol,root=R3.root,t=B.t,k;
   // units
+  var fgx=Math.min(L+10,B.sightX||zoneMax()+80);R3.fogX+=(fgx-R3.fogX)*.08;R3.fog.position.x=R3.fogX-L/2-60;R3.fog.visible=R3.fogX<L-4;
   for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0)continue;
+    if(u.side===1&&!u.vis){if(u.m)u.m.visible=false;continue;}
+    if(u.m)u.m.visible=true;
     if(!u.m){u.m=r3Unit(u.cls,u.side===0?(u.ally?u.acol:my[0]):en[0],u.side===0?(u.ally?"#ffffff":my[1]):en[1]);if(u.boss){u.m.userData.b.scale.multiplyScalar(1.2);}root.add(u.m);R3.um.push(u);}
     m=u.m;var gy=hAt(u.x,u.y),drop=u.born<.28?(1-u.born/.28):0,cl=CLASSES[u.cls],hov=u.cls==="lancer"?2+Math.sin(u.wob*.5)*1.2:0;
     m.position.set(u.x-L/2,gy,u.y-WD/2);m.rotation.y=-u.face;var b=m.userData.b,s=m.userData.s*(u.boss?1.2:1)*(u.flash>0?1.16:1);
@@ -1443,7 +1473,7 @@ function r3Frame(){
   if(R3.um.length){var keep=[];for(i=0;i<R3.um.length;i++){u=R3.um[i];if(u.hp>0)keep.push(u);else if(u.gone){root.remove(u.m);u.m=null;}}R3.um=keep;}
   for(i=B.corpses.length-1;i>=0;i--){var co=B.corpses[i];co.t+=.016*B.spd;if(!co.u.m){B.corpses.splice(i,1);continue;}var cb=co.u.m.userData.b;cb.rotation.z=Math.min(1.45,co.t*6);cb.position.y=co.t>.5?-(co.t-.5)*22:0;if(co.t>1.1){root.remove(co.u.m);co.u.m=null;B.corpses.splice(i,1);}}
   // structures
-  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(!s.m)continue;
+  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(!s.m)continue;s.m.visible=s.side===0||!!s.seen;
     if(s.hp<=0){s.m.position.y-=1.6*B.spd;s.m.rotation.z+=.012*B.spd;if(s.m.position.y<-70){root.remove(s.m);s.m=null;}continue;}
     var ps=s.flash>0?1.05:1;s.m.scale.set(ps,ps,ps);if(s.m.userData.head)s.m.userData.head.rotation.y=-s.tur.a;if(s.m.userData.core){var cs=1+Math.sin(t*5)*.22;s.m.userData.core.scale.set(cs,cs,cs);}}
   for(i=0;i<B.relays.length;i++){var rl=B.relays[i],o=R3.rel[i],cc=rl.own===1?my[0]:rl.own===-1?en[0]:"#cfd6ea";o.lm.color.set(cc);o.rm.color.set(rl.p>0?my[0]:rl.p<0?en[0]:"#cfd6ea");o.rm.opacity=.35+Math.abs(rl.p)*.55;}
@@ -1473,8 +1503,8 @@ function r3Frame(){
   R3.rd.render(R3.sc,R3.cam);
   // overlay: health bars and floating numbers
   var c=bx,p;c.setTransform(B.dpr,0,0,B.dpr,0,0);c.clearRect(0,0,B.cw,B.ch);
-  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0||u.hp>=u.mhp)continue;p=r3Screen(u.x,u.y,hAt(u.x,u.y)+(u.cls==="titan"?46:28));var bw=u.cls==="titan"||u.boss?30:20,fq=u.hp/u.mhp;c.fillStyle="rgba(8,6,30,.75)";c.fillRect(p[0]-bw/2-1,p[1]-1,bw+2,5);c.fillStyle=u.side===0?"#8dff5a":"#ff5468";c.fillRect(p[0]-bw/2,p[1],bw*fq,3);}
-  for(i=0;i<B.structs.length;i++){var s2=B.structs[i];if(s2.hp<=0||(s2.hp>=s2.mhp&&!s2.hq))continue;p=r3Screen(s2.x,s2.y,s2.hq?76:s2.gate?42:30);var w2=s2.hq?64:40,f2=clamp(s2.hp/s2.mhp,0,1);c.fillStyle="rgba(8,6,30,.8)";c.fillRect(p[0]-w2/2-2,p[1]-2,w2+4,9);c.fillStyle=f2>.5?"#8dff5a":f2>.25?"#ffcf3a":"#ff5468";c.fillRect(p[0]-w2/2,p[1],w2*f2,5);}
+  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0||u.hp>=u.mhp||(u.side===1&&!u.vis))continue;p=r3Screen(u.x,u.y,hAt(u.x,u.y)+(u.cls==="titan"?46:28));var bw=u.cls==="titan"||u.boss?30:20,fq=u.hp/u.mhp;c.fillStyle="rgba(8,6,30,.75)";c.fillRect(p[0]-bw/2-1,p[1]-1,bw+2,5);c.fillStyle=u.side===0?"#8dff5a":"#ff5468";c.fillRect(p[0]-bw/2,p[1],bw*fq,3);}
+  for(i=0;i<B.structs.length;i++){var s2=B.structs[i];if(s2.hp<=0||(s2.hp>=s2.mhp&&!s2.hq)||(s2.side===1&&!s2.seen))continue;p=r3Screen(s2.x,s2.y,s2.hq?76:s2.gate?42:30);var w2=s2.hq?64:40,f2=clamp(s2.hp/s2.mhp,0,1);c.fillStyle="rgba(8,6,30,.8)";c.fillRect(p[0]-w2/2-2,p[1]-2,w2+4,9);c.fillStyle=f2>.5?"#8dff5a":f2>.25?"#ffcf3a":"#ff5468";c.fillRect(p[0]-w2/2,p[1],w2*f2,5);}
   c.textAlign="center";c.textBaseline="middle";
   for(i=0;i<B.txt.length;i++){var tx=B.txt[i],kk=tx.t/tx.d;p=r3Screen(tx.x,tx.y,26+kk*26);c.globalAlpha=1-kk*kk;c.font="900 "+Math.round(tx.sz*1.15)+"px Nunito,sans-serif";c.lineWidth=3;c.strokeStyle="rgba(0,0,0,.75)";c.strokeText(tx.s,p[0],p[1]);c.fillStyle=tx.col;c.fillText(tx.s,p[0],p[1]);}
   c.globalAlpha=1;
@@ -1513,8 +1543,8 @@ function attackNode(i,auto,ally){
 function startRaid(auto,ev){
   if(S.raidCd>0){toast("Scouts are still looking for a target ("+S.raidCd+"s).");return;}
   if(armySize()<1){toast("You have no soldiers. Recruit some in Army.","bad");return;}
-  var b=pick(bots()),lv=Math.max(1,S.lvl+irnd(-1,1)),tr=pick(["open","cover","high","choke"]);
-  startBattle({mode:"raid",ty:1,lv:lv,tr:tr,sd:(Math.random()*1e9)|0,nm:ev?evNow().nm+" Gauntlet":b.nm+"'s Camp",sub:(ev?"Limited mode · ":"Raid · ")+TERR[tr].nm+" · Lv "+(ev?lv+1:lv),th:ev?(evId()%THEMES.length):W().th,w:S.cur,ecol:enemyCols(),auto:!!auto,bot:b.i,ev:!!ev});
+  var b=pick(bots()),lv=Math.max(1,S.lvl+irnd(-1,1)),tr=pick(["open","cover","high","choke"]),pv=ev?null:netTarget();if(pv){lv=pv.lvl;b={nm:pv.name,i:0};}
+  startBattle({mode:"raid",ty:1,lv:lv,tr:tr,sd:(Math.random()*1e9)|0,nm:ev?evNow().nm+" Gauntlet":b.nm+"'s Camp",sub:(ev?"Limited mode · ":"Raid · ")+TERR[tr].nm+" · Lv "+(ev?lv+1:lv),th:ev?(evId()%THEMES.length):W().th,w:S.cur,ecol:enemyCols(),auto:!!auto,bot:b.i,ev:!!ev,pvp:pv});
 }
 function defendNow(){
   var th=S.threat;if(!th)return;var wd=S.worlds[th.w],n=wd.n[th.n],b=bots()[th.b];
@@ -1535,15 +1565,19 @@ function battleDone(b){
     S.stats.wins++;qprog("win",1);
     var surv=b.depN?1-deadN/b.depN:1,tf=clamp(1-b.t/b.dur,0,1);
     var score=Math.round(T_SCORE[cfg.ty]*(def?.75:cfg.mode==="raid"?.85:1)*(.72+.2*surv+.16*tf)*(R.auto?.5:1));R.score=score;
+    R.stars=(surv>=.82&&tf>=.35)?3:(surv>=.55||tf>=.2)?2:1;if(R.stars===3)qprog("star3",1);
+    dailySync();if(!S.daily.first){S.daily.first=true;R.first=true;gem(10);}
     var wm=1+.5*(cfg.w||0),lm=1+.06*(cfg.lv-1);
-    var coins=Math.round(T_COIN[cfg.ty]*wm*lm*rnd(.9,1.15)*(def?.5:1)*(S.ally>=0?1.05:1)),xp=Math.round(T_XP[cfg.ty]*(1+.1*(cfg.lv-1))*(def?.6:1)),alloy=def?0:Math.round(T_ALLOY[cfg.ty]*wm)+(cfg.ty===0&&Math.random()<.14?1:0);
-    S.coins+=coins;S.alloy+=alloy;R.items.push([IC.coin,"Coins","+"+fmt(coins)]);if(alloy)R.items.push([IC.alloy,"Alloy","+"+alloy]);R.items.push([IC.xp,"XP","+"+xp]);
+    var coins=Math.round(T_COIN[cfg.ty]*wm*lm*rnd(.9,1.15)*(def?.5:1)*(S.ally>=0?1.05:1)),xp=Math.round(T_XP[cfg.ty]*(1+.1*(cfg.lv-1))*(def?.6:1)*(R.first?2:1)),alloy=def?0:Math.round(T_ALLOY[cfg.ty]*wm)+(cfg.ty===0&&Math.random()<.14?1:0);
+    S.coins+=coins;S.alloy+=alloy;R.items.push([IC.coin,"Coins","+"+fmt(coins)]);if(alloy)R.items.push([IC.alloy,"Alloy","+"+alloy]);R.items.push([IC.xp,R.first?"XP (doubled)":"XP","+"+xp]);if(R.first)R.items.push([IC.gem,"First victory of the day","+10"]);
     if(cfg.mode==="atk"){
-      var wd=S.worlds[cfg.w],n=wd.n[cfg.n];n.o=1;S.stats.capT[cfg.ty]++;S.stats.captures++;qprog("capture",1);
+      var wd=S.worlds[cfg.w],n=wd.n[cfg.n];n.o=1;if(R.stars>(n.st||0)){S.stats.stars+=R.stars-(n.st||0);n.st=R.stars;}
+      while(S.stats.stars>=(S.starPaid+1)*10){S.starPaid++;gem(10);R.items.push([IC.gem,S.starPaid*10+" stars collected","+10"]);}S.stats.capT[cfg.ty]++;S.stats.captures++;qprog("capture",1);
       R.items.push([IC.flag,"Captured",esc(n.nm)]);var mg=milestone(n.ty);if(mg)R.items.push([IC.gem,"First "+TIER[n.ty].toLowerCase()+" captured","+"+mg]);
       if(n.ty===4&&!wd.done){wd.done=true;hit("h1");R.core=true;if(S.worlds.length<=wd.w+1){S.worlds.push(genWorld(wd.w+1));}}
       alertAdd("land","You captured "+n.nm+".");
     }
+    if(cfg.pvp){R.items.push([IC.sword,"Raided a real commander",esc(cfg.pvp.name)]);}
     if(cfg.mode==="raid"){qprog("raid",1);S.raidCd=40;if(cfg.ev){var ep=Math.round(score/25);S.ev.pts+=ep;hit("h14");R.items.push([IC.bolt,"Event points","+"+ep]);}}
     if(def){S.stats.defends++;qprog("defend",1);S.threat=null;R.items.push([IC.shield,"Held",esc(S.worlds[cfg.thr.w].n[cfg.thr.n].nm)]);}
     if(!def){var cp=Math.min(capCap()-S.cap,Math.floor(b.kills*rnd(.1,.3)));if(cp>0){if(S.cap===0)S.capCyc=0;S.cap+=cp;S.capU=Math.max(S.capU,now()+FED_MS);S.stats.captives+=cp;R.items.push([IC.cap,"Captives taken","+"+cp]);}}
@@ -1568,11 +1602,13 @@ function battleDone(b){
     if(o==="lose")addXP(Math.round(T_XP[cfg.ty]*.15));
   }
   if(armySize()<8&&now()>S.militiaT){var mil=8-armySize();S.army.trooper=(S.army.trooper||0)+mil;S.militiaT=now()+150000;R.items.push([IC.army,"Militia rallied to your banner","+"+mil]);}
+  if(cfg.pvp&&o!=="retreat")netReport(cfg.pvp,win);netPublish();
   checkAch();R.ach=newAch.slice();quiet=false;save();showResults(R);
 }
 function showResults(R){
   var h="",lp=Math.round(R.score*LZR*LZM);
   h+='<div class="ban '+(R.win?"":"lose")+'">'+(R.win?"VICTORY":R.o==="retreat"?"RETREAT":"DEFEAT")+"</div>";
+  if(R.win)h+='<p class="ctr" style="font-size:34px;letter-spacing:6px;margin:-4px 0 2px;color:var(--gold);text-shadow:0 3px 0 #7a4a00">'+"★★★".slice(0,R.stars)+'<span style="color:#3d36b0;text-shadow:none">'+"★★★".slice(R.stars)+"</span></p>";
   h+='<p class="ctr mut sm">'+esc(R.cfg.nm)+"</p>";
   if(R.win)h+='<p class="ctr"><span class="tag g">Battle score '+fmt(R.score)+'</span> <span class="tag c">+'+fmt(lp)+" LP"+(LZ_EA?" held":"")+"</span>"+(R.auto?' <span class="tag">Autopilot: half score</span>':"")+"</p>";
   h+='<div class="lst">';
@@ -1666,7 +1702,7 @@ function showDefLoss(r){
   snd("lose");
 }
 function showAway(o){
-  var h="<h2>While you were away "+hk("h7")+"</h2><p class=\"ctr sm mut\">Gone for "+dur(o.away)+". You earned nothing while offline.</p><div class=\"lst\">";
+  var h="<h2>While you were away "+hk("h7")+"</h2><p class=\"ctr sm mut\">"+(o.real?"Real commanders came for you.":"Gone for "+dur(o.away)+". You earned nothing while offline.")+"</p><div class=\"lst\">";
   if(!o.raids.length&&!o.auto.length)h+='<div class="li">Nobody attacked. This time.</div>';
   o.raids.forEach(function(r){h+=r.win?'<div class="li good">'+IC.shield+" Held "+esc(r.node)+" against "+esc(r.by)+" <b>+"+r.coins+"</b></div>":'<div class="li bad">'+IC.flag+" "+esc(r.by)+" took "+esc(r.node)+" <b>-"+fmt(r.coins)+"</b></div>";});
   o.auto.forEach(function(a){h+='<div class="li good">'+IC.sword+" Your Advanced General captured "+esc(a.nm)+" <b>+"+a.c+"</b></div>";});
@@ -1686,7 +1722,7 @@ function renderHud(){
   var fk=S.flag.em+S.flag.c1+S.flag.c2;if(h.dataset.f!==fk){h.dataset.f=fk;paintIcons(h);}
 }
 function renderNav(){
-  var hungry=fedOn()&&now()>S.fedU&&armySize()>0,dots={army:hungry||(S.cap>0&&S.capU-now()<40000),quests:questsReady()+achReady()+passReady()>0,social:chatNew>0&&tab!=="social"};
+  var hungry=fedOn()&&now()>S.fedU&&armySize()>0,dots={army:hungry||(S.cap>0&&S.capU-now()<40000),quests:questsReady()+achReady()+passReady()>0||(S.daily&&!S.daily.chest&&dailyDone()>=3),store:S.spinDay!==dayStr(),social:chatNew>0&&tab!=="social"};
   $("#nav").innerHTML=[["world","World",IC.globe],["army","Army",IC.army],["forge","Forge",IC.forge],["quests","Quests",IC.quest],["social","Social",IC.chat],["store","Store",IC.store]].map(function(t){return '<button data-a="tab" data-v="'+t[0]+'" class="'+(tab===t[0]?"on":"")+'">'+t[2]+t[1]+(dots[t[0]]?'<span class="dot"></span>':"")+"</button>";}).join("");
 }
 function renderBanner(){
@@ -1736,6 +1772,7 @@ function renderWorld(){
   var wd=W(),th=THEMES[wd.th],ev=evNow(),inc=incomeMin();
   $("#wtop").innerHTML='<div class="pl"><button data-a="planet" data-v="-1" '+(S.cur<=0?"disabled":"")+'>‹</button><div style="text-align:center"><b>'+esc(wd.nm)+"</b><small>"+th.nm+" world · "+Math.round(worldPct(wd)*100)+"% yours "+hk("h1")+'</small></div><button data-a="planet" data-v="1" '+(S.cur>=S.worlds.length-1?"disabled":"")+">›</button></div>";
   var l='<button class="pill ev" data-a="goEvent"><span><b>'+ev.nm+"</b><br>ends in "+cd(now()+evLeft()*1000)+"</span>"+hk("h14")+'</button><button class="pill tr" data-a="goTour"><span><b>Blitz Tournament</b><br><span id="tourP"></span></span>'+hk("h13b")+"</button>";
+  dailySync();l+='<button class="pill" data-a="goDaily" style="border-color:var(--gold)"><span><b>Daily missions</b><br>'+(S.daily.chest?"Chest claimed":dailyDone()+"/3 done"+(S.daily.first?"":" · first win 2× XP"))+"</span>"+hk("h8")+"</button>";
   if(now()<S.shieldU)l+='<div class="pill sh">'+IC.shield+"<span><b>Shield</b> "+cd(S.shieldU)+"</span></div>";
   if(now()<S.genU)l+='<div class="pill">'+IC.sword+"<span><b>Adv. General</b> "+cd(S.genU)+"</span></div>";
   $("#wleft").innerHTML=l;
@@ -1869,7 +1906,7 @@ function pgForge(){
 
 /* ---------- quests ---------- */
 function pgQuests(){
-  var h="<h2>"+IC.quest+" Quests</h2>"+seg("quests",[["q","Quests",questsReady()>0],["ach","Badges",achReady()>0],["daily","Daily"],["event","Event",passReady()>0]]);
+  var h="<h2>"+IC.quest+" Quests</h2>"+seg("quests",[["q","Quests",questsReady()>0],["ach","Badges",achReady()>0],["daily","Daily",S.daily&&!S.daily.chest&&dailyDone()>=3],["event","Event",passReady()>0]]);
   if(sub.quests==="q"){
     var mqq=mainQ(),mqd=mqq.f();
     h+='<div class="pn" style="border-color:var(--gold)"><div class="row w"><div class="sp"><span class="tag g">MAIN QUEST '+(S.mq+1)+'</span><h3 style="font-size:17px;margin-top:6px">'+mqq.t+'</h3><div class="loot"><span>'+IC.gem+mqq.g+"</span><span>"+IC.coin+(100+60*S.mq)+"</span><span>"+IC.xp+(40+10*S.mq)+'</span></div></div><button class="btn '+(mqd?"":"off")+'" data-a="claimMain">Claim</button></div></div>';
@@ -1882,6 +1919,10 @@ function pgQuests(){
     ACH.forEach(function(a){var st=S.ach[a.id]||0;h+='<div class="card '+(st?"":"lock")+'"><div class="row"><div class="sp"><h4>'+a.nm+'</h4><div class="sm mut">'+a.d+"</div></div>"+(st===1?'<button class="btn s" data-a="claimA" data-v="'+a.id+'">'+IC.coin+a.c+"</button>":st===2?'<span class="tag l">Earned</span>':'<span class="tag">'+IC.coin+a.c+"</span>")+"</div></div>";});
     h+="</div>";
   }else if(sub.quests==="daily"){
+    dailySync();var dd=dailyDone();
+    h+='<div class="pn" style="border-color:var(--gold)"><h3>Daily missions '+hk("h8")+'</h3><p class="sm mut">Three new missions every day. Finish all three to open the Daily Chest. '+(S.daily.first?"":"Your first victory today pays double XP and 10 gems.")+'</p>';
+    S.daily.m.forEach(function(m){var t=DM[m.k];h+='<div style="margin:8px 0"><div class="row"><span class="sp sm">'+t[1]+'</span><b class="sm">'+m.p+" / "+t[0]+'</b></div><div class="bar '+(m.p>=t[0]?"g":"")+'"><i style="width:'+clamp(m.p/t[0]*100,0,100)+'%"></i></div></div>';});
+    h+='<div class="acts"><button class="btn '+(dd>=3&&!S.daily.chest?"":"off")+'" data-a="dailyChest">'+IC.chest+" "+(S.daily.chest?"Chest claimed. Back tomorrow.":"Open Daily Chest · "+IC.gem+"15")+"</button></div></div>";
     var idx=(Math.max(1,S.streak.d)-1)%7;
     h+='<div class="pn"><h3>Login streak: day '+S.streak.d+" "+hk("h8")+'</h3><p class="sm mut">Come back every day to climb the row. Miss one and you start over at day 1.</p><div class="days">';
     for(var i=0;i<7;i++)h+='<div class="day '+(i<idx?"got":i===idx?"now":"")+'"><b>Day '+(i+1)+"</b>"+rewardTxt(STREAK_R[i])+"</div>";
@@ -1908,16 +1949,20 @@ function chatTick(){if(Math.random()<.4){var b=pick(bots());chatPush(b.nm,botLin
 function pgSocial(){
   var h="<h2>"+IC.chat+" Social</h2>"+seg("social",[["chat","Chat"],["ally","Alliance"],["rank","Ranks"],["tour","Tournament"]]);
   if(sub.social==="chat"){
-    h+='<div class="pn"><h3>Global chat '+hk("h13")+'</h3><div class="chat" id="chatBox">'+S.chat.map(chatRow).join("")+'</div><div class="chin"><input id="chatIn" maxlength="80" placeholder="Say something" autocomplete="off"><button class="btn" data-a="chat">Send</button></div><p class="demo">Rival commanders are AI. Anything you type stays on this device.</p></div>';
+    if(NET.on)h+='<div class="pn"><h3>Global chat <span class="tag l">LIVE</span> '+hk("h13")+'</h3><div class="chat" id="chatBox">'+netChatHtml()+'</div><div class="chin"><input id="chatIn" maxlength="120" placeholder="Message every commander" autocomplete="off"><button class="btn" data-a="chat">Send</button></div><p class="demo">Real players. Messages are filtered, links and contact details are removed, and anything can be reported. Never share personal information.</p></div>';
+    else h+='<div class="pn"><h3>Global chat '+hk("h13")+'</h3><div class="chat" id="chatBox">'+S.chat.map(chatRow).join("")+'</div><div class="chin"><input id="chatIn" maxlength="80" placeholder="Say something" autocomplete="off"><button class="btn" data-a="chat">Send</button></div><p class="demo">You are signed out, so these rival commanders are AI. <button data-a="signin" style="color:var(--cy);text-decoration:underline">Sign in</button> to chat, raid and rank against real players.</p></div>';
   }else if(sub.social==="ally"){
     if(S.lvl<4)return h+'<div class="pn"><h3>'+IC.lock+" Alliances</h3><p>Unlock at level 4: joint attacks, shared camps and an income bonus. "+hk("h3")+"</p></div>";
     if(S.ally<0){h+='<p class="sub">Join one to call allies into battle and camp together for defense.</p><div class="grid2">';ALLIES.forEach(function(a,i){h+='<div class="card" style="border-color:'+a.col+'"><h4>'+a.nm+'</h4><div class="sm mut">'+(18+i*7)+" members · +5% coins · joint attacks</div><button class=\"btn s\" style=\"margin-top:8px\" data-a=\"allyJoin\" data-v=\""+i+'">Join</button></div>';});h+="</div>";}
     else{var a=ALLIES[S.ally];h+='<div class="pn" style="border-color:'+a.col+'"><h3>'+a.nm+' <span class="tag l">Member</span></h3><div class="lst"><div class="li">'+IC.coin+" Income and loot <b>+5%</b></div><div class=\"li\">"+IC.sword+" Joint attack: pick <b>With ally</b> on any target</div><div class=\"li\">"+IC.shield+" Camp together "+(now()<S.campU?"<b>active "+cd(S.campU)+"</b>":"<b>+30% defense for 10 min</b>")+'</div></div><div class="row w"><button class="btn s b2 '+(S.campCd>0?"off":"")+'" data-a="campTog">'+(S.campCd>0?"Camp ready in "+dur(S.campCd):"Camp together")+'</button><button class="btn s bx" data-a="allyLeave">Leave</button></div><p class="sm mut" style="margin-top:8px">Your allies would notice if you stopped showing up. '+hk("h13")+"</p></div>";}
   }else if(sub.social==="rank"){
-    var rows=bots().map(function(b){return{nm:b.nm,s:botScore(b),l:botLvl(b),i:b.i};});rows.push({nm:S.name,s:S.xpTot,l:S.lvl,me:1});rows.sort(function(x,y){return y.s-x.s;});
+    var rows;
+    if(NET.on&&NET.top.length){rows=NET.top.filter(function(x){return x.uid!==NET.uid;}).map(function(x){return{nm:String(x.name||"").slice(0,16),s:x.xp|0,l:x.lvl|0,real:1};});bots().slice(3,Math.max(3,15-rows.length)).forEach(function(b){rows.push({nm:b.nm,s:botScore(b),l:botLvl(b),i:b.i,ai:1});});}
+    else rows=bots().map(function(b){return{nm:b.nm,s:botScore(b),l:botLvl(b),i:b.i,ai:1};});
+    rows.push({nm:S.name,s:S.xpTot,l:S.lvl,me:1});rows.sort(function(x,y){return y.s-x.s;});if(NET.on)netTop(function(){});
     var mi=0;rows.forEach(function(r,i){if(r.me)mi=i;});
     h+='<p class="sub">Ranked by total XP. You are <b style="color:var(--gold)">#'+(mi+1)+"</b> of "+rows.length+". "+hk("h13b")+'</p><div class="lb">';
-    rows.forEach(function(r,i){if(i<8||Math.abs(i-mi)<=2)h+='<div class="r '+(r.me?"me":"")+'"><i>#'+(i+1)+'</i><canvas class="fl" width="44" height="44" data-flag="'+(r.me?"me":r.i)+'"></canvas><span>'+esc(r.nm)+' <span class="tag">'+rankOf(r.l)+"</span></span><b>"+fmt(r.s)+"</b></div>";else if(i===8&&mi>10)h+='<div class="r"><i>…</i></div>';});
+    rows.forEach(function(r,i){if(i<8||Math.abs(i-mi)<=2)h+='<div class="r '+(r.me?"me":"")+'"><i>#'+(i+1)+'</i>'+(r.real?'<span class="fl" style="background:var(--cy)"></span>':'<canvas class="fl" width="44" height="44" data-flag="'+(r.me?"me":r.i)+'"></canvas>')+'<span>'+esc(r.nm)+' <span class="tag">'+rankOf(r.l)+"</span>"+(r.ai?' <span class="tag" style="opacity:.6">AI</span>':"")+"</span><b>"+fmt(r.s)+"</b></div>";else if(i===8&&mi>10)h+='<div class="r"><i>…</i></div>';});
     h+="</div>";
   }else{
     var on=tourOn(),tb=tourBoard(tourId(),false);
@@ -2136,6 +2181,90 @@ function glDown(e){if(!GL)return;GL.drag={x:e.clientX,y:e.clientY,r:GL.rot,t:GL.
 function glMove(e){if(!GL||!GL.drag)return;var d=GL.drag,dx=e.clientX-d.x,dy=e.clientY-d.y;d.m=Math.max(d.m,Math.abs(dx)+Math.abs(dy));if(d.m<7)return;GL.spin=false;GL.rot=d.r-dx*.0075;GL.tilt=clamp(d.t+dy*.004,.12,.95);GL.vel=-(e.clientX-d.lx)*.0075;d.lx=e.clientX;}
 function glUp(){if(!GL||!GL.drag)return false;var tap=GL.drag.m<7;GL.drag=null;return tap;}
 function glFocus(n){if(GL)GL.focus=Math.PI/2+n.a;}
+/* ================= shared world (Firestore) =================
+   Signed-in commanders publish a camp snapshot, raid each other's snapshots, leave attack reports,
+   share one leaderboard and one chat. Signed out, everything falls back to the AI rivals. */
+var NET={on:false,uid:"",rivals:[],rivT:0,top:[],topT:0,msgs:[],unsub:null,pubT:0,sendT:0,hidden:{},admin:false,inboxT:0};
+var BADW=["fuck","shit","bitch","asshole","dick","pussy","cunt","nigg","fag","retard","slut","whore","rape","porn","sex","nude","kys","kill yourself","hitler","nazi","penis","vagina","cock","bastard","damn","hell no"];
+function chatClean(t){
+  t=String(t||"").replace(/\s+/g," ").trim().slice(0,120);
+  t=t.replace(/(https?:\/\/|www\.)\S+/gi,"[link removed]").replace(/\S+@\S+\.\S+/g,"[removed]").replace(/(\d[\s().-]?){7,}/g,"[removed]");
+  var low=t.toLowerCase().replace(/[@4]/g,"a").replace(/[!1|]/g,"i").replace(/0/g,"o").replace(/3/g,"e").replace(/[$5]/g,"s");
+  for(var i=0;i<BADW.length;i++){var w=BADW[i],at=low.indexOf(w);while(at>=0){t=t.slice(0,at)+"*".repeat(w.length)+t.slice(at+w.length);low=low.slice(0,at)+"*".repeat(w.length)+low.slice(at+w.length);at=low.indexOf(w);}}
+  return t;
+}
+function netReady(){return !!(window.FS&&window.LZ&&LZ.signedIn&&LZ.signedIn()&&LZ.user&&S&&S.name);}
+function netInit(){
+  if(!netReady()){if(NET.unsub){try{NET.unsub();}catch(e){}NET.unsub=null;}NET.on=false;return;}
+  if(NET.on&&NET.uid===LZ.user.uid)return;
+  NET.on=true;NET.uid=LZ.user.uid;NET.pubT=0;
+  try{var rl=LZ.roles&&LZ.roles();if(rl&&rl.then)rl.then(function(r){NET.admin=!!(r&&r[String(LZ.username||"").toLowerCase()]);});}catch(e){}
+  netPublish();netInbox();netRivals();netTop();netChatSub();
+}
+function netCol(){return FS.collection.apply(null,[LZ.db].concat([].slice.call(arguments)));}
+function netPublish(){
+  if(!NET.on||now()-NET.pubT<45000)return;NET.pubT=now();
+  var army={},clv={};CLS.forEach(function(k){if(S.army[k]>0){army[k]=Math.min(999,Math.round(S.army[k]));clv[k]=Math.min(99,S.clv[k]||1);}});
+  FS.setDoc(FS.doc(LZ.db,"dominionPlayers",NET.uid),{name:S.name,lvl:S.lvl,xp:Math.round(S.xpTot),pw:Math.round(armyPower()),fort:S.fort,ench:S.ench,em:S.flag.em,c1:S.flag.c1,c2:S.flag.c2,army:army,clv:clv,wins:S.stats.wins,land:ownedCount(),sh:Math.round(S.shieldU),at:FS.serverTimestamp()}).catch(function(e){console.warn("dominion publish",e.code||e);});
+}
+function netRivals(){
+  if(!NET.on||now()-NET.rivT<300000)return;NET.rivT=now();
+  FS.getDocs(FS.query(netCol("dominionPlayers"),FS.where("lvl",">=",Math.max(1,S.lvl-2)),FS.where("lvl","<=",S.lvl+2),FS.limit(30))).then(function(sn){var a=[];sn.forEach(function(d){var x=d.data();x.uid=d.id;if(d.id!==NET.uid&&x.army&&!(x.sh>now()))a.push(x);});NET.rivals=a;}).catch(function(e){console.warn("dominion rivals",e.code||e);});
+}
+function netTop(cb){
+  if(!NET.on)return;if(now()-NET.topT<60000){if(cb)cb();return;}NET.topT=now();
+  FS.getDocs(FS.query(netCol("dominionPlayers"),FS.orderBy("xp","desc"),FS.limit(40))).then(function(sn){var a=[];sn.forEach(function(d){var x=d.data();x.uid=d.id;a.push(x);});NET.top=a;if(cb)cb();}).catch(function(e){console.warn("dominion ranks",e.code||e);});
+}
+// a real commander's camp as a raid target
+function netTarget(){
+  if(!NET.on||!NET.rivals.length||Math.random()<.2)return null;var t=pick(NET.rivals),n=0,sum=0;
+  for(var k in t.clv){if(CLASSES[k]){sum+=t.clv[k];n++;}}
+  return{uid:t.uid,name:String(t.name||"Commander").slice(0,16),lvl:clamp(t.lvl|0,1,S.lvl+3),army:t.army||{},avg:n?sum/n:1,fort:clamp(t.fort|0,1,40),ench:clamp(t.ench|0,0,5)};
+}
+function pvpArmy(pv,budget,r){
+  var ks=Object.keys(pv.army).filter(function(k){return CLASSES[k]&&pv.army[k]>0;}),out=[],g=0;if(!ks.length)return rollArmy(budget,pv.lvl,r);
+  var tot=0;ks.forEach(function(k){tot+=pv.army[k];});
+  while(budget>.9&&g++<80){var x=r()*tot,ch=ks[0];for(var i=0;i<ks.length;i++){x-=pv.army[ks[i]];if(x<=0){ch=ks[i];break;}}if(ECOST[ch]>budget+.3)ch="trooper";out.push(ch);budget-=ECOST[ch];}
+  return out;
+}
+function netReport(pv,win){
+  if(!NET.on||!pv)return;var coins=win?Math.min(600,Math.round(40+14*S.lvl)):0;
+  FS.addDoc(netCol("dominionInbox",pv.uid,"reports"),{from:NET.uid,name:S.name,win:!!win,coins:coins,at:FS.serverTimestamp()}).catch(function(e){console.warn("dominion report",e.code||e);});
+}
+function netInbox(){
+  if(!NET.on||now()-NET.inboxT<120000)return;NET.inboxT=now();
+  FS.getDocs(FS.query(netCol("dominionInbox",NET.uid,"reports"),FS.limit(12))).then(function(sn){
+    var out={away:0,raids:[],auto:[],real:true},n=0;
+    sn.forEach(function(d){var r=d.data();FS.deleteDoc(d.ref).catch(function(){});if(n>=3)return;n++;
+      var by=String(r.name||"A commander").slice(0,16);
+      if(r.win&&now()>S.shieldU){var c=Math.min(r.coins|0,Math.round(S.coins*.06)),nd="";S.coins-=c;
+        if(Math.random()<.5){var opts=[];S.worlds.forEach(function(wd){wd.n.forEach(function(x){if(x.o===1&&x.ty<=1)opts.push([wd,x]);});});if(opts.length>4){var o=pick(opts);o[1].o=0;o[0].done=false;nd=o[1].nm;S.stats.nodesLost++;}}
+        S.stats.defLost++;hit("h5");hit("h7");out.raids.push({win:false,by:by,node:nd||"your camp",coins:c});}
+      else{var b=Math.round(20+10*S.lvl);S.coins+=b;S.stats.defends++;out.raids.push({win:true,by:by,node:"your camp",coins:b});}});
+    if(out.raids.length){alertAdd("attack",out.raids.length+" commander"+(out.raids.length>1?"s":"")+" attacked you while you were away.");dirty();if(modalFree()&&!B)showAway(out);else renderAll();}
+  }).catch(function(e){console.warn("dominion inbox",e.code||e);});
+}
+function netChatSub(){
+  if(!NET.on||NET.unsub)return;
+  try{NET.unsub=FS.onSnapshot(FS.query(netCol("dominionChat","global","msgs"),FS.orderBy("at","desc"),FS.limit(40)),function(sn){
+    var a=[],had=NET.msgs.length?NET.msgs[NET.msgs.length-1].id:"";sn.forEach(function(d){var x=d.data();a.push({id:d.id,uid:x.uid,n:String(x.name||"").slice(0,16),l:x.lvl|0,t:String(x.text||"").slice(0,120)});});a.reverse();NET.msgs=a;
+    if(a.length&&a[a.length-1].id!==had&&a[a.length-1].uid!==NET.uid&&!(tab==="social"&&sub.social==="chat")){chatNew++;hit("h13");}
+    if(tab==="social"&&sub.social==="chat"&&modalFree()){var c=$("#chatBox");if(c){c.innerHTML=netChatHtml();c.scrollTop=c.scrollHeight;}}
+  },function(e){console.warn("dominion chat",e.code||e);NET.unsub=null;});}catch(e){console.warn(e);}
+}
+function netChatHtml(){
+  if(!NET.msgs.length)return '<div class="m sys">Nobody has said anything yet. Go first.</div>';
+  return NET.msgs.filter(function(m){return !NET.hidden[m.id];}).map(function(m){return '<div class="m '+(m.uid===NET.uid?"me":"")+'"><span class="bd">'+rankOf(m.l||1)+"</span><b>"+esc(m.n)+":</b> "+esc(chatClean(m.t))+(m.uid===NET.uid||NET.admin?' <button class="mut" style="font-size:11px" data-a="chatDel" data-v="'+esc(m.id)+'">delete</button>':' <button class="mut" style="font-size:11px" data-a="chatFlag" data-v="'+esc(m.id)+'">report</button>')+"</div>";}).join("");
+}
+function netChatSend(t){
+  if(!NET.on)return false;t=chatClean(t);if(!t)return false;
+  if(now()-NET.sendT<3300){toast("Slow down a moment.");return false;}NET.sendT=now();
+  var b=FS.writeBatch(LZ.db);b.set(FS.doc(netCol("dominionChat","global","msgs")),{uid:NET.uid,name:S.name,lvl:S.lvl,text:t,at:FS.serverTimestamp()});b.set(FS.doc(LZ.db,"dominionChatRate",NET.uid),{at:FS.serverTimestamp()});
+  b.commit().catch(function(e){console.warn("dominion chat send",e.code||e);toast("Message not sent. Try again in a few seconds.","bad");});hit("h13");return true;
+}
+function netChatFlag(id){var m=NET.msgs.filter(function(x){return x.id===id;})[0];if(!m||!NET.on)return;NET.hidden[id]=1;
+  FS.addDoc(netCol("dominionChatFlags"),{ch:"global",msg:id,text:m.t,by:NET.uid,at:FS.serverTimestamp()}).catch(function(){});toast("Reported. It is hidden for you and sent to the moderators.");var c=$("#chatBox");if(c)c.innerHTML=netChatHtml();}
+function netChatDel(id){if(!NET.on)return;FS.deleteDoc(FS.doc(LZ.db,"dominionChat","global","msgs",id)).catch(function(e){toast("Could not delete that message.","bad");});}
 /* ================= actions ================= */
 var introFac="solari";
 function cleanName(v){v=String(v||"").replace(/[<>&"'\/\\]/g,"").replace(/\s+/g," ").trim().slice(0,16);return v||"Commander";}
@@ -2173,6 +2302,8 @@ var ACT={
   defend:function(){defendNow();},
   autodef:function(){var r=resolveThreat();renderAll();if(r&&!r.win)showDefLoss(r);},
   planet:function(v){S.cur=clamp(S.cur+(+v),0,S.worlds.length-1);mapSel=-1;renderWorld();dirty();},
+  goDaily:function(){tab="quests";sub.quests="daily";renderAll();},
+  dailyChest:function(){dailyChest();rr();renderNav();},
   goEvent:function(){tab="quests";sub.quests="event";renderAll();},
   goTour:function(){tab="social";sub.social="tour";renderAll();},
   recruit:function(v,el){var n=+el.dataset.n||1,done=0;for(var i=0;i<n;i++){var c=recruitCost(v);if(armySize()>=campCap()||S.coins<c)break;S.coins-=c;S.army[v]=(S.army[v]||0)+1;done++;}if(!done)return;if(!S.clv[v])S.clv[v]=1;S.stats.recruits+=done;qprog("recruit",done);hit("h11");snd("deploy");rr();},
@@ -2210,7 +2341,9 @@ var ACT={
   claimA:function(v){if(S.ach[v]!==1)return;var a=ACH.filter(function(x){return x.id===v;})[0];S.ach[v]=2;S.coins+=a.c;snd("coin");rr();renderNav();},
   passF:function(){if(S.ev.cf>=passTier())return;var g=grant(PASS_F[S.ev.cf]);S.ev.cf++;snd("coin");toast("Event reward: "+g,"gold");rr();renderNav();},
   passP:function(){if(!S.ev.prem||S.ev.cp>=passTier())return;var g=grant(PASS_P[S.ev.cp]);S.ev.cp++;snd("coin");toast("Premium reward: "+g,"gold");rr();renderNav();},
-  chat:function(){var i=$("#chatIn");if(!i)return;var t=i.value.replace(/\s+/g," ").trim().slice(0,80);if(!t)return;i.value="";chatPush(S.name,t,{me:1,l:S.lvl});hit("h13");if(Math.random()<.7)setTimeout(function(){var b=pick(bots());chatPush(b.nm,pick(CHAT_REPLY),{l:botLvl(b)});},1400+Math.random()*2200);},
+  signin:function(){if(window.LZ)try{LZ.openAccount("signin");}catch(e){}},
+  chatFlag:function(v){netChatFlag(v);},chatDel:function(v){netChatDel(v);},
+  chat:function(){var i=$("#chatIn");if(!i)return;if(NET.on){if(netChatSend(i.value))i.value="";return;}var t=chatClean(i.value).slice(0,80);if(!t)return;i.value="";chatPush(S.name,t,{me:1,l:S.lvl});hit("h13");if(Math.random()<.7)setTimeout(function(){var b=pick(bots());chatPush(b.nm,pick(CHAT_REPLY),{l:botLvl(b)});},1400+Math.random()*2200);},
   allyJoin:function(v){S.ally=+v;chatPush("",ALLIES[S.ally].nm+" welcomes "+S.name+".",{sys:1});hit("h13");rr();},
   allyLeave:function(){S.ally=-1;rr();},
   campTog:function(){if(S.campCd>0||S.ally<0)return;S.campU=now()+600e3;S.campCd=1200;toast(IC.shield+" Allies are camped with you: +30% defense for 10 minutes","good");rr();},
@@ -2231,7 +2364,7 @@ var ACT={
   facI:function(v,el){introFac=v;$$(".fpick button").forEach(function(b){b.classList.toggle("on",b===el);});},
   begin:function(){
     S.name=cleanName($("#nameIn").value);S.faction=introFac;S.flag.c1=FACTIONS[introFac].c1;S.lastDay=dayStr();streakSync();hit("h12");
-    closeModal(true);renderAll();save();flowNext();
+    closeModal(true);renderAll();save();flowNext();try{netInit();}catch(e){}
   },
   revive:function(v,el){var c=reviveCost();if(!armySize(S.lastDead||{}))return;if(!spendGems(c,"a revive"))return;var n=doRevive();hit("m11");snd("jack");toast(IC.army+" "+n+" soldiers revived","good");el.remove();renderHud();},
   offerBuy:function(){offerBuy();}
@@ -2267,7 +2400,7 @@ function boot(){
     S=load();document.body.classList.toggle("lens",!!S.lens);
     if(!S.worlds.length)S.worlds.push(genWorld(0));
     S.quests=S.quests.filter(function(q){return q&&QT[q.k];});while(S.quests.length<3)S.quests.push(newQuest());
-    S.cur=clamp(S.cur,0,S.worlds.length-1);evSync();if(S.tour.id<0)S.tour={id:tourId(),pts:0};tourSync();
+    S.cur=clamp(S.cur,0,S.worlds.length-1);evSync();dailySync();if(S.tour.id<0)S.tour={id:tourId(),pts:0};tourSync();
     if(!S.chat.length){chatPush("","Channel open. Rival commanders are online.",{sys:1});for(var i=0;i<4;i++){var b=bots()[i+3];chatPush(b.nm,botLine(b),{l:botLvl(b)});}chatNew=0;}
     if(!S.name){showIntro();}
     else{
@@ -2275,9 +2408,10 @@ function boot(){
       renderAll();if(off)showAway(off);else flowNext();
     }
     save();setInterval(tick,1000);requestAnimationFrame(mapLoop);
+    var goNet=function(){try{netInit();}catch(e){console.warn(e);}};if(window.LZ&&LZ.onChange)LZ.onChange(goNet);window.addEventListener("fs-ready",goNet);setInterval(function(){if(!document.hidden){netInit();netPublish();netRivals();netInbox();}},60000);
   });
 }
-window.__dom={get S(){return S;},get B(){return B;},ACT:ACT,startBattle:startBattle,attackNode:attackNode,deploy:deploy,tick:tick,save:save};
+window.__dom={get NET(){return NET;},get S(){return S;},get B(){return B;},ACT:ACT,startBattle:startBattle,attackNode:attackNode,deploy:deploy,tick:tick,save:save};
 boot();
 </script>
 </body>

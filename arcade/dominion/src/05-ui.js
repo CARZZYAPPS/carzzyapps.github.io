@@ -11,7 +11,7 @@ function renderHud(){
   var fk=S.flag.em+S.flag.c1+S.flag.c2;if(h.dataset.f!==fk){h.dataset.f=fk;paintIcons(h);}
 }
 function renderNav(){
-  var hungry=fedOn()&&now()>S.fedU&&armySize()>0,dots={army:hungry||(S.cap>0&&S.capU-now()<40000),quests:questsReady()+achReady()+passReady()>0,social:chatNew>0&&tab!=="social"};
+  var hungry=fedOn()&&now()>S.fedU&&armySize()>0,dots={army:hungry||(S.cap>0&&S.capU-now()<40000),quests:questsReady()+achReady()+passReady()>0||(S.daily&&!S.daily.chest&&dailyDone()>=3),store:S.spinDay!==dayStr(),social:chatNew>0&&tab!=="social"};
   $("#nav").innerHTML=[["world","World",IC.globe],["army","Army",IC.army],["forge","Forge",IC.forge],["quests","Quests",IC.quest],["social","Social",IC.chat],["store","Store",IC.store]].map(function(t){return '<button data-a="tab" data-v="'+t[0]+'" class="'+(tab===t[0]?"on":"")+'">'+t[2]+t[1]+(dots[t[0]]?'<span class="dot"></span>':"")+"</button>";}).join("");
 }
 function renderBanner(){
@@ -61,6 +61,7 @@ function renderWorld(){
   var wd=W(),th=THEMES[wd.th],ev=evNow(),inc=incomeMin();
   $("#wtop").innerHTML='<div class="pl"><button data-a="planet" data-v="-1" '+(S.cur<=0?"disabled":"")+'>‹</button><div style="text-align:center"><b>'+esc(wd.nm)+"</b><small>"+th.nm+" world · "+Math.round(worldPct(wd)*100)+"% yours "+hk("h1")+'</small></div><button data-a="planet" data-v="1" '+(S.cur>=S.worlds.length-1?"disabled":"")+">›</button></div>";
   var l='<button class="pill ev" data-a="goEvent"><span><b>'+ev.nm+"</b><br>ends in "+cd(now()+evLeft()*1000)+"</span>"+hk("h14")+'</button><button class="pill tr" data-a="goTour"><span><b>Blitz Tournament</b><br><span id="tourP"></span></span>'+hk("h13b")+"</button>";
+  dailySync();l+='<button class="pill" data-a="goDaily" style="border-color:var(--gold)"><span><b>Daily missions</b><br>'+(S.daily.chest?"Chest claimed":dailyDone()+"/3 done"+(S.daily.first?"":" · first win 2× XP"))+"</span>"+hk("h8")+"</button>";
   if(now()<S.shieldU)l+='<div class="pill sh">'+IC.shield+"<span><b>Shield</b> "+cd(S.shieldU)+"</span></div>";
   if(now()<S.genU)l+='<div class="pill">'+IC.sword+"<span><b>Adv. General</b> "+cd(S.genU)+"</span></div>";
   $("#wleft").innerHTML=l;
@@ -194,7 +195,7 @@ function pgForge(){
 
 /* ---------- quests ---------- */
 function pgQuests(){
-  var h="<h2>"+IC.quest+" Quests</h2>"+seg("quests",[["q","Quests",questsReady()>0],["ach","Badges",achReady()>0],["daily","Daily"],["event","Event",passReady()>0]]);
+  var h="<h2>"+IC.quest+" Quests</h2>"+seg("quests",[["q","Quests",questsReady()>0],["ach","Badges",achReady()>0],["daily","Daily",S.daily&&!S.daily.chest&&dailyDone()>=3],["event","Event",passReady()>0]]);
   if(sub.quests==="q"){
     var mqq=mainQ(),mqd=mqq.f();
     h+='<div class="pn" style="border-color:var(--gold)"><div class="row w"><div class="sp"><span class="tag g">MAIN QUEST '+(S.mq+1)+'</span><h3 style="font-size:17px;margin-top:6px">'+mqq.t+'</h3><div class="loot"><span>'+IC.gem+mqq.g+"</span><span>"+IC.coin+(100+60*S.mq)+"</span><span>"+IC.xp+(40+10*S.mq)+'</span></div></div><button class="btn '+(mqd?"":"off")+'" data-a="claimMain">Claim</button></div></div>';
@@ -207,6 +208,10 @@ function pgQuests(){
     ACH.forEach(function(a){var st=S.ach[a.id]||0;h+='<div class="card '+(st?"":"lock")+'"><div class="row"><div class="sp"><h4>'+a.nm+'</h4><div class="sm mut">'+a.d+"</div></div>"+(st===1?'<button class="btn s" data-a="claimA" data-v="'+a.id+'">'+IC.coin+a.c+"</button>":st===2?'<span class="tag l">Earned</span>':'<span class="tag">'+IC.coin+a.c+"</span>")+"</div></div>";});
     h+="</div>";
   }else if(sub.quests==="daily"){
+    dailySync();var dd=dailyDone();
+    h+='<div class="pn" style="border-color:var(--gold)"><h3>Daily missions '+hk("h8")+'</h3><p class="sm mut">Three new missions every day. Finish all three to open the Daily Chest. '+(S.daily.first?"":"Your first victory today pays double XP and 10 gems.")+'</p>';
+    S.daily.m.forEach(function(m){var t=DM[m.k];h+='<div style="margin:8px 0"><div class="row"><span class="sp sm">'+t[1]+'</span><b class="sm">'+m.p+" / "+t[0]+'</b></div><div class="bar '+(m.p>=t[0]?"g":"")+'"><i style="width:'+clamp(m.p/t[0]*100,0,100)+'%"></i></div></div>';});
+    h+='<div class="acts"><button class="btn '+(dd>=3&&!S.daily.chest?"":"off")+'" data-a="dailyChest">'+IC.chest+" "+(S.daily.chest?"Chest claimed. Back tomorrow.":"Open Daily Chest · "+IC.gem+"15")+"</button></div></div>";
     var idx=(Math.max(1,S.streak.d)-1)%7;
     h+='<div class="pn"><h3>Login streak: day '+S.streak.d+" "+hk("h8")+'</h3><p class="sm mut">Come back every day to climb the row. Miss one and you start over at day 1.</p><div class="days">';
     for(var i=0;i<7;i++)h+='<div class="day '+(i<idx?"got":i===idx?"now":"")+'"><b>Day '+(i+1)+"</b>"+rewardTxt(STREAK_R[i])+"</div>";
@@ -233,16 +238,20 @@ function chatTick(){if(Math.random()<.4){var b=pick(bots());chatPush(b.nm,botLin
 function pgSocial(){
   var h="<h2>"+IC.chat+" Social</h2>"+seg("social",[["chat","Chat"],["ally","Alliance"],["rank","Ranks"],["tour","Tournament"]]);
   if(sub.social==="chat"){
-    h+='<div class="pn"><h3>Global chat '+hk("h13")+'</h3><div class="chat" id="chatBox">'+S.chat.map(chatRow).join("")+'</div><div class="chin"><input id="chatIn" maxlength="80" placeholder="Say something" autocomplete="off"><button class="btn" data-a="chat">Send</button></div><p class="demo">Rival commanders are AI. Anything you type stays on this device.</p></div>';
+    if(NET.on)h+='<div class="pn"><h3>Global chat <span class="tag l">LIVE</span> '+hk("h13")+'</h3><div class="chat" id="chatBox">'+netChatHtml()+'</div><div class="chin"><input id="chatIn" maxlength="120" placeholder="Message every commander" autocomplete="off"><button class="btn" data-a="chat">Send</button></div><p class="demo">Real players. Messages are filtered, links and contact details are removed, and anything can be reported. Never share personal information.</p></div>';
+    else h+='<div class="pn"><h3>Global chat '+hk("h13")+'</h3><div class="chat" id="chatBox">'+S.chat.map(chatRow).join("")+'</div><div class="chin"><input id="chatIn" maxlength="80" placeholder="Say something" autocomplete="off"><button class="btn" data-a="chat">Send</button></div><p class="demo">You are signed out, so these rival commanders are AI. <button data-a="signin" style="color:var(--cy);text-decoration:underline">Sign in</button> to chat, raid and rank against real players.</p></div>';
   }else if(sub.social==="ally"){
     if(S.lvl<4)return h+'<div class="pn"><h3>'+IC.lock+" Alliances</h3><p>Unlock at level 4: joint attacks, shared camps and an income bonus. "+hk("h3")+"</p></div>";
     if(S.ally<0){h+='<p class="sub">Join one to call allies into battle and camp together for defense.</p><div class="grid2">';ALLIES.forEach(function(a,i){h+='<div class="card" style="border-color:'+a.col+'"><h4>'+a.nm+'</h4><div class="sm mut">'+(18+i*7)+" members · +5% coins · joint attacks</div><button class=\"btn s\" style=\"margin-top:8px\" data-a=\"allyJoin\" data-v=\""+i+'">Join</button></div>';});h+="</div>";}
     else{var a=ALLIES[S.ally];h+='<div class="pn" style="border-color:'+a.col+'"><h3>'+a.nm+' <span class="tag l">Member</span></h3><div class="lst"><div class="li">'+IC.coin+" Income and loot <b>+5%</b></div><div class=\"li\">"+IC.sword+" Joint attack: pick <b>With ally</b> on any target</div><div class=\"li\">"+IC.shield+" Camp together "+(now()<S.campU?"<b>active "+cd(S.campU)+"</b>":"<b>+30% defense for 10 min</b>")+'</div></div><div class="row w"><button class="btn s b2 '+(S.campCd>0?"off":"")+'" data-a="campTog">'+(S.campCd>0?"Camp ready in "+dur(S.campCd):"Camp together")+'</button><button class="btn s bx" data-a="allyLeave">Leave</button></div><p class="sm mut" style="margin-top:8px">Your allies would notice if you stopped showing up. '+hk("h13")+"</p></div>";}
   }else if(sub.social==="rank"){
-    var rows=bots().map(function(b){return{nm:b.nm,s:botScore(b),l:botLvl(b),i:b.i};});rows.push({nm:S.name,s:S.xpTot,l:S.lvl,me:1});rows.sort(function(x,y){return y.s-x.s;});
+    var rows;
+    if(NET.on&&NET.top.length){rows=NET.top.filter(function(x){return x.uid!==NET.uid;}).map(function(x){return{nm:String(x.name||"").slice(0,16),s:x.xp|0,l:x.lvl|0,real:1};});bots().slice(3,Math.max(3,15-rows.length)).forEach(function(b){rows.push({nm:b.nm,s:botScore(b),l:botLvl(b),i:b.i,ai:1});});}
+    else rows=bots().map(function(b){return{nm:b.nm,s:botScore(b),l:botLvl(b),i:b.i,ai:1};});
+    rows.push({nm:S.name,s:S.xpTot,l:S.lvl,me:1});rows.sort(function(x,y){return y.s-x.s;});if(NET.on)netTop(function(){});
     var mi=0;rows.forEach(function(r,i){if(r.me)mi=i;});
     h+='<p class="sub">Ranked by total XP. You are <b style="color:var(--gold)">#'+(mi+1)+"</b> of "+rows.length+". "+hk("h13b")+'</p><div class="lb">';
-    rows.forEach(function(r,i){if(i<8||Math.abs(i-mi)<=2)h+='<div class="r '+(r.me?"me":"")+'"><i>#'+(i+1)+'</i><canvas class="fl" width="44" height="44" data-flag="'+(r.me?"me":r.i)+'"></canvas><span>'+esc(r.nm)+' <span class="tag">'+rankOf(r.l)+"</span></span><b>"+fmt(r.s)+"</b></div>";else if(i===8&&mi>10)h+='<div class="r"><i>…</i></div>';});
+    rows.forEach(function(r,i){if(i<8||Math.abs(i-mi)<=2)h+='<div class="r '+(r.me?"me":"")+'"><i>#'+(i+1)+'</i>'+(r.real?'<span class="fl" style="background:var(--cy)"></span>':'<canvas class="fl" width="44" height="44" data-flag="'+(r.me?"me":r.i)+'"></canvas>')+'<span>'+esc(r.nm)+' <span class="tag">'+rankOf(r.l)+"</span>"+(r.ai?' <span class="tag" style="opacity:.6">AI</span>':"")+"</span><b>"+fmt(r.s)+"</b></div>";else if(i===8&&mi>10)h+='<div class="r"><i>…</i></div>';});
     h+="</div>";
   }else{
     var on=tourOn(),tb=tourBoard(tourId(),false);

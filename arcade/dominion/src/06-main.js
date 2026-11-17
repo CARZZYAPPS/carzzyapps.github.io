@@ -35,6 +35,8 @@ var ACT={
   defend:function(){defendNow();},
   autodef:function(){var r=resolveThreat();renderAll();if(r&&!r.win)showDefLoss(r);},
   planet:function(v){S.cur=clamp(S.cur+(+v),0,S.worlds.length-1);mapSel=-1;renderWorld();dirty();},
+  goDaily:function(){tab="quests";sub.quests="daily";renderAll();},
+  dailyChest:function(){dailyChest();rr();renderNav();},
   goEvent:function(){tab="quests";sub.quests="event";renderAll();},
   goTour:function(){tab="social";sub.social="tour";renderAll();},
   recruit:function(v,el){var n=+el.dataset.n||1,done=0;for(var i=0;i<n;i++){var c=recruitCost(v);if(armySize()>=campCap()||S.coins<c)break;S.coins-=c;S.army[v]=(S.army[v]||0)+1;done++;}if(!done)return;if(!S.clv[v])S.clv[v]=1;S.stats.recruits+=done;qprog("recruit",done);hit("h11");snd("deploy");rr();},
@@ -72,7 +74,9 @@ var ACT={
   claimA:function(v){if(S.ach[v]!==1)return;var a=ACH.filter(function(x){return x.id===v;})[0];S.ach[v]=2;S.coins+=a.c;snd("coin");rr();renderNav();},
   passF:function(){if(S.ev.cf>=passTier())return;var g=grant(PASS_F[S.ev.cf]);S.ev.cf++;snd("coin");toast("Event reward: "+g,"gold");rr();renderNav();},
   passP:function(){if(!S.ev.prem||S.ev.cp>=passTier())return;var g=grant(PASS_P[S.ev.cp]);S.ev.cp++;snd("coin");toast("Premium reward: "+g,"gold");rr();renderNav();},
-  chat:function(){var i=$("#chatIn");if(!i)return;var t=i.value.replace(/\s+/g," ").trim().slice(0,80);if(!t)return;i.value="";chatPush(S.name,t,{me:1,l:S.lvl});hit("h13");if(Math.random()<.7)setTimeout(function(){var b=pick(bots());chatPush(b.nm,pick(CHAT_REPLY),{l:botLvl(b)});},1400+Math.random()*2200);},
+  signin:function(){if(window.LZ)try{LZ.openAccount("signin");}catch(e){}},
+  chatFlag:function(v){netChatFlag(v);},chatDel:function(v){netChatDel(v);},
+  chat:function(){var i=$("#chatIn");if(!i)return;if(NET.on){if(netChatSend(i.value))i.value="";return;}var t=chatClean(i.value).slice(0,80);if(!t)return;i.value="";chatPush(S.name,t,{me:1,l:S.lvl});hit("h13");if(Math.random()<.7)setTimeout(function(){var b=pick(bots());chatPush(b.nm,pick(CHAT_REPLY),{l:botLvl(b)});},1400+Math.random()*2200);},
   allyJoin:function(v){S.ally=+v;chatPush("",ALLIES[S.ally].nm+" welcomes "+S.name+".",{sys:1});hit("h13");rr();},
   allyLeave:function(){S.ally=-1;rr();},
   campTog:function(){if(S.campCd>0||S.ally<0)return;S.campU=now()+600e3;S.campCd=1200;toast(IC.shield+" Allies are camped with you: +30% defense for 10 minutes","good");rr();},
@@ -93,7 +97,7 @@ var ACT={
   facI:function(v,el){introFac=v;$$(".fpick button").forEach(function(b){b.classList.toggle("on",b===el);});},
   begin:function(){
     S.name=cleanName($("#nameIn").value);S.faction=introFac;S.flag.c1=FACTIONS[introFac].c1;S.lastDay=dayStr();streakSync();hit("h12");
-    closeModal(true);renderAll();save();flowNext();
+    closeModal(true);renderAll();save();flowNext();try{netInit();}catch(e){}
   },
   revive:function(v,el){var c=reviveCost();if(!armySize(S.lastDead||{}))return;if(!spendGems(c,"a revive"))return;var n=doRevive();hit("m11");snd("jack");toast(IC.army+" "+n+" soldiers revived","good");el.remove();renderHud();},
   offerBuy:function(){offerBuy();}
@@ -129,7 +133,7 @@ function boot(){
     S=load();document.body.classList.toggle("lens",!!S.lens);
     if(!S.worlds.length)S.worlds.push(genWorld(0));
     S.quests=S.quests.filter(function(q){return q&&QT[q.k];});while(S.quests.length<3)S.quests.push(newQuest());
-    S.cur=clamp(S.cur,0,S.worlds.length-1);evSync();if(S.tour.id<0)S.tour={id:tourId(),pts:0};tourSync();
+    S.cur=clamp(S.cur,0,S.worlds.length-1);evSync();dailySync();if(S.tour.id<0)S.tour={id:tourId(),pts:0};tourSync();
     if(!S.chat.length){chatPush("","Channel open. Rival commanders are online.",{sys:1});for(var i=0;i<4;i++){var b=bots()[i+3];chatPush(b.nm,botLine(b),{l:botLvl(b)});}chatNew=0;}
     if(!S.name){showIntro();}
     else{
@@ -137,7 +141,8 @@ function boot(){
       renderAll();if(off)showAway(off);else flowNext();
     }
     save();setInterval(tick,1000);requestAnimationFrame(mapLoop);
+    var goNet=function(){try{netInit();}catch(e){console.warn(e);}};if(window.LZ&&LZ.onChange)LZ.onChange(goNet);window.addEventListener("fs-ready",goNet);setInterval(function(){if(!document.hidden){netInit();netPublish();netRivals();netInbox();}},60000);
   });
 }
-window.__dom={get S(){return S;},get B(){return B;},ACT:ACT,startBattle:startBattle,attackNode:attackNode,deploy:deploy,tick:tick,save:save};
+window.__dom={get NET(){return NET;},get S(){return S;},get B(){return B;},ACT:ACT,startBattle:startBattle,attackNode:attackNode,deploy:deploy,tick:tick,save:save};
 boot();

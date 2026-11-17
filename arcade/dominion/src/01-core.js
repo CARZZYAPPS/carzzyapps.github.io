@@ -164,13 +164,13 @@ function fresh(){
     fedU:0,fedQ:1,feedAuto:{on:false,q:1,cap:true,buy:true},cap:0,capU:0,capCyc:0,capFeed:true,
     worlds:[],cur:0,vault:0,raidT:200,threat:null,raidCd:0,chest:null,chestT:90,
     quests:[],qn:0,ach:{},
-    stats:{wins:0,losses:0,battles:0,kills:0,lost:0,spins:0,nearMiss:0,spent:0,buys:0,topups:0,popups:0,popupBuys:0,chests:0,defends:0,defLost:0,nodesLost:0,time:0,feeds:0,captures:0,recruits:0,upgrades:0,puUsed:0,collected:0,gemsSpent:0,spikes:0,alerts:0,hints:0,autoBattles:0,retreats:0,sessions:0,away:0,captives:0,quests:0,lensOpens:0,report:0,gemsEarned:30,capT:[0,0,0,0,0]},
+    stats:{wins:0,losses:0,battles:0,kills:0,lost:0,spins:0,nearMiss:0,spent:0,buys:0,topups:0,popups:0,popupBuys:0,chests:0,defends:0,defLost:0,nodesLost:0,time:0,feeds:0,captures:0,recruits:0,upgrades:0,puUsed:0,collected:0,gemsSpent:0,spikes:0,alerts:0,hints:0,autoBattles:0,retreats:0,sessions:0,away:0,captives:0,quests:0,lensOpens:0,report:0,gemsEarned:30,capT:[0,0,0,0,0],stars:0},
     hooks:{},lens:false,mute:false,
     streak:{d:0,last:"",best:0,freeze:0},shieldU:0,genU:0,lossProt:0,
     ally:-1,allyCd:0,campCd:0,campU:0,
     ev:{id:-1,pts:0,cf:0,cp:0,prem:false},tour:{id:-1,pts:0},
     offers:{starter:true,shownStarter:false,last:0,near:0,siege:{}},alerts:[],alertCfg:{attack:true,land:true,event:true,streak:true,quest:true},
-    chat:[],lastDay:"",tut:0,total:0,lastRank:0,lastDead:{},spinDay:"",mile:{},mq:0,militiaT:0,lastDmg:null};
+    chat:[],lastDay:"",tut:0,total:0,lastRank:0,lastDead:{},spinDay:"",mile:{},mq:0,militiaT:0,lastDmg:null,daily:null,starPaid:0};
 }
 function load(){
   try{var d=JSON.parse(localStorage.getItem(SAVEKEY));if(d&&d.v===VER&&d.worlds){var f=fresh();for(var k in f){if(d[k]===undefined)d[k]=f[k];else if(f[k]&&typeof f[k]==="object"&&!Array.isArray(f[k])&&d[k]&&typeof d[k]==="object"){for(var j in f[k])if(d[k][j]===undefined)d[k][j]=f[k][j];}}return d;}}catch(e){}

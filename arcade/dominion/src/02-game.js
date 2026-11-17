@@ -113,7 +113,20 @@ function newQuest(){
   var pool=Object.keys(QT).filter(function(k){return !have[k]&&S.lvl>=(QT[k].lvl||1);}),k=q===0?"win":q===1?"recruit":q===2?"capture":pick(pool);
   return {k:k,n:QT[k].n(q),p:0,c:Math.round(50*Math.pow(1+q,.5)),x:Math.round(22*Math.pow(1+q,.45)),a:q%3===2?1+Math.floor(q/9):0,g:q%5===4?8:0,q:q};
 }
+var DM={win:[5,"Win 5 battles"],capture:[3,"Capture 3 territories"],kills:[60,"Defeat 60 enemy soldiers"],star3:[2,"Earn 3 stars in 2 battles"],raid:[2,"Win 2 raids"],upgrade:[3,"Buy 3 upgrades"],feed:[3,"Feed your army 3 times"],deploy:[25,"Deploy 25 squads"]};
+function dailySync(){
+  var d=dayStr();if(S.daily&&S.daily.day===d)return;
+  var ks=Object.keys(DM).filter(function(k){return k!=="feed"||S.lvl>=2;}),r=rng(hash(S.seed+":"+d));
+  for(var i=ks.length-1;i>0;i--){var j=Math.floor(r()*(i+1)),t=ks[i];ks[i]=ks[j];ks[j]=t;}
+  S.daily={day:d,m:ks.slice(0,3).map(function(k){return{k:k,p:0};}),chest:false,first:false};
+}
+function dailyDone(){return S.daily?S.daily.m.filter(function(m){return m.p>=DM[m.k][0];}).length:0;}
+function dailyChest(){
+  if(!S.daily||S.daily.chest||dailyDone()<3)return;S.daily.chest=true;var c=Math.round(200*(1+.15*(S.lvl-1))),p=pick(Object.keys(PUPS));
+  S.coins+=c;gem(15);S.pu[p]++;hit("h8");hit("h15");snd("jack");toast(IC.chest+" Daily chest: "+IC.gem+" 15, "+IC.coin+" "+fmt(c)+", "+PUPS[p].nm,"gold");dirty();
+}
 function qprog(k,n){
+  if(S.daily)S.daily.m.forEach(function(m){if(m.k===k)m.p=Math.min(DM[k][0],m.p+n);});
   S.quests.forEach(function(q){if(q&&q.k===k&&q.p<q.n){q.p=Math.min(q.n,q.p+n);if(q.p>=q.n)alertAdd("quest","Quest complete: "+QT[q.k].t(q.n));}});
 }
 function questsReady(){return S.quests.filter(function(q){return q&&q.p>=q.n;}).length+(mainQ().f()?1:0);}
@@ -308,7 +321,7 @@ function tick(){
     if(!S.chest){S.chestT--;if(S.chestT<=0){var wd=W();S.chest={w:S.cur,n:irnd(1,wd.n.length-1),exp:now()+75000};S.chestT=irnd(110,200);hit("h15");}}
     else if(now()>S.chest.exp)S.chest=null;
   }
-  if(tickN%5===0){evSync();tourSync();chatTick();if(dayStr()!==S.lastDay){S.lastDay=dayStr();streakSync();if(streakPending&&modalFree()&&!B)showStreak();}checkAch();}
+  if(tickN%5===0){evSync();tourSync();chatTick();dailySync();if(dayStr()!==S.lastDay){S.lastDay=dayStr();streakSync();if(streakPending&&modalFree()&&!B)showStreak();}checkAch();}
   if(tickN%30===0){var rk=myRank();if(S.lastRank&&rk>S.lastRank){alertAdd("event","You dropped to #"+rk+" on the leaderboard.");hit("h13b");}S.lastRank=rk;}
   if(tickN%20===0)dirty();
   if(!B)liveUpdate();

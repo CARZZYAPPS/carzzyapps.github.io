@@ -13,6 +13,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>window.LZ_GAME="dominion";</script>
 <script type="module" src="/arcade/lz.js"></script>
+<script type="module">
+import {doc,getDoc,setDoc,deleteDoc,addDoc,collection,query,where,orderBy,limit,getDocs,onSnapshot,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+window.FS={doc,getDoc,setDoc,deleteDoc,addDoc,collection,query,where,orderBy,limit,getDocs,onSnapshot,writeBatch,serverTimestamp};window.dispatchEvent(new Event("fs-ready"));
+</script>
 <style>
 :root{--bg:#0a0926;--bg2:#12103c;--pn:#1a1757;--pn2:#241f78;--ln:#3d36b0;--tx:#f5f2ff;--mut:#aea8e6;--gold:#ffcf3a;--gold2:#ff9a1f;--pink:#ff4fa3;--cy:#2fe6ff;--lime:#8dff5a;--red:#ff5468;--org:#ff9a3d;--vio:#a66bff;--me:#ffb629;--me2:#ff5d3a;--disp:'Lilita One','Arial Black',sans-serif;--body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;--sab:env(safe-area-inset-bottom,0px);--sat:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}

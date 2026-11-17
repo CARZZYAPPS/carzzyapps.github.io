@@ -77,7 +77,8 @@ function spawnEnemy(){
   for(i=0;i<nt;i++)mkStruct(1,L-150-(i===2?55:0),i===2?WD/2:(i?WD/2+115:WD/2-115),15,200*em,false,{dmg:(5+ty)*em,rng:118,cd:1.1});
   if(B.gateInfo){var gt=mkStruct(1,(B.gateInfo.gx+.5)*CELL,(B.gateInfo.gy+2)*CELL,46,(260+60*ty)*em,false,null);gt.gate=true;}
   B.relays.forEach(function(rl){for(var q=0;q<2;q++){var gp=freeSpot(rl.x+rnd(-24,24),rl.y+rnd(-24,24));mkUnit(1,"trooper",gp[0],gp[1],{hold:true});}});
-  var budget=eBudget(ty,cfg.lv)*(raid?.9:1)*(cfg.ev?1.35:1)*(S.stats.wins<3?.75:1),list=rollArmy(budget,cfg.lv,r),gar=ty===0?list.length:Math.ceil(list.length*.68);
+  if(cfg.pvp){B.hq.hp=B.hq.mhp=B.hq.hp*(1+.06*cfg.pvp.fort);if(cfg.pvp.ench){mkStruct(1,L-150,WD/2-115,15,200*em,false,{dmg:(5+cfg.pvp.ench)*em,rng:118,cd:1.1});}}
+  var budget=eBudget(ty,cfg.lv)*(raid?.9:1)*(cfg.ev?1.35:1)*(S.stats.wins<3?.75:1),list=cfg.pvp?pvpArmy(cfg.pvp,budget,r):rollArmy(budget,cfg.lv,r),gar=ty===0?list.length:Math.ceil(list.length*.68);
   for(i=0;i<list.length;i++){
     if(i<gar){var c=CLASSES[list[i]],back=c.ranged||c.heal,p=freeSpot(back?rnd(L-190,L-100):rnd(L*.54,L-180),rnd(45,WD-45));mkUnit(1,list[i],p[0],p[1],{hold:true});}
   }
@@ -94,7 +95,7 @@ function startBattle(cfg){
   closeModal(true);
   B={cfg:cfg,r:rng(cfg.sd),t:0,dur:T_DUR[cfg.ty]*(cfg.mode==="def"?.75:1),units:[],structs:[],shots:[],fx:[],txt:[],cp:5,cpMax:10,sel:null,stance:cfg.mode==="def"?"hold":"charge",
     res:{},dead:{},kills:0,over:false,spd:1,auto:!!cfg.auto,autoT:0,adv:now()<S.genU,chest:null,gotChest:false,waves:[],spiked:false,rageT:0,shieldT:0,
-    grid:new Uint8Array(GX*GY),hi:[],cover:[],obst:[],decals:[],relays:[],bridges:[],corpses:[],gateInfo:null,river:(cfg.th||0)%2===0,shake:0,squads:0,puUsed:0,aiT:1.2,depN:0,pm:playerMults(),em:es(cfg.lv),strikes:[],last:0,endT:0,outcome:null,hintT:0,th:THEMES[cfg.th||0],uiT:0,paused:false};
+    visT:0,sightX:0,ks:0,ksT:0,grid:new Uint8Array(GX*GY),hi:[],cover:[],obst:[],decals:[],relays:[],bridges:[],corpses:[],gateInfo:null,river:(cfg.th||0)%2===0,shake:0,squads:0,puUsed:0,aiT:1.2,depN:0,pm:playerMults(),em:es(cfg.lv),strikes:[],last:0,endT:0,outcome:null,hintT:0,th:THEMES[cfg.th||0],uiT:0,paused:false};
   for(var k in S.army)if(S.army[k]>0)B.res[k]=S.army[k];
   genField();spawnEnemy();
   if(cfg.mode!=="def"&&B.r()<.24){var p=freeSpot(rnd(L*.36,L*.62),rnd(60,WD-60));B.chest={x:p[0],y:p[1]};}
@@ -164,7 +165,7 @@ function kill(e){
   if(e.gate){var gi=B.gateInfo;for(i=0;i<4;i++)B.grid[gi.gx+(gi.gy+i)*GX]=0;bmsg("GATE DOWN!");}
   if(e.struct){B.shake=e.hq?16:8;snd("boom");
     if(e.hq)endBattle(e.side===1?"win":"lose");}
-  else{if(e.side===1){B.kills++;}else if(!e.ally){B.dead[e.cls]=(B.dead[e.cls]||0)+1;}B.corpses.push({u:e,t:0});}
+  else{if(e.side===1){B.kills++;B.ks=B.ksT>0?B.ks+1:1;B.ksT=2.6;if(B.ks===5)bmsg("RAMPAGE!");else if(B.ks===10)bmsg("UNSTOPPABLE!");}else if(!e.ally){B.dead[e.cls]=(B.dead[e.cls]||0)+1;}B.corpses.push({u:e,t:0});}
 }
 function attack(u,tg){
   var c=CLASSES[u.cls];u.t=c.cd*(u.side===0&&B.rageT>0?.7:1);var dmg=u.dmg;
@@ -243,6 +244,10 @@ function bStep(dt){
     if(rl.own===1)ro++;});
   B.cp=Math.min(B.cpMax,B.cp+dt/1.45*(1+.3*ro));if(B.rageT>0)B.rageT-=dt;if(B.shieldT>0)B.shieldT-=dt;
   if(B.auto){B.autoT+=dt;aiStep(dt);}
+  B.visT-=dt;if(B.visT<=0){B.visT=.15;var zx=zoneMax()+70,mxu=zx,fr=[];B.units.forEach(function(q){if(q.side===0&&q.hp>0){fr.push(q);if(q.x+175>mxu)mxu=q.x+175;}});if(B.cfg.mode==="def")mxu=Math.max(mxu,B.hq.x+260);B.sightX=mxu;
+    var seen=function(e){if(e.x<zx||(B.cfg.mode==="def"&&e.x<B.hq.x+260))return true;for(var q=0;q<fr.length;q++){var dx=fr[q].x-e.x,dy=fr[q].y-e.y;if(dx*dx+dy*dy<30625)return true;}return false;};
+    B.units.forEach(function(e){if(e.side===1)e.vis=seen(e);});B.structs.forEach(function(e){if(e.side===1&&!e.seen)e.seen=e.hq||seen(e);});}
+  if(B.ksT>0)B.ksT-=dt;
   // waves, ambush
   B.waves.forEach(function(w){if(!w.done&&B.t>=w.t){if(w.ally){w.done=true;var b=ALLIES[S.ally]||ALLIES[0];["guardian","trooper","trooper","ranger","ranger"].forEach(function(k,j){if(CLASSES[k].ul>S.lvl+1)k="trooper";mkUnit(0,k,40,WD/2+(j-2)*26,{ally:true,acol:b.col});});bmsg("ALLIES ARRIVE");}else{spawnWave(w);if(B.cfg.mode!=="def")bmsg("REINFORCEMENTS!");else bmsg("WAVE INCOMING");snd("alert");}}});
   if(B.cfg.mode!=="def"&&!B.spiked&&B.t>B.dur*.28&&B.hq.hp<B.hq.mhp*.75&&(B.cfg.ty>=1||S.stats.wins>4)){
@@ -391,9 +396,10 @@ function bDraw(){
   if(B.sel==="strike"){c.fillStyle="rgba(255,154,61,"+(.08+.04*Math.sin(B.t*8))+")";c.fillRect(0,0,L,WD);}
   if(B.chest&&!B.gotChest){c.save();c.translate(B.chest.x,B.chest.y);var bob=Math.sin(B.t*4)*2;c.fillStyle="rgba(255,207,58,.3)";c.beginPath();c.arc(0,0,16+bob,0,TAU);c.fill();c.fillStyle="#c9792a";c.strokeStyle="#5a2f08";c.lineWidth=2;c.beginPath();c.roundRect(-9,-7,18,14,3);c.fill();c.stroke();c.fillStyle="#ffcf3a";c.fillRect(-2,-3,4,6);c.restore();}
   for(i=0;i<B.relays.length;i++){var rl=B.relays[i];c.strokeStyle=rl.p>0?my[0]:rl.p<0?en[0]:"#cfd6ea";c.globalAlpha=.4+Math.abs(rl.p)*.5;c.lineWidth=3;c.beginPath();c.arc(rl.x,rl.y,52,0,TAU);c.stroke();c.globalAlpha=1;c.fillStyle=rl.own===1?my[0]:rl.own===-1?en[0]:"#cfd6ea";c.beginPath();c.arc(rl.x,rl.y,7,0,TAU);c.fill();c.strokeStyle="#15122e";c.lineWidth=2;c.stroke();}
-  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(s.hp>0)drawFort(c,s,s.side===0?my[0]:en[0],s.side===0?my[1]:en[1]);}
+  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(s.hp>0&&(s.side===0||s.seen))drawFort(c,s,s.side===0?my[0]:en[0],s.side===0?my[1]:en[1]);}
   if(B.cfg.mode==="def"&&B.hq.aura&&B.hq.hp>0){c.strokeStyle="rgba(255,79,163,"+(.5+.3*Math.sin(B.t*4))+")";c.lineWidth=3;c.setLineDash([6,8]);c.beginPath();c.arc(B.hq.x,B.hq.y,120,0,TAU);c.stroke();c.setLineDash([]);}
-  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0)continue;
+  if(B.sightX<L){c.fillStyle="rgba(4,3,20,.5)";c.fillRect(B.sightX,0,L-B.sightX,WD);}
+  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0||(u.side===1&&!u.vis))continue;
     c.save();c.translate(u.x,u.y);
     if(u.side===0&&B.shieldT>0){c.strokeStyle="rgba(47,230,255,.8)";c.lineWidth=2;c.beginPath();c.arc(0,0,u.r+5,0,TAU);c.stroke();}
     if(u.side===0&&B.rageT>0){c.fillStyle="rgba(255,79,163,.28)";c.beginPath();c.arc(0,0,u.r+6,0,TAU);c.fill();}

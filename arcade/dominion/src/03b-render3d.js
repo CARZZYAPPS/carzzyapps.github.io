@@ -120,12 +120,16 @@ function r3Build(){
   R3.dec=[];for(i=0;i<46;i++){var dc=new T.Mesh(G3.shadow,mt("#0a0814",true,.3));dc.material.depthWrite=false;dc.rotation.x=-Math.PI/2;dc.visible=false;root.add(dc);R3.dec.push(dc);}
   var NP=420,pg=new T.BufferGeometry();pg.setAttribute("position",new T.BufferAttribute(new Float32Array(NP*3),3));pg.setAttribute("color",new T.BufferAttribute(new Float32Array(NP*3),3));R3.own.push(pg);
   var pm=new T.PointsMaterial({size:7,vertexColors:true,transparent:true,opacity:.95,depthWrite:false,sizeAttenuation:true});R3.own.push(pm);R3.pts=new T.Points(pg,pm);R3.pts.frustumCulled=false;root.add(R3.pts);R3.np=NP;
+  // fog of war: a dark bank that sits just past what your soldiers can see
+  R3.fog=new T.Group();var fcol="#"+new T.Color(th.g2).multiplyScalar(.16).getHexString();
+  [[40,.16],[40,.3],[40,.44]].forEach(function(f,ix){var fm=new T.Mesh(gB(40,.2,WD+8),mt(fcol,true,f[1]));fm.material.depthWrite=false;fm.position.set(20+ix*40,0,0);R3.fog.add(fm);});
+  var fb=new T.Mesh(gB(L,.2,WD+8),mt(fcol,true,.6));fb.material.depthWrite=false;fb.position.set(120+L/2,0,0);R3.fog.add(fb);R3.fog.position.y=19;root.add(R3.fog);R3.fogX=zoneMax()+80;
   r3Fit();
 }
 function r3Fit(){
-  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?48:38;
-  var tgt=R3.tgt.set(port?14:0,0,port?0:6),dir=(port?new T.Vector3(-.5,1,0):new T.Vector3(0,1,.74)).normalize(),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
-  var pts=[[-L/2,0,-WD/2],[L/2,0,-WD/2],[-L/2,0,WD/2],[L/2,0,WD/2],[L/2-70,70,0],[L/2,30,-WD/2],[L/2,30,WD/2],[-L/2,26,-WD/2],[-L/2,26,WD/2]];
+  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?52:40;
+  var pitch=port?.66:.6,nw=port?.5:.4,tgt=R3.tgt.set(-L/2+L*(port?.44:.4),0,0),dir=new T.Vector3(-Math.cos(pitch),Math.sin(pitch),0),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
+  var pts=[[-L/2,0,-WD*nw],[-L/2,0,WD*nw],[L/2,0,-WD/2],[L/2,0,WD/2],[L/2-70,76,0],[-L/2+10,34,-WD*nw],[-L/2+10,34,WD*nw]];
   for(i=0;i<24;i++){var mid=(lo+hi)/2,ok=true;cam.position.copy(tgt).addScaledVector(dir,mid);cam.lookAt(tgt);cam.updateMatrixWorld();cam.updateProjectionMatrix();
     for(j=0;j<pts.length;j++){R3.v.set(pts[j][0],pts[j][1],pts[j][2]).project(cam);if(Math.abs(R3.v.x)>.975||R3.v.y<-.985||R3.v.y>top){ok=false;break;}}
     if(ok)hi=mid;else lo=mid;}
@@ -137,7 +141,10 @@ function r3Pick(px,py){R3.v.set(px/B.cw*2-1,-(py/B.ch)*2+1,.5);R3.ray.setFromCam
 function r3Frame(){
   var i,u,m,my=myCols(),en=B.cfg.ecol,root=R3.root,t=B.t,k;
   // units
+  var fgx=Math.min(L+10,B.sightX||zoneMax()+80);R3.fogX+=(fgx-R3.fogX)*.08;R3.fog.position.x=R3.fogX-L/2-60;R3.fog.visible=R3.fogX<L-4;
   for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0)continue;
+    if(u.side===1&&!u.vis){if(u.m)u.m.visible=false;continue;}
+    if(u.m)u.m.visible=true;
     if(!u.m){u.m=r3Unit(u.cls,u.side===0?(u.ally?u.acol:my[0]):en[0],u.side===0?(u.ally?"#ffffff":my[1]):en[1]);if(u.boss){u.m.userData.b.scale.multiplyScalar(1.2);}root.add(u.m);R3.um.push(u);}
     m=u.m;var gy=hAt(u.x,u.y),drop=u.born<.28?(1-u.born/.28):0,cl=CLASSES[u.cls],hov=u.cls==="lancer"?2+Math.sin(u.wob*.5)*1.2:0;
     m.position.set(u.x-L/2,gy,u.y-WD/2);m.rotation.y=-u.face;var b=m.userData.b,s=m.userData.s*(u.boss?1.2:1)*(u.flash>0?1.16:1);
@@ -147,7 +154,7 @@ function r3Frame(){
   if(R3.um.length){var keep=[];for(i=0;i<R3.um.length;i++){u=R3.um[i];if(u.hp>0)keep.push(u);else if(u.gone){root.remove(u.m);u.m=null;}}R3.um=keep;}
   for(i=B.corpses.length-1;i>=0;i--){var co=B.corpses[i];co.t+=.016*B.spd;if(!co.u.m){B.corpses.splice(i,1);continue;}var cb=co.u.m.userData.b;cb.rotation.z=Math.min(1.45,co.t*6);cb.position.y=co.t>.5?-(co.t-.5)*22:0;if(co.t>1.1){root.remove(co.u.m);co.u.m=null;B.corpses.splice(i,1);}}
   // structures
-  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(!s.m)continue;
+  for(i=0;i<B.structs.length;i++){var s=B.structs[i];if(!s.m)continue;s.m.visible=s.side===0||!!s.seen;
     if(s.hp<=0){s.m.position.y-=1.6*B.spd;s.m.rotation.z+=.012*B.spd;if(s.m.position.y<-70){root.remove(s.m);s.m=null;}continue;}
     var ps=s.flash>0?1.05:1;s.m.scale.set(ps,ps,ps);if(s.m.userData.head)s.m.userData.head.rotation.y=-s.tur.a;if(s.m.userData.core){var cs=1+Math.sin(t*5)*.22;s.m.userData.core.scale.set(cs,cs,cs);}}
   for(i=0;i<B.relays.length;i++){var rl=B.relays[i],o=R3.rel[i],cc=rl.own===1?my[0]:rl.own===-1?en[0]:"#cfd6ea";o.lm.color.set(cc);o.rm.color.set(rl.p>0?my[0]:rl.p<0?en[0]:"#cfd6ea");o.rm.opacity=.35+Math.abs(rl.p)*.55;}
@@ -177,8 +184,8 @@ function r3Frame(){
   R3.rd.render(R3.sc,R3.cam);
   // overlay: health bars and floating numbers
   var c=bx,p;c.setTransform(B.dpr,0,0,B.dpr,0,0);c.clearRect(0,0,B.cw,B.ch);
-  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0||u.hp>=u.mhp)continue;p=r3Screen(u.x,u.y,hAt(u.x,u.y)+(u.cls==="titan"?46:28));var bw=u.cls==="titan"||u.boss?30:20,fq=u.hp/u.mhp;c.fillStyle="rgba(8,6,30,.75)";c.fillRect(p[0]-bw/2-1,p[1]-1,bw+2,5);c.fillStyle=u.side===0?"#8dff5a":"#ff5468";c.fillRect(p[0]-bw/2,p[1],bw*fq,3);}
-  for(i=0;i<B.structs.length;i++){var s2=B.structs[i];if(s2.hp<=0||(s2.hp>=s2.mhp&&!s2.hq))continue;p=r3Screen(s2.x,s2.y,s2.hq?76:s2.gate?42:30);var w2=s2.hq?64:40,f2=clamp(s2.hp/s2.mhp,0,1);c.fillStyle="rgba(8,6,30,.8)";c.fillRect(p[0]-w2/2-2,p[1]-2,w2+4,9);c.fillStyle=f2>.5?"#8dff5a":f2>.25?"#ffcf3a":"#ff5468";c.fillRect(p[0]-w2/2,p[1],w2*f2,5);}
+  for(i=0;i<B.units.length;i++){u=B.units[i];if(u.hp<=0||u.hp>=u.mhp||(u.side===1&&!u.vis))continue;p=r3Screen(u.x,u.y,hAt(u.x,u.y)+(u.cls==="titan"?46:28));var bw=u.cls==="titan"||u.boss?30:20,fq=u.hp/u.mhp;c.fillStyle="rgba(8,6,30,.75)";c.fillRect(p[0]-bw/2-1,p[1]-1,bw+2,5);c.fillStyle=u.side===0?"#8dff5a":"#ff5468";c.fillRect(p[0]-bw/2,p[1],bw*fq,3);}
+  for(i=0;i<B.structs.length;i++){var s2=B.structs[i];if(s2.hp<=0||(s2.hp>=s2.mhp&&!s2.hq)||(s2.side===1&&!s2.seen))continue;p=r3Screen(s2.x,s2.y,s2.hq?76:s2.gate?42:30);var w2=s2.hq?64:40,f2=clamp(s2.hp/s2.mhp,0,1);c.fillStyle="rgba(8,6,30,.8)";c.fillRect(p[0]-w2/2-2,p[1]-2,w2+4,9);c.fillStyle=f2>.5?"#8dff5a":f2>.25?"#ffcf3a":"#ff5468";c.fillRect(p[0]-w2/2,p[1],w2*f2,5);}
   c.textAlign="center";c.textBaseline="middle";
   for(i=0;i<B.txt.length;i++){var tx=B.txt[i],kk=tx.t/tx.d;p=r3Screen(tx.x,tx.y,26+kk*26);c.globalAlpha=1-kk*kk;c.font="900 "+Math.round(tx.sz*1.15)+"px Nunito,sans-serif";c.lineWidth=3;c.strokeStyle="rgba(0,0,0,.75)";c.strokeText(tx.s,p[0],p[1]);c.fillStyle=tx.col;c.fillText(tx.s,p[0],p[1]);}
   c.globalAlpha=1;
