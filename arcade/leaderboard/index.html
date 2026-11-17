@@ -25,6 +25,7 @@
 .pod{text-align:center;padding:22px 12px 18px;border-radius:20px;position:relative;overflow:hidden}
 .pod .crown{font:900 13px var(--display);letter-spacing:.14em;color:var(--mut)}
 .pod .nm{font:800 clamp(15px,2vw,20px) var(--display);margin:10px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lr .nm small{display:block;color:var(--mut);font-size:12px;line-height:1.3}
 .podtime{font-size:11px;color:var(--mut);font-weight:700;margin-top:3px}
 .pod .v{font:800 clamp(18px,2.6vw,26px) var(--display)}
 .pod .v small{display:block;font:700 12px var(--body);color:var(--mut)}
@@ -119,7 +120,8 @@ function draw(rows, g, unit) {
   const gname = (id) => { const x = ((cat && cat.games) || cat || []).find((y) => y.id === id); return x ? x.name : ""; };
   const baseSub = (r) => tab === "all" ? (metric === "best" ? (gname(r.bestRoundGame) ? "in " + gname(r.bestRoundGame) : "single round") : ng(r) + " game" + (ng(r) === 1 ? "" : "s")) : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
   const timePlayed = (r) => { const t = r.timeTotal || 0; return t >= 60 ? fmtTime(t) + " played" : ""; };
-  const sub = (r) => { const b = baseSub(r), t = timePlayed(r); return t ? (b ? t + " · " + b : t) : b; };
+  const longest = (r) => { const t = r.timeBest || 0; return t >= 60 ? "longest " + fmtTime(t) : ""; };
+  const sub = (r) => [timePlayed(r), longest(r), baseSub(r)].filter(Boolean).join(" · ");
   
   $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { 
     const r = rows[i]; 
@@ -135,6 +137,7 @@ function draw(rows, g, unit) {
       <div class="nm">${nameHtml(r, TIERS, ACH, "")}</div>
       ${badge(r.username)}
       ${timePlayed(r) ? `<div class="podtime">${timePlayed(r)}</div>` : ""}
+      ${longest(r) ? `<div class="podtime">${longest(r)}</div>` : ""}
       <div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div>
     </div>`; 
   }).join("") : "";
