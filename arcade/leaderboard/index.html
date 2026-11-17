@@ -88,10 +88,11 @@ const [TIERS, ACH] = await Promise.all([loadTiers(), loadAch()]);
 injectCss();
 const badge = (u) => { const r = roles[String(u || "").toLowerCase()]; return r ? `<span class="badge ${r}">${r === "creator" ? "CREATOR" : "ADMIN"}</span>` : ""; };
 
-function field() { return tab === "all" ? (metric === "best" ? "bestRound" : "lp") : `games.${tab}.${metric}`; }
-function val(r) { return tab === "all" ? (metric === "best" ? r.bestRound || 0 : r.lp) : ((r.games || {})[tab] || {})[metric] || 0; }
+function field() { return tab === "time" ? (metric === "best" ? "timeBest" : "timeTotal") : tab === "all" ? (metric === "best" ? "bestRound" : "lp") : `games.${tab}.${metric}`; }
+function val(r) { return tab === "time" ? (metric === "best" ? r.timeBest || 0 : r.timeTotal || 0) : tab === "all" ? (metric === "best" ? r.bestRound || 0 : r.lp) : ((r.games || {})[tab] || {})[metric] || 0; }
+function fmtVal(r) { return tab === "time" ? fmtTime(val(r)) : fmt(val(r)); }
 function tabs() {
-  const list = [{ id: "all", name: "Overall" }].concat(cat.games.map((g) => ({ id: g.id, name: g.name })));
+  const list = [{ id: "all", name: "Overall" }, { id: "time", name: "Time" }].concat(cat.games.map((g) => ({ id: g.id, name: g.name })));
   $("#tabs").innerHTML = list.map((t) => `<button class="chip ${t.id === tab ? "on" : ""}" role="tab" aria-selected="${t.id === tab}" data-t="${t.id}">${esc(t.name)}</button>`).join("");
   $("#tabs").querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => { tab = b.dataset.t; metric = "lp"; history.replaceState(null, "", tab === "all" ? location.pathname : "?game=" + tab); render(); }));
 }
@@ -99,13 +100,14 @@ async function render() {
   tabs();
   const g = cat.games.find((x) => x.id === tab);
   $("#metric").hidden = false;
-  $("#metric").querySelector('[data-m="best"]').textContent = g ? "Best score" : "Best round";
+  $("#metric").querySelector('[data-m="lp"]').textContent = tab === "time" ? "Total time" : "Lazer Points";
+  $("#metric").querySelector('[data-m="best"]').textContent = tab === "time" ? "Best session" : g ? "Best score" : "Best round";
   $("#metric").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.m === metric));
-  const unit = !g || metric === "lp" ? "LP" : (g.scoreLabel || "score");
+  const unit = tab === "time" ? "" : !g || metric === "lp" ? "LP" : (g.scoreLabel || "score");
   const allBest = !g && metric === "best";
-  $("#col").textContent = unit.toUpperCase();
-  $("#title").innerHTML = g ? `${esc(g.name)} <em>Board</em>` : `Lazer <em>Leaderboard</em>`;
-  $("#desc").textContent = g ? (metric === "lp" ? `Lazer Points earned in ${g.name}. These also count toward the overall board.` : `Best single ${g.scoreLabel || "score"} in ${g.name}.`) : allBest ? "Most Lazer Points earned in a single round of any game." : "Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.";
+  $("#col").textContent = tab === "time" ? "TIME" : unit.toUpperCase();
+  $("#title").innerHTML = tab === "time" ? `Time <em>Played</em>` : g ? `${esc(g.name)} <em>Board</em>` : `Lazer <em>Leaderboard</em>`;
+  $("#desc").textContent = tab === "time" ? (metric === "best" ? "Longest single session on Lazer Arcade. One continuous stretch of play." : "Most active time spent on Lazer Arcade, across every game.") : g ? (metric === "lp" ? `Lazer Points earned in ${g.name}. These also count toward the overall board.` : `Best single ${g.scoreLabel || "score"} in ${g.name}.`) : allBest ? "Most Lazer Points earned in a single round of any game." : "Total Lazer Points across every game. Every game pays about 100 LP per minute of skilled play, so the board is fair no matter what you play.";
   $("#rows").innerHTML = '<div class="lr"><div class="skel" style="height:18px;grid-column:1/-1"></div></div>';
   if (unwatch) unwatch();
   const fail = () => fetch("/arcade/board-fallback.json", { cache: "no-cache" }).then((r) => r.json())
@@ -118,10 +120,11 @@ function draw(rows, g, unit) {
   const me = LZ.user ? LZ.user.uid : null;
   const ng = (r) => Object.keys(r.games || {}).filter((k) => k !== "bonus").length;
   const gname = (id) => { const x = ((cat && cat.games) || cat || []).find((y) => y.id === id); return x ? x.name : ""; };
-  const baseSub = (r) => tab === "all" ? (metric === "best" ? (gname(r.bestRoundGame) ? "in " + gname(r.bestRoundGame) : "single round") : ng(r) + " game" + (ng(r) === 1 ? "" : "s")) : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
+  const baseSub = (r) => (tab === "all" && metric === "best") ? (gname(r.bestRoundGame) ? "in " + gname(r.bestRoundGame) : "single round") : (tab === "all" || tab === "time") ? ng(r) + " game" + (ng(r) === 1 ? "" : "s") : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
   const timePlayed = (r) => { const t = r.timeTotal || 0; return t >= 60 ? fmtTime(t) + " played" : ""; };
   const longest = (r) => { const t = r.timeBest || 0; return t >= 60 ? "longest " + fmtTime(t) : ""; };
-  const sub = (r) => [timePlayed(r), longest(r), baseSub(r)].filter(Boolean).join(" · ");
+  const sub = (r) => { if (tab === "time") return [metric === "best" ? timePlayed(r) : longest(r), baseSub(r)].filter(Boolean).join(" · "); return [timePlayed(r), longest(r), baseSub(r)].filter(Boolean).join(" · "); };
+  const podtimeLines = (r) => { if (tab === "time") { const c = metric === "best" ? timePlayed(r) : longest(r); return c ? `<div class="podtime">${c}</div>` : ""; } return (timePlayed(r) ? `<div class="podtime">${timePlayed(r)}</div>` : "") + (longest(r) ? `<div class="podtime">${longest(r)}</div>` : ""); };
   
   $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { 
     const r = rows[i]; 
@@ -136,14 +139,13 @@ function draw(rows, g, unit) {
       <div class="av">${avatarContent}</div>
       <div class="nm">${nameHtml(r, TIERS, ACH, "")}</div>
       ${badge(r.username)}
-      ${timePlayed(r) ? `<div class="podtime">${timePlayed(r)}</div>` : ""}
-      ${longest(r) ? `<div class="podtime">${longest(r)}</div>` : ""}
-      <div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div>
+      ${podtimeLines(r)}
+      <div class="v">${fmtVal(r)}${unit ? `<small>${esc(unit)}</small>` : ""}</div>
     </div>`; 
   }).join("") : "";
 
   const list = rows.length >= 3 ? rows.slice(3) : rows, off = rows.length >= 3 ? 3 : 0;
-  $("#rows").innerHTML = rows.length ? (list.map((r, i) => `<div class="lr r${i + 1 + off} ${r.uid === me ? "me" : ""}${rowClass(r, TIERS)}"><span class="rk">${i + 1 + off}</span><span class="nm">${avatarHtml(r)}${nameHtml(r, TIERS, ACH, badge(r.username))}<small>${sub(r)}</small></span><span class="pt">${fmt(val(r))}<small>${esc(unit)}</small></span></div>`).join("") || '<div class="empty">That\'s everyone so far.</div>')
+  $("#rows").innerHTML = rows.length ? (list.map((r, i) => `<div class="lr r${i + 1 + off} ${r.uid === me ? "me" : ""}${rowClass(r, TIERS)}"><span class="rk">${i + 1 + off}</span><span class="nm">${avatarHtml(r)}${nameHtml(r, TIERS, ACH, badge(r.username))}<small>${sub(r)}</small></span><span class="pt">${fmtVal(r)}${unit ? `<small>${esc(unit)}</small>` : ""}</span></div>`).join("") || '<div class="empty">That\'s everyone so far.</div>')
     : `<div class="empty">No scores yet. ${g ? `<a href="${esc(g.path)}" style="color:var(--cyan)">Play ${esc(g.name)}</a> and take #1.` : "Be the first."}</div>`;
 }
 
@@ -159,7 +161,7 @@ async function you() {
   const m = await LZ.me(); const v = m ? val(m) : 0;
   const r = v ? await LZ.rank(field(), v) : null;
   el.hidden = false;
-  const head = v ? `<span>You're <b>#${r || "?"}</b> with <b>${fmt(v)}</b> ${tab === "all" || metric === "lp" ? "LP" : ""}</span><span style="color:var(--mut);font-weight:700">${esc(LZ.username)}</span>`
+  const head = v ? `<span>You're <b>#${r || "?"}</b> with <b>${tab === "time" ? fmtTime(v) : fmt(v)}</b> ${tab === "time" ? (metric === "best" ? "longest session" : "played") : (tab === "all" || metric === "lp" ? "LP" : "")}</span><span style="color:var(--mut);font-weight:700">${esc(LZ.username)}</span>`
     : `<span>Signed in as <b>${esc(LZ.username)}</b>. Finish a round to get on this board.</span><a class="btn sm" href="/arcade/">Play</a>`;
   el.innerHTML = `<div class="yhead">${head}</div>${timeStats(m)}`;
 }
