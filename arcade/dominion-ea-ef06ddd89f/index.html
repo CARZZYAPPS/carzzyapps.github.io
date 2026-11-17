@@ -259,7 +259,69 @@ body.lens #hud{box-shadow:inset 0 -3px 0 var(--vio)}
 .sw button.on{border-color:#fff}
 .txtin{width:100%;min-height:44px;border-radius:12px;border:2px solid #3a33a8;background:#0c0a33;color:#fff;padding:0 12px;font:400 18px var(--disp);text-align:center;user-select:text;-webkit-user-select:text}
 .demo{font-size:11.5px;color:var(--mut);text-align:center;margin-top:8px}
-@media(max-width:640px){#cpb{flex-basis:100%}.stn{flex:1}.stn button{flex:1}#hud{gap:6px;padding-left:8px;padding-right:8px}.cur{order:5;width:100%;justify-content:space-between;gap:5px}.cur .c{flex:1;justify-content:center;padding:3px 6px 3px 4px;font-size:12.5px}.cur .c svg{width:16px;height:16px}.cmd .nm{max-width:150px}.page h2{font-size:21px}.wleft{max-width:52%}.pill{font-size:11px;padding:4px 7px}}
+@media(max-width:640px){#cpb{flex-basis:100%}.stn{flex:1}.stn button{flex:1;padding:0 4px}.tg{padding:0 7px;font-size:12px}#hud{gap:6px;padding-left:8px;padding-right:8px}.cur{order:5;width:100%;justify-content:space-between;gap:5px}.cur .c{flex:1;justify-content:center;padding:3px 6px 3px 4px;font-size:12.5px}.cur .c svg{width:16px;height:16px}.cmd .nm{max-width:150px}.page h2{font-size:21px}.wleft{max-width:52%}.pill{font-size:11px;padding:4px 7px}}
+
+/* ---- polish layer ---- */
+.cur .c{position:relative}
+.cur .c.bump{animation:bump .4s}
+@keyframes bump{40%{transform:scale(1.2)}}
+.flt{position:absolute;left:50%;top:100%;font:900 13px var(--body);color:var(--lime);text-shadow:0 2px 0 #000,0 0 8px #000;pointer-events:none;animation:flt 1.2s forwards;white-space:nowrap;z-index:9}
+.flt.neg{color:#ff9aa6}
+@keyframes flt{0%{opacity:0;transform:translate(-50%,-8px) scale(.8)}18%{opacity:1;transform:translate(-50%,2px) scale(1.15)}100%{opacity:0;transform:translate(-50%,24px) scale(1)}}
+.lst .li{animation:liin .4s backwards cubic-bezier(.2,1.3,.4,1)}
+.lst .li:nth-child(2){animation-delay:.08s}.lst .li:nth-child(3){animation-delay:.16s}.lst .li:nth-child(4){animation-delay:.24s}.lst .li:nth-child(5){animation-delay:.32s}.lst .li:nth-child(6){animation-delay:.4s}.lst .li:nth-child(7){animation-delay:.48s}.lst .li:nth-child(n+8){animation-delay:.56s}
+@keyframes liin{from{opacity:0;transform:translateX(-22px) scale(.96)}}
+.btn.big{position:relative;overflow:hidden}
+.btn.big:after{content:"";position:absolute;top:0;left:-60%;width:38%;height:100%;background:linear-gradient(100deg,transparent,#ffffff99,transparent);transform:skewX(-20deg);animation:shine 2.8s infinite}
+@keyframes shine{0%,55%{left:-60%}100%{left:140%}}
+.bar i:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(110deg,#ffffff30 0 8px,transparent 8px 16px);background-size:23px 100%;animation:stripe .9s linear infinite;border-radius:8px}
+@keyframes stripe{to{background-position:23px 0}}
+.page h2{font-size:26px;background:linear-gradient(180deg,#fff 30%,#bdb4ff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 #0b0930)}
+.page h2 svg{color:var(--cy);width:26px;height:26px}
+.pn{box-shadow:0 6px 0 #0b0930,inset 0 1.5px 0 #ffffff26}
+.card{background:linear-gradient(180deg,#1a1660,#110e44);box-shadow:inset 0 1.5px 0 #ffffff14}
+.card canvas.ui{background:radial-gradient(circle at 50% 35%,#3a33a8,#0b0930);box-shadow:inset 0 0 0 2px #4a43c4}
+#nav button.on:before{content:"";position:absolute;top:-6px;left:28%;right:28%;height:4px;border-radius:0 0 5px 5px;background:var(--cy);box-shadow:0 0 12px var(--cy)}
+#hud{box-shadow:0 4px 18px #0008}
+.cmd canvas{box-shadow:0 0 0 2px var(--gold),0 0 12px #ffcf3a66}
+.cmd .lv b{box-shadow:0 2px 0 #b86d00}
+.xpb{height:12px;width:96px}
+.xpb i:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#ffffff66,transparent 55%);border-radius:6px}
+.seg{box-shadow:inset 0 2px 6px #0008}
+.mb{background:linear-gradient(180deg,#342ca8,#1a1757 60%)}
+/* battle hud */
+#cpb{display:flex;gap:3px;background:none;box-shadow:none;height:18px;overflow:visible;align-items:center}
+#cpb em{font:400 13px/1 var(--disp);font-style:normal;color:#ffd0f0;margin-right:4px;min-width:20px;text-align:center}
+#cpb b{flex:1;height:100%;border-radius:5px;background:#0b0930;box-shadow:inset 0 0 0 1.5px #5a3fb0;position:relative;overflow:hidden}
+#cpb b i{position:absolute;inset:0;background:linear-gradient(180deg,#ff9ad6,#b45cff);transform-origin:left center;border-radius:4px;transition:transform .12s linear}
+#cpb b.full i{background:linear-gradient(180deg,#fff0a8,#ffb629);box-shadow:0 0 8px #ffcf3a}
+.uc{width:76px;border-radius:14px;background:linear-gradient(180deg,#322ba0,#151150);border:2px solid #5a52e0;padding:5px 3px 6px;box-shadow:0 4px 0 #0b0930,inset 0 1.5px 0 #ffffff30;overflow:visible}
+.uc canvas{width:50px;height:50px}
+.uc b{font-size:11.5px;margin-top:1px}
+.uc small{color:#d6d1ff}
+.uc .cp{left:-5px;top:-6px;width:23px;height:23px;line-height:23px;font-size:12px;z-index:2;box-shadow:0 0 0 2px #100d40,0 2px 0 2px #0b0930}
+.uc .wait{position:absolute;left:0;right:0;bottom:0;height:0;background:#05041ab8;border-radius:0 0 12px 12px;pointer-events:none;transition:height .15s linear}
+.uc.sel{border-color:var(--gold);transform:translateY(-6px);box-shadow:0 10px 0 #0b0930,0 0 18px var(--gold),inset 0 1.5px 0 #ffffff50}
+.uc.dis{filter:none;opacity:.9}.uc.dis canvas{filter:grayscale(.8) brightness(.75)}
+.uc.out{filter:grayscale(1) brightness(.55)}
+.uc.pu{width:58px;border-radius:16px;background:linear-gradient(180deg,#5a2bb8,#22104d);border-color:#a66bff}
+.uc.pu.dis{filter:grayscale(1) brightness(.6)}
+#btop .nm{font-size:16px}
+#btop .tm{box-shadow:0 3px 0 #0b0930}
+#bhud{box-shadow:0 -6px 20px #0009}
+/* world chips */
+.pill{box-shadow:0 3px 0 #0b093099;backdrop-filter:blur(6px);text-align:left}
+.vault{box-shadow:0 4px 0 #0b093099,0 0 16px #ffcf3a33;backdrop-filter:blur(6px)}
+#raidB{min-height:42px;font-size:15px}
+.hint{box-shadow:0 6px 0 #0b093088,0 0 0 3px #ff4fa355}
+@media(max-width:640px){
+  .wleft{left:0;right:0;top:58px;max-width:none;flex-direction:row;overflow-x:auto;padding:0 8px 6px;gap:6px;scrollbar-width:none}
+  .wleft::-webkit-scrollbar{display:none}
+  .wleft .pill{flex:none;white-space:nowrap}
+  .wleft .pill br{display:none}.wleft .pill b:after{content:" · "}
+  .wside{top:104px;flex-direction:row;left:8px;right:8px;justify-content:space-between;align-items:center}
+  .vault small{display:none}
+}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important}}
 </style>
 </head>
@@ -272,7 +334,7 @@ body.lens #hud{box-shadow:inset 0 -3px 0 var(--vio)}
 </div>
 <div id="battle" hidden>
   <div id="bwrap"><canvas id="b3"></canvas><canvas id="bf"></canvas><div id="btop"></div><div id="bmsg"></div><div id="btip"></div></div>
-  <div id="bhud"><div class="r1"><div id="cpb"><i></i><span></span></div><div class="stn" id="stn"></div><button class="tg" id="bcmd" data-b="cmd" style="border-color:var(--pink);color:#ffd0e8">+5 CMD · 15 gems</button><button class="tg" id="bauto"></button><button class="tg" id="bspd">1×</button></div><div id="cards"></div></div>
+  <div id="bhud"><div class="r1"><div id="cpb"></div><div class="stn" id="stn"></div><button class="tg" id="bcmd" data-b="cmd" style="border-color:var(--pink);color:#ffd0e8">+5 CMD · 15</button><button class="tg" id="bauto"></button><button class="tg" id="bspd">1×</button></div><div id="cards"></div></div>
 </div>
 <div id="modal" hidden></div>
 <div id="hookpop" hidden></div>
@@ -1282,23 +1344,25 @@ function drawFlag(c,w,em,c1,c2){
 function buildBattleHud(){
   var cfg=B.cfg,h="";
   $("#btop").innerHTML='<div class="nm">'+esc(cfg.nm)+'<small>'+esc(cfg.sub||"")+'</small></div><div class="hp"><div class="bar r" id="bhp"><i style="width:100%"></i><span></span></div></div><div class="tm" id="btm"></div>'+hk("h18")+hk("h4");
-  CLS.forEach(function(k){if(S.army[k]>0)h+='<button class="uc" data-b="unit" data-v="'+k+'"><span class="cp">'+CLASSES[k].cp+'</span><canvas width="88" height="88" data-u="'+k+'"></canvas><b>'+CLASSES[k].nm+'</b><small></small></button>';});
+  CLS.forEach(function(k){if(S.army[k]>0)h+='<button class="uc" data-b="unit" data-v="'+k+'"><span class="cp">'+CLASSES[k].cp+'</span><canvas width="100" height="100" data-u="'+k+'"></canvas><b>'+CLASSES[k].nm+'</b><small></small><span class="wait"></span></button>';});
   h+='<span class="vsep"></span>';
   Object.keys(PUPS).forEach(function(k){h+='<button class="uc pu" data-b="pu" data-v="'+k+'"><canvas width="68" height="68" data-pu="'+k+'"></canvas><b>'+PUPS[k].nm+'</b><small></small></button>';});
   $("#cards").innerHTML=h;paintIcons($("#cards"));
+  $("#cpb").innerHTML="";
   $("#stn").innerHTML=(cfg.mode==="def"?[["hold","Hold"],["charge","Charge"]]:[["charge","Charge"],["hold","Hold"],["retreat","Retreat"]]).map(function(s){return '<button data-b="stance" data-v="'+s[0]+'">'+s[1]+"</button>";}).join("");
   updateBattleHud();
 }
 function updateBattleHud(){
   if(!B)return;
-  $("#cpb i").style.width=(B.cp/B.cpMax*100)+"%";$("#cpb span").textContent="COMMAND "+Math.floor(B.cp)+"/"+B.cpMax;
+  var cpb=$("#cpb");if(!cpb.firstChild){var ph="<em></em>";for(var pi=0;pi<B.cpMax;pi++)ph+="<b><i></i></b>";cpb.innerHTML=ph;}
+  cpb.firstChild.textContent=Math.floor(B.cp);for(var pj=0;pj<B.cpMax;pj++){var pp=cpb.children[pj+1],fv=clamp(B.cp-pj,0,1);pp.firstChild.style.transform="scaleX("+fv+")";pp.classList.toggle("full",fv>=1);}
   var left=B.dur-B.t,tm=$("#btm");tm.textContent=mmss(left);tm.classList.toggle("low",left<12&&B.cfg.mode!=="def");
   var hq=B.hq,f=clamp(hq.hp/hq.mhp,0,1);$("#bhp i").style.width=(f*100)+"%";$("#bhp span").textContent=(B.cfg.mode==="def"?"YOUR FORTRESS ":"ENEMY HQ ")+Math.ceil(f*100)+"%";
   $$("#cards .uc").forEach(function(b){var k=b.dataset.v;
-    if(b.dataset.b==="unit"){var n=B.res[k]||0;b.querySelector("small").textContent=n+" left";b.classList.toggle("dis",n<=0||B.cp<CLASSES[k].cp);b.classList.toggle("sel",B.sel===k);}
+    if(b.dataset.b==="unit"){var n=B.res[k]||0;b.querySelector("small").textContent="×"+n;b.classList.toggle("out",n<=0);b.classList.toggle("dis",n>0&&B.cp<CLASSES[k].cp);b.classList.toggle("sel",B.sel===k);b.querySelector(".wait").style.height=(n>0?clamp(1-B.cp/CLASSES[k].cp,0,1)*100:0)+"%";}
     else{var m=S.pu[k]||0;b.querySelector("small").textContent="×"+m;b.classList.toggle("dis",m<=0);b.classList.toggle("sel",B.sel===k);}});
   $$("#stn button").forEach(function(b){b.classList.toggle("on",b.dataset.v===B.stance);});
-  var a=$("#bauto");a.textContent=(B.adv?"Adv. General":"General")+(B.auto?": ON":": OFF");a.classList.toggle("on",B.auto);
+  var a=$("#bauto");a.textContent=(B.adv?"Adv. Auto":"Auto")+(B.auto?": ON":": OFF");a.classList.toggle("on",B.auto);
   $("#bspd").textContent=B.spd+"×";var cb=$("#bcmd");if(cb)cb.classList.toggle("on",S.gems>=GP.cmd&&B.cp<=B.cpMax-1);
 }
 function battleTap(e){
@@ -1446,8 +1510,8 @@ function r3Build(){
   r3Fit();
 }
 function r3Fit(){
-  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?52:40;
-  var pitch=port?.66:.6,nw=port?.5:.4,tgt=R3.tgt.set(-L/2+L*(port?.44:.4),0,0),dir=new T.Vector3(-Math.cos(pitch),Math.sin(pitch),0),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
+  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?50:40;
+  var pitch=port?.92:.6,nw=port?.5:.4,tgt=R3.tgt.set(-L/2+L*(port?.44:.4),0,0),dir=new T.Vector3(-Math.cos(pitch),Math.sin(pitch),0),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
   var pts=[[-L/2,0,-WD*nw],[-L/2,0,WD*nw],[L/2,0,-WD/2],[L/2,0,WD/2],[L/2-70,76,0],[-L/2+10,34,-WD*nw],[-L/2+10,34,WD*nw]];
   for(i=0;i<24;i++){var mid=(lo+hi)/2,ok=true;cam.position.copy(tgt).addScaledVector(dir,mid);cam.lookAt(tgt);cam.updateMatrixWorld();cam.updateProjectionMatrix();
     for(j=0;j<pts.length;j++){R3.v.set(pts[j][0],pts[j][1],pts[j][2]).project(cam);if(Math.abs(R3.v.x)>.975||R3.v.y<-.985||R3.v.y>top){ok=false;break;}}
@@ -1712,12 +1776,15 @@ function showAway(o){
 /* ================= UI ================= */
 var tab="world",sub={army:"camp",forge:"gear",quests:"q",social:"chat",store:"boost"},mapSel=-1,M={cx:0,cy:0,R:1,sc:1},lastHint="",chatNew=0,bannerKey="";
 function renderAll(){if(!S||!S.name)return;renderHud();renderNav();renderBanner();renderTab();}
+var hudPrev={};
 function renderHud(){
   var h=$("#hud");
   if(!h.dataset.b){h.dataset.b=1;
     h.innerHTML='<button class="cmd" data-a="profile"><canvas width="76" height="76" data-flag="me" id="hflag"></canvas><div><div class="nm" id="hname"></div><div class="lv"><b id="hlv"></b><div class="xpb"><i id="hxp"></i></div>'+hk("h2")+'</div></div></button><span class="sp"></span><button class="hb" data-a="alerts">'+IC.bell+'<em id="hbell"></em></button><button class="hb" data-a="menu">'+IC.gear+'</button><div class="cur"><div class="c">'+IC.coin+'<span id="hc"></span></div><div class="c">'+IC.stamp+'<span id="hs"></span></div><div class="c">'+IC.alloy+'<span id="ha"></span></div><button class="c gem" data-a="tab" data-v="store">'+IC.gem+'<span id="hg"></span><u>+</u></button></div>';}
   $("#hname").textContent=S.name;$("#hlv").textContent="LV "+S.lvl;$("#hxp").style.width=clamp(S.xp/xpNeed(S.lvl)*100,0,100)+"%";
-  $("#hc").textContent=fmt(S.coins);$("#hs").textContent=fmt(S.stamps);$("#ha").textContent=fmt(S.alloy);$("#hg").textContent=fmt(S.gems);
+  [["hc",S.coins],["hs",S.stamps],["ha",S.alloy],["hg",S.gems]].forEach(function(x){var el=$("#"+x[0]),v=Math.floor(x[1]),pv=hudPrev[x[0]];el.textContent=fmt(v);
+    if(pv!==undefined&&pv!==v&&modalFree()&&!B){var chip=el.parentNode,f=document.createElement("span");f.className="flt"+(v<pv?" neg":"");f.textContent=(v>pv?"+":"−")+fmt(Math.abs(v-pv));chip.appendChild(f);setTimeout(function(){f.remove();},1200);chip.classList.remove("bump");void chip.offsetWidth;chip.classList.add("bump");}
+    hudPrev[x[0]]=v;});
   var u=unread(),e=$("#hbell");e.textContent=u||"";e.style.display=u?"":"none";
   var fk=S.flag.em+S.flag.c1+S.flag.c2;if(h.dataset.f!==fk){h.dataset.f=fk;paintIcons(h);}
 }
@@ -1791,7 +1858,7 @@ function nodePanel(wd,n){
   if(!can){h+='<p class="sm" style="color:var(--gold)">'+IC.lock+(n.rs?" Capture "+esc(wd.n[n.p].nm)+" to reach this site.":" Capture everything that guards it first ("+got+"/"+kids+").")+"</p></div>";return h;}
   h+='<div class="row w"><button class="btn big" data-a="attack" data-v="'+n.i+'">'+IC.sword+' Attack</button><button class="btn bx" data-a="attackAuto" data-v="'+n.i+'">Send General</button>';
   if(S.ally>=0)h+='<button class="btn b2 '+(S.allyCd>0?"off":"")+'" data-a="attackAlly" data-v="'+n.i+'">'+(S.allyCd>0?"Ally "+S.allyCd+"s":"With ally")+"</button>";
-  h+="</div><p class=\"sm mut\" style=\"margin:6px 0 0\">You command: "+armySize()+" soldiers. The free General fights for you at half score. "+hk("h4")+"</p></div>";
+  h+="</div><p class=\"sm mut\" style=\"margin:6px 0 0\">You command: "+armySize()+" soldiers. The free General (Auto) fights for you at half score. "+hk("h4")+"</p></div>";
   return h;
 }
 function nodePos(n){if(GL&&GL.scr.length)return GL.scr[n.i]||[-9999,-9999];return[M.cx+Math.cos(n.a)*n.r*2*M.R,M.cy+Math.sin(n.a)*n.r*2*M.R];}
