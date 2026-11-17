@@ -127,8 +127,8 @@ function r3Build(){
   r3Fit();
 }
 function r3Fit(){
-  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?52:40;
-  var pitch=port?.66:.6,nw=port?.5:.4,tgt=R3.tgt.set(-L/2+L*(port?.44:.4),0,0),dir=new T.Vector3(-Math.cos(pitch),Math.sin(pitch),0),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
+  if(!R3||!B)return;var cam=R3.cam,w=B.cw,h=B.ch,T=THREE,port=B.port,i,j;R3.rd.setPixelRatio(B.dpr);R3.rd.setSize(w,h,false);cam.aspect=w/h;cam.fov=port?50:40;
+  var pitch=port?.92:.6,nw=port?.5:.4,tgt=R3.tgt.set(-L/2+L*(port?.44:.4),0,0),dir=new T.Vector3(-Math.cos(pitch),Math.sin(pitch),0),top=1-2*(TOPPAD+4)/h,lo=120,hi=5200;
   var pts=[[-L/2,0,-WD*nw],[-L/2,0,WD*nw],[L/2,0,-WD/2],[L/2,0,WD/2],[L/2-70,76,0],[-L/2+10,34,-WD*nw],[-L/2+10,34,WD*nw]];
   for(i=0;i<24;i++){var mid=(lo+hi)/2,ok=true;cam.position.copy(tgt).addScaledVector(dir,mid);cam.lookAt(tgt);cam.updateMatrixWorld();cam.updateProjectionMatrix();
     for(j=0;j<pts.length;j++){R3.v.set(pts[j][0],pts[j][1],pts[j][2]).project(cam);if(Math.abs(R3.v.x)>.975||R3.v.y<-.985||R3.v.y>top){ok=false;break;}}

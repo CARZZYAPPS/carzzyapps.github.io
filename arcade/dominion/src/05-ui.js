@@ -1,12 +1,15 @@
 /* ================= UI ================= */
 var tab="world",sub={army:"camp",forge:"gear",quests:"q",social:"chat",store:"boost"},mapSel=-1,M={cx:0,cy:0,R:1,sc:1},lastHint="",chatNew=0,bannerKey="";
 function renderAll(){if(!S||!S.name)return;renderHud();renderNav();renderBanner();renderTab();}
+var hudPrev={};
 function renderHud(){
   var h=$("#hud");
   if(!h.dataset.b){h.dataset.b=1;
     h.innerHTML='<button class="cmd" data-a="profile"><canvas width="76" height="76" data-flag="me" id="hflag"></canvas><div><div class="nm" id="hname"></div><div class="lv"><b id="hlv"></b><div class="xpb"><i id="hxp"></i></div>'+hk("h2")+'</div></div></button><span class="sp"></span><button class="hb" data-a="alerts">'+IC.bell+'<em id="hbell"></em></button><button class="hb" data-a="menu">'+IC.gear+'</button><div class="cur"><div class="c">'+IC.coin+'<span id="hc"></span></div><div class="c">'+IC.stamp+'<span id="hs"></span></div><div class="c">'+IC.alloy+'<span id="ha"></span></div><button class="c gem" data-a="tab" data-v="store">'+IC.gem+'<span id="hg"></span><u>+</u></button></div>';}
   $("#hname").textContent=S.name;$("#hlv").textContent="LV "+S.lvl;$("#hxp").style.width=clamp(S.xp/xpNeed(S.lvl)*100,0,100)+"%";
-  $("#hc").textContent=fmt(S.coins);$("#hs").textContent=fmt(S.stamps);$("#ha").textContent=fmt(S.alloy);$("#hg").textContent=fmt(S.gems);
+  [["hc",S.coins],["hs",S.stamps],["ha",S.alloy],["hg",S.gems]].forEach(function(x){var el=$("#"+x[0]),v=Math.floor(x[1]),pv=hudPrev[x[0]];el.textContent=fmt(v);
+    if(pv!==undefined&&pv!==v&&modalFree()&&!B){var chip=el.parentNode,f=document.createElement("span");f.className="flt"+(v<pv?" neg":"");f.textContent=(v>pv?"+":"−")+fmt(Math.abs(v-pv));chip.appendChild(f);setTimeout(function(){f.remove();},1200);chip.classList.remove("bump");void chip.offsetWidth;chip.classList.add("bump");}
+    hudPrev[x[0]]=v;});
   var u=unread(),e=$("#hbell");e.textContent=u||"";e.style.display=u?"":"none";
   var fk=S.flag.em+S.flag.c1+S.flag.c2;if(h.dataset.f!==fk){h.dataset.f=fk;paintIcons(h);}
 }
@@ -80,7 +83,7 @@ function nodePanel(wd,n){
   if(!can){h+='<p class="sm" style="color:var(--gold)">'+IC.lock+(n.rs?" Capture "+esc(wd.n[n.p].nm)+" to reach this site.":" Capture everything that guards it first ("+got+"/"+kids+").")+"</p></div>";return h;}
   h+='<div class="row w"><button class="btn big" data-a="attack" data-v="'+n.i+'">'+IC.sword+' Attack</button><button class="btn bx" data-a="attackAuto" data-v="'+n.i+'">Send General</button>';
   if(S.ally>=0)h+='<button class="btn b2 '+(S.allyCd>0?"off":"")+'" data-a="attackAlly" data-v="'+n.i+'">'+(S.allyCd>0?"Ally "+S.allyCd+"s":"With ally")+"</button>";
-  h+="</div><p class=\"sm mut\" style=\"margin:6px 0 0\">You command: "+armySize()+" soldiers. The free General fights for you at half score. "+hk("h4")+"</p></div>";
+  h+="</div><p class=\"sm mut\" style=\"margin:6px 0 0\">You command: "+armySize()+" soldiers. The free General (Auto) fights for you at half score. "+hk("h4")+"</p></div>";
   return h;
 }
 function nodePos(n){if(GL&&GL.scr.length)return GL.scr[n.i]||[-9999,-9999];return[M.cx+Math.cos(n.a)*n.r*2*M.R,M.cy+Math.sin(n.a)*n.r*2*M.R];}

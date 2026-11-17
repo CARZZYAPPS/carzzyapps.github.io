@@ -455,23 +455,25 @@ function drawFlag(c,w,em,c1,c2){
 function buildBattleHud(){
   var cfg=B.cfg,h="";
   $("#btop").innerHTML='<div class="nm">'+esc(cfg.nm)+'<small>'+esc(cfg.sub||"")+'</small></div><div class="hp"><div class="bar r" id="bhp"><i style="width:100%"></i><span></span></div></div><div class="tm" id="btm"></div>'+hk("h18")+hk("h4");
-  CLS.forEach(function(k){if(S.army[k]>0)h+='<button class="uc" data-b="unit" data-v="'+k+'"><span class="cp">'+CLASSES[k].cp+'</span><canvas width="88" height="88" data-u="'+k+'"></canvas><b>'+CLASSES[k].nm+'</b><small></small></button>';});
+  CLS.forEach(function(k){if(S.army[k]>0)h+='<button class="uc" data-b="unit" data-v="'+k+'"><span class="cp">'+CLASSES[k].cp+'</span><canvas width="100" height="100" data-u="'+k+'"></canvas><b>'+CLASSES[k].nm+'</b><small></small><span class="wait"></span></button>';});
   h+='<span class="vsep"></span>';
   Object.keys(PUPS).forEach(function(k){h+='<button class="uc pu" data-b="pu" data-v="'+k+'"><canvas width="68" height="68" data-pu="'+k+'"></canvas><b>'+PUPS[k].nm+'</b><small></small></button>';});
   $("#cards").innerHTML=h;paintIcons($("#cards"));
+  $("#cpb").innerHTML="";
   $("#stn").innerHTML=(cfg.mode==="def"?[["hold","Hold"],["charge","Charge"]]:[["charge","Charge"],["hold","Hold"],["retreat","Retreat"]]).map(function(s){return '<button data-b="stance" data-v="'+s[0]+'">'+s[1]+"</button>";}).join("");
   updateBattleHud();
 }
 function updateBattleHud(){
   if(!B)return;
-  $("#cpb i").style.width=(B.cp/B.cpMax*100)+"%";$("#cpb span").textContent="COMMAND "+Math.floor(B.cp)+"/"+B.cpMax;
+  var cpb=$("#cpb");if(!cpb.firstChild){var ph="<em></em>";for(var pi=0;pi<B.cpMax;pi++)ph+="<b><i></i></b>";cpb.innerHTML=ph;}
+  cpb.firstChild.textContent=Math.floor(B.cp);for(var pj=0;pj<B.cpMax;pj++){var pp=cpb.children[pj+1],fv=clamp(B.cp-pj,0,1);pp.firstChild.style.transform="scaleX("+fv+")";pp.classList.toggle("full",fv>=1);}
   var left=B.dur-B.t,tm=$("#btm");tm.textContent=mmss(left);tm.classList.toggle("low",left<12&&B.cfg.mode!=="def");
   var hq=B.hq,f=clamp(hq.hp/hq.mhp,0,1);$("#bhp i").style.width=(f*100)+"%";$("#bhp span").textContent=(B.cfg.mode==="def"?"YOUR FORTRESS ":"ENEMY HQ ")+Math.ceil(f*100)+"%";
   $$("#cards .uc").forEach(function(b){var k=b.dataset.v;
-    if(b.dataset.b==="unit"){var n=B.res[k]||0;b.querySelector("small").textContent=n+" left";b.classList.toggle("dis",n<=0||B.cp<CLASSES[k].cp);b.classList.toggle("sel",B.sel===k);}
+    if(b.dataset.b==="unit"){var n=B.res[k]||0;b.querySelector("small").textContent="×"+n;b.classList.toggle("out",n<=0);b.classList.toggle("dis",n>0&&B.cp<CLASSES[k].cp);b.classList.toggle("sel",B.sel===k);b.querySelector(".wait").style.height=(n>0?clamp(1-B.cp/CLASSES[k].cp,0,1)*100:0)+"%";}
     else{var m=S.pu[k]||0;b.querySelector("small").textContent="×"+m;b.classList.toggle("dis",m<=0);b.classList.toggle("sel",B.sel===k);}});
   $$("#stn button").forEach(function(b){b.classList.toggle("on",b.dataset.v===B.stance);});
-  var a=$("#bauto");a.textContent=(B.adv?"Adv. General":"General")+(B.auto?": ON":": OFF");a.classList.toggle("on",B.auto);
+  var a=$("#bauto");a.textContent=(B.adv?"Adv. Auto":"Auto")+(B.auto?": ON":": OFF");a.classList.toggle("on",B.auto);
   $("#bspd").textContent=B.spd+"×";var cb=$("#bcmd");if(cb)cb.classList.toggle("on",S.gems>=GP.cmd&&B.cp<=B.cpMax-1);
 }
 function battleTap(e){
