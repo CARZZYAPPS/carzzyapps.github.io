@@ -25,6 +25,7 @@
 .pod{text-align:center;padding:22px 12px 18px;border-radius:20px;position:relative;overflow:hidden}
 .pod .crown{font:900 13px var(--display);letter-spacing:.14em;color:var(--mut)}
 .pod .nm{font:800 clamp(15px,2vw,20px) var(--display);margin:10px 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podtime{font-size:11px;color:var(--mut);font-weight:700;margin-top:3px}
 .pod .v{font:800 clamp(18px,2.6vw,26px) var(--display)}
 .pod .v small{display:block;font:700 12px var(--body);color:var(--mut)}
 .pod .av{width:56px;height:56px;margin:12px auto 0;border-radius:50%;display:grid;place-items:center;font:900 22px var(--display);color:#0d0a26}
@@ -116,7 +117,9 @@ function draw(rows, g, unit) {
   const me = LZ.user ? LZ.user.uid : null;
   const ng = (r) => Object.keys(r.games || {}).filter((k) => k !== "bonus").length;
   const gname = (id) => { const x = ((cat && cat.games) || cat || []).find((y) => y.id === id); return x ? x.name : ""; };
-  const sub = (r) => tab === "all" ? (metric === "best" ? (gname(r.bestRoundGame) ? "in " + gname(r.bestRoundGame) : "single round") : ng(r) + " game" + (ng(r) === 1 ? "" : "s")) : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
+  const baseSub = (r) => tab === "all" ? (metric === "best" ? (gname(r.bestRoundGame) ? "in " + gname(r.bestRoundGame) : "single round") : ng(r) + " game" + (ng(r) === 1 ? "" : "s")) : fmt(((r.games || {})[tab] || {}).plays || 0) + " plays";
+  const timePlayed = (r) => { const t = r.timeTotal || 0; return t >= 60 ? fmtTime(t) + " played" : ""; };
+  const sub = (r) => { const b = baseSub(r), t = timePlayed(r); return t ? (b ? t + " · " + b : t) : b; };
   
   $("#podium").innerHTML = rows.length >= 3 ? [1, 0, 2].map((i) => { 
     const r = rows[i]; 
@@ -131,6 +134,7 @@ function draw(rows, g, unit) {
       <div class="av">${avatarContent}</div>
       <div class="nm">${nameHtml(r, TIERS, ACH, "")}</div>
       ${badge(r.username)}
+      ${timePlayed(r) ? `<div class="podtime">${timePlayed(r)}</div>` : ""}
       <div class="v">${fmt(val(r))}<small>${esc(unit)}</small></div>
     </div>`; 
   }).join("") : "";
@@ -163,8 +167,9 @@ function fmtTime(sec) {
   return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
 }
 function timeStats(m) {
-  const prog = (m && m.prog) || {}, days = prog.days || {};
-  const total = Object.values(days).reduce((a, v) => a + (v.sec || 0), 0), best = prog.tBest || 0;
+  let total = 0, best = 0;
+  try { const pt = LZ.playtime ? LZ.playtime() : null; if (pt) { total = pt.total; best = pt.best; } } catch (e) {}
+  if (!total && !best) { const prog = (m && m.prog) || {}, days = prog.days || {}; total = Object.values(days).reduce((a, v) => a + (v.sec || 0), 0); best = prog.tBest || 0; }
   if (!total && !best) return `<div class="tstats"><div class="ts"><b>—</b><small>Total time</small></div><div class="ts"><b>—</b><small>Longest session</small></div><span class="tnote">Time played starts counting now.</span></div>`;
   return `<div class="tstats"><div class="ts"><b>${fmtTime(total)}</b><small>Total time played</small></div><div class="ts"><b>${fmtTime(best)}</b><small>Longest session</small></div></div>`;
 }

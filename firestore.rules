@@ -301,6 +301,8 @@ service cloud.firestore {
           && (!('prog' in data) || data.prog is map)
           && (!('bestRound' in data) || (data.bestRound is int && data.bestRound >= 0 && data.bestRound <= 20000))
           && (!('bestRoundGame' in data) || (data.bestRoundGame is string && data.bestRoundGame.size() <= 24))
+          && (!('timeTotal' in data) || (data.timeTotal is int && data.timeTotal >= 0 && data.timeTotal <= 1000000000))
+          && (!('timeBest' in data) || (data.timeBest is int && data.timeBest >= 0 && data.timeBest <= 1000000000))
           && photoOk(data)
           && pinsOk(data)
           && (!('hideCredits' in data) || data.hideCredits is bool)

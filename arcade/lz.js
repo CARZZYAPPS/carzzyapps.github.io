@@ -334,6 +334,7 @@ async function addToAccount(entries) {
     });
     const out = keepExtras(cur, { username: state.username, lp: Math.min((cur.lp || 0) + add, (cur.lp || 0) + SESSION_LP_CAP), games: gm, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() });
     if (br) { out.bestRound = br; out.bestRoundGame = brg.slice(0, 24); }
+    out.timeTotal = progSeconds(out.prog); out.timeBest = Math.round((out.prog && out.prog.tBest) || 0);
     tx.set(ref, out);
   });
 }
@@ -427,6 +428,8 @@ function stash(id, e) {
   if (e.round || o.round) p[id].round = Math.max(o.round || 0, e.round || 0);
   setPending(p);
 }
+function progSeconds(prog) { return Math.round(Object.values((prog && prog.days) || {}).reduce((a, v) => a + (v.sec || 0), 0)); }
+function playtime() { const p = getProg(); const total = Object.values(p.days || {}).reduce((a, v) => a + (v.sec || 0), 0); return { total, best: p.tBest || 0 }; }
 function pendingLP() { let t = 0; Object.values(pendingAll()).forEach((e) => (t += e.lp || 0)); return t; }
 
 /* ---------------- tiers & perks ---------------- */
@@ -436,6 +439,8 @@ function keepExtras(cur, out) {
   if (typeof cur.hideCredits === "boolean") out.hideCredits = cur.hideCredits;
   if (typeof cur.photoURL === "string") out.photoURL = cur.photoURL;
   if (typeof cur.bestRound === "number") { out.bestRound = cur.bestRound; if (typeof cur.bestRoundGame === "string") out.bestRoundGame = cur.bestRoundGame; }
+  if (typeof cur.timeTotal === "number") out.timeTotal = cur.timeTotal;
+  if (typeof cur.timeBest === "number") out.timeBest = cur.timeBest;
   return out;
 }
 async function editRow(fn) {
@@ -697,7 +702,7 @@ async function openFeedback(gameId) {
 const LZ = {
   ready: readyP, auth, db, catalog, gameInfo, toLP, onChange, signedIn,
   get user() { return state.user; }, get username() { return state.username; },
-  boot, save, flush, endSession, inEarlyAccess, settleEarly, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles, setPins, setHideCredits, vote, votes, access, credits,
+  boot, save, flush, endSession, inEarlyAccess, settleEarly, gameOfTheDay, multiplier, progress, claimDoor, syncProg, extras, today, pendingLP, playtime, plays, top, watchTop, me, rank, playerCount, goSignIn, goSignUp, roles, setPins, setHideCredits, vote, votes, access, credits,
   openAccount, openFeedback, requestAccess, accountMenu, toast, logout, base: BASE, fmt, esc
 };
 window.LZ = LZ;
@@ -742,7 +747,10 @@ async function addTime() {
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref); if (!snap.exists()) return; // row is created on first LP; until then time stays local
     const cur = snap.data();
-    tx.set(ref, keepExtras(cur, { username: state.username, lp: cur.lp || 0, games: cur.games || {}, prog: mergeProg(cur.prog, getProg()), updatedAt: serverTimestamp() }));
+    const merged = mergeProg(cur.prog, getProg());
+    const out = keepExtras(cur, { username: state.username, lp: cur.lp || 0, games: cur.games || {}, prog: merged, updatedAt: serverTimestamp() });
+    out.timeTotal = progSeconds(merged); out.timeBest = Math.round(merged.tBest || 0);
+    tx.set(ref, out);
   });
 }
 readyP.then(startTime);
