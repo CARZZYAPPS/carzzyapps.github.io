@@ -102,6 +102,28 @@
       "released": "2026-11-19",
       "earlyAccess": true,
       "eaBoost": 1.5
+    },
+    {
+      "id": "dominion",
+      "name": "Dominion: Infinite Frontiers",
+      "version": "0.9",
+      "path": "/arcade/dominion/",
+      "hook": "Raise an army and conquer whole planets, outpost by outpost, in real-time 3D battles. Hold what you take while rival commanders come for it.",
+      "categories": [
+        "strategy",
+        "3d"
+      ],
+      "ratio": 0.04,
+      "scoreLabel": "battle score",
+      "accent": [
+        "#ffcf3a",
+        "#ff4fa3"
+      ],
+      "thumb": "/arcade/img/dominion.jpg",
+      "released": "2026-12-31",
+      "earlyAccess": true,
+      "eaBoost": 1.5,
+      "bonus": true
     }
   ]
 }

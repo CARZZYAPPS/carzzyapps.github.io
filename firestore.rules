@@ -514,5 +514,75 @@ service cloud.firestore {
       allow delete: if isCremaRushAdmin();
     }
 
+
+    // ===================== Dominion: Infinite Frontiers (Lazer Arcade) =====================
+    // Public camp snapshot that other commanders raid and rank against. Only its owner writes it.
+    match /dominionPlayers/{uid} {
+      allow read: if true;
+      allow create, update: if arcadeAccount() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'lvl', 'xp', 'pw', 'fort', 'ench', 'em', 'c1', 'c2', 'army', 'clv', 'wins', 'land', 'sh', 'at'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 16
+        && request.resource.data.lvl is int && request.resource.data.lvl >= 1 && request.resource.data.lvl <= 999
+        && request.resource.data.xp is number && request.resource.data.pw is number
+        && request.resource.data.fort is int && request.resource.data.ench is int && request.resource.data.em is int
+        && request.resource.data.c1 is string && request.resource.data.c1.size() <= 9
+        && request.resource.data.c2 is string && request.resource.data.c2.size() <= 9
+        && request.resource.data.army is map && request.resource.data.army.size() <= 12
+        && request.resource.data.clv is map && request.resource.data.clv.size() <= 12
+        && request.resource.data.wins is int && request.resource.data.land is int
+        && request.resource.data.sh is number
+        && request.resource.data.at == request.time;
+      allow delete: if arcadeAccount() && request.auth.uid == uid;
+    }
+
+    // Attack reports left for a commander by whoever raided them. Only the target reads or clears them.
+    match /dominionInbox/{uid}/reports/{reportId} {
+      allow read, delete: if arcadeAccount() && request.auth.uid == uid;
+      allow create: if arcadeAccount() && request.auth.uid != uid
+        && request.resource.data.keys().hasOnly(['from', 'name', 'win', 'coins', 'at'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 16
+        && request.resource.data.win is bool
+        && request.resource.data.coins is int
+        && request.resource.data.coins >= 0 && request.resource.data.coins <= 600
+        && request.resource.data.at == request.time;
+    }
+
+    // Chat. Signed-in accounts only, 120 characters, and one message every 3 seconds: each message
+    // must be written in the same batch as the sender's rate marker.
+    match /dominionChat/{channel}/msgs/{msgId} {
+      allow read: if arcadeAccount();
+      allow create: if arcadeAccount()
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'lvl', 'text', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 16
+        && request.resource.data.lvl is int
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 120
+        && request.resource.data.at == request.time
+        && getAfter(/databases/$(database)/documents/dominionChatRate/$(request.auth.uid)).data.at == request.time;
+      allow delete: if isArcadeAdmin() || (arcadeAccount() && resource.data.uid == request.auth.uid);
+    }
+    match /dominionChatRate/{uid} {
+      allow read: if arcadeAccount() && request.auth.uid == uid;
+      allow create: if arcadeAccount() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at == request.time;
+      allow update: if arcadeAccount() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at == request.time
+        && request.time > resource.data.at + duration.value(3, 's');
+    }
+    // Reported chat messages, for moderators.
+    match /dominionChatFlags/{flagId} {
+      allow read, delete: if isArcadeAdmin();
+      allow create: if arcadeAccount()
+        && request.resource.data.keys().hasOnly(['ch', 'msg', 'text', 'by', 'at'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.text is string && request.resource.data.text.size() <= 120
+        && request.resource.data.at == request.time;
+    }
+
   }
 }
