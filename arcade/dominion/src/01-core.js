@@ -80,7 +80,7 @@ var GEAR={
 var GEAR_LV=[1,3,7,10,13,16];
 var TIER=["Outpost","City","State Fortress","Capital","World Core"];
 var TIERS=["base","city","state","country","core"];
-var T_SCORE=[1800,3200,4500,6000,9000],T_COIN=[46,130,300,640,1500],T_XP=[20,46,92,180,420],T_ALLOY=[0,3,8,20,50],T_INC=[4,11,26,64,180],T_DUR=[55,80,95,115,150];
+var T_SCORE=[1800,3200,4500,6000,9000],T_COIN=[46,130,300,640,1500],T_XP=[20,46,92,180,420],T_ALLOY=[0,3,8,20,50],T_INC=[4,11,26,64,180],T_DUR=[55,80,100,130,165];
 var THEMES=[
   {nm:"Verdis",g1:"#3fae63",g2:"#17603f",acc:"#b7ff7a",sea:"#1f77d6",rock:"#586a60",tree:"#0e5c34",bias:"cover",d:"Forest world. Lots of cover."},
   {nm:"Emberfall",g1:"#c2552e",g2:"#611d1b",acc:"#ffc24a",sea:"#ff7a2a",rock:"#3d2424",tree:"#8a3414",bias:"high",d:"Volcanic ridges. High ground everywhere."},
@@ -106,7 +106,7 @@ var EVENTS=[
   {nm:"Harvest of Stars",col:"#8dff5a",skin:{id:"ev_harvest",nm:"Starharvest",c1:"#d7ff6a",c2:"#1fbf6a"}}
 ];
 var PASS_PTS=[40,100,180,280,400,560,760,1000];
-var GP={spin:30,shield:60,revive:40,prot:60,xp:80,skip:250,pups:70,general:120,freeze:40,pass:300,evskin:250,starter:20};
+var GP={cmd:15,repair:50,spin:30,shield:60,revive:40,prot:60,xp:80,skip:250,pups:70,general:120,freeze:40,pass:300,evskin:250,starter:20};
 var ALLIES=[{nm:"Crimson Pact",col:"#ff5468"},{nm:"Star Syndicate",col:"#2fe6ff"},{nm:"Iron Lotus",col:"#8dff5a"}];
 var BOTN=["Kragmoor","NovaQueen","xX_Vex_Xx","IronTide","Zyra","Mako77","LordPickle","Astra","Brakka","SilentFox","Quillon","DuneRat","Hexa","Tornwing","Juno","Okabe","Rustbolt","Mirelle","Vanta","GrimLoaf","Peachy","Solenne","Draxis","Wobble","Kestrel","Ymir","Fennec","Onyx","Talon","Bex"];
 var BOTC=["#ff5468","#ff9a3d","#2fe6ff","#8dff5a","#ff4fa3","#a66bff","#ffe27a","#5d8bff","#3fe3b0","#ff7a5c"];
@@ -132,7 +132,7 @@ h13:{n:"#13",t:"Chat, badges and status",d:"Chat keeps you connected and badges 
 h13b:{n:"#13b",t:"Leaderboards and tournaments",d:"Seeing your rank slip is a reason to play more. The top AI rivals here are tuned to stay a little ahead of you, so there is always someone to chase."},
 h14:{n:"#14",t:"Seasonal events and limited items",d:"A countdown on something that may never come back makes showing up feel necessary."},
 h15:{n:"#15",t:"Hidden treasure and surprise drops",d:"Random rewards hit harder than predictable ones. Not knowing what is inside is the whole point."},
-h16:{n:"#16",t:"Wheel spins and near-misses",d:"Many games steer the wheel to stop right beside the jackpot, because almost winning makes people spin again. This wheel is fair and shows its odds."},
+h16:{n:"#16",t:"Wheel spins and near-misses",d:"The odds shown are real, but the two most common prizes sit on either side of the jackpot and the wheel is tuned to stop a hair from the line when it lands on them. Almost winning makes people spin again."},
 h17:{n:"#17",t:"Notifications",d:"Alerts about attacks, timers and rewards are built to interrupt you. Just checking turns into playing."},
 h18:{n:"#18",t:"Speed and bright visuals",d:"Fast battles, flashes and instant feedback keep attention locked and make it hard to stop mid-session."},
 m1:{n:"$1",t:"Optional but tempting",d:"Pressure rises over time and premium shortcuts are always one tap away. In a paid game this is where the money comes in. Here the shortcuts cost gems you earned."},
@@ -170,7 +170,7 @@ function fresh(){
     ally:-1,allyCd:0,campCd:0,campU:0,
     ev:{id:-1,pts:0,cf:0,cp:0,prem:false},tour:{id:-1,pts:0},
     offers:{starter:true,shownStarter:false,last:0,near:0,siege:{}},alerts:[],alertCfg:{attack:true,land:true,event:true,streak:true,quest:true},
-    chat:[],lastDay:"",tut:0,total:0,lastRank:0,lastDead:{},spinDay:"",mile:{}};
+    chat:[],lastDay:"",tut:0,total:0,lastRank:0,lastDead:{},spinDay:"",mile:{},mq:0,militiaT:0,lastDmg:null};
 }
 function load(){
   try{var d=JSON.parse(localStorage.getItem(SAVEKEY));if(d&&d.v===VER&&d.worlds){var f=fresh();for(var k in f){if(d[k]===undefined)d[k]=f[k];else if(f[k]&&typeof f[k]==="object"&&!Array.isArray(f[k])&&d[k]&&typeof d[k]==="object"){for(var j in f[k])if(d[k][j]===undefined)d[k][j]=f[k][j];}}return d;}}catch(e){}

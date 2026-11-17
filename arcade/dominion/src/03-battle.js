@@ -72,12 +72,12 @@ function spawnEnemy(){
     return;
   }
   var raid=cfg.mode==="raid";
-  B.hq=mkStruct(1,L-70,WD/2,[26,32,36,40,46][ty],[380,900,1500,2200,3400][ty]*em,true,ty>=1?{dmg:(8+3*ty)*em,rng:140,cd:1.1}:null);
+  B.hq=mkStruct(1,L-70,WD/2,[26,32,36,40,46][ty],[380,850,1350,1900,2900][ty]*em,true,ty>=1?{dmg:(8+3*ty)*em,rng:140,cd:1.1}:null);
   var nt=(ty>=2?2:0)+(cfg.tr==="fort"&&ty>=1?1:0);
-  for(i=0;i<nt;i++)mkStruct(1,L-150-(i===2?55:0),i===2?WD/2:(i?WD/2+115:WD/2-115),15,240*em,false,{dmg:(6+ty)*em,rng:125,cd:1});
-  if(B.gateInfo){var gt=mkStruct(1,(B.gateInfo.gx+.5)*CELL,(B.gateInfo.gy+2)*CELL,46,(420+90*ty)*em,false,null);gt.gate=true;}
+  for(i=0;i<nt;i++)mkStruct(1,L-150-(i===2?55:0),i===2?WD/2:(i?WD/2+115:WD/2-115),15,200*em,false,{dmg:(5+ty)*em,rng:118,cd:1.1});
+  if(B.gateInfo){var gt=mkStruct(1,(B.gateInfo.gx+.5)*CELL,(B.gateInfo.gy+2)*CELL,46,(260+60*ty)*em,false,null);gt.gate=true;}
   B.relays.forEach(function(rl){for(var q=0;q<2;q++){var gp=freeSpot(rl.x+rnd(-24,24),rl.y+rnd(-24,24));mkUnit(1,"trooper",gp[0],gp[1],{hold:true});}});
-  var budget=eBudget(ty,cfg.lv)*(raid?.9:1)*(S.stats.wins<3?.75:1),list=rollArmy(budget,cfg.lv,r),gar=ty===0?list.length:Math.ceil(list.length*.68);
+  var budget=eBudget(ty,cfg.lv)*(raid?.9:1)*(cfg.ev?1.35:1)*(S.stats.wins<3?.75:1),list=rollArmy(budget,cfg.lv,r),gar=ty===0?list.length:Math.ceil(list.length*.68);
   for(i=0;i<list.length;i++){
     if(i<gar){var c=CLASSES[list[i]],back=c.ranged||c.heal,p=freeSpot(back?rnd(L-190,L-100):rnd(L*.54,L-180),rnd(45,WD-45));mkUnit(1,list[i],p[0],p[1],{hold:true});}
   }
@@ -466,7 +466,7 @@ function updateBattleHud(){
     else{var m=S.pu[k]||0;b.querySelector("small").textContent="×"+m;b.classList.toggle("dis",m<=0);b.classList.toggle("sel",B.sel===k);}});
   $$("#stn button").forEach(function(b){b.classList.toggle("on",b.dataset.v===B.stance);});
   var a=$("#bauto");a.textContent=(B.adv?"Adv. General":"General")+(B.auto?": ON":": OFF");a.classList.toggle("on",B.auto);
-  $("#bspd").textContent=B.spd+"×";
+  $("#bspd").textContent=B.spd+"×";var cb=$("#bcmd");if(cb)cb.classList.toggle("on",S.gems>=GP.cmd&&B.cp<=B.cpMax-1);
 }
 function battleTap(e){
   if(!B||B.over)return;var rc=bf.getBoundingClientRect(),p=sf(e.clientX-rc.left,e.clientY-rc.top);
@@ -480,6 +480,7 @@ function battleBtn(b){
   if(!B||B.over)return;var k=b.dataset.b,v=b.dataset.v;snd("tap");
   if(k==="unit"){if(!(B.res[v]>0))return;B.sel=B.sel===v?null:v;}
   else if(k==="pu"){if(!(S.pu[v]>0))return;if(v==="strike")B.sel=B.sel==="strike"?null:"strike";else usePU(v);}
+  else if(k==="cmd"){if(S.gems<GP.cmd){bmsg("NOT ENOUGH GEMS");snd("bad");}else if(B.cp>B.cpMax-1){snd("bad");}else{S.gems-=GP.cmd;S.stats.gemsSpent+=GP.cmd;hit("m9");hit("m14");B.cp=Math.min(B.cpMax,B.cp+5);snd("jack");bmsg("+5 COMMAND");}}
   else if(k==="stance"){B.stance=v;if(v==="retreat"){S.stats.retreats++;bmsg("FALL BACK!");B.sel=null;}B.units.forEach(function(u){if(u.side===0&&!u.ally)u.hold=v==="hold";});}
   updateBattleHud();
 }

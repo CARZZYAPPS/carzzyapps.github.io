@@ -25,6 +25,8 @@ var ACT={
   resetYes:function(){var g=(S.gen||0)+1,mute=S.mute;S=fresh();S.gen=g;S.mute=mute;_bots=null;save();if(window.LZ)try{LZ.flush();}catch(e){}location.reload();},
   collect:function(){var v=Math.floor(S.vault);if(v<1){toast("The vault is empty. Capture territory to fill it.");return;}S.coins+=v;S.vault-=v;S.stats.collected+=v;qprog("collect",v);snd("coin");toast(IC.coin+" +"+fmt(v)+" collected","gold");renderWorld();renderHud();dirty();},
   raid:function(){startRaid(false);},
+  gauntlet:function(){startRaid(false,true);},
+  claimMain:function(){claimMain();if(pendingLv.length)flowNext();else{rr();renderNav();}},
   attack:function(v){attackNode(+v,false,false);},
   attackAuto:function(v){attackNode(+v,true,false);},
   attackAlly:function(v){if(S.allyCd>0)return;attackNode(+v,false,true);},
@@ -50,7 +52,8 @@ var ACT={
   enchant:function(){if(S.ench>=5)return;if(!spendGems(80*(S.ench+1),"an enchantment"))return;S.ench++;hit("m3");snd("jack");rr();},
   starter:function(){claimStarter();rr();},
   buy:function(v){
-    var nm={shield:"a Shield",prot:"Loss Protection",xp:"an XP Surge",skip:"a Level Skip",pups:"a Power-up Crate",general:"the Advanced General",freeze:"a Streak Freeze",pass:"the premium track"}[v];
+    var nm={shield:"a Shield",prot:"Loss Protection",xp:"an XP Surge",skip:"a Level Skip",pups:"a Power-up Crate",general:"the Advanced General",freeze:"a Streak Freeze",pass:"the premium track",repair:"an Instant Repair"}[v];
+    if(v==="repair"&&!S.lastDmg)return;
     if(v==="pass"&&S.ev.prem)return;
     if(!spendGems(GP[v],nm))return;
     if(v==="shield"){S.shieldU=Math.max(now(),S.shieldU)+8*3600e3;S.threat=null;hit("m11");}
@@ -61,6 +64,7 @@ var ACT={
     else if(v==="general"){S.genU=Math.max(now(),S.genU)+24*3600e3;hit("m10");}
     else if(v==="freeze"){S.streak.freeze++;hit("m11");}
     else if(v==="pass"){S.ev.prem=true;hit("m13");}
+    else if(v==="repair"){S.gear[S.lastDmg.s]={t:S.lastDmg.t,l:S.lastDmg.l};S.lastDmg=null;hit("m11");}
     snd("jack");toast(IC.gem+" Purchased: "+nm.replace(/^(a|an|the) /,""),"gold");
     if(pendingLv.length)flowNext();else renderAll();
   },

@@ -3,7 +3,7 @@ var TAU=Math.PI*2,FED_MS=180000,STAMP_PRICE=3;
 var PN_A=["Ar","Vel","Kor","Zan","Tor","Ny","Ex","Um","Or","Cal","Dra","Ith","Sol","Mar","Bel","Quo"],PN_B=["dis","ora","mund","thar","ius","ella","ion","arra","eth","ux","ana","oth"];
 var CN_A=["Ash","Bright","Storm","Iron","Gold","Red","Frost","Star","Moon","Sky","Dusk","Silver","Thorn","Glass","Ember","Wolf","Raven","Sun"],CN_B=["ford","haven","gate","hold","reach","fall","watch","spire","mere","vale","crest","port","mark","burn"];
 function genWorld(w){
-  var r=rng(hash(S.seed+":w"+w)),th=w%THEMES.length,C=w<1?2:3,N=[],used={};
+  var r=rng(hash(S.seed+":w"+w)),th=w%THEMES.length,C=w<1?3:4,N=[],used={};
   function nm(){for(var t=0;t<20;t++){var s=CN_A[Math.floor(r()*CN_A.length)]+CN_B[Math.floor(r()*CN_B.length)];if(!used[s]){used[s]=1;return s;}}return "Nova"+N.length;}
   function terr(){var ks=["open","cover","high","choke","fort"];return r()<.5?THEMES[th].bias:ks[Math.floor(r()*ks.length)];}
   function add(ty,p,a,rad,rv){var n={i:N.length,ty:ty,p:p,k:[],o:0,a:a,r:rad+(ty?(r()-.5)*.014:0),nm:"",tr:ty>=2?(r()<.55?"fort":terr()):terr(),sd:Math.floor(r()*1e9),rv:rv};N.push(n);if(p>=0)N[p].k.push(n.i);return n;}
@@ -17,17 +17,19 @@ function genWorld(w){
       for(var ci=0;ci<2;ci++){
         var iw=sw/2,ia=sa+ci*iw,cin=add(1,sn.i,ia+iw/2,.372,rv);cin.nm=nm();
         for(var b=0;b<2;b++){var bn=add(0,cin.i,ia+iw*(b?.76:.24),.468,rv);bn.nm=cin.nm+(b?" East":" West");}
+        if(ci===0){var rs=add(0,cin.i,ia+iw*.5,.5,rv);cin.k.pop();rs.rs=s?"farm":"mine";rs.nm=cin.nm+(s?" Farms":" Mine");}
       }
     }
   }
   return {w:w,nm:pn,th:th,n:N,done:false};
 }
 function W(){return S.worlds[S.cur];}
-function attackable(wd,n){return n.o===0&&n.k.every(function(k){return wd.n[k].o===1;});}
+function attackable(wd,n){if(n.rs)return n.o===0&&wd.n[n.p].o===1;return n.o===0&&n.k.every(function(k){return wd.n[k].o===1;});}
+function siteCount(kind){var c=0;S.worlds.forEach(function(wd){wd.n.forEach(function(n){if(n.o===1&&n.rs===kind)c++;});});return c;}
 function ownedCount(ty){var c=0;S.worlds.forEach(function(wd){wd.n.forEach(function(n){if(n.o===1&&(ty===undefined||n.ty===ty))c++;});});return c;}
 function worldPct(wd){var o=0;wd.n.forEach(function(n){if(n.o===1)o++;});return o/wd.n.length;}
-function incomeMin(){var t=0;S.worlds.forEach(function(wd){wd.n.forEach(function(n){if(n.o===1)t+=T_INC[n.ty]*(1+.6*wd.w);});});return t*(S.ally>=0?1.05:1);}
-function nodeLv(wd,n){return Math.max(1+wd.w*4+n.ty,Math.round(S.lvl-1+n.ty*.75));}
+function incomeMin(){var t=0;S.worlds.forEach(function(wd){wd.n.forEach(function(n){if(n.o===1&&!n.rs)t+=T_INC[n.ty]*(1+.6*wd.w);});});return t*(S.ally>=0?1.05:1);}
+function nodeLv(wd,n){var base=1+wd.w*4+n.ty;return Math.min(base+5,Math.max(base,Math.round(S.lvl-1+n.ty*.4)));}
 function eBudget(ty,lv){return[8,14,19,24,30][ty]*(1+.07*(lv-1));}
 function es(lv){return 1+.1*(lv-1);}
 
@@ -49,7 +51,7 @@ function campCost(){return Math.round(180*Math.pow(S.campX+1,1.6));}
 function fedOn(){return S.lvl>=2;}
 function fedMult(){if(!fedOn())return 1;return now()<S.fedU?[.92,1,1.12][S.fedQ]:.8;}
 function armyPower(){var t=0;for(var k in S.army)t+=S.army[k]*CLASSES[k].pw*clsMult(k);return t*(1+(gearBonus("weapon")+gearBonus("armor"))/2)*fedMult();}
-function enemyPower(ty,lv){return(eBudget(ty,lv)*12+[0,40,90,150,240][ty])*es(lv);}
+function enemyPower(ty,lv){return(eBudget(ty,lv)*12+[0,70,200,420,640][ty])*es(lv);}
 function matchup(ty,lv){var r=armyPower()/enemyPower(ty,lv);return r>=1.6?["Easy","l"]:r>=1.05?["Fair","c"]:r>=.72?["Hard","g"]:["Deadly","r"];}
 var pendingLv=[];
 function gem(n){S.gems+=n;S.stats.gemsEarned+=n;}
@@ -79,6 +81,20 @@ function capCap(){return 8+2*S.lvl;}
 function ransomVal(){return Math.round(S.cap*(7+4*Math.min(S.capCyc,6))*(1+.08*(S.lvl-1)));}
 
 /* ================= quests / achievements ================= */
+var MAINQ=[
+  {t:"Win your first battle",f:function(){return S.stats.wins>=1;},g:5},
+  {t:"Capture 4 outposts",f:function(){return S.stats.capT[0]>=4;},g:5},
+  {t:"Capture a city",f:function(){return S.stats.capT[1]>=1;},g:10},
+  {t:"Reach level 3",f:function(){return S.lvl>=3;},g:10},
+  {t:"Feed your army 3 times",f:function(){return S.stats.feeds>=3;},g:5},
+  {t:"Capture a state fortress",f:function(){return S.stats.capT[2]>=1;},g:15},
+  {t:"Equip gear in every slot",f:function(){return Object.keys(GEAR).every(function(s){return S.gear[s];});},g:15},
+  {t:"Win 3 defenses",f:function(){return S.stats.defends>=3;},g:15},
+  {t:"Capture a capital",f:function(){return S.stats.capT[3]>=1;},g:25},
+  {t:"Conquer a World Core",f:function(){return S.stats.capT[4]>=1;},g:50}
+];
+function mainQ(){var i=S.mq;if(i<MAINQ.length)return MAINQ[i];var k=i-MAINQ.length+2;return{t:"Conquer "+k+" worlds",f:function(){return S.stats.capT[4]>=k;},g:50};}
+function claimMain(){var q=mainQ();if(!q.f())return;var c=100+60*S.mq;S.mq++;gem(q.g);S.coins+=c;addXP(30+10*S.mq);hit("h9");snd("jack");toast(IC.gem+" Main quest complete: +"+q.g+" gems, +"+c+" coins","gold");dirty();}
 var QT={
   win:{t:function(n){return "Win "+n+" battle"+(n>1?"s":"");},n:function(q){return 2+Math.floor(q*.55);}},
   kills:{t:function(n){return "Defeat "+n+" enemy soldiers";},n:function(q){return 15+q*9;}},
@@ -100,7 +116,7 @@ function newQuest(){
 function qprog(k,n){
   S.quests.forEach(function(q){if(q&&q.k===k&&q.p<q.n){q.p=Math.min(q.n,q.p+n);if(q.p>=q.n)alertAdd("quest","Quest complete: "+QT[q.k].t(q.n));}});
 }
-function questsReady(){return S.quests.filter(function(q){return q&&q.p>=q.n;}).length;}
+function questsReady(){return S.quests.filter(function(q){return q&&q.p>=q.n;}).length+(mainQ().f()?1:0);}
 function claimQuest(i){
   var q=S.quests[i];if(!q||q.p<q.n)return;
   S.coins+=q.c;if(q.a)S.alloy+=q.a;if(q.g)gem(q.g);addXP(q.x);S.stats.quests++;S.quests[i]=null;S.quests[i]=newQuest();hit("h9");hit("h10");
@@ -239,11 +255,16 @@ var WHEEL=[
   {nm:"JACKPOT",jack:1,col:"#ffcf3a",w:2},{nm:"60 coins",r:["coins",60],col:"#3a55e0",w:20},{nm:"30 stamps",r:["stamps",30],col:"#12b3a6",w:16},{nm:"Power-up",r:["pu",1],col:"#a66bff",w:12},
   {nm:"150 coins",r:["coins",150],col:"#e02f86",w:12},{nm:"2 alloy",r:["alloy",2],col:"#0a8fb0",w:10},{nm:"25 gems",r:["gems",25],col:"#4fd63a",w:8},{nm:"40 coins",r:["coins",40],col:"#5d3fd0",w:20}
 ];
-// Fair wheel: each slot is drawn by its published weight and the stop point inside the slot is uniform.
+// The slot is drawn by its published weight, so the odds on screen are true. The near-miss is in the
+// layout and the stop: the two most likely prizes flank the jackpot, and a stop on either one is
+// placed a hair from the jackpot line (deck hook #16).
 function wheelRoll(){
   var tot=0,i;for(i=0;i<WHEEL.length;i++)tot+=WHEEL[i].w;var x=Math.random()*tot;
   for(i=0;i<WHEEL.length;i++){x-=WHEEL[i].w;if(x<=0)break;}
-  return{seg:Math.min(i,WHEEL.length-1),off:rnd(.08,.92)};
+  i=Math.min(i,WHEEL.length-1);
+  if(i===1)return{seg:1,off:rnd(.02,.13),near:true};
+  if(i===WHEEL.length-1)return{seg:i,off:rnd(.87,.98),near:true};
+  return{seg:i,off:rnd(.15,.85),near:false};
 }
 function wheelGrant(seg){
   var w=WHEEL[seg];
@@ -277,12 +298,13 @@ function tick(){
   if(!S||!S.name||document.hidden)return;
   tickN++;S.stats.time++;
   var inc=incomeMin();if(inc>0)S.vault=Math.min(inc*10,S.vault+inc/60);
+  var nm=siteCount("mine"),nf=siteCount("farm");if(nm){S.accA=(S.accA||0)+nm/200;if(S.accA>=1){S.accA-=1;S.alloy++;}}if(nf){S.accS=(S.accS||0)+nf/15;if(S.accS>=1){var ws=Math.floor(S.accS);S.accS-=ws;S.stamps+=ws;}}
   if(S.cap>0&&now()>S.capU){alertAdd("land",S.cap+" captives escaped. Nobody fed them.");S.cap=0;S.capCyc=0;hit("h6");}
   if(fedOn()&&S.feedAuto.on&&S.lvl>=6&&S.fedU-now()<4000&&armySize()>0)feed(S.feedAuto.q,true);
   if(S.allyCd>0)S.allyCd--;if(S.campCd>0)S.campCd--;if(S.raidCd>0)S.raidCd--;
   if(!B){
     if(S.threat){S.threat.t--;if(S.threat.t<=0){var r=resolveThreat();if(r&&!r.win)showDefLoss(r);renderAll();}}
-    else if(S.lvl>=3&&ownedCount()>=4&&now()>S.shieldU&&modalFree()){S.raidT--;if(S.raidT<=0){spawnThreat();S.raidT=irnd(150,260);renderAll();}}
+    else if(S.lvl>=3&&ownedCount()>=4&&now()>S.shieldU&&modalFree()){S.raidT--;if(S.raidT<=0){spawnThreat();S.raidT=irnd(200,330);renderAll();}}
     if(!S.chest){S.chestT--;if(S.chestT<=0){var wd=W();S.chest={w:S.cur,n:irnd(1,wd.n.length-1),exp:now()+75000};S.chestT=irnd(110,200);hit("h15");}}
     else if(now()>S.chest.exp)S.chest=null;
   }

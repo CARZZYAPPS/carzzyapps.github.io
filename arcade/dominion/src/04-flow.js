@@ -27,11 +27,11 @@ function attackNode(i,auto,ally){
   var lv=nodeLv(wd,n);if(ally)S.allyCd=180;
   startBattle({mode:"atk",ty:n.ty,lv:lv,tr:n.tr,sd:n.sd+S.stats.battles*7919,nm:n.nm,sub:TIER[n.ty]+" · "+TERR[n.tr].nm+" · Lv "+lv,th:wd.th,w:wd.w,n:i,ecol:enemyCols(),auto:!!auto,ally:!!ally});
 }
-function startRaid(auto){
+function startRaid(auto,ev){
   if(S.raidCd>0){toast("Scouts are still looking for a target ("+S.raidCd+"s).");return;}
   if(armySize()<1){toast("You have no soldiers. Recruit some in Army.","bad");return;}
   var b=pick(bots()),lv=Math.max(1,S.lvl+irnd(-1,1)),tr=pick(["open","cover","high","choke"]);
-  startBattle({mode:"raid",ty:1,lv:lv,tr:tr,sd:(Math.random()*1e9)|0,nm:b.nm+"'s Camp",sub:"Raid · "+TERR[tr].nm+" · Lv "+lv,th:W().th,w:S.cur,ecol:enemyCols(),auto:!!auto,bot:b.i});
+  startBattle({mode:"raid",ty:1,lv:lv,tr:tr,sd:(Math.random()*1e9)|0,nm:ev?evNow().nm+" Gauntlet":b.nm+"'s Camp",sub:(ev?"Limited mode · ":"Raid · ")+TERR[tr].nm+" · Lv "+(ev?lv+1:lv),th:ev?(evId()%THEMES.length):W().th,w:S.cur,ecol:enemyCols(),auto:!!auto,bot:b.i,ev:!!ev});
 }
 function defendNow(){
   var th=S.threat;if(!th)return;var wd=S.worlds[th.w],n=wd.n[th.n],b=bots()[th.b];
@@ -61,7 +61,7 @@ function battleDone(b){
       if(n.ty===4&&!wd.done){wd.done=true;hit("h1");R.core=true;if(S.worlds.length<=wd.w+1){S.worlds.push(genWorld(wd.w+1));}}
       alertAdd("land","You captured "+n.nm+".");
     }
-    if(cfg.mode==="raid"){qprog("raid",1);S.raidCd=40;}
+    if(cfg.mode==="raid"){qprog("raid",1);S.raidCd=40;if(cfg.ev){var ep=Math.round(score/25);S.ev.pts+=ep;hit("h14");R.items.push([IC.bolt,"Event points","+"+ep]);}}
     if(def){S.stats.defends++;qprog("defend",1);S.threat=null;R.items.push([IC.shield,"Held",esc(S.worlds[cfg.thr.w].n[cfg.thr.n].nm)]);}
     if(!def){var cp=Math.min(capCap()-S.cap,Math.floor(b.kills*rnd(.1,.3)));if(cp>0){if(S.cap===0)S.capCyc=0;S.cap+=cp;S.capU=Math.max(S.capU,now()+FED_MS);S.stats.captives+=cp;R.items.push([IC.cap,"Captives taken","+"+cp]);}}
     if(!def&&cfg.ty>=1&&Math.random()<.18){
@@ -80,10 +80,11 @@ function battleDone(b){
       var have=Object.keys(GEAR).filter(function(s){return S.gear[s];});
       if(have.length){var s2=pick(have),g=S.gear[s2],nm=GEAR[s2].names[g.t-1];
         if(S.lossProt>0){S.lossProt--;R.items.push([IC.shield,"Loss Protection","saved your "+nm]);}
-        else{g.l--;if(g.l<1){S.gear[s2]=null;R.bad.push(nm+" destroyed");}else R.bad.push(nm+" damaged (level "+g.l+")");}}
+        else{S.lastDmg={s:s2,t:g.t,l:g.l};g.l--;if(g.l<1){S.gear[s2]=null;R.bad.push(nm+" destroyed");}else R.bad.push(nm+" damaged (level "+g.l+")");}}
     }
     if(o==="lose")addXP(Math.round(T_XP[cfg.ty]*.15));
   }
+  if(armySize()<8&&now()>S.militiaT){var mil=8-armySize();S.army.trooper=(S.army.trooper||0)+mil;S.militiaT=now()+150000;R.items.push([IC.army,"Militia rallied to your banner","+"+mil]);}
   checkAch();R.ach=newAch.slice();quiet=false;save();showResults(R);
 }
 function showResults(R){

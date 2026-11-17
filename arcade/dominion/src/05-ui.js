@@ -24,7 +24,7 @@ function renderBanner(){
 function seg(key,opts){return '<div class="seg">'+opts.map(function(o){return '<button data-a="sub" data-v="'+o[0]+'" class="'+(sub[key]===o[0]?"on":"")+'">'+o[1]+(o[2]?'<span class="dot"></span>':"")+"</button>";}).join("")+"</div>";}
 function renderTab(){
   var v=$("#view");
-  if(tab==="world"){if(!$("#world")){v.innerHTML='<div id="world"><canvas id="map"></canvas><div class="wtop" id="wtop"></div><div class="wleft" id="wleft"></div><div class="wside" id="wside"></div><div id="wbot"></div></div>';$("#map").addEventListener("pointerdown",mapTap);}renderWorld();return;}
+  if(tab==="world"){if(!$("#world")){v.innerHTML='<div id="world"><canvas id="map3"></canvas><canvas id="map"></canvas><div class="wtop" id="wtop"></div><div class="wleft" id="wleft"></div><div class="wside" id="wside"></div><div id="wbot"></div></div>';var mp=$("#map");mp.addEventListener("pointerdown",function(e){if(GL){try{mp.setPointerCapture(e.pointerId);}catch(x){}glDown(e);}else mapTap(e);});mp.addEventListener("pointermove",glMove);mp.addEventListener("pointerup",function(e){if(GL&&glUp())mapTap(e);});mp.addEventListener("pointercancel",function(){if(GL)GL.drag=null;});}renderWorld();return;}
   var h='<div class="page">';
   if(tab==="army")h+=pgArmy();else if(tab==="forge")h+=pgForge();else if(tab==="quests")h+=pgQuests();else if(tab==="social")h+=pgSocial();else h+=pgStore();
   v.innerHTML=h+"</div>";paintIcons(v);
@@ -49,7 +49,7 @@ function hintText(){
   if(fedOn()&&now()>S.fedU)return "Your army is hungry and fighting at 80%. Feed them in Army, Mess Hall.";
   if(questsReady())return "A quest reward is waiting in Quests.";
   if(inc>0&&S.vault>=inc*9)return "Your vault is full. Collect it before it stops filling.";
-  if(S.stats.wins===0)return "Tap a glowing outpost on the rim of the planet to launch your first attack.";
+  if(S.stats.wins===0)return "Tap an outpost with a gold ring to launch your first attack. Drag to spin the planet.";
   for(i=0;i<wd.n.length;i++){n=wd.n[i];if(n.ty===1&&attackable(wd,n))return n.nm+" has lost its outposts. Strike the city now.";}
   for(i=0;i<wd.n.length;i++){n=wd.n[i];if(n.ty>=2&&attackable(wd,n))return n.nm+" is exposed. This is the big one.";}
   if(S.lvl>=3&&S.fort<S.lvl-1)return "Rivals raid weak fortresses. Upgrade yours in Forge before you log off.";
@@ -72,21 +72,21 @@ function renderWorld(){
 }
 function nodePanel(wd,n){
   var lv=nodeLv(wd,n),mu=matchup(n.ty,lv),can=attackable(wd,n),kids=n.k.length,got=n.k.filter(function(k){return wd.n[k].o===1;}).length,rv=bots()[n.rv%24],wm=1+.5*wd.w;
-  var h='<div id="node"><button class="x" data-a="unsel">✕</button><h3>'+esc(n.nm)+' <span class="tag">'+TIER[n.ty]+"</span>"+(n.o?' <span class="tag l">Yours</span>':' <span class="tag '+mu[1]+'">'+mu[0]+"</span>")+"</h3>";
+  var h='<div id="node"><button class="x" data-a="unsel">✕</button><h3>'+esc(n.nm)+' <span class="tag">'+(n.rs==="mine"?"Alloy Mine":n.rs==="farm"?"Farmland":TIER[n.ty])+"</span>"+(n.o?' <span class="tag l">Yours</span>':' <span class="tag '+mu[1]+'">'+mu[0]+"</span>")+"</h3>";
   if(S.chest&&S.chest.w===wd.w&&S.chest.n===n.i)h+='<div class="row" style="margin:6px 0"><span class="sp">'+IC.chest+" A treasure chest is sitting here. "+hk("h15")+'</span><button class="btn s" data-a="chest">Open</button></div>';
-  if(n.o){h+='<p class="sm mut" style="margin:4px 0">Earning '+fmt(T_INC[n.ty]*(1+.6*wd.w))+" coins per minute while you are online. Rivals can take it back. "+hk("h5")+"</p></div>";return h;}
-  h+='<div class="st"><span>Held by <b>'+esc(rv.nm)+"</b></span><span>Enemy level <b>"+lv+"</b></span><span>Terrain <b>"+TERR[n.tr].nm+"</b></span></div><p class=\"sm mut\" style=\"margin:2px 0\">"+TERR[n.tr].d+'</p><div class="loot"><span>'+IC.coin+" ~"+fmt(T_COIN[n.ty]*wm*(1+.06*(lv-1)))+"</span>"+(T_ALLOY[n.ty]?"<span>"+IC.alloy+" "+Math.round(T_ALLOY[n.ty]*wm)+"</span>":"")+"<span>"+IC.xp+" "+Math.round(T_XP[n.ty]*(1+.1*(lv-1)))+"</span><span>"+IC.flag+" +"+fmt(T_INC[n.ty]*(1+.6*wd.w))+"/min</span></div>";
-  if(!can){h+='<p class="sm" style="color:var(--gold)">'+IC.lock+" Capture everything that guards it first ("+got+"/"+kids+").</p></div>";return h;}
+  if(n.o){h+='<p class="sm mut" style="margin:4px 0">'+(n.rs==="mine"?"Producing 1 alloy every "+dur(200)+" while you are online.":n.rs==="farm"?"Growing 4 food stamps a minute while you are online.":"Earning "+fmt(T_INC[n.ty]*(1+.6*wd.w))+" coins per minute while you are online.")+" Rivals can take it back. "+hk("h5")+"</p></div>";return h;}
+  h+='<div class="st"><span>Held by <b>'+esc(rv.nm)+"</b></span><span>Enemy level <b>"+lv+"</b></span><span>Terrain <b>"+TERR[n.tr].nm+"</b></span></div><p class=\"sm mut\" style=\"margin:2px 0\">"+TERR[n.tr].d+'</p><div class="loot"><span>'+IC.coin+" ~"+fmt(T_COIN[n.ty]*wm*(1+.06*(lv-1)))+"</span>"+(T_ALLOY[n.ty]?"<span>"+IC.alloy+" "+Math.round(T_ALLOY[n.ty]*wm)+"</span>":"")+"<span>"+IC.xp+" "+Math.round(T_XP[n.ty]*(1+.1*(lv-1)))+"</span>"+(n.rs==="mine"?"<span>"+IC.alloy+" steady alloy":n.rs==="farm"?"<span>"+IC.stamp+" steady food":"<span>"+IC.flag+" +"+fmt(T_INC[n.ty]*(1+.6*wd.w))+"/min")+"</span></div>";
+  if(!can){h+='<p class="sm" style="color:var(--gold)">'+IC.lock+(n.rs?" Capture "+esc(wd.n[n.p].nm)+" to reach this site.":" Capture everything that guards it first ("+got+"/"+kids+").")+"</p></div>";return h;}
   h+='<div class="row w"><button class="btn big" data-a="attack" data-v="'+n.i+'">'+IC.sword+' Attack</button><button class="btn bx" data-a="attackAuto" data-v="'+n.i+'">Send General</button>';
   if(S.ally>=0)h+='<button class="btn b2 '+(S.allyCd>0?"off":"")+'" data-a="attackAlly" data-v="'+n.i+'">'+(S.allyCd>0?"Ally "+S.allyCd+"s":"With ally")+"</button>";
   h+="</div><p class=\"sm mut\" style=\"margin:6px 0 0\">You command: "+armySize()+" soldiers. The free General fights for you at half score. "+hk("h4")+"</p></div>";
   return h;
 }
-function nodePos(n){return[M.cx+Math.cos(n.a)*n.r*2*M.R,M.cy+Math.sin(n.a)*n.r*2*M.R];}
+function nodePos(n){if(GL&&GL.scr.length)return GL.scr[n.i]||[-9999,-9999];return[M.cx+Math.cos(n.a)*n.r*2*M.R,M.cy+Math.sin(n.a)*n.r*2*M.R];}
 function mapTap(e){
   var cv=$("#map"),rc=cv.getBoundingClientRect(),x=e.clientX-rc.left,y=e.clientY-rc.top,wd=W(),best=-1,bd=30*M.sc;
   wd.n.forEach(function(n){var p=nodePos(n),d=Math.hypot(p[0]-x,p[1]-y)-[4,7,9,11,16][n.ty]*M.sc;if(d<bd){bd=d;best=n.i;}});
-  if(best!==mapSel){mapSel=best;if(best>=0){snd("tap");var n=wd.n[best];if(!n.o&&n.ty>=2&&attackable(wd,n)&&!S.offers.siege[wd.w+":"+n.i]&&offerDue()&&S.stats.wins>4){S.offers.siege[wd.w+":"+n.i]=1;renderWorld();showOffer("siege");return;}}renderWorld();}
+  if(best!==mapSel){mapSel=best;if(best>=0){snd("tap");var n=wd.n[best];glFocus(n);if(!n.o&&n.ty>=2&&attackable(wd,n)&&!S.offers.siege[wd.w+":"+n.i]&&offerDue()&&S.stats.wins>4){S.offers.siege[wd.w+":"+n.i]=1;renderWorld();showOffer("siege");return;}}renderWorld();}
 }
 var stars=null;
 function mapLoop(ts){
@@ -94,6 +94,7 @@ function mapLoop(ts){
   var cv=$("#map");if(!cv||B||tab!=="world"||!S||!S.name)return;
   var w=cv.clientWidth,h=cv.clientHeight,dpr=Math.min(2,window.devicePixelRatio||1);if(!w||!h)return;
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  if(glInit()){$("#map3").style.display="block";try{glFrame(ts,w,h,dpr);return;}catch(e){console.warn("globe failed, using flat map",e);glFail=true;GL=null;$("#map3").style.display="none";}}
   var c=cv.getContext("2d"),t=ts/1000,wd=W(),th=THEMES[wd.th],my=myCols(),i,n,p;
   c.setTransform(dpr,0,0,dpr,0,0);
   var g=c.createLinearGradient(0,0,0,h);g.addColorStop(0,"#0a0926");g.addColorStop(1,"#1c0f52");c.fillStyle=g;c.fillRect(0,0,w,h);
@@ -186,7 +187,7 @@ function pgForge(){
     var fm=S.fort>=2+S.lvl,fc=fortCost(),ec=300*(S.ench+1);
     h+='<div class="pn"><h3>Fortress level '+S.fort+' <span class="tag c">Defense '+fmt(defPower())+"</span> "+hk("h7")+'</h3><p class="sm mut">When a rival attacks and you are busy or offline, your fortress and army fight back on their own. You earn nothing while offline, but you can still lose land, coins and soldiers. Set this before you log off.</p><div class="row w"><button class="btn '+(fm||S.coins<fc?"off":"")+'" data-a="fortUp">'+(fm?"Max for your level":"Upgrade · "+IC.coin+fmt(fc))+"</button></div></div>";
     h+='<div class="pn"><h3>Enchantment '+S.ench+" / 5 "+hk("m3")+'</h3><p class="sm mut">A premium ward that burns attackers near your fortress and adds a big chunk of defense. Gems only.</p><button class="btn b3 '+(S.ench>=5?"off":"")+'" data-a="enchant">'+(S.ench>=5?"Fully enchanted":"Enchant · "+IC.gem+ec)+"</button></div>";
-    h+='<div class="pn"><h3>Protection '+hk("m11")+'</h3><div class="row w"><div class="sp"><b>Shield</b><div class="sm mut">'+(now()<S.shieldU?"Active for "+cd(S.shieldU):"No rival can attack for 8 hours, online or off.")+'</div></div><button class="btn s b3" data-a="buy" data-v="shield">'+IC.gem+GP.shield+'</button></div><div class="row w" style="margin-top:10px"><div class="sp"><b>Gear Loss Protection ×'+S.lossProt+'</b><div class="sm mut">Saves a piece of gear the next 3 times a defeat would damage it.</div></div><button class="btn s b3" data-a="buy" data-v="prot">'+IC.gem+GP.prot+"</button></div></div>";
+    h+='<div class="pn"><h3>Protection '+hk("m11")+'</h3><div class="row w"><div class="sp"><b>Shield</b><div class="sm mut">'+(now()<S.shieldU?"Active for "+cd(S.shieldU):"No rival can attack for 8 hours, online or off.")+'</div></div><button class="btn s b3" data-a="buy" data-v="shield">'+IC.gem+GP.shield+'</button></div><div class="row w" style="margin-top:10px"><div class="sp"><b>Gear Loss Protection ×'+S.lossProt+'</b><div class="sm mut">Saves a piece of gear the next 3 times a defeat would damage it.</div></div><button class="btn s b3" data-a="buy" data-v="prot">'+IC.gem+GP.prot+"</button></div>"+(S.lastDmg?'<div class="row w" style="margin-top:10px"><div class="sp"><b>Instant Repair</b><div class="sm mut">Restore your '+GEAR[S.lastDmg.s].names[S.lastDmg.t-1]+' to how it was before the last defeat.</div></div><button class="btn s b3" data-a="buy" data-v="repair">'+IC.gem+GP.repair+"</button></div>":"")+"</div>";
   }
   return h;
 }
@@ -195,7 +196,9 @@ function pgForge(){
 function pgQuests(){
   var h="<h2>"+IC.quest+" Quests</h2>"+seg("quests",[["q","Quests",questsReady()>0],["ach","Badges",achReady()>0],["daily","Daily"],["event","Event",passReady()>0]]);
   if(sub.quests==="q"){
-    h+='<p class="sub">Finish one and the next appears. There is always another. '+hk("h9")+" "+hk("h10")+"</p>";
+    var mqq=mainQ(),mqd=mqq.f();
+    h+='<div class="pn" style="border-color:var(--gold)"><div class="row w"><div class="sp"><span class="tag g">MAIN QUEST '+(S.mq+1)+'</span><h3 style="font-size:17px;margin-top:6px">'+mqq.t+'</h3><div class="loot"><span>'+IC.gem+mqq.g+"</span><span>"+IC.coin+(100+60*S.mq)+"</span><span>"+IC.xp+(40+10*S.mq)+'</span></div></div><button class="btn '+(mqd?"":"off")+'" data-a="claimMain">Claim</button></div></div>';
+    h+='<p class="sub" style="margin-top:0">Side quests. Finish one and the next appears. '+hk("h9")+" "+hk("h10")+"</p>";
     S.quests.forEach(function(q,i){var done=q.p>=q.n;h+='<div class="pn"><div class="row w"><div class="sp"><h3 style="font-size:16px">'+QT[q.k].t(q.n)+'</h3><div class="bar '+(done?"g":"")+'"><i style="width:'+clamp(q.p/q.n*100,0,100)+'%"></i><span>'+fmt(q.p)+" / "+fmt(q.n)+'</span></div><div class="loot"><span>'+IC.coin+fmt(q.c)+"</span><span>"+IC.xp+q.x+"</span>"+(q.a?"<span>"+IC.alloy+q.a+"</span>":"")+(q.g?"<span>"+IC.gem+q.g+"</span>":"")+'</div></div><button class="btn '+(done?"":"off")+'" data-a="claimQ" data-v="'+i+'">Claim</button></div></div>';});
     var nx=nextUnlocks(4);
     if(nx.length){h+='<div class="pn"><h3>Coming up '+hk("h3")+'</h3><div class="lst">';nx.forEach(function(u){h+='<div class="li">'+IC.lock+" "+esc(u[1])+" <b>Level "+u[0]+"</b></div>";});h+="</div></div>";}
@@ -215,7 +218,7 @@ function pgQuests(){
     PASS_F.forEach(function(r,i){var got=i<S.ev.cf,can=!got&&i<t;h+='<button class="tk '+(got?"got":can?"can":"")+'" '+(can?'data-a="passF"':"")+"><b>"+PASS_PTS[i]+" pts</b>"+rewardTxt(r)+"<br>"+(got?"Claimed":can?"Tap to claim":"Locked")+"</button>";});
     h+='</div><h3 style="font-size:15px">Premium track '+hk("m13")+'</h3><div class="track">';
     PASS_P.forEach(function(r,i){var got=i<S.ev.cp,can=S.ev.prem&&!got&&i<t;h+='<button class="tk prem '+(got?"got":can?"can":"")+'" '+(can?'data-a="passP"':"")+"><b>"+PASS_PTS[i]+" pts</b>"+(r[0]==="skin"?ev.skin.nm:rewardTxt(r))+"<br>"+(got?"Claimed":!S.ev.prem?(i<t?"Earned, locked":"Locked"):can?"Tap to claim":"Locked")+"</button>";});
-    h+="</div>"+(S.ev.prem?'<span class="tag p">Premium unlocked</span>':'<button class="btn b3" data-a="buy" data-v="pass">Unlock premium track · '+IC.gem+GP.pass+"</button>")+"</div>";
+    h+="</div>"+'<div class="row w" style="margin-bottom:10px"><div class="sp"><b>'+ev.nm+' Gauntlet</b> <span class="tag r">LIMITED MODE</span><div class="sm mut">A tougher fight on event terrain. Pays triple event points. Gone when the event ends.</div></div><button class="btn s b2 '+(S.raidCd>0?"off":"")+'" data-a="gauntlet">Enter</button></div>'+(S.ev.prem?'<span class="tag p">Premium unlocked</span>':'<button class="btn b3" data-a="buy" data-v="pass">Unlock premium track · '+IC.gem+GP.pass+"</button>")+"</div>";
   }
   return h;
 }
@@ -263,7 +266,7 @@ function pgStore(){
     h+="</div>";
   }else if(sub.store==="wheel"){
     var free=S.spinDay!==dayStr(),tot=0;WHEEL.forEach(function(w){tot+=w.w;});
-    h+='<div class="pn" style="text-align:center"><h3 style="justify-content:center">Wheel of Fortune '+hk("h16")+'</h3><canvas id="wheelC" width="600" height="600"></canvas><div id="wheelMsg" style="min-height:24px;font:400 18px var(--disp)"></div><div class="acts"><button class="btn '+(free?"b4":"b3")+' big" data-a="spin">'+(free?"Free daily spin":"Spin · "+IC.gem+GP.spin)+'</button></div><p class="sm mut" style="margin:10px 0 4px">Odds, exactly as the wheel rolls them:</p><div class="loot" style="justify-content:center">'+WHEEL.map(function(w){return "<span>"+w.nm+" <b>"+(w.w/tot*100).toFixed(0)+"%</b></span>";}).join("")+"</div></div>";
+    h+='<div class="pn" style="text-align:center"><h3 style="justify-content:center">Wheel of Fortune '+hk("h16")+'</h3><canvas id="wheelC" width="600" height="600"></canvas><div id="wheelMsg" style="min-height:24px;font:400 18px var(--disp)"></div><div class="acts"><button class="btn '+(free?"b4":"b3")+' big" data-a="spin">'+(free?"Free daily spin":"Spin · "+IC.gem+GP.spin)+'</button></div><p class="sm mut" style="margin:10px 0 4px">Prize odds:</p><div class="loot" style="justify-content:center">'+WHEEL.map(function(w){return "<span>"+w.nm+" <b>"+(w.w/tot*100).toFixed(0)+"%</b></span>";}).join("")+"</div></div>";
   }else{
     var ev=evNow(),sk=ev.skin,own=S.skins.indexOf(sk.id)>=0;
     h+='<p class="sub">Skins recolor your whole army. '+hk("h12")+'</p><div class="grid2">';
@@ -299,7 +302,7 @@ function spinWheel(){
     if(k<1){requestAnimationFrame(step);return;}
     wheelBusy=false;var got=wheelGrant(roll.seg),m2=$("#wheelMsg");
     if(WHEEL[roll.seg].jack){snd("jack");if(m2)m2.innerHTML='<span style="color:var(--gold)">JACKPOT! '+got+"</span>";}
-    else{snd("coin");hit("h16");if(m2)m2.innerHTML="You won "+got;}
+    else{snd("coin");hit("h16");if(roll.near)S.stats.nearMiss++;if(m2)m2.innerHTML=(roll.near?'<span style="color:var(--pink)">SO CLOSE!</span> ':"")+"You won "+got;}
     renderHud();dirty();
   })(t0);
 }
