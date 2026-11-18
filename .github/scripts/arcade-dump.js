@@ -40,13 +40,16 @@ function enc(v) {
 
 async function dumpCollection(ref, out, counts) {
   const path = ref.path; // e.g. "arcadePlayers" or "arcadeSaves/UID/games"
-  const snap = await ref.get();
+  // listDocuments() returns EVERY document reference, including "missing" parent
+  // docs that have no fields but do have subcollections (e.g. arcadeSaves/{uid}).
+  // A plain .get() skips those, which would drop all saves nested under them.
+  const docRefs = await ref.listDocuments();
   if (!out[path]) out[path] = {};
-  for (const doc of snap.docs) {
-    out[path][doc.id] = enc(doc.data());
-    counts.docs++;
-    // Recurse into any subcollections under this doc.
-    const subs = await doc.ref.listCollections();
+  for (const docRef of docRefs) {
+    const snap = await docRef.get();
+    if (snap.exists) { out[path][docRef.id] = enc(snap.data()); counts.docs++; }
+    // Recurse into any subcollections under this doc (present even if the doc is empty).
+    const subs = await docRef.listCollections();
     for (const sub of subs) await dumpCollection(sub, out, counts);
   }
   counts.cols++;
