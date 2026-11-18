@@ -9,22 +9,26 @@
   <style>
     *, *:before, *:after { box-sizing: border-box; }
     body { background:#0a0a0a; color:#ccc; font-family:sans-serif; margin:0; padding-top:80px; }
-    .container { display: flex; flex-direction: row; flex-wrap: nowrap; max-width: 900px; margin: 40px auto; gap: 20px; padding: 0 15px; }
+    .container { display: flex; max-width: 900px; margin: 40px auto; gap: 20px; padding: 0 15px; }
     .sidebar { width: 220px; flex-shrink: 0; background: #2a2a2a; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 8px; margin-top: 100px; }
     .sidebar-btn { background: none; border: none; color: #aaa; cursor: pointer; padding: 12px; text-align: left; font-weight: bold; border-radius: 4px; }
     .sidebar-btn.active { color: #00d1b2; background: #1a1a1a; }
     .main-content { flex: 1; min-width: 0; background: #2a2a2a; padding: 30px; border-radius: 8px; margin-top: 100px; }
     .panel { display: none; }
     .panel.active { display: block; }
-    h2 { color: #00d1b2; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    h2, h3 { color: #00d1b2; margin-top: 0; }
+    h2 { border-bottom: 1px solid #444; padding-bottom: 10px; }
     label { font-size: 0.8rem; color: #aaa; display: block; margin: 15px 0 5px; }
-    input:not([type="checkbox"]) { background: #1a1a1a; border: 1px solid #444; color: #ccc; padding: 10px; width: 100%; box-sizing: border-box; border-radius: 4px; }
+    input:not([type="checkbox"]) { background: #1a1a1a; border: 1px solid #444; color: #ccc; padding: 10px; width: 100%; border-radius: 4px; }
     button.action-btn { background: #00d1b2; color: #0a0a0a; border: none; padding: 12px; font-weight: bold; border-radius: 4px; width: 100%; margin-top: 15px; cursor: pointer; }
     .status { color: #00d1b2; margin-top: 15px; text-align: center; }
     .file-upload-wrapper { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; }
-    .custom-file-upload { display: block; background: #1a1a1a; border: 1.5px dashed #00d1b2; color: #00d1b2; padding: 25px; width: 100%; text-align: center; border-radius: 8px; cursor: pointer; box-sizing: border-box; font-weight: bold; transition: 0.2s; }
-    .custom-file-upload.dragover { background: rgba(0,209,178,0.2); border-color: #fff; }
+    .custom-file-upload { display: block; background: #1a1a1a; border: 1.5px dashed #00d1b2; color: #00d1b2; padding: 25px; width: 100%; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .custom-file-upload.dragover { background: rgba(0,209,178,0.2); }
     #pic-in { display: none; }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); align-items: center; justify-content: center; }
+    .modal-content { background: #2a2a2a; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
+    .crop-box { max-height: 280px; width: 100%; overflow: hidden; margin: 15px 0; }
   </style>
 </head>
 <body>
@@ -59,13 +63,10 @@
       <div id="tab-pic" class="panel">
         <h2>Profile Picture</h2>
         <div class="file-upload-wrapper">
-          <div style="max-width: 300px; max-height: 300px; overflow: hidden; margin-bottom: 10px;">
-            <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
-          </div>
+          <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
           <label for="pic-in" class="custom-file-upload"><span id="upload-placeholder">Upload or Drag and Drop Photo</span></label>
           <input id="pic-in" type="file" accept="image/*" onchange="showLocalPreview(this)" />
-          <button class="action-btn" onclick="updateProfilePic()">Save</button>
-          <button class="action-btn" style="background:#ff3860;color:#fff;margin-top:5px;" onclick="removeProfilePic()">Remove Photo</button>
+          <button class="action-btn" style="background:#ff3860;color:#fff;" onclick="removeProfilePic()">Remove Photo</button>
         </div>
       </div>
       <div id="tab-del" class="panel">
@@ -77,6 +78,18 @@
     </div>
   </div>
 </div>
+
+<div id="crop-modal" class="modal">
+  <div class="modal-content">
+    <h3>Crop Picture</h3>
+    <div class="crop-box">
+      <img id="crop-preview" style="max-width:100%; display:block;" />
+    </div>
+    <button class="action-btn" onclick="updateProfilePic()">Save</button>
+    <button class="action-btn" style="background:#555;color:#fff;margin-top:8px;" onclick="closeCropModal()">Cancel</button>
+  </div>
+</div>
+
 <script src="/nav-bar.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -117,31 +130,28 @@
   window.showLocalPreview = (input) => {
     const file = input.files[0];
     if (file) {
-      const preview = document.getElementById('preview');
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = 'block';
-      preview.style.borderRadius = '0';
-      document.getElementById('upload-placeholder').textContent = `Selected: ${file.name}`;
+      const cropImg = document.getElementById('crop-preview');
+      cropImg.src = URL.createObjectURL(file);
+      document.getElementById('crop-modal').style.display = 'flex';
       if (cropper) cropper.destroy();
-      cropper = new Cropper(preview, { aspectRatio: 1, viewMode: 1, background: false });
+      cropper = new Cropper(cropImg, { aspectRatio: 1, viewMode: 1, background: false });
     }
+  };
+
+  window.closeCropModal = () => {
+    document.getElementById('crop-modal').style.display = 'none';
+    document.getElementById('pic-in').value = "";
+    if (cropper) { cropper.destroy(); cropper = null; }
   };
 
   const dropZone = document.querySelector('.custom-file-upload');
   const fileInput = document.getElementById('pic-in');
 
-  ['dragenter', 'dragover'].forEach(name => {
-    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-  });
-  ['dragleave', 'dragend', 'drop'].forEach(name => {
-    dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); });
-  });
-  dropZone.addEventListener('drop', (e) => {
+  ['dragenter', 'dragover'].forEach(n => dropZone.addEventListener(n, e => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+  ['dragleave', 'dragend', 'drop'].forEach(n => dropZone.addEventListener(n, e => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+  dropZone.addEventListener('drop', e => {
     e.preventDefault();
-    if (e.dataTransfer.files.length) {
-      fileInput.files = e.dataTransfer.files;
-      window.showLocalPreview(fileInput);
-    }
+    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; window.showLocalPreview(fileInput); }
   });
 
   window.updateUsername = async () => {
@@ -154,7 +164,6 @@
       let isTaken = false;
       snap.forEach(d => { if (d.id !== curUser.uid) isTaken = true; });
       if (isTaken) return setStatus("Username taken.", true);
-
       setStatus("Updating...");
       await updateProfile(curUser, { displayName: val });
       await setDoc(doc(db, "usernames", curUser.uid), { uid: curUser.uid, guest: false, username: val, usernameLower: val.toLowerCase() });
@@ -182,27 +191,23 @@
   };
 
   window.updateProfilePic = async () => {
-    if (!cropper) return setStatus("Please select an image first.", true);
+    if (!cropper) return setStatus("No active image crop.", true);
     try {
       setStatus("Uploading image...");
       cropper.getCroppedCanvas({ width: 150, height: 150 }).toBlob(async (blob) => {
         const formData = new FormData();
         formData.append("file", blob, "profile.jpg");
         formData.append("upload_preset", uploadPreset);
-
         const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
         if (!res.ok) throw new Error();
         const data = await res.json();
-
         setStatus("Saving...");
         await updateProfile(curUser, { photoURL: data.secure_url });
         await updateDoc(doc(db, "arcadePlayers", curUser.uid), { photoURL: data.secure_url, updatedAt: serverTimestamp() });
-        
-        cropper.destroy();
-        cropper = null;
         const preview = document.getElementById('preview');
         preview.src = data.secure_url;
-        preview.style.borderRadius = '50%';
+        preview.style.display = 'inline-block';
+        window.closeCropModal();
         setStatus("Profile picture updated!");
       }, 'image/jpeg');
     } catch (e) { setStatus("Upload failed.", true); console.error(e);}
@@ -213,12 +218,10 @@
       setStatus("Removing profile picture...");
       await updateProfile(curUser, { photoURL: "" });
       await updateDoc(doc(db, "arcadePlayers", curUser.uid), { photoURL: "", updatedAt: serverTimestamp() });
-      if (cropper) { cropper.destroy(); cropper = null; }
+      if (cropper) window.closeCropModal();
       const preview = document.getElementById('preview');
       preview.src = "";
       preview.style.display = 'none';
-      document.getElementById('pic-in').value = "";
-      document.getElementById('upload-placeholder').textContent = "Upload or Drag and Drop Photo";
       setStatus("Profile picture removed!");
     } catch (e) { setStatus("Failed to remove picture.", true); console.error(e); }
   };
