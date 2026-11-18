@@ -4,8 +4,9 @@
   <title>Account | Carzzy Apps</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <style>
-    
     *, *:before, *:after { box-sizing: border-box; }
     body { background:#0a0a0a; color:#ccc; font-family:sans-serif; margin:0; padding-top:80px; }
     .container { display: flex; flex-direction: row; flex-wrap: nowrap; max-width: 900px; margin: 40px auto; gap: 20px; padding: 0 15px; }
@@ -58,10 +59,13 @@
       <div id="tab-pic" class="panel">
         <h2>Profile Picture</h2>
         <div class="file-upload-wrapper">
-          <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
+          <div style="max-width: 300px; max-height: 300px; overflow: hidden; margin-bottom: 10px;">
+            <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
+          </div>
           <label for="pic-in" class="custom-file-upload"><span id="upload-placeholder">Upload or Drag and Drop Photo</span></label>
           <input id="pic-in" type="file" accept="image/*" onchange="showLocalPreview(this)" />
-          <button class="action-btn" onclick="updateProfilePic()">Upload & Crop</button>
+          <button class="action-btn" onclick="updateProfilePic()">Save</button>
+          <button class="action-btn" style="background:#ff3860;color:#fff;margin-top:5px;" onclick="removeProfilePic()">Remove Photo</button>
         </div>
       </div>
       <div id="tab-del" class="panel">
@@ -81,7 +85,7 @@
 
   const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
   const auth = getAuth(app), db = getFirestore(app);
-  let curUser = null;
+  let curUser = null, cropper = null;
   const cloudName = "u5bvfdsm", uploadPreset = "Carzzy-Apps-Profile-Pictures";
 
   window.showTab = (id) => {
@@ -115,8 +119,11 @@
     if (file) {
       const preview = document.getElementById('preview');
       preview.src = URL.createObjectURL(file);
-      preview.style.display = 'inline-block';
+      preview.style.display = 'block';
+      preview.style.borderRadius = '0';
       document.getElementById('upload-placeholder').textContent = `Selected: ${file.name}`;
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(preview, { aspectRatio: 1, viewMode: 1, background: false });
     }
   };
 
@@ -175,30 +182,45 @@
   };
 
   window.updateProfilePic = async () => {
-    const fileInput = document.getElementById('pic-in');
-    if (!fileInput.files[0]) return setStatus("Please select an image.", true);
+    if (!cropper) return setStatus("Please select an image first.", true);
     try {
       setStatus("Uploading image...");
-      const formData = new FormData();
-      formData.append("file", fileInput.files[0]);
-      formData.append("upload_preset", uploadPreset);
+      cropper.getCroppedCanvas({ width: 150, height: 150 }).toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append("file", blob, "profile.jpg");
+        formData.append("upload_preset", uploadPreset);
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
 
-      const croppedUrl = data.secure_url.replace("/upload/", "/upload/c_thumb,g_face,w_150,h_150,z_0.7/");
-      setStatus("Saving...");
-      await updateProfile(curUser, { photoURL: croppedUrl });
-      await updateDoc(doc(db, "arcadePlayers", curUser.uid), {
-        photoURL: croppedUrl,
-        updatedAt: serverTimestamp()
-      });
-      const preview = document.getElementById('preview');
-      preview.src = croppedUrl;
-      preview.style.display = 'inline-block';
-      setStatus("Profile picture updated!");
+        setStatus("Saving...");
+        await updateProfile(curUser, { photoURL: data.secure_url });
+        await updateDoc(doc(db, "arcadePlayers", curUser.uid), { photoURL: data.secure_url, updatedAt: serverTimestamp() });
+        
+        cropper.destroy();
+        cropper = null;
+        const preview = document.getElementById('preview');
+        preview.src = data.secure_url;
+        preview.style.borderRadius = '50%';
+        setStatus("Profile picture updated!");
+      }, 'image/jpeg');
     } catch (e) { setStatus("Upload failed.", true); console.error(e);}
+  };
+
+  window.removeProfilePic = async () => {
+    try {
+      setStatus("Removing profile picture...");
+      await updateProfile(curUser, { photoURL: "" });
+      await updateDoc(doc(db, "arcadePlayers", curUser.uid), { photoURL: "", updatedAt: serverTimestamp() });
+      if (cropper) { cropper.destroy(); cropper = null; }
+      const preview = document.getElementById('preview');
+      preview.src = "";
+      preview.style.display = 'none';
+      document.getElementById('pic-in').value = "";
+      document.getElementById('upload-placeholder').textContent = "Upload or Drag and Drop Photo";
+      setStatus("Profile picture removed!");
+    } catch (e) { setStatus("Failed to remove picture.", true); console.error(e); }
   };
 
   window.deleteAcc = async () => {
