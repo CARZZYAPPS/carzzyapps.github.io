@@ -54,7 +54,7 @@ body {
 }
 
 a { color: inherit; }
-h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
+h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; }
 
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 10px; }
 
@@ -77,27 +77,6 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
 .btn-ghost, .contact-btn { background: transparent; color: var(--accent); }
 .btn-ghost:hover, .contact-btn:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 20px rgba(0, 209, 178, 0.4); }
 
-.kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 14px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: rgba(21, 21, 21, 0.75);
-    color: var(--muted);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-}
-.kicker .dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 10px var(--accent);
-    animation: cz-pulse 2.4s ease-in-out infinite;
-}
-@keyframes cz-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 .accent-text { color: var(--accent); text-shadow: 0 0 30px rgba(0, 209, 178, 0.35); }
 
@@ -112,7 +91,7 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
     gap: 44px;
     align-items: center;
 }
-.hero h1 {
+.hero h1, .hero h2 {
     margin: 18px 0 16px;
     font-size: clamp(2.3rem, 5.2vw, 3.6rem);
     line-height: 0.98;
@@ -127,18 +106,6 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
 }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
-.beam {
-    position: absolute;
-    left: -20%; right: -20%;
-    height: 2px;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0.35;
-    filter: drop-shadow(0 0 6px var(--accent));
-}
-.beam.b1 { top: 30%; transform: rotate(-7deg); animation: cz-sweep 8s ease-in-out infinite; }
-.beam.b2 { top: 88%; transform: rotate(5deg); animation: cz-sweep 10s ease-in-out infinite reverse; opacity: 0.2; }
-@keyframes cz-sweep { 0%, 100% { translate: -6% 0; } 50% { translate: 6% 0; } }
 
 .stats { display: flex; flex-wrap: wrap; gap: 30px; margin-top: 30px; }
 .stats b { display: block; font-size: 1.7rem; font-weight: 900; letter-spacing: -0.02em; }
@@ -170,7 +137,7 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
     letter-spacing: 0.12em;
     text-transform: uppercase;
 }
-.feature-body h3 { display: block; margin: 14px 0 8px; font-size: 1.9rem; font-weight: 900; color: #00d1b2; }
+.feature-body h3, .feature-body h4 { display: block; margin: 14px 0 8px; font-size: 1.9rem; font-weight: 900; color: #00d1b2; }
 .feature-body .cz-play { display: inline-block; }
 .feature-body p { display: block; margin: 0 0 24px; color: var(--muted); line-height: 1.6; }
 
@@ -193,7 +160,7 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
     letter-spacing: 0.16em;
     text-transform: uppercase;
 }
-.sh h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); font-weight: 900; }
+.sh h2, .sh h3 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); font-weight: 900; }
 .sh p { margin: 6px 0 0; color: var(--muted); }
 .sh-actions { display: flex; align-items: center; gap: 8px; }
 .see-all {
@@ -529,7 +496,7 @@ h1, h2, h3 { margin: 0; letter-spacing: -0.02em; }
     padding: 44px 24px;
     background: radial-gradient(400px 200px at 50% 0%, rgba(0, 209, 178, 0.12), transparent 70%), var(--surface);
 }
-.contact-section h3 { margin: 0 0 10px; font-size: 1.6rem; font-weight: 900; }
+.contact-section h3, .contact-section h4 { margin: 0 0 10px; font-size: 1.6rem; font-weight: 900; }
 .contact-section p { margin: 0 0 22px; color: var(--muted); line-height: 1.6; }
 
 footer {
@@ -599,7 +566,7 @@ footer .brand { color: var(--accent); font-weight: bold; }
     .cz-cover { aspect-ratio: 16 / 8; }
     .feature .cz-cover { aspect-ratio: 16 / 9; }
     .feature-body { padding: 22px 22px 26px; }
-    .feature-body h3 { font-size: 1.6rem; }
+    .feature-body h3, .feature-body h4 { font-size: 1.6rem; }
     .sh-actions .arrow-btn { display: none; }
     .btn { flex: 1 1 auto; }
 }
@@ -607,6 +574,6 @@ footer .brand { color: var(--accent); font-weight: bold; }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
-    .kicker .dot, .beam, .ad-banner::before { animation: none; }
+    .ad-banner::before { animation: none; }
     .cz-card, .cz-cat, .feature, .cz-cover::before, .cz-shot { transition: none; }
 }

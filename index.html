@@ -33,7 +33,7 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
 	<!-- Google tag (gtag.js) -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VD38580YSL"></script>	
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VD38580YSL"></script>
 	<script>
   		window.dataLayer = window.dataLayer || [];
   		function gtag(){dataLayer.push(arguments);}
@@ -60,369 +60,192 @@
     -->
     <meta name="google-site-verification" content="HbcEB98bgiQEfkfdGsmj3vowfgB6Mep-i1L_DJFxTYU" />
 
-    <style>
-        body {
-            background-color: #0a0a0a;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-        }
-
-        h2 {
-            margin-top: 100px;
-            color: #aaa;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .project-card {
-            background: #151515;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-decoration: none;
-            color: white;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .project-card:hover {
-            border-color: #00d1b2;
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0, 209, 178, 0.2);
-        }
-
-        .project-title {
-            color: #00d1b2;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .project-desc {
-            font-size: 0.9rem;
-            color: #aaa;
-        }
-
-        .contact-section {
-            margin-top: 60px;
-            text-align: center;
-            border-top: 1px solid #222;
-            padding-top: 40px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .contact-btn {
-            display: inline-block;
-            background: transparent;
-            color: #00d1b2;
-            border: 2px solid #00d1b2;
-            padding: 15px 30px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-
-        .contact-btn:hover {
-            background: #00d1b2;
-            color: #0a0a0a;
-            box-shadow: 0 0 20px rgba(0, 209, 178, 0.4);
-        }
-
-        footer {
-            margin-top: 50px;
-            padding-bottom: 40px;
-            font-size: 0.8rem;
-            color: #aaa;
-        }
-
-        .ad-panel {
-            width: 100%;
-            max-width: 600px;
-            margin: 10px auto 12px;
-        }
-
-        .ad-frame {
-            position: relative;
-            width: 120%;
-            margin-left: -10%;
-            border-right: 3px solid #00d1b2;
-            border-left: 3px solid #00d1b2;
-        }
-
-        .ad-content {
-            width: 83.333333%;
-            margin: 0 auto;
-        }
-
-        .ad-frame::before,
-        .ad-frame::after {
-            content: "";
-            display: block;
-            width: 100%;
-            height: 3px;
-            background: #00d1b2;
-        }
-
-        .ad-frame::before {
-            margin-bottom: 12px;
-        }
-
-        .ad-frame::after {
-            margin-top: 12px;
-        }
-
-        .ad-label {
-            margin: 0 0 10px;
-            text-align: center;
-            color: #aaa;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-        }
-
-        .ad-banner {
-            position: relative;
-            overflow: hidden;
-            border-radius: 16px;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12), transparent 28%),
-                linear-gradient(180deg, rgba(18,18,18,0.95), rgba(7,7,7,1));
-            border: 1px solid rgba(255,255,255,0.12);
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 20px 40px rgba(0,0,0,0.45);
-            padding: 18px 14px 10px;
-        }
-
-        .ad-banner::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-            transform: translateX(-100%);
-            animation: shimmer 6s ease-in-out infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            30%, 100% { transform: translateX(100%); }
-        }
-
-        .ad-brand {
-            margin: 0;
-            font-size: clamp(3.4rem, 7vw, 10rem);
-            line-height: 0.82;
-            font-weight: 900;
-            letter-spacing: -0.08em;
-            text-transform: uppercase;
-            text-align: center;
-            color: rgba(255,255,255,0.82);
-            text-shadow: 0 0 22px rgba(255,255,255,0.18), 0 0 42px rgba(255,255,255,0.08);
-            transform: scaleY(1.05);
-            filter: blur(0.3px);
-            user-select: none;
-        }
-
-        .ad-tagline {
-            margin: 16px 0 0;
-            text-align: center;
-            font-size: clamp(1rem, 2vw, 2rem);
-            letter-spacing: -0.04em;
-            color: rgba(255,255,255,0.7);
-            text-shadow: 0 0 18px rgba(255,255,255,0.08);
-            font-weight: 500;
-        }
-
-        .ad-contact {
-            color:#00d1b2;
-            align-items: center;
-            text-align: center;
-            margin-top: 12px;
-            margin-bottom: 0;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .ad-contact a {
-            color: #00d1b2;
-        }
-
-        s {
-            color: #aaa;
-            text-decoration-line: line-through;
-            text-decoration-color: #00d1b2;
-        }
-
-    </style>
+    <link rel="stylesheet" href="/catalog/catalog.css">
 </head>
 
 <body>
 
     <script src="/nav-bar.js"></script>
-    
-    <header>
-        <h2>Our Games & Apps</h2>
-    </header>
 
-    <div class="container">
-        <a class="lzr-card" href="/arcade/" aria-label="Lazer Arcade: original browser games by Lazer Yudel">
-            <style>
-                .lzr-card,.lzr-card *{box-sizing:border-box}
-                .lzr-card{position:relative;display:block;margin:0 0 26px;border-radius:18px;padding:1.5px;text-decoration:none;color:#fff;
-                    background:linear-gradient(135deg,rgba(167,139,250,.9),rgba(79,123,255,.55) 45%,rgba(34,211,238,.9));
-                    box-shadow:0 14px 40px rgba(79,123,255,.22);transition:transform .25s ease,box-shadow .25s ease}
-                .lzr-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(79,123,255,.35),0 0 0 1px rgba(34,211,238,.35)}
-                .lzr-body{display:flex;align-items:center;gap:18px;border-radius:16.5px;padding:20px 20px;
-                    background:radial-gradient(380px 180px at 100% 0,rgba(124,77,255,.28),transparent 70%),radial-gradient(260px 160px at 0 100%,rgba(34,211,238,.12),transparent 70%),#0c0a1c}
-                .lzr-icon{flex:none;width:60px;height:60px}
-                .lzr-icon svg{display:block;width:100%;height:100%}
-                .lzr-text{display:block;flex:1;min-width:0}
-                .lzr-kicker{display:flex;align-items:center;gap:8px;font:700 11px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.12em;color:#9aa4d6;text-transform:uppercase}
-                .lzr-new{background:#22d3ee;color:#06121a;border-radius:999px;padding:4px 8px;letter-spacing:.08em}
-                .lzr-title{display:block;margin:8px 0 6px;font:800 26px/1.05 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.02em;color:#fff}
-                .lzr-desc{display:block;color:#b9bfdc;font-size:.9rem;line-height:1.45}
-                .lzr-arrow{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#7c4dff,#22d3ee);font:700 20px/1 system-ui,sans-serif;transition:transform .25s ease}
-                .lzr-card:hover .lzr-arrow{transform:translateX(4px)}
-                @media (max-width:480px){.lzr-body{padding:16px;gap:14px}.lzr-icon{width:48px;height:48px}.lzr-title{font-size:22px}.lzr-arrow{display:none}}
-            </style>
-            <span class="lzr-body">
-                <span class="lzr-icon"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lzrg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset=".55" stop-color="#7c4dff"/><stop offset="1" stop-color="#22e4ff"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="#140c36" stroke="url(#lzrg)" stroke-width="2.5"/><path d="M12 10v19h16" fill="none" stroke="url(#lzrg)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 10l8 9" stroke="#22e4ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="29" cy="19" r="2.6" fill="#fff"/></svg></span>
-                <span class="lzr-text">
-                    <span class="lzr-kicker"><span class="lzr-new">New</span>Games by Lazer Yudel</span>
-                    <span class="lzr-title">Lazer Arcade</span>
-                    <span class="lzr-desc">Original browser games, starting with Crema Rush 3D, a full coffee-shop tycoon. Puzzle, strategy and skill-building games are on the way. Sign in with your Carzzy Apps account and your progress follows you.</span>
-                </span>
-                <span class="lzr-arrow" aria-hidden="true">→</span>
-            </span>
-        </a>
+    <div class="ambient" aria-hidden="true"></div>
 
-        <a href="https://carzzyapps.github.io/Under-Construction/" class="project-card">
-            <span class="project-title">Rhythm Runner</span>
-            <span class="project-desc">An Endless Runner where You Jump Spikes and Duck Drones</span><br>
-            <span class="project-desc"><!--<s>-->Built In Music!!!<!--</s>--></span>
-            <!--<span class="project-desc" style="font-size: 0.7rem">To accommodate our users, the music will be acapella during the Three Weeks</span>--><br> 
-            <span class="project-desc">✓ Compatible With Smartphones.</span><br>
-            
-        </a>
+    <main class="page">
 
-		<a class="project-card" href="/mastermind/">
-			<span class="project-title">Mastermind</span>
-			<span class="project-desc">Play the classic game of Mastermind online!</span><br>
-			<span class="project-desc">Try to crack the code in 10 moves or less!</span><br>
-			<span class="project-desc">Play two different modes: singleplayer or multiplayer!</span>
-		</a>
+        <!-- HERO -->
+        <header class="hero">
+            <div class="hero-grid">
+                <div>
+                    <h2>Free games &amp; tools,<br><span class="accent-text">made for fun.</span></h2>
+                    <p class="lead">Rhythm runners, sports shootouts, brain-teasers, music practice and handy everyday utilities. No downloads, no sign-ups, just click and play.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="#categories">Browse categories <span aria-hidden="true">↓</span></a>
+                        <a class="btn btn-ghost" href="/arcade/">Visit Lazer Arcade</a>
+                    </div>
+                    <div class="stats">
+                        <div><b data-cz="count">16</b><span>Projects</span></div>
+                        <div><b>4</b><span>Categories</span></div>
+                        <div><b>100%</b><span>Free</span></div>
+                    </div>
+                </div>
 
-        <a href="/scymores-games" class="project-card">
-            <span class="project-title">Scymore's Games</span>
-            <span class="project-desc">New games coming soon!</span>
-        </a>
-		
-        <a href="https://carzzyapps.github.io/Metronome/" class="project-card">
-            <span class="project-title">Metronome</span>
-            <span class="project-desc">An Online Metronome</span>
-        </a>
+                <a class="feature" href="https://carzzyapps.github.io/Rhythm-Runner/" data-cover="games" style="--glow: 70%">
+                    <span class="cz-cover has-img">
+                        <img class="cz-shot" src="/images/rhythm-runner.jpg" alt="Rhythm Runner screenshot">
+                        <span class="cz-badges"><span>Games</span><span>Music</span></span>
+                    </span>
+                    <span class="feature-body">
+                        <span class="label">Featured</span>
+                        <h4>Rhythm Runner</h4>
+                        <p>An endless runner where you jump spikes and duck drones, all to a built-in soundtrack. Works great on phones.</p>
+                        <span class="cz-play">Play now <span aria-hidden="true">→</span></span>
+                    </span>
+                </a>
+            </div>
+        </header>
 
+        <!-- CATEGORIES -->
+        <section class="sec reveal" id="categories" style="scroll-margin-top: 90px;">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow">Explore</span>
+                    <h3>Browse by category</h3>
+                </div>
+            </div>
+            <div role="navigation" class="cz-cats" data-cz="cats" aria-label="Categories"></div>
+        </section>
 
-        <a href="https://carzzyapps.github.io/right-on-time/" class="project-card">
-            <span class="project-title">Right On Time</span>
-            <span class="project-desc">A Stopwatch where You Try to Stop it Exactly on the Second</span>
-        </a>
+        <!-- LAZER ARCADE -->
+        <section class="sec reveal">
+            <a class="lzr-card" href="/arcade/" aria-label="Lazer Arcade: original browser games by Lazer Yudel">
+                    <style>
+                        .lzr-card,.lzr-card *{box-sizing:border-box}
+                        .lzr-card{position:relative;display:block;margin:0;border-radius:18px;padding:1.5px;text-decoration:none;color:#fff;
+                            background:linear-gradient(135deg,rgba(167,139,250,.9),rgba(79,123,255,.55) 45%,rgba(34,211,238,.9));
+                            box-shadow:0 14px 40px rgba(79,123,255,.22);transition:transform .25s ease,box-shadow .25s ease}
+                        .lzr-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(79,123,255,.35),0 0 0 1px rgba(34,211,238,.35)}
+                        .lzr-body{display:flex;align-items:center;gap:22px;border-radius:16.5px;padding:26px 26px;
+                            background:radial-gradient(480px 220px at 100% 0,rgba(124,77,255,.28),transparent 70%),radial-gradient(320px 200px at 0 100%,rgba(34,211,238,.12),transparent 70%),#0c0a1c}
+                        .lzr-icon{flex:none;width:72px;height:72px}
+                        .lzr-icon svg{display:block;width:100%;height:100%}
+                        .lzr-text{display:block;flex:1;min-width:0}
+                        .lzr-kicker{display:flex;align-items:center;gap:8px;font:700 11px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.12em;color:#9aa4d6;text-transform:uppercase}
+                        .lzr-new{background:#22d3ee;color:#06121a;border-radius:999px;padding:4px 8px;letter-spacing:.08em}
+                        .lzr-title{display:block;margin:8px 0 6px;font:800 28px/1.05 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:-.02em;color:#fff}
+                        .lzr-desc{display:block;color:#b9bfdc;font-size:.92rem;line-height:1.5;max-width:640px}
+                        .lzr-arrow{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#7c4dff,#22d3ee);font:700 20px/1 system-ui,sans-serif;transition:transform .25s ease}
+                        .lzr-card:hover .lzr-arrow{transform:translateX(4px)}
+                        @media (max-width:480px){.lzr-body{padding:16px;gap:14px}.lzr-icon{width:48px;height:48px}.lzr-title{font-size:22px}.lzr-arrow{display:none}}
+                    </style>
+                    <span class="lzr-body">
+                        <span class="lzr-icon"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lzrg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a78bfa"/><stop offset=".55" stop-color="#7c4dff"/><stop offset="1" stop-color="#22e4ff"/></linearGradient></defs><rect x="2" y="2" width="36" height="36" rx="11" fill="#140c36" stroke="url(#lzrg)" stroke-width="2.5"/><path d="M12 10v19h16" fill="none" stroke="url(#lzrg)" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 10l8 9" stroke="#22e4ff" stroke-width="2.6" stroke-linecap="round"/><circle cx="29" cy="19" r="2.6" fill="#fff"/></svg></span>
+                        <span class="lzr-text">
+                            <span class="lzr-kicker"><span class="lzr-new">New</span>Games by Lazer Yudel</span>
+                            <span class="lzr-title">Lazer Arcade</span>
+                            <span class="lzr-desc">Original browser games, starting with Crema Rush 3D, a full coffee-shop tycoon. Puzzle, strategy and skill-building games are on the way. Sign in with your Carzzy Apps account and your progress follows you.</span>
+                        </span>
+                        <span class="lzr-arrow" aria-hidden="true">→</span>
+                    </span>
+                </a>
+        </section>
 
-
-        <a href="https://carzzyapps.github.io/Radical-Stopwatch/" class="project-card">
-            <span class="project-title">Radical Stopwatch</span>
-            <span class="project-desc">A Stopwatch that Counts in Radicals</span>
-        </a>
-
-        <a href="https://carzzyapps.github.io/Radical-Clicker/" class="project-card">
-            <span class="project-title">Radical Clicker</span>
-            <span class="project-desc">A Clicker Game that Counts in Radicals</span>
-        </a>
-
-        <a href="https://carzzyapps.github.io/Hockey-Shootout/" class="project-card">
-            <span class="project-title">Hockey Shootout</span>
-            <span class="project-desc">Exactly what it Sounds Like</span>
-        </a>
-
-        <a href="https://carzzyapps.github.io/DeCrossyBus/" class="project-card">
-            <span class="project-title">DeCrossyBus</span>
-            <span class="project-desc">Why Did DeBus Cross the Road?</span><br>
-            <span class="project-desc">To Save Us From Copyright Infringement, Of Course</span><br>
-            <span class="project-desc">✓ Compatible With Smartphones</span><br>
-        </a>
-
-        <a href="https://carzzyapps.github.io/Stat-Calc/" class="project-card">
-            <span class="project-title">Statistics Calculator</span>
-            <span class="project-desc">Calculator for Mean, Median, Mode, Z-scores, and More</span>
-        </a>
-
-		<a href="https://carzzyapps.github.io/Carzzy-Chords/" class="project-card">
-            <span class="project-title" id="new">Carzzy Chords</span>
-            <span class="project-desc">The perfect tool to practice piano chords.</span>
-        </a>
-
-        <a href="https://carzzyapps.github.io/carzzy-countdown/" class="project-card">
-            <span class="project-title" id="new">Carzzy Countdown</span>
-            <span class="project-desc">A simple and customizable countdown timer that allows you to set a countdown for any event, save it, and share it with others.</span>
-        </a>
+        <!-- GAMES -->
+        <section class="sec reveal">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow"><span data-cz="count" data-cat="games"></span> to play</span>
+                    <h3>Games</h3>
+                </div>
+                <div class="sh-actions">
+                    <button class="arrow-btn" type="button" data-shelf-btn="prev" aria-controls="shelf-games" aria-label="Scroll games left">←</button>
+                    <button class="arrow-btn" type="button" data-shelf-btn="next" aria-controls="shelf-games" aria-label="Scroll games right">→</button>
+                    <a class="see-all" href="/games/">See all →</a>
+                </div>
+            </div>
+            <div class="cz-shelf" id="shelf-games" data-cz="shelf" data-cat="games"></div>
+        </section>
 
         <!-- AD BREAK-->
-<aside class="ad-panel">
-        <div class="ad-frame">
-        <div class="ad-content">
-        <p class="ad-label">Paid Advertisement</p>
-        <div class="ad-banner" aria-label="Kosher Kitchen AI advertisement">
-            <p class="ad-brand" style="font-size: 3.4rem">KosherKitchenAI</p>
-            <p class="ad-tagline">AI Generated Recipes for <i>ANYTHING</i></p>
-            <p class="ad-tagline">Check it out. Go to <a style="color:rgba(255,255,255,0.7)" href="https://kosherkitchenai.com/" target="_blank" rel="noopener noreferrer">KosherKitchenAI</a> today</p>
-        </div>
-        <h3 class="ad-contact">
-            To have your business featured here, please <a href="https://www.carzzyapps.com/contact-us/">contact us</a>!
-        </h3>
-        </div>
-        </div>
-    </aside>
+        <section class="sec reveal">
+            <aside class="ad-panel">
+                <div class="ad-frame">
+                    <div class="ad-content">
+                        <p class="ad-label">Paid Advertisement</p>
+                        <div class="ad-banner" aria-label="Kosher Kitchen AI advertisement">
+                            <p class="ad-brand">KosherKitchenAI</p>
+                            <p class="ad-tagline">AI Generated Recipes for <i>ANYTHING</i></p>
+                            <p class="ad-tagline">Check it out. Go to <a href="https://kosherkitchenai.com/" target="_blank" rel="noopener noreferrer">KosherKitchenAI</a> today</p>
+                        </div>
+                        <h4 class="ad-contact">
+                            To have your business featured here, please <a href="https://www.carzzyapps.com/contact-us/">contact us</a>!
+                        </h4>
+                    </div>
+                </div>
+            </aside>
+        </section>
         <!-- AD BREAK END -->
 
-        <a href="https://carzzyapps.github.io/Basketball/" class="project-card">
-            <span class="project-title">2K Hoops</span>
-            <span class="project-desc">A fun online basketball game.</span>
-            <br>
-            <span class="project-desc">Made by: ACM</span>
-        </a>
+        <!-- Tools -->
+        <section class="sec reveal">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow"><span data-cz="count" data-cat="tools"></span> handy tools</span>
+                    <h3>Tools</h3>
+                </div>
+                <div class="sh-actions">
+                    <button class="arrow-btn" type="button" data-shelf-btn="prev" aria-controls="shelf-tools" aria-label="Scroll tools left">←</button>
+                    <button class="arrow-btn" type="button" data-shelf-btn="next" aria-controls="shelf-tools" aria-label="Scroll tools right">→</button>
+                    <a class="see-all" href="/tools/">See all →</a>
+                </div>
+            </div>
+            <div class="cz-shelf" id="shelf-tools" data-cz="shelf" data-cat="tools"></div>
+        </section>
 
+        <!-- Math -->
+        <section class="sec reveal">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow"><span data-cz="count" data-cat="math"></span> for number lovers</span>
+                    <h3>Math</h3>
+                </div>
+                <div class="sh-actions">
+                    <button class="arrow-btn" type="button" data-shelf-btn="prev" aria-controls="shelf-math" aria-label="Scroll math left">←</button>
+                    <button class="arrow-btn" type="button" data-shelf-btn="next" aria-controls="shelf-math" aria-label="Scroll math right">→</button>
+                    <a class="see-all" href="/math/">See all →</a>
+                </div>
+            </div>
+            <div class="cz-shelf" id="shelf-math" data-cz="shelf" data-cat="math"></div>
+        </section>
 
-        <a href="/jeopardy" class="project-card">
-            <span class="project-title">Jeopardy</span>
-            <span class="project-desc">If you have any questions you want featured on a Jeopardy Game please send them in via the contact page.</span>
-            
-        </a>
+        <!-- Music -->
+        <section class="sec reveal">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow"><span data-cz="count" data-cat="music"></span> with a beat</span>
+                    <h3>Music</h3>
+                </div>
+                <div class="sh-actions">
+                    <button class="arrow-btn" type="button" data-shelf-btn="prev" aria-controls="shelf-music" aria-label="Scroll music left">←</button>
+                    <button class="arrow-btn" type="button" data-shelf-btn="next" aria-controls="shelf-music" aria-label="Scroll music right">→</button>
+                    <a class="see-all" href="/music/">See all →</a>
+                </div>
+            </div>
+            <div class="cz-shelf" id="shelf-music" data-cz="shelf" data-cat="music"></div>
+        </section>
 
-        <a href="https://carzzyapps.github.io/Leaderboards/" class="project-card">
-            <span class="project-title">Leaderboards</span>
-            <span class="project-desc">Click here to view them.</span>
-        </a>
+        <!-- CONTACT -->
+        <section class="contact-section reveal">
+            <h4>Got an idea or a question?</h4>
+            <p>Suggest a game, send in Jeopardy questions, or ask about featuring your business on Carzzy Apps.</p>
+            <a class="btn contact-btn" href="/contact-us/">Contact us</a>
+        </section>
 
+        <footer>
+            <span class="brand">Carzzy Apps</span> · Avis &amp; DeBus | v1.0.0 PRO
+        </footer>
 
-    </div>
+    </main>
 
-    
-
-    <footer>
-        Avis & DeBus | v1.0.0 PRO
-    </footer>
+    <script src="/catalog/catalog.js"></script>
 
 	<script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
