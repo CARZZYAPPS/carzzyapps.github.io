@@ -572,7 +572,7 @@ h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; }
 .ft-btn { padding: 10px 20px; font-size: 0.9rem; }
 .ft-h {
     margin: 4px 0 16px;
-    color: var(--text);
+    color: var(--accent);
     font-size: 0.78rem;
     font-weight: 800;
     letter-spacing: 0.14em;
