@@ -22,15 +22,15 @@ var CATEGORIES = [
 var PROJECTS = [
     {
         id: 'rhythm-runner', img: '/images/rhythm-runner.jpg',
-        title: 'Rhythm Runner', url: 'https://carzzyapps.github.io/Rhythm-Runner/',
-        cats: ['games', 'music'], kind: 'Endless runner', featured: true,
+        title: 'Rhythm Runner', url: 'https://carzzyapps.github.io/Under-Construction/',
+        cats: ['games', 'music'], kind: 'Endless runner',
         desc: 'An endless runner where you jump spikes and duck drones, all to a built-in soundtrack.',
         tags: ['Built-in music', 'Mobile friendly']
     },
     {
         id: 'mastermind', img: '/images/mastermind.jpg',
         title: 'Mastermind', url: '/mastermind/',
-        cats: ['games'], kind: 'Puzzle',
+        cats: ['games'], kind: 'Puzzle', featured: true,
         desc: 'Play the classic game of Mastermind online and try to crack the code in 10 moves or less.',
         tags: ['Singleplayer', 'Multiplayer']
     },
@@ -80,7 +80,7 @@ var PROJECTS = [
         id: 'scymores-games', img: '/images/scymores-games.jpg',
         title: "Scymore's Games", url: '/scymores-games/',
         cats: ['games'], kind: 'Collection',
-        desc: 'A collection of games by Scymore. Click to browse them all.',
+        desc: 'New games coming soon!',
         tags: ['Collection']
     },
     {
