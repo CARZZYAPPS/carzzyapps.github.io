@@ -436,53 +436,92 @@ h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; }
 }
 .ad-frame::before { margin-bottom: 14px; }
 .ad-frame::after { margin-top: 14px; }
-.ad-content { max-width: 640px; margin: 0 auto; }
+.ad-content { max-width: 940px; margin: 0 auto; }
 .ad-label { margin: 0 0 10px; text-align: center; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.75rem; }
-.ad-banner {
+/* KosherKitchenAI ad: styled after kosherkitchenai.com */
+.ad-banner.kka {
+    --kka-cream: #FBF7F2;
+    --kka-ink: #231A15;
+    --kka-ink-2: #5C4F45;
+    --kka-line: #E8DED1;
+    --kka-paprika: #C43D16;
     position: relative;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 28px;
+    align-items: center;
     overflow: hidden;
-    border-radius: 16px;
+    padding: 30px;
+    border-radius: 20px;
     background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12), transparent 28%),
-        linear-gradient(180deg, rgba(18,18,18,0.95), rgba(7,7,7,1));
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 20px 40px rgba(0,0,0,0.45);
-    padding: 22px 14px 14px;
+        radial-gradient(420px 260px at 100% 0%, rgba(245, 160, 58, 0.22), transparent 70%),
+        radial-gradient(360px 240px at 0% 100%, rgba(228, 87, 42, 0.10), transparent 70%),
+        var(--kka-cream);
+    color: var(--kka-ink);
+    font-family: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    text-decoration: none;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    transition: transform 0.25s, box-shadow 0.25s;
 }
-.ad-banner::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-    transform: translateX(-100%);
-    animation: cz-shimmer 6s ease-in-out infinite;
+.ad-banner.kka:hover { transform: translateY(-3px); box-shadow: 0 26px 60px rgba(196, 61, 22, 0.35); }
+.kka span { display: block; }
+.kka .kka-main { min-width: 0; }
+.kka .kka-brand { display: flex; align-items: center; gap: 10px; }
+.kka-logo { width: 38px; height: 38px; flex: none; border-radius: 9px; }
+.kka-logo.sm { width: 22px; height: 22px; border-radius: 6px; }
+.kka .kka-word { font: 600 1.55rem/1 "Fraunces", Georgia, "Times New Roman", serif; letter-spacing: -0.01em; color: var(--kka-ink); }
+.kka-word em { font-style: italic; font-weight: 500; color: var(--kka-paprika); }
+.kka .kka-labels { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 18px; }
+.kka .kka-tag { display: inline-block; padding: 3px 9px; border-radius: 6px; color: #fff; font-size: 0.75rem; font-weight: 600; }
+.kka-tag.meat { background: #A8202C; }
+.kka-tag.dairy { background: #1F4FB8; }
+.kka-tag.pareve { background: #17703F; }
+.kka .kka-note { display: inline-block; margin-left: 4px; color: var(--kka-ink-2); font-size: 0.8rem; }
+.kka .kka-title {
+    margin-top: 12px;
+    font: 700 clamp(1.5rem, 3.2vw, 2.2rem)/1.04 "Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+    letter-spacing: -0.035em;
+    color: var(--kka-ink);
 }
-@keyframes cz-shimmer { 0% { transform: translateX(-100%); } 30%, 100% { transform: translateX(100%); } }
-.ad-brand {
-    margin: 0;
-    font-size: clamp(1.4rem, 7.2vw, 3.4rem);
-    line-height: 0.9;
-    font-weight: 900;
-    letter-spacing: -0.06em;
-    text-transform: uppercase;
-    text-align: center;
-    color: rgba(255,255,255,0.82);
-    text-shadow: 0 0 22px rgba(255,255,255,0.18), 0 0 42px rgba(255,255,255,0.08);
-    transform: scaleY(1.05);
-    filter: blur(0.3px);
-    user-select: none;
-    overflow-wrap: anywhere;
+.kka .kka-title span { display: inline; color: var(--kka-paprika); }
+.kka .kka-desc { margin-top: 12px; color: var(--kka-ink-2); font-size: 0.98rem; line-height: 1.55; max-width: 460px; }
+.kka .kka-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: 20px; }
+.kka .kka-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 22px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #E4572A, #C43D16 60%, #9F3112);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    box-shadow: 0 10px 24px rgba(196, 61, 22, 0.35);
+    transition: transform 0.2s;
 }
-.ad-tagline {
-    margin: 14px 0 0;
-    text-align: center;
-    font-size: clamp(1rem, 2.4vw, 1.4rem);
-    letter-spacing: -0.02em;
-    color: rgba(255,255,255,0.7);
-    font-weight: 500;
+.kka .kka-cta span { display: inline; }
+.ad-banner.kka:hover .kka-cta { transform: translateX(3px); }
+.kka .kka-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--kka-ink-2); font-size: 0.82rem; }
+.kka .kka-checks span { display: inline; }
+
+.kka .kka-demo { position: relative; min-height: 250px; padding: 18px; border-radius: 18px;
+    background: linear-gradient(160deg, #F7A440 0%, #E4572A 55%, #BF341C 100%); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15); }
+.kka .kka-bubble { max-width: 82%; margin-left: auto; padding: 11px 14px; border-radius: 14px 14px 4px 14px;
+    background: var(--kka-ink); color: #FFF8EF; font-size: 0.86rem; line-height: 1.4; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); }
+.kka .kka-card { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: #fff; box-shadow: 0 14px 30px rgba(35, 26, 21, 0.25); }
+.kka .kka-chef { display: flex; align-items: center; gap: 7px; color: var(--kka-ink-2); font-size: 0.78rem; }
+.kka-chef b { color: var(--kka-ink); font-weight: 600; }
+.kka .kka-dish { margin-top: 8px; font: 700 1.1rem/1.2 "Bricolage Grotesque", "Figtree", system-ui, sans-serif; letter-spacing: -0.02em; color: var(--kka-ink); }
+.kka .kka-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.kka .kka-pill { display: inline-block; padding: 3px 9px; border-radius: 6px; background: #F4ECE1; color: var(--kka-ink-2); font-size: 0.75rem; font-weight: 500; }
+.kka .kka-ready { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--kka-line); color: var(--kka-ink-2); font-size: 0.8rem; }
+
+@media (max-width: 760px) {
+    .ad-banner.kka { grid-template-columns: 1fr; padding: 22px; gap: 20px; }
+    .kka .kka-demo { min-height: 0; }
+    .kka .kka-cta { width: 100%; justify-content: center; }
 }
-.ad-tagline a { color: rgba(255,255,255,0.85); position: relative; z-index: 1; }
+
 .ad-contact { color: var(--accent); text-align: center; margin: 14px 0 0; font-size: 0.95rem; font-weight: 600; line-height: 1.5; }
 .ad-contact a { color: var(--accent); }
 
@@ -574,6 +613,6 @@ footer .brand { color: var(--accent); font-weight: bold; }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .reveal { opacity: 1; transform: none; transition: none; }
-    .ad-banner::before { animation: none; }
+    .ad-banner.kka, .kka .kka-cta { transition: none; }
     .cz-card, .cz-cat, .feature, .cz-cover::before, .cz-shot { transition: none; }
 }
