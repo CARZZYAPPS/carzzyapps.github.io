@@ -592,7 +592,7 @@ h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; }
     transition: border-color 0.2s, transform 0.2s;
 }
 .ft-partners a:hover { border-color: var(--accent); transform: translateY(-2px); }
-.ft-pname { display: block; color: var(--text); font-weight: 700; }
+.ft-pname { display: block; color: var(--accent); font-weight: 700; }
 .ft-partners a:hover .ft-pname { color: var(--accent); }
 .ft-pdesc { display: block; margin-top: 3px; color: var(--dim); font-size: 0.8rem; line-height: 1.45; }
 .ft-bottom {
