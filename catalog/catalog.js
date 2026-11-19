@@ -35,6 +35,13 @@ var PROJECTS = [
         tags: ['Singleplayer', 'Multiplayer']
     },
     {
+        id: 'leaderboards', img: '/images/leaderboards.jpg',
+        title: 'Leaderboards', url: 'https://carzzyapps.github.io/Leaderboards/',
+        cats: ['games'], kind: 'High scores',
+        desc: "See who's on top. Click here to view the leaderboards.",
+        tags: ['Rankings']
+    },
+    {
         id: 'right-on-time', img: '/images/right-on-time.jpg',
         title: 'Right On Time', url: 'https://carzzyapps.github.io/right-on-time/',
         cats: ['games'], kind: 'Reflex challenge',
@@ -56,11 +63,18 @@ var PROJECTS = [
         tags: ['Arcade', 'Mobile friendly']
     },
     {
+        id: 'scymores-games', img: '/images/scymores-games.jpg',
+        title: "Scymore's Games", url: '/scymores-games/',
+        cats: ['games'], kind: 'Collection',
+        desc: 'New games coming soon!',
+        tags: ['Collection']
+    },
+    {
         id: '2k-hoops', img: '/images/2k-hoops.jpg',
         title: '2K Hoops', url: 'https://carzzyapps.github.io/Basketball/',
         cats: ['games'], kind: 'Sports · Made by ACM',
         desc: 'A fun online basketball game.',
-        tags: ['Sports', 'Arcade']
+        tags: ['Sports', 'Arcade', '❌ Not mobile friendly (yet!)']
     },
     {
         id: 'radical-clicker', img: '/images/radical-clicker.jpg',
@@ -75,20 +89,6 @@ var PROJECTS = [
         cats: ['games'], kind: 'Trivia',
         desc: 'Have questions you want featured on a Jeopardy game? Send them in via the contact page.',
         tags: ['Trivia', 'Group play']
-    },
-    {
-        id: 'scymores-games', img: '/images/scymores-games.jpg',
-        title: "Scymore's Games", url: '/scymores-games/',
-        cats: ['games'], kind: 'Collection',
-        desc: 'New games coming soon!',
-        tags: ['Collection']
-    },
-    {
-        id: 'leaderboards', img: '/images/leaderboards.jpg',
-        title: 'Leaderboards', url: 'https://carzzyapps.github.io/Leaderboards/',
-        cats: ['games'], kind: 'High scores',
-        desc: "See who's on top. Click here to view the leaderboards.",
-        tags: ['Rankings']
     },
     {
         id: 'carzzy-chords', img: '/images/carzzy-chords.jpg',
