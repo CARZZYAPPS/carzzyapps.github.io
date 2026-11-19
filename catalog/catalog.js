@@ -201,6 +201,8 @@ var PROJECTS = [
                 el.innerHTML = CATEGORIES.map(function (c) { return catTileHTML(c, cur); }).join('');
             } else if (type === 'count') {
                 el.textContent = cat ? inCat(cat).length : PROJECTS.length;
+            } else if (type === 'year') {
+                el.textContent = new Date().getFullYear();
             }
         });
 
