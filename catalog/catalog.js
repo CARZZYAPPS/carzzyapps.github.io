@@ -42,7 +42,8 @@ var PROJECTS = [
         tags: ['Timing', 'Quick play']
     },
     {
-        id: 'hockey-shootout', title: 'Hockey Shootout', url: 'https://carzzyapps.github.io/Hockey-Shootout/',
+        id: 'hockey-shootout', img: '/images/hockey-shootout.jpg',
+        title: 'Hockey Shootout', url: 'https://carzzyapps.github.io/Hockey-Shootout/',
         cats: ['games'], kind: 'Sports',
         desc: 'Exactly what it sounds like.',
         tags: ['Sports', 'Arcade']
@@ -118,7 +119,8 @@ var PROJECTS = [
         tags: ['Math', 'Timer']
     },
     {
-        id: 'stat-calc', title: 'Statistics Calculator', url: 'https://carzzyapps.github.io/Stat-Calc/',
+        id: 'stat-calc', img: '/images/stat-calc.jpg',
+        title: 'Statistics Calculator', url: 'https://carzzyapps.github.io/Stat-Calc/',
         cats: ['math', 'tools'], kind: 'Calculator',
         desc: 'Calculator for mean, median, mode, z-scores, and more.',
         tags: ['Statistics', 'Study']
