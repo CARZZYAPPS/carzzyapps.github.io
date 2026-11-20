@@ -212,7 +212,7 @@
     <button class="action-btn" id="duckBtn">DUCK</button>
   </div>
 
-  <script src="/firebase-config.js"></script>
+   <script src="/firebase-config.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
@@ -226,10 +226,7 @@
     const app = initializeApp(window.CARZZY_FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const submitRhythmRunnerScore = httpsCallable(
-      getFunctions(app),
-      "submitRhythmRunnerScore"
-    );
+    const submitRhythmRunnerScore = httpsCallable(getFunctions(app), "submitRhythmRunnerScore");
 
     const LEGACY_SCORE_URL = "https://script.google.com/macros/s/AKfycbyUqQ31FsONw4J5ibyvLFzIoSMvcd8qfkFwbc_j-BXEO0S3pTiqARVZ4mOm5C3rI-7sIA/exec";
     const RR_USERNAME_KEY = "rr_username";
@@ -404,25 +401,8 @@
     const ctx = canvas.getContext('2d');
     const controls = document.getElementById('controls');
 
-    // --- 1. PLAYLIST SETUP ---
     const playlist = [
-                  //stam songs
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Bekitcha.mp3',
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Hershy%20Weinberger%20and%20Shmueli%20Ungar%20-%20RTVT.mp3',
-      'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Arcade.mp3',
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Ari%20Samet%20and%20Ancii%20-%20Hood.mp3',
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Fire-shmulei_ungar.mp3',
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Parentches.mp3',
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Zusha-Pull_Me_Through.mp3',
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Zusha%20-%20Everything%20Can%20Change.mp3',
-      //'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Chaim_Shlomo_Mayesz-Baskol.mp3'
-                  //acapella songs(sferia/three weeks)
-      /*'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/acappela/Yum%20Yum(acapella).mp3',
-      'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/acappela/Yonatan_Stern_-_Nekudot__Acapella_Cover__(Single).mp3',
-      "https://github.com/CARZZYAPPS/music/raw/refs/heads/main/acappela/Ya'alili.mp3",
-      'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/acappela/Types_Of_Yidden_no_silence.mp3',
-      'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/acappela/Shulem%20Lemmer%20singing%20with%20shira%20chad%20gadyu.mp3',
-      'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/acappela/Gavriel_Pelcovitz_-_Eicha__Acapella__(Single).mp3'*/
+      'https://github.com/CARZZYAPPS/music/raw/refs/heads/main/Arcade.mp3'
     ];
 
     function shufflePlaylist(array) {
@@ -442,7 +422,6 @@
       bgMusic.play();
     });
 
-    // --- 2. CHEAT SETUP ---
     let ghostMode = false;
     let inputBuffer = "";
     const cheatCode = "sgdufbkhfdvjfdrfrbvforhfkjfifkkjghkdjhkhkjhjkjjjjjjjjjjjjjjjkkkkkkkkkkkkkkkkkkkklllllllllllllgdhgjgytfhgrjgfdhgjfdfjkfjhfdhgfgfggfhggfhydhfgffyfhtfthllllllllgffytgcghfddsghnbvftjkjuh215465446354685764646734670624121edd5d55d5d5d54f54f8f157ce5dd44484t8fvefiefo8ryeiluwy9eyr48rk8f4r9r3r4ru983roi48ur4iruo4ru984r4r9847r98r749r489r0328734347928343928740234873409832474533633543154053335763216574";
@@ -502,14 +481,34 @@
     document.getElementById('duckBtn').ontouchstart = (e) => { e.preventDefault(); toggleDuck(true); };
     document.getElementById('duckBtn').ontouchend = (e) => { e.preventDefault(); toggleDuck(false); };
 
-    function update() {
+    // FRAMERATE INDEPENDENCE LOGIC [1.1.1]
+    let lastTime = 0;
+    let accumulator = 0;
+    const timestep = 1000 / 60; // stable timestep 60Hz (~16.67ms) [1.2.1]
+
+    function update(timestamp) {
       if (!gameActive) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = "rgba(0, 209, 178, 0.5)";
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
+      if (!lastTime) lastTime = timestamp;
+      let elapsed = timestamp - lastTime;
+      lastTime = timestamp;
 
+      // Prevent "spiral of death" during lag spikes [1.1.1]
+      if (elapsed > 100) elapsed = 100;
+
+      accumulator += elapsed;
+
+      // Run fixed timestep steps for accurate physics regardless of monitor [1.2.1]
+      while (accumulator >= timestep) {
+        updatePhysics();
+        accumulator -= timestep;
+      }
+
+      draw();
+      requestAnimationFrame(update);
+    }
+
+    function updatePhysics() {
       spawnTimer++;
       let nextSpawn = Math.floor(Math.random() * (85 - 35) + 35);
       if (spawnTimer > Math.max(nextSpawn, 75 - gameSpeed)) {
@@ -529,23 +528,11 @@
         let o = obstacles[i];
         o.x -= gameSpeed;
 
-        ctx.fillStyle = o.type === 'drone' ? "#ff0077" : "#00d1b2";
-        if (o.type === 'drone') {
-          ctx.fillRect(o.x, o.visualY, o.w, 15);
-          ctx.fillStyle = "rgba(255, 0, 119, 0.3)";
-          ctx.fillRect(o.x - 10, o.visualY + 5, o.w + 20, 5);
-        } else {
-          ctx.beginPath();
-          ctx.moveTo(o.x, groundY);
-          ctx.lineTo(o.x + o.w / 2, groundY - o.h);
-          ctx.lineTo(o.x + o.w, groundY);
-          ctx.fill();
-        }
-
         if (!ghostMode) {
           if (o.x < player.x + player.w && o.x + o.w > player.x &&
             player.y < o.y + o.h && player.y + player.h > o.y) {
             gameOver();
+            return;
           }
         }
 
@@ -567,6 +554,29 @@
         player.dy = 0;
         player.grounded = true;
       }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "rgba(0, 209, 178, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke();
+
+      for (let o of obstacles) {
+        ctx.fillStyle = o.type === 'drone' ? "#ff0077" : "#00d1b2";
+        if (o.type === 'drone') {
+          ctx.fillRect(o.x, o.visualY, o.w, 15);
+          ctx.fillStyle = "rgba(255, 0, 119, 0.3)";
+          ctx.fillRect(o.x - 10, o.visualY + 5, o.w + 20, 5);
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(o.x, groundY);
+          ctx.lineTo(o.x + o.w / 2, groundY - o.h);
+          ctx.lineTo(o.x + o.w, groundY);
+          ctx.fill();
+        }
+      }
 
       ctx.globalAlpha = ghostMode ? 0.4 : 1.0;
       ctx.shadowBlur = 10; ctx.shadowColor = "#00d1b2";
@@ -578,8 +588,6 @@
       ctx.fill(); ctx.stroke();
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1.0;
-
-      requestAnimationFrame(update);
     }
 
     function gameOver() {
@@ -621,6 +629,10 @@
       obstacles = [];
       gameSpeed = 10;
       spawnTimer = 0;
+      
+      // Reset loops [1.1.1, 1.2.1]
+      lastTime = 0;
+      accumulator = 0;
 
       document.getElementById('score').innerText = "0";
       document.getElementById('ui-layer').style.display = 'none';
@@ -628,7 +640,7 @@
 
       gameActive = true;
       bgMusic.play().catch(e => { });
-      update();
+      requestAnimationFrame(update);
     };
 
     document.getElementById("usernamePrompt").addEventListener('keydown', (e) => {
@@ -637,10 +649,7 @@
         document.getElementById('saveUsernameBtn').click();
       }
     });
-        
-    
-  
-    </script>
+  </script>
 
 </body>
 <script data-goatcounter="https://carzzyapps.goatcounter.com/count"
