@@ -114,7 +114,7 @@ var PROJECTS = [
     {
         id: 'radical-stopwatch', img: '/images/radical-stopwatch.jpg',
         title: 'Radical Stopwatch', url: 'https://carzzyapps.github.io/Radical-Stopwatch/',
-        cats: ['tools', 'math'], kind: 'Utility',
+        cats: ['math'], kind: 'Utility',
         desc: 'A stopwatch that counts in radicals.',
         tags: ['Math', 'Timer']
     },
