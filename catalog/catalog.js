@@ -21,18 +21,18 @@ var CATEGORIES = [
 
 var PROJECTS = [
     {
-        id: 'rhythm-runner', img: '/images/rhythm-runner.jpg',
-        title: 'Rhythm Runner', url: 'https://carzzyapps.github.io/Under-Construction/',
-        cats: ['games', 'music'], kind: 'Endless runner',
-        desc: 'An endless runner where you jump spikes and duck drones, all to a built-in soundtrack.',
-        tags: ['Built-in music', 'Mobile friendly']
-    },
-    {
         id: 'mastermind', img: '/images/mastermind.jpg',
         title: 'Mastermind', url: '/mastermind/',
         cats: ['games'], kind: 'Puzzle', featured: true,
         desc: 'Play the classic game of Mastermind online and try to crack the code in 10 moves or less.',
         tags: ['Singleplayer', 'Multiplayer']
+    },
+    {
+        id: 'decrossybus', img: '/images/decrossybus.jpg',
+        title: 'DeCrossyBus', url: 'https://carzzyapps.github.io/DeCrossyBus/',
+        cats: ['games'], kind: 'Arcade',
+        desc: 'Why did DeBus cross the road? To save us from copyright infringement, of course.',
+        tags: ['Arcade', 'Mobile friendly']
     },
     {
         id: 'leaderboards', img: '/images/leaderboards.jpg',
@@ -49,18 +49,18 @@ var PROJECTS = [
         tags: ['Timing', 'Quick play']
     },
     {
+        id: 'rhythm-runner', img: '/images/rhythm-runner.jpg',
+        title: 'Rhythm Runner', url: 'https://carzzyapps.github.io/Under-Construction/',
+        cats: ['games', 'music'], kind: 'Endless runner',
+        desc: 'An endless runner where you jump spikes and duck drones, all to a built-in soundtrack.',
+        tags: ['Built-in music', 'Mobile friendly']
+    },
+    {
         id: 'hockey-shootout', img: '/images/hockey-shootout.jpg',
         title: 'Hockey Shootout', url: 'https://carzzyapps.github.io/Hockey-Shootout/',
         cats: ['games'], kind: 'Sports',
         desc: 'Exactly what it sounds like.',
         tags: ['Sports', 'Arcade']
-    },
-    {
-        id: 'decrossybus', img: '/images/decrossybus.jpg',
-        title: 'DeCrossyBus', url: 'https://carzzyapps.github.io/DeCrossyBus/',
-        cats: ['games'], kind: 'Arcade',
-        desc: 'Why did DeBus cross the road? To save us from copyright infringement, of course.',
-        tags: ['Arcade', 'Mobile friendly']
     },
     {
         id: 'scymores-games', img: '/images/scymores-games.jpg',
