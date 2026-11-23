@@ -412,7 +412,7 @@
       askForUsername();
     };
 
-    // Under-construction gate: only accounts with rhythmRunnerAdmins/{uid} { enabled: true } can play.
+    // Under-construction gate: only accounts with siteAdmins/{uid} { enabled: true } can play.
     const ucOverlay = document.getElementById("uc-overlay");
     const ucMessage = document.getElementById("uc-message");
     const ucSignIn = document.getElementById("uc-signin");
@@ -426,7 +426,7 @@
 
     async function isAdmin(user) {
       try {
-        const snap = await getDoc(doc(db, "rhythmRunnerAdmins", user.uid));
+        const snap = await getDoc(doc(db, "siteAdmins", user.uid));
         return snap.exists() && snap.data().enabled === true;
       } catch (error) {
         console.warn("Could not check admin status.", error);

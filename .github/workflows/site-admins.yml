@@ -1,0 +1,37 @@
+name: Site admins
+
+# Syncs .github/site-admins.json into the siteAdmins Firestore collection
+# (carzzy-apps) and deploys the Firestore rules that let admins read their entry.
+# Needs repository secret FIREBASE_SERVICE_ACCOUNT.
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/site-admins.json", ".github/scripts/sync-site-admins.js", ".github/workflows/site-admins.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Deploy Firestore rules
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only firestore:rules --project carzzy-apps --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
+      - name: Sync site admins
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
+          NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-site-admins.js" "$GITHUB_WORKSPACE/.github/site-admins.json"
