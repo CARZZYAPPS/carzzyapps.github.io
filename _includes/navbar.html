@@ -2,33 +2,100 @@
   Shared site navbar. Edit this file to change the navbar on every page.
   Each page pulls it in with an include tag right after <body>, and needs
   front matter (the --- lines at the top) so Jekyll processes it.
-  Styles live in /nav-bar.css and the menu behaviour in /nav-bar.js.
-  Keep the desktop and mobile links in sync.
+  Styles live in /nav-bar.css and the behaviour (menu, account dropdown,
+  sign-in state) in /nav-bar.js. Keep the desktop and mobile links in sync.
+
+  data-auth on .cz-nav is "out" or "in"; nav-bar.js switches it once it
+  knows whether someone is signed in. Without JavaScript the signed-out
+  links show.
 {% endcomment %}
 <link rel="stylesheet" href="/nav-bar.css">
-<nav class="cz-nav" aria-label="Site">
+<header class="cz-nav" data-auth="out">
     <a class="cz-logo" href="/"><img src="/carzzy-apps-logo-300.png" width="150" height="50" alt="Carzzy Apps home"></a>
-    <span class="cz-nav-head">Carzzy Apps</span>
-    <span class="cz-nav-links">
-        <a class="cz-nav-link" href="/">Home</a>
-        <a class="cz-nav-link cz-lzr" href="/arcade/">Lazer Arcade</a>
-        <a class="cz-nav-link" href="/Leaderboards/">Leaderboards</a>
-        <a class="cz-nav-link" href="/scymores-games/">Scymore's Games</a>
-        <a class="cz-nav-link" href="/contact-us/">Contact Us</a>
-    </span>
-    <button type="button" class="cz-menu-button" aria-label="Open menu" aria-expanded="false" aria-controls="cz-menu">
-        <img src="/menu.svg" alt="">
-    </button>
-</nav>
 
-<div class="cz-menu-overlay" id="cz-menu" hidden>
-    <ul class="cz-menu-popup">
-        <li class="cz-menu-close-item"><button type="button" class="cz-menu-close" aria-label="Close menu">&times;</button></li>
-        <li><a class="cz-menu-link" href="/">Home</a></li>
-        <li><a class="cz-menu-link cz-lzr" href="/arcade/">Lazer Arcade</a></li>
-        <li><a class="cz-menu-link" href="/Leaderboards/">Leaderboards</a></li>
-        <li><a class="cz-menu-link" href="/scymores-games/">Scymore's Games</a></li>
-        <li><a class="cz-menu-link" href="/contact-us/">Contact Us</a></li>
-    </ul>
+    <nav class="cz-links" aria-label="Site">
+        <a class="cz-link" href="/">Home</a>
+        <a class="cz-link cz-lzr" href="/arcade/">Lazer Arcade</a>
+        <a class="cz-link" href="/Leaderboards/">Leaderboards</a>
+        <a class="cz-link" href="/scymores-games/">Scymore's Games</a>
+        <a class="cz-link" href="/contact-us/">Contact Us</a>
+    </nav>
+
+    <div class="cz-actions">
+        <div class="cz-when-out">
+            <a class="cz-btn cz-btn-quiet" href="/auth/sign-in/" data-cz-auth-link>Sign in</a>
+            <a class="cz-btn cz-btn-solid" href="/auth/sign-up/" data-cz-auth-link>Sign up</a>
+        </div>
+
+        <div class="cz-when-in cz-account">
+            <button type="button" class="cz-account-button" aria-expanded="false" aria-controls="cz-account-menu" aria-haspopup="true">
+                <span class="cz-avatar" data-cz-avatar aria-hidden="true"></span>
+                <span class="cz-account-name" data-cz-name>Account</span>
+                <svg class="cz-chevron" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="cz-account-menu" id="cz-account-menu" hidden>
+                <div class="cz-account-card">
+                    <span class="cz-avatar cz-avatar-lg" data-cz-avatar aria-hidden="true"></span>
+                    <span class="cz-account-text">
+                        <span class="cz-account-card-name" data-cz-name>Account</span>
+                        <span class="cz-account-email" data-cz-email></span>
+                    </span>
+                </div>
+                <a class="cz-menu-item" href="/auth/account/">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    Account settings
+                </a>
+                <button type="button" class="cz-menu-item cz-sign-out" data-cz-sign-out>
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Sign out
+                </button>
+            </div>
+        </div>
+
+        <button type="button" class="cz-menu-button" aria-label="Open menu" aria-expanded="false" aria-controls="cz-drawer">
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
+    </div>
+</header>
+
+<div class="cz-drawer-backdrop" hidden>
+    <div class="cz-drawer" id="cz-drawer" role="dialog" aria-modal="true" aria-label="Menu">
+        <div class="cz-drawer-head">
+            <span class="cz-drawer-title">Menu</span>
+            <button type="button" class="cz-drawer-close" aria-label="Close menu">
+                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+
+        <div class="cz-drawer-account cz-when-out">
+            <p class="cz-drawer-pitch">Sign in to save your scores and show up on the leaderboards.</p>
+            <div class="cz-drawer-buttons">
+                <a class="cz-btn cz-btn-solid" href="/auth/sign-in/" data-cz-auth-link>Sign in</a>
+                <a class="cz-btn cz-btn-outline" href="/auth/sign-up/" data-cz-auth-link>Sign up</a>
+            </div>
+        </div>
+
+        <div class="cz-drawer-account cz-when-in">
+            <div class="cz-account-card">
+                <span class="cz-avatar cz-avatar-lg" data-cz-avatar aria-hidden="true"></span>
+                <span class="cz-account-text">
+                    <span class="cz-account-card-name" data-cz-name>Account</span>
+                    <span class="cz-account-email" data-cz-email></span>
+                </span>
+            </div>
+            <div class="cz-drawer-buttons">
+                <a class="cz-btn cz-btn-outline" href="/auth/account/">Account settings</a>
+                <button type="button" class="cz-btn cz-btn-quiet" data-cz-sign-out>Sign out</button>
+            </div>
+        </div>
+
+        <nav class="cz-drawer-links" aria-label="Site">
+            <a class="cz-drawer-link" href="/">Home</a>
+            <a class="cz-drawer-link cz-lzr" href="/arcade/">Lazer Arcade</a>
+            <a class="cz-drawer-link" href="/Leaderboards/">Leaderboards</a>
+            <a class="cz-drawer-link" href="/scymores-games/">Scymore's Games</a>
+            <a class="cz-drawer-link" href="/contact-us/">Contact Us</a>
+        </nav>
+    </div>
 </div>
-<noscript><style>.cz-nav-links{display:inline!important}</style></noscript>
+<noscript><style>.cz-links{display:flex!important}.cz-menu-button{display:none!important}</style></noscript>

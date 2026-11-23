@@ -1,4 +1,5 @@
-// Shared site script: loads the feedback popup and wires up the navbar menu.
+// Shared site script: loads the feedback popup and runs the navbar
+// (current-page highlight, account dropdown, mobile drawer, sign-in state).
 // The navbar markup itself is built into each page by Jekyll from
 // _includes/navbar.html, so it shows up without waiting for this script.
 
@@ -7,46 +8,192 @@ feedbackPopupScript.src = '/feedback-popup.js';
 document.head.appendChild(feedbackPopupScript);
 
 (function () {
-    function initializeMenu() {
-        const button = document.querySelector('.cz-menu-button');
-        const overlay = document.querySelector('.cz-menu-overlay');
-        if (!button || !overlay || overlay.dataset.ready) return;
-        overlay.dataset.ready = 'true';
+    // Same Firebase project the /auth pages sign people in to. The navbar uses
+    // its own SDK version so its app never clashes with a page's own
+    // initializeApp() call; sign-in state is still shared (same site storage).
+    const FIREBASE_VERSION = '10.14.0';
+    const FIREBASE_CONFIG = {
+        apiKey: 'AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4',
+        authDomain: 'carzzy-apps.firebaseapp.com',
+        projectId: 'carzzy-apps'
+    };
+    const CACHE_KEY = 'czNavUser';
 
-        const closeButton = overlay.querySelector('.cz-menu-close');
-        let previousOverflow = '';
+    let auth = null;
+    let firebaseAuth = null;
 
-        function openMenu() {
-            previousOverflow = document.body.style.overflow;
-            overlay.hidden = false;
-            button.setAttribute('aria-expanded', 'true');
-            document.body.style.overflow = 'hidden';
-            if (closeButton) closeButton.focus();
+    function normalisePath(path) {
+        path = decodeURIComponent(path).toLowerCase().replace(/index\.html$/, '');
+        return path.endsWith('/') ? path : path + '/';
+    }
+
+    function markCurrentPage() {
+        const here = normalisePath(location.pathname);
+        document.querySelectorAll('.cz-link, .cz-drawer-link').forEach(link => {
+            const target = normalisePath(new URL(link.href).pathname);
+            const isCurrent = target === '/' ? here === '/' : here.startsWith(target);
+            if (isCurrent) link.setAttribute('aria-current', 'page');
+        });
+    }
+
+    // ---------- Signed-in state ----------
+
+    function readCache() {
+        try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch (e) { return null; }
+    }
+
+    function writeCache(user) {
+        try {
+            if (user) localStorage.setItem(CACHE_KEY, JSON.stringify(user));
+            else localStorage.removeItem(CACHE_KEY);
+        } catch (e) { /* storage blocked: the navbar still works, it just can't remember */ }
+    }
+
+    function showUser(user) {
+        const state = user ? 'in' : 'out';
+        document.querySelectorAll('.cz-nav, .cz-drawer-backdrop').forEach(el => { el.dataset.auth = state; });
+        if (!user) return;
+
+        const name = user.name || 'Account';
+        document.querySelectorAll('[data-cz-name]').forEach(el => { el.textContent = name; });
+        document.querySelectorAll('[data-cz-email]').forEach(el => {
+            el.textContent = user.email || '';
+            el.hidden = !user.email;
+        });
+        document.querySelectorAll('[data-cz-avatar]').forEach(el => {
+            el.textContent = '';
+            if (user.photo) {
+                const img = document.createElement('img');
+                img.src = user.photo;
+                img.alt = '';
+                img.referrerPolicy = 'no-referrer';
+                img.onerror = () => { el.textContent = name.charAt(0); };
+                el.appendChild(img);
+            } else {
+                el.textContent = name.charAt(0);
+            }
+        });
+        const button = document.querySelector('.cz-account-button');
+        if (button) button.setAttribute('aria-label', 'Account menu for ' + name);
+    }
+
+    function userFromFirebase(u) {
+        if (!u || u.isAnonymous) return null;
+        return {
+            name: u.displayName || (u.email ? u.email.split('@')[0] : 'Account'),
+            email: u.email || '',
+            photo: u.photoURL || ''
+        };
+    }
+
+    function watchSignIn() {
+        const base = 'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/';
+        Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js')])
+            .then(([appSdk, authSdk]) => {
+                const app = appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(FIREBASE_CONFIG);
+                firebaseAuth = authSdk;
+                auth = authSdk.getAuth(app);
+                authSdk.onAuthStateChanged(auth, u => {
+                    const user = userFromFirebase(u);
+                    writeCache(user);
+                    showUser(user);
+                });
+            })
+            .catch(error => console.warn('Navbar could not check sign-in state:', error));
+    }
+
+    function signOut() {
+        const done = () => {
+            writeCache(null);
+            try { localStorage.removeItem('signIn'); } catch (e) { /* ignore */ }
+            if (location.pathname.startsWith('/auth/account')) location.href = '/';
+            else location.reload();
+        };
+        if (auth && firebaseAuth) firebaseAuth.signOut(auth).then(done, done);
+        else done();
+    }
+
+    // ---------- Menus ----------
+
+    function initializeNavbar() {
+        const nav = document.querySelector('.cz-nav');
+        const backdrop = document.querySelector('.cz-drawer-backdrop');
+        if (!nav || !backdrop || nav.dataset.ready) return;
+        nav.dataset.ready = 'true';
+
+        markCurrentPage();
+        showUser(readCache());   // instant guess from last visit, confirmed by Firebase below
+        watchSignIn();
+
+        // Remember where people were so sign-in can send them back here.
+        document.querySelectorAll('[data-cz-auth-link]').forEach(link => {
+            link.addEventListener('click', () => {
+                if (location.pathname.startsWith('/auth/')) return;
+                try { sessionStorage.setItem('prevPage', location.href); } catch (e) { /* ignore */ }
+            });
+        });
+        document.querySelectorAll('[data-cz-sign-out]').forEach(b => b.addEventListener('click', signOut));
+
+        // Account dropdown (desktop) — on small screens the avatar opens the drawer.
+        const accountButton = nav.querySelector('.cz-account-button');
+        const accountMenu = nav.querySelector('.cz-account-menu');
+        const smallScreen = window.matchMedia('(max-width: 1080px)');
+
+        function setAccountMenu(open) {
+            accountMenu.hidden = !open;
+            accountButton.setAttribute('aria-expanded', String(open));
         }
 
-        function closeMenu() {
-            if (overlay.hidden) return;
-            overlay.hidden = true;
-            button.setAttribute('aria-expanded', 'false');
+        accountButton.addEventListener('click', () => {
+            if (smallScreen.matches) return openDrawer();
+            setAccountMenu(accountMenu.hidden);
+        });
+        document.addEventListener('click', event => {
+            if (!accountMenu.hidden && !event.target.closest('.cz-account')) setAccountMenu(false);
+        });
+
+        // Drawer (small screens)
+        const menuButton = nav.querySelector('.cz-menu-button');
+        const closeButton = backdrop.querySelector('.cz-drawer-close');
+        let previousOverflow = '';
+        let opener = null;
+
+        function openDrawer() {
+            opener = document.activeElement;
+            previousOverflow = document.body.style.overflow;
+            backdrop.hidden = false;
+            menuButton.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+            closeButton.focus();
+        }
+
+        function closeDrawer() {
+            if (backdrop.hidden) return;
+            backdrop.hidden = true;
+            menuButton.setAttribute('aria-expanded', 'false');
             // Put back whatever the page had, instead of forcing "auto".
             document.body.style.overflow = previousOverflow;
-            button.focus();
+            if (opener && opener.focus) opener.focus();
         }
 
-        button.addEventListener('click', openMenu);
-        // Clicking the dim background, the × or a link closes the menu.
-        overlay.addEventListener('click', event => {
-            if (event.target === overlay || event.target.closest('.cz-menu-close, .cz-menu-link')) closeMenu();
+        menuButton.addEventListener('click', openDrawer);
+        closeButton.addEventListener('click', closeDrawer);
+        backdrop.addEventListener('click', event => {
+            if (event.target === backdrop || event.target.closest('.cz-drawer-link')) closeDrawer();
         });
+        smallScreen.addEventListener('change', () => { closeDrawer(); setAccountMenu(false); });
+
         document.addEventListener('keydown', event => {
-            if (event.key === 'Escape') closeMenu();
+            if (event.key !== 'Escape') return;
+            if (!accountMenu.hidden) { setAccountMenu(false); accountButton.focus(); }
+            closeDrawer();
         });
     }
 
     // Fallback for a page that loads this script but wasn't built with the
     // include (for example a page missing its front matter): fetch the navbar.
     function ensureNavbar() {
-        if (document.querySelector('.cz-nav')) return initializeMenu();
+        if (document.querySelector('.cz-nav')) return initializeNavbar();
         fetch('/nav-bar.html')
             .then(response => {
                 if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -55,7 +202,7 @@ document.head.appendChild(feedbackPopupScript);
             .then(html => {
                 if (html.includes('{% include')) throw new Error('nav-bar.html was not built by Jekyll');
                 document.body.insertAdjacentHTML('afterbegin', html);
-                initializeMenu();
+                initializeNavbar();
             })
             .catch(error => console.warn('Could not load the site navbar:', error));
     }
