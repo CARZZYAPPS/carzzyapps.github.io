@@ -4,59 +4,89 @@ layout: null
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up | Carzzy Apps</title>
-    <style>
-    /* These headings were moved up one level (h2 -> h1 etc.); keep the
-       size and spacing they had before. Rules below still override this. */
-    h1 { font-size: 1.5em; margin-top: 0.83em; margin-bottom: 0.83em; }
-
-      body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
-      .card{background:#1a1a1a;border:1px solid #00d1b2;padding:30px;border-radius:12px;width:100%;max-width:450px;box-sizing:border-box;margin:100px auto 0 auto;}
-      h1 {font-size:32px;text-align:center;}
-      label{display:block;margin-top:20px;font-size:15px}
-      input,button{width:100%;padding:10px;margin-top:5px;border-radius:6px;box-sizing:border-box}
-      input{background:#2a2a2a;border:1px solid #333;color:#fff}
-      button{background:#00d1b2;border:none;color:#0a0a0a;font-weight:bold;cursor:pointer;margin-top:25px;font-size:20px;}
-      .msg{text-align:center;margin-top:15px}
-      .stay-signed-in-container{display:flex;align-items:center;gap:8px;margin-top:12px;color:#ccc;font-size:14px}
-      .stay-signed-in-container input{width:auto;margin:0;accent-color:#00d1b2}
-      .stay-signed-in-container label{margin:0;cursor:pointer}
-    </style>
-  <style>
-    /* Base page font and spacing. These used to be applied to every page by the
-       old fetched navbar; they now live on each page that relies on them. */
-    html, body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="color-scheme" content="dark">
+  <title>Sign Up | Carzzy Apps</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/auth/auth.css">
 </head>
 <body>
 {% include navbar.html %}
   <script src="/nav-bar.js"></script>
-  <div class="card">
-    <h1>Sign Up</h1>
-    <form id="signup-form">
-      <label for="username">Username</label>
-      <input type="text" id="username" required placeholder="carzzy_boss">
-      <label for="email">Email Address</label>
-      <input type="email" id="email" required placeholder="you@example.com">
-      <label for="password">Password</label>
-      <input type="password" id="password" required placeholder="••••••••">
-      <label for="confirm-password">Confirm Password</label>
-      <input type="password" id="confirm-password" required placeholder="••••••••">
-      <div style="display:flex;align-items:center;gap:8px;margin-top:15px;font-size:14px;">
-        <input type="checkbox" id="show-password" style="width:auto;margin:0;cursor:pointer;accent-color:#00d1b2;">
-        <label for="show-password" style="margin:0;cursor:pointer;color:#ccc;">Show Password</label>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-head">
+        <div class="auth-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M2 21a8 8 0 0 1 13.3-6"/><path d="M19 15v6M16 18h6"/></svg>
+        </div>
+        <h1>Create your account</h1>
+        <p>Save scores, climb leaderboards, and more</p>
       </div>
-      <div class="stay-signed-in-container">
-        <input type="checkbox" id="stay-signed-in">
-        <label for="stay-signed-in">Stay signed in on this device</label>
+
+      <form id="signup-form" novalidate>
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label for="username">Username</label>
+            <span class="auth-hint" id="username-count">0/15</span>
+          </div>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <input type="text" id="username" required placeholder="carzzy_boss" maxlength="15" autocomplete="username" aria-describedby="username-count">
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="email">Email address</label>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            <input type="email" id="email" required placeholder="you@example.com" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <div class="auth-input-wrap has-toggle">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            <input type="password" id="password" required placeholder="Create a password" autocomplete="new-password" aria-describedby="password-hint">
+            <button type="button" class="auth-eye" aria-controls="password confirm-password" aria-label="Show passwords" aria-pressed="false">
+              <svg class="eye-on" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+            </button>
+          </div>
+          <div class="auth-hint" id="password-hint">At least 6 characters, with upper &amp; lowercase letters, a number, and a symbol.</div>
+        </div>
+
+        <div class="auth-field">
+          <label for="confirm-password">Confirm password</label>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+            <input type="password" id="confirm-password" required placeholder="Re-enter your password" autocomplete="new-password" aria-describedby="confirm-hint">
+          </div>
+          <div class="auth-hint" id="confirm-hint" aria-live="polite"></div>
+        </div>
+
+        <label class="auth-check">
+          <input type="checkbox" id="stay-signed-in">
+          Stay signed in on this device
+        </label>
+
+        <button type="submit" class="auth-submit" id="submit-btn">
+          <span class="auth-spinner" aria-hidden="true"></span>
+          <span class="auth-submit-text">Create Account</span>
+        </button>
+      </form>
+
+      <div id="msg" class="auth-msg" role="alert" aria-live="polite"></div>
+
+      <div class="auth-foot">
+        Already have an account? <a href="/auth/sign-in">Sign in</a>
       </div>
-      <button type="submit">Sign Up</button>
-    </form>
-    <div id="msg" class="msg"></div>
-    <div style="text-align:center;margin-top:15px;color:#ccc;">Already have an account? <a href="/auth/sign-in" style="color:#00d1b2">Sign In</a></div>
-  </div>
+    </div>
+  </main>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
@@ -76,7 +106,7 @@ layout: null
       const db = getFirestore(app);
       const lowercaseUsername = username.toLowerCase();
       const usernamesRef = collection(db, "usernames");
-      
+
       const q = query(usernamesRef, where("usernameLower", "==", lowercaseUsername));
       const querySnapshot = await getDocs(q);
       let isTaken = false;
@@ -86,57 +116,101 @@ layout: null
       if (isTaken) {
         const e = new Error("taken"); e.code = "already-exists"; throw e;
       }
-      
+
       const ref = doc(db, "usernames", user.uid);
       await runTransaction(db, async (tx) => {
-        tx.set(ref, { 
-          uid: user.uid, 
-          guest: false, 
-          username: username, 
-          usernameLower: lowercaseUsername 
+        tx.set(ref, {
+          uid: user.uid,
+          guest: false,
+          username: username,
+          usernameLower: lowercaseUsername
         });
       });
     }
 
-    const showPasswordCheckbox = document.getElementById("show-password");
+    const msg = document.getElementById("msg");
+    const submitBtn = document.getElementById("submit-btn");
+    const submitText = submitBtn.querySelector(".auth-submit-text");
+    const usernameInput = document.getElementById("username");
+    const usernameCount = document.getElementById("username-count");
     const passwordInput = document.getElementById("password");
     const confirmPasswordInput = document.getElementById("confirm-password");
+    const confirmHint = document.getElementById("confirm-hint");
 
-    showPasswordCheckbox.addEventListener("change", () => {
-      const type = showPasswordCheckbox.checked ? "text" : "password";
-      passwordInput.type = type; confirmPasswordInput.type = type;
+    function showMsg(text, kind) {
+      msg.className = "auth-msg is-" + kind;
+      msg.textContent = text;
+    }
+
+    function setLoading(on) {
+      submitBtn.disabled = on;
+      submitBtn.classList.toggle("is-loading", on);
+      submitText.textContent = on ? "Creating account…" : "Create Account";
+    }
+
+    // Eye button shows/hides both password fields together.
+    document.querySelectorAll(".auth-eye").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const inputs = btn.getAttribute("aria-controls").split(" ").map((id) => document.getElementById(id));
+        const show = inputs[0].type === "password";
+        inputs.forEach((input) => { input.type = show ? "text" : "password"; });
+        btn.setAttribute("aria-pressed", String(show));
+        btn.setAttribute("aria-label", show ? "Hide passwords" : "Show passwords");
+      });
     });
+
+    usernameInput.addEventListener("input", () => {
+      usernameCount.textContent = usernameInput.value.length + "/15";
+    });
+
+    function updateConfirmHint() {
+      if (!confirmPasswordInput.value) {
+        confirmHint.textContent = "";
+        confirmHint.className = "auth-hint";
+      } else if (confirmPasswordInput.value === passwordInput.value) {
+        confirmHint.textContent = "Passwords match";
+        confirmHint.className = "auth-hint is-good";
+      } else {
+        confirmHint.textContent = "Passwords don't match yet";
+        confirmHint.className = "auth-hint is-bad";
+      }
+    }
+    passwordInput.addEventListener("input", updateConfirmHint);
+    confirmPasswordInput.addEventListener("input", updateConfirmHint);
 
     document.getElementById("signup-form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const msg = document.getElementById("msg");
-      const username = document.getElementById("username").value.trim();
+      const username = usernameInput.value.trim();
       const email = document.getElementById("email").value.trim();
       const password = passwordInput.value;
       const confirmPassword = confirmPasswordInput.value;
 
+      if (!username || username.length > 15) {
+        showMsg("Username must be 1–15 characters.", "error"); return;
+      }
+      if (!email || !password) {
+        showMsg("Please fill in every field.", "error"); return;
+      }
       if (password !== confirmPassword) {
-        msg.style.color = "#f00"; msg.textContent = "Passwords do not match!"; return;
+        showMsg("Passwords do not match.", "error"); return;
       }
 
+      setLoading(true);
       let cred = null;
       try {
-        if (!username || username.length > 15) {
-          msg.style.color = "#f00"; msg.textContent = "Username must be up to 15 characters."; return;
-        }
         const staySignedIn = document.getElementById("stay-signed-in").checked;
         await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);
         cred = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(cred.user, { displayName: username });
         await claimUsernameSafely(cred.user, username);
         if (staySignedIn) { localStorage.setItem("signIn", "true"); } else { localStorage.removeItem("signIn"); }
-        msg.style.color = "#00d1b2"; msg.textContent = "Account registered successfully!";
-        setTimeout(() => {document.location.href = "/auth/verify-email";}, 500);
+        showMsg("Account created! Redirecting…", "success");
+        setTimeout(() => { document.location.href = "/auth/verify-email"; }, 500);
       } catch (err) {
         if (cred && cred.user) {
           try { await cred.user.delete(); } catch (delErr) { console.error("Cleanup failed:", delErr); }
         }
-        msg.style.color = "#f00";
+        setLoading(false);
         let friendlyMessage = "An unexpected error occurred. Please try again.";
         switch (err.code) {
           case "auth/email-already-in-use": friendlyMessage = "This email address is already registered."; break;
@@ -150,7 +224,7 @@ layout: null
           case "permission-denied": friendlyMessage = "Username registration failed."; break;
           default: friendlyMessage = err.message;
         }
-        msg.textContent = friendlyMessage;
+        showMsg(friendlyMessage, "error");
       }
     });
   </script>
