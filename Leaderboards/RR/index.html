@@ -136,7 +136,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import {
-      collection, getDocs, getFirestore, limit, orderBy, query
+      collection, doc, getDoc, getDocs, getFirestore, limit, orderBy, query
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     async function loadLeaderboard() {
@@ -147,10 +147,20 @@
         const app = initializeApp(window.CARZZY_FIREBASE_CONFIG);
         const db = getFirestore(app);
         const snapshot = await getDocs(query(
-          collection(db, "rhythmRunnerScores"),
-          orderBy("score", "desc"),
+          collection(db, "carzzyPlayers"),
+          orderBy("RRBest", "desc"),
           limit(100)
         ));
+
+        // Look up each player's username from usernames/{uid}.
+        const names = await Promise.all(snapshot.docs.map(async (playerDoc) => {
+          try {
+            const u = await getDoc(doc(db, "usernames", playerDoc.id));
+            return (u.exists() && u.data().username) || "Player";
+          } catch (e) {
+            return "Player";
+          }
+        }));
 
         const tbody = document.getElementById("leaderboard");
         tbody.innerHTML = "";
@@ -158,7 +168,7 @@
         snapshot.docs.forEach((scoreDoc, i) => {
           const row = scoreDoc.data();
           const tr = document.createElement("tr");
-          for (const value of [i + 1, row.username, row.score]) {
+          for (const value of [i + 1, names[i], row.RRBest]) {
             const cell = document.createElement("td");
             cell.textContent = String(value);
             tr.appendChild(cell);

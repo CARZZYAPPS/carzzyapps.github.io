@@ -253,6 +253,24 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Shared per-player record. Rhythm Runner best score lives in RRBest.
+    match /carzzyPlayers/{uid} {
+      function validRRBest(data, prev) {
+        return data.RRBest is int
+          && data.RRBest >= prev
+          && data.RRBest <= 2147483647;
+      }
+
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['RRBest'])
+        && validRRBest(request.resource.data, 0);
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['RRBest'])
+        && validRRBest(request.resource.data, ('RRBest' in resource.data) ? resource.data.RRBest : 0);
+      allow delete: if false;
+    }
+
     match /rhythmRunnerScores/{playerId} {
       function validRhythmRunnerScore(data) {
         return data.keys().hasAll(['username', 'score', 'updatedAt'])

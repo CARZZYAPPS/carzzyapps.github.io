@@ -260,8 +260,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+    import { getFirestore, doc, getDoc, setDoc, runTransaction, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
     if (!window.CARZZY_FIREBASE_CONFIG) {
       throw new Error("Rhythm Runner Firebase configuration is unavailable.");
@@ -270,7 +269,6 @@
     const app = initializeApp(window.CARZZY_FIREBASE_CONFIG);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const submitRhythmRunnerScore = httpsCallable(getFunctions(app), "submitRhythmRunnerScore");
 
     const LEGACY_SCORE_URL = "https://script.google.com/macros/s/AKfycbyUqQ31FsONw4J5ibyvLFzIoSMvcd8qfkFwbc_j-BXEO0S3pTiqARVZ4mOm5C3rI-7sIA/exec";
     const RR_USERNAME_KEY = "rr_username";
@@ -469,19 +467,19 @@
 
     updateUsernameDisplay();
 
+    // Saves the player's best score to carzzyPlayers/{uid}.RRBest (only ever raises it).
     async function submitScore(name, score) {
-      let playerToken = currentAuthUser ? currentAuthUser.uid : localStorage.getItem("game_token");
-      if (!playerToken) {
-        playerToken = `rr-${crypto.randomUUID().replaceAll("-", "")}`;
-        localStorage.setItem("game_token", playerToken);
-      }
-
-      const result = await submitRhythmRunnerScore({
-        playerId: playerToken,
-        username: name,
-        score
+      const user = auth.currentUser;
+      if (!user) return null;
+      const newScore = Math.max(0, Math.floor(Number(score) || 0));
+      const ref = doc(db, "carzzyPlayers", user.uid);
+      return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const current = snap.exists() && Number.isInteger(snap.data().RRBest) ? snap.data().RRBest : 0;
+        if (newScore <= current) return current;
+        tx.set(ref, { RRBest: newScore }, { merge: true });
+        return newScore;
       });
-      return result.data;
     }
 
     const canvas = document.getElementById('gameCanvas');
@@ -686,13 +684,8 @@
         localStorage.setItem('rr_best_pro', bestScore);
         document.getElementById('best-score').innerText = bestScore;
       }
-      if (username) {
+      if (auth.currentUser) {
         submitScore(username, score)
-          .then((saved) => {
-            username = saved.username;
-            localStorage.setItem("rr_username", username);
-            updateUsernameDisplay();
-          })
           .catch((error) => {
             console.error("Could not save the Rhythm Runner score.", error);
             alert("Your score could not be saved. Check your connection and try again.");

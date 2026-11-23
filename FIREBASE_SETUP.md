@@ -109,26 +109,15 @@ keep their password safe.
 
 ## Rhythm Runner Firebase leaderboard
 
-Rhythm Runner stores each player's best score in the `rhythmRunnerScores`
-collection in the `carzzy-apps` project. A Firebase callable validates score
-submissions and replaces invalid or inappropriate usernames with a randomly
-generated name. The public leaderboard reads the top 100 scores from this
-collection. The admin workspace's **Rhythm Runner leaderboard** section can
-edit or delete any score and can generate a random username from the edit form.
-Existing scores in the previous Google Apps Script leaderboard are not
-automatically imported into Firestore.
+Rhythm Runner saves each signed-in player's best score directly from the browser
+to `carzzyPlayers/{UID}` in the field `RRBest` (no Cloud Function). Firestore
+rules let a player write only their own document, only the `RRBest` field, and
+only to raise it. The public leaderboard (`/Leaderboards/RR/`) reads the top 100
+`RRBest` values and shows each player's name from `usernames/{UID}`. Players who
+are not signed in don't save scores.
 
-Deploy the callable and the root Firestore rules to `carzzy-apps`:
-
-```powershell
-firebase deploy --only functions:submitRhythmRunnerScore,firestore:rules --project carzzy-apps
-```
-
-The admin score editor uses the same game-project `adminUsers/{UID}` allowlist
-as Crema Rush. Sign in to the admin workspace with the matching game-project
-account, create or enable its `adminUsers/{UID}` document, then open
-**Rhythm Runner leaderboard**. Player score submissions are written by the
-callable; direct client writes are denied by Firestore rules.
+The older `rhythmRunnerScores` collection is no longer written or shown on the
+leaderboard; its data and admin-edit rule are kept.
 
 ## Verify
 
@@ -139,12 +128,8 @@ the admin dashboard and an email is delivered by Formcarry. Submit feedback at
 and timestamp appears under `feedbackSubmissions`. The username should match
 the one shown on the Rhythm Runner leaderboard.
 
-For Rhythm Runner, deploy `submitRhythmRunnerScore` and the root rules, then
-publish the game and leaderboard pages. Try an invalid username, complete a
-game, and confirm the generated name and best score appear in
-`rhythmRunnerScores` and on the public leaderboard. Sign in to the admin
-workspace, open **Rhythm Runner leaderboard**, edit the name or score, and
-confirm the public leaderboard reflects the change.
+For Rhythm Runner, sign in, finish a game, and confirm `RRBest` appears under
+`carzzyPlayers/{UID}` and on the public leaderboard.
 
 Open either game while signed out and verify the three choices are shown.
 Continue as a guest and confirm a generated username appears in `usernames`.
