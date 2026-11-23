@@ -171,12 +171,53 @@
       color: white;
       font-weight: bold;
     }
+    #uc-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(10, 10, 10, 0.97);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+    }
+    #uc-overlay[hidden] { display: none; }
+    #uc-overlay .uc-box {
+      max-width: 420px;
+      padding: 28px 24px;
+      border: 1px solid #00d1b2;
+      border-radius: 12px;
+      background: #111;
+    }
+    #uc-overlay h2 { margin: 0 0 12px; color: #00d1b2; letter-spacing: 2px; }
+    #uc-overlay p { margin: 0 0 18px; line-height: 1.5; }
+    #uc-overlay a {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 6px;
+      background: #00d1b2;
+      color: #0a0a0a;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    #uc-overlay .uc-warn { color: #ff6b6b; }
   </style>
 </head>
 
 <body>
 
   <script src="/nav-bar.js"></script>
+
+  <div id="uc-overlay" role="dialog" aria-modal="true" aria-labelledby="uc-title">
+    <div class="uc-box">
+      <h2 id="uc-title">🚧 UNDER CONSTRUCTION 🚧</h2>
+      <p id="uc-message">Rhythm Runner is being worked on. Sign in with an admin account to play.</p>
+      <a id="uc-signin" href="/auth/sign-in/">SIGN IN</a>
+    </div>
+  </div>
 
   <div class="stats">
     SCORE: <span id="score">0</span><br>
@@ -368,8 +409,51 @@
       askForUsername();
     };
 
+    // Under-construction gate: only accounts with adminUsers/{uid} { enabled: true } can play.
+    const ucOverlay = document.getElementById("uc-overlay");
+    const ucMessage = document.getElementById("uc-message");
+    const ucSignIn = document.getElementById("uc-signin");
+    ucSignIn.addEventListener("click", () => {
+      sessionStorage.setItem("prevPage", window.location.href);
+    });
+    // Block game keyboard input while the overlay is showing.
+    window.addEventListener("keydown", (e) => {
+      if (!ucOverlay.hidden) e.stopImmediatePropagation();
+    }, true);
+
+    async function isAdmin(user) {
+      try {
+        const snap = await getDoc(doc(db, "adminUsers", user.uid));
+        return snap.exists() && snap.data().enabled === true;
+      } catch (error) {
+        console.warn("Could not check admin status.", error);
+        return false;
+      }
+    }
+
+    async function updateConstructionGate(user) {
+      if (!user || user.isAnonymous) {
+        ucMessage.classList.remove("uc-warn");
+        ucMessage.textContent = "Rhythm Runner is being worked on. Sign in with an admin account to play.";
+        ucSignIn.textContent = "SIGN IN";
+        ucSignIn.hidden = false;
+        ucOverlay.hidden = false;
+        return;
+      }
+      if (await isAdmin(user)) {
+        ucOverlay.hidden = true;
+        return;
+      }
+      ucMessage.classList.add("uc-warn");
+      ucMessage.textContent = "You're signed in, but your account is not an admin. Rhythm Runner is only available to admins while it's under construction.";
+      ucSignIn.textContent = "SIGN IN WITH A DIFFERENT ACCOUNT";
+      ucSignIn.hidden = false;
+      ucOverlay.hidden = false;
+    }
+
     onAuthStateChanged(auth, async (user) => {
       currentAuthUser = user;
+      updateConstructionGate(user);
       if (user) {
         await loadAuthUsername();
         await importLegacyScoresForUser();
