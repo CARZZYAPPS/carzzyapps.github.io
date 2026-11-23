@@ -99,24 +99,32 @@
     transition: color 0.2s, background-color 0.2s;
 }
 
-.cz-link:hover {
-    color: #fff;
-    background-color: #222;
-}
-
-.cz-link[aria-current="page"] {
-    color: var(--cz-accent);
-}
-
-.cz-link[aria-current="page"]::after {
+/* Underline: hidden until hover; always shown under the current page. */
+.cz-link::after {
     content: "";
     position: absolute;
     left: 13px;
     right: 13px;
-    bottom: 2px;
+    bottom: 3px;
     height: 2px;
     border-radius: 2px;
     background: var(--cz-accent);
+    transform: scaleX(0);
+    transition: transform 0.2s ease-out;
+}
+
+.cz-link:hover {
+    color: var(--cz-accent);
+    background-color: rgba(0, 209, 178, 0.14);
+}
+
+.cz-link:hover::after,
+.cz-link[aria-current="page"]::after {
+    transform: scaleX(1);
+}
+
+.cz-link[aria-current="page"] {
+    color: var(--cz-accent);
 }
 
 .cz-lzr,
@@ -131,6 +139,32 @@
 
 .cz-link.cz-lzr:hover {
     color: transparent;
+    background-color: transparent;
+}
+
+/* The gradient text clips its own background to the letters, so Lazer
+   Arcade's hover tint is drawn on a separate layer behind the text. */
+.cz-lzr {
+    isolation: isolate;
+}
+
+.cz-lzr::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: rgba(167, 139, 250, 0.18);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.cz-lzr:hover::before {
+    opacity: 1;
+}
+
+.cz-link.cz-lzr::after {
+    background: linear-gradient(90deg, #a78bfa, #22d3ee);
 }
 
 /* ---------- Right side ---------- */
@@ -173,11 +207,17 @@
     text-decoration: none;
     white-space: nowrap;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.cz-btn:active {
+    transform: translateY(1px) scale(0.98);
 }
 
 .cz-btn-quiet:hover {
-    background: #222;
+    border-color: var(--cz-accent);
+    background: var(--cz-accent-soft);
+    color: var(--cz-accent);
 }
 
 .cz-btn-solid,
@@ -187,7 +227,9 @@
 }
 
 .cz-btn-solid:hover {
-    box-shadow: 0 0 18px rgba(0, 209, 178, 0.45);
+    background: #2ef0d1;
+    box-shadow: 0 0 0 3px rgba(0, 209, 178, 0.25), 0 6px 22px rgba(0, 209, 178, 0.55);
+    transform: translateY(-1px);
 }
 
 .cz-btn-outline,
@@ -197,7 +239,10 @@
 }
 
 .cz-btn-outline:hover {
-    background: var(--cz-accent-soft);
+    background: rgba(0, 209, 178, 0.18);
+    color: #2ef0d1;
+    border-color: #2ef0d1;
+    box-shadow: 0 0 18px rgba(0, 209, 178, 0.4);
 }
 
 /* Signed-in account button + dropdown */
@@ -225,8 +270,9 @@
 
 .cz-account-button:hover,
 .cz-account-button[aria-expanded="true"] {
-    border-color: rgba(0, 209, 178, 0.55);
-    background: #222;
+    border-color: var(--cz-accent);
+    background: rgba(0, 209, 178, 0.12);
+    box-shadow: 0 0 16px rgba(0, 209, 178, 0.3);
 }
 
 .cz-account-name {
@@ -347,11 +393,16 @@
 }
 
 .cz-menu-item:hover {
-    background: #232323;
+    background: rgba(0, 209, 178, 0.12);
+    color: var(--cz-accent);
 }
 
 .cz-menu-item:hover svg {
     color: var(--cz-accent);
+}
+
+.cz-sign-out:hover {
+    background: rgba(255, 107, 107, 0.12);
 }
 
 .cz-sign-out:hover,
@@ -377,7 +428,8 @@
 }
 
 .cz-menu-button:hover {
-    border-color: rgba(0, 209, 178, 0.55);
+    border-color: var(--cz-accent);
+    background: rgba(0, 209, 178, 0.12);
     color: var(--cz-accent);
 }
 
@@ -498,8 +550,16 @@
     text-decoration: none;
 }
 
+.cz-drawer-link {
+    position: relative;
+    transition: background-color 0.2s, color 0.2s, padding-left 0.2s;
+}
+
 .cz-drawer-link:hover {
-    background-color: #222;
+    padding-left: 20px;
+    background-color: rgba(0, 209, 178, 0.14);
+    color: var(--cz-accent);
+    box-shadow: inset 3px 0 0 var(--cz-accent);
 }
 
 .cz-drawer-link[aria-current="page"] {
@@ -514,6 +574,11 @@
     color: transparent;
 }
 
+.cz-drawer-link.cz-lzr:hover {
+    background-color: transparent;
+    box-shadow: inset 3px 0 0 #a78bfa;
+}
+
 @keyframes cz-fade {
     from { opacity: 0; }
 }
@@ -526,6 +591,16 @@
     .cz-drawer-backdrop,
     .cz-drawer {
         animation: none;
+    }
+
+    .cz-nav *,
+    .cz-drawer * {
+        transition: none !important;
+    }
+
+    .cz-btn-solid:hover,
+    .cz-btn:active {
+        transform: none;
     }
 }
 
