@@ -686,7 +686,7 @@ layout: null
     $("delete-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector("button[type=submit]");
-      if (!$("del-confirm").checked) return showMsg("delete-msg", "Tick the box to confirm you want to delete your account.", "error");
+      if (!$("del-confirm").checked) return showMsg("delete-msg", "Check the box to confirm you want to delete your account.", "error");
 
       setBusy(btn, true, hasPassword() ? "Deleting…" : "Waiting for Google…");
       try {
