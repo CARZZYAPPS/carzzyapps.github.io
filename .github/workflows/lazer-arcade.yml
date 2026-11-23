@@ -66,11 +66,21 @@ jobs:
         run: |
           cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
           NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-arcade-roles.js" "$GITHUB_WORKSPACE/arcade/roles.json"
+
+  rhythmadmins:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Sync Rhythm Runner admins
-        if: steps.s.outputs.ok == '1'
         env:
           SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-rhythm-runner-admins.js" "$GITHUB_WORKSPACE/.github/rhythm-runner-admins.json"
+        run: |
+          cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
+          NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-rhythm-runner-admins.js" "$GITHUB_WORKSPACE/.github/rhythm-runner-admins.json"
 
   tickets:
     runs-on: ubuntu-latest
