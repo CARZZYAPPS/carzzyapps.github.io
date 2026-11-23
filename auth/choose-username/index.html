@@ -1,0 +1,183 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="color-scheme" content="dark">
+  <title>Choose a Username | Carzzy Apps</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/auth/auth.css">
+</head>
+<body>
+{% include navbar.html %}
+  <script src="/nav-bar.js"></script>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-head">
+        <div class="auth-badge" id="badge" aria-hidden="true">
+          <span class="auth-spinner" id="icon-loading"></span>
+          <svg id="icon-user" hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          <svg id="icon-lock" hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </div>
+        <h1 id="title">Choose a username</h1>
+        <p id="subtitle">Checking your account…</p>
+      </div>
+
+      <form id="username-form" hidden novalidate>
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label for="username">Username</label>
+            <span class="auth-hint" id="username-count">0/15</span>
+          </div>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <input type="text" id="username" required placeholder="carzzy_boss" maxlength="15" autocomplete="off" aria-describedby="username-count username-note">
+          </div>
+        </div>
+
+        <div class="auth-note" id="username-note">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg>
+          <span>Your username is shown on leaderboards, so please don't use your real name. Your Google name stays private.</span>
+        </div>
+
+        <button type="submit" class="auth-submit" id="submit-btn">
+          <span class="auth-spinner" aria-hidden="true"></span>
+          <span class="auth-submit-text">Continue</span>
+        </button>
+      </form>
+
+      <a href="/auth/sign-in" class="auth-secondary" id="sign-in-link" hidden>Sign in</a>
+
+      <div id="msg" class="auth-msg" role="alert" aria-live="polite"></div>
+
+      <div class="auth-foot" id="foot" hidden>
+        <span id="signed-in-as"></span><br>
+        <a href="#" id="switch-account">Use a different account</a>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { claimUsername, findUsername, validateUsername, USERNAME_MAX } from "/auth/username.js";
+    import { scrubGoogleProfile } from "/auth/google.js";
+
+    const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
+    const auth = getAuth(app);
+
+    const form = document.getElementById("username-form");
+    const usernameInput = document.getElementById("username");
+    const usernameCount = document.getElementById("username-count");
+    const titleEl = document.getElementById("title");
+    const subtitleEl = document.getElementById("subtitle");
+    const signInLink = document.getElementById("sign-in-link");
+    const foot = document.getElementById("foot");
+    const msg = document.getElementById("msg");
+    const submitBtn = document.getElementById("submit-btn");
+    const submitText = submitBtn.querySelector(".auth-submit-text");
+
+    const goBack = () => { window.location.href = sessionStorage.getItem("prevPage") || "/"; };
+
+    function setBadge(kind) {
+      document.getElementById("badge").className = "auth-badge" + (kind === "lock" ? " is-error" : "");
+      for (const k of ["loading", "user", "lock"]) {
+        document.getElementById("icon-" + k).toggleAttribute("hidden", k !== kind);
+      }
+    }
+
+    function showMsg(text, kind) {
+      msg.className = "auth-msg is-" + kind;
+      msg.textContent = text;
+    }
+
+    function setLoading(on) {
+      submitBtn.disabled = on;
+      submitBtn.classList.toggle("is-loading", on);
+      submitText.textContent = on ? "Saving…" : "Continue";
+    }
+
+    usernameInput.addEventListener("input", () => {
+      usernameCount.textContent = usernameInput.value.length + "/" + USERNAME_MAX;
+    });
+
+    document.getElementById("switch-account").addEventListener("click", async (e) => {
+      e.preventDefault();
+      try { await signOut(auth); } catch (err) { console.error(err); }
+      localStorage.removeItem("signIn");
+      window.location.href = "/auth/sign-in";
+    });
+
+    let checked = false;
+    onAuthStateChanged(auth, async (user) => {
+      if (checked) return;
+      checked = true;
+
+      if (!user || user.isAnonymous) {
+        setBadge("lock");
+        titleEl.textContent = "Sign in required";
+        subtitleEl.textContent = "Sign in to choose a username for your account.";
+        signInLink.hidden = false;
+        return;
+      }
+
+      try {
+        const existing = await findUsername(app, user.uid);
+        if (existing) {
+          // Already has one (e.g. opened this page again): make sure the
+          // profile shows it rather than a Google name, then carry on.
+          await scrubGoogleProfile(user, existing);
+          goBack();
+          return;
+        }
+        // Make sure Google's real name isn't on the profile while they choose.
+        await scrubGoogleProfile(user, null);
+      } catch (err) {
+        console.error("Could not check username.", err);
+      }
+
+      setBadge("user");
+      subtitleEl.textContent = "One last step: pick the name other players will see.";
+      document.getElementById("signed-in-as").textContent = "Signed in as " + (user.email || "your account");
+      foot.hidden = false;
+      form.hidden = false;
+      usernameInput.focus();
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const username = usernameInput.value.trim();
+      const error = validateUsername(username);
+      if (error) { showMsg(error, "error"); return; }
+
+      setLoading(true);
+      try {
+        await claimUsername(app, user, username);
+        await updateProfile(user, { displayName: username });
+        showMsg("You're all set, " + username + "!", "success");
+        setTimeout(goBack, 600);
+      } catch (err) {
+        console.error("Could not save username.", err);
+        setLoading(false);
+        switch (err.code) {
+          case "already-exists": showMsg("That username is already taken. Try another one.", "error"); break;
+          case "permission-denied": showMsg("That username isn't allowed. Try another one.", "error"); break;
+          case "unavailable":
+          case "deadline-exceeded":
+          case "auth/network-request-failed": showMsg("Network error. Check your connection and try again.", "error"); break;
+          default: showMsg("Something went wrong saving your username. Please try again.", "error");
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -86,6 +86,15 @@ document.head.appendChild(feedbackPopupScript);
         };
     }
 
+    // Google accounts start with no username (their Google name is removed on
+    // purpose, see /auth/google.js). If someone left before picking one,
+    // send them back to do it. /auth pages are skipped so sign-in can finish.
+    function needsUsername(u) {
+        return !!u && !u.isAnonymous && !u.displayName
+            && u.providerData.some(p => p.providerId === 'google.com')
+            && !location.pathname.startsWith('/auth/');
+    }
+
     function watchSignIn() {
         const base = 'https://www.gstatic.com/firebasejs/' + FIREBASE_VERSION + '/';
         Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js')])
@@ -94,6 +103,11 @@ document.head.appendChild(feedbackPopupScript);
                 firebaseAuth = authSdk;
                 auth = authSdk.getAuth(app);
                 authSdk.onAuthStateChanged(auth, u => {
+                    if (needsUsername(u)) {
+                        try { sessionStorage.setItem('prevPage', location.href); } catch (e) { /* ignore */ }
+                        location.replace('/auth/choose-username/');
+                        return;
+                    }
                     const user = userFromFirebase(u);
                     writeCache(user);
                     showUser(user);
