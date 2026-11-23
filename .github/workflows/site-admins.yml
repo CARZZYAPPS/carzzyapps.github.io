@@ -1,13 +1,13 @@
-name: Site admins
+name: Firestore rules & site admins
 
-# Syncs .github/site-admins.json into the siteAdmins Firestore collection
-# (carzzy-apps) and deploys the Firestore rules that let admins read their entry.
+# Deploys firestore.rules to carzzy-apps and syncs .github/site-admins.json
+# into the siteAdmins Firestore collection.
 # Needs repository secret FIREBASE_SERVICE_ACCOUNT.
 
 on:
   push:
     branches: [main]
-    paths: [".github/site-admins.json", ".github/scripts/sync-site-admins.js", ".github/workflows/site-admins.yml"]
+    paths: ["firestore.rules", ".github/site-admins.json", ".github/scripts/sync-site-admins.js", ".github/workflows/site-admins.yml"]
   workflow_dispatch:
 
 permissions:
