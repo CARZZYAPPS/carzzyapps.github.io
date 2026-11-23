@@ -45,6 +45,11 @@ layout: null
 	</script>
 
         <style>
+    /* These headings were moved up one level (h2 -> h1 etc.); keep the
+       size and spacing they had before. Rules below still override this. */
+    h1 { font-size: 1.5em; margin-top: 0.83em; margin-bottom: 0.83em; }
+    h2 { font-size: 1.17em; margin-top: 1em; margin-bottom: 1em; }
+
 
             body {
                 background: #0a0a0a;
@@ -53,12 +58,12 @@ layout: null
                 text-align: center;
             }
 
-            h2 {
+            h1 {
                 margin-top: 100px;
                 font-size: 32px;
             }
 
-            h3 {
+            h2 {
                 font-size: 24px;
             }
 
@@ -120,10 +125,10 @@ layout: null
 
         <script src="/nav-bar.js"></script>
 
-        <h2>Miles ↔ Kilometers Converter</h2>
+        <h1>Miles ↔ Kilometers Converter</h1>
 
             <div class="convert">
-                <h3>Miles to Kilometers</h3>
+                <h2>Miles to Kilometers</h2>
                 <input type="number" id="miles" placeholder="Miles">
                 <button class="convert-btn" id="mi-to-km" onclick="convertMi()">CONVERT</button>
                 <div class="result">
@@ -132,7 +137,7 @@ layout: null
             </div>
 
             <div class="convert">
-                <h3>Kilometers to Miles</h3>
+                <h2>Kilometers to Miles</h2>
                 <input type="number" id="km" placeholder="Kilometers">
                 <button class="convert-btn" id="km-to-mi" onclick="convertKm()">CONVERT</button>
                 <div class="result">

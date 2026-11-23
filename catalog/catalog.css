@@ -535,7 +535,7 @@ h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; }
     padding: 44px 24px;
     background: radial-gradient(400px 200px at 50% 0%, rgba(0, 209, 178, 0.12), transparent 70%), var(--surface);
 }
-.contact-section h3, .contact-section h4 { margin: 0 0 10px; font-size: 1.6rem; font-weight: 900; }
+.contact-section h2, .contact-section h3, .contact-section h4 { margin: 0 0 10px; font-size: 1.6rem; font-weight: 900; }
 .contact-section p { margin: 0 0 22px; color: var(--muted); line-height: 1.6; }
 
 /* ---------- Site footer ---------- */

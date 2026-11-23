@@ -59,8 +59,14 @@ layout: null
       height: 100vh;
     }
 
-    h2 {
+    h1, h2 {
       font-size: 32px;
+    }
+
+    /* Was an h3; keep its original look. */
+    #usernamePrompt h2 {
+      font-size: 1.17em;
+      margin: 1em 0;
     }
 
     #ui-layer {
@@ -237,7 +243,7 @@ layout: null
 
   <div id="ui-layer">
     <img src="https://carzzyapps.github.io/Rhythm-Runner/rhythm-dj.png" style="width: 60px;" alt="Rhythm Runner Icon">
-    <h2 id="title">RHYTHM RUNNER</h2>
+    <h1 id="title">RHYTHM RUNNER</h1>
     <p><b>JUMP</b> spikes | <b>DUCK</b> drones</p>
     <p class="username-notice">Inappropriate or invalid usernames will be replaced with a randomly generated name. Scores are saved and appear on the leaderboard.</p>
 
@@ -247,7 +253,7 @@ layout: null
 
   <!-- USERNAME PROMPT -->
   <div id="usernamePrompt">
-    <h3>ENTER USERNAME</h3>
+    <h2>ENTER USERNAME</h2>
     <p class="username-disclaimer">Use 2–20 letters, numbers, or underscores. Do not use your real name or claim someone else's username. Inappropriate or invalid usernames will be replaced with a randomly generated username. Your scores are saved and shown on the <a href="https://www.carzzyapps.com/Leaderboards/RR/" style="color: #00d1b2" target="_blank" rel="noopener" title="Opens in a new tab">leaderboard</a>.</p>
     <input id="usernameInput" type="text" maxlength="20" placeholder="Do not use your real name">
     <button id="saveUsernameBtn" class="menu-btn">SAVE</button>

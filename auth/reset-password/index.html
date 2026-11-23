@@ -35,9 +35,13 @@ layout: null
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
   <style>
+    /* These headings were moved up one level (h2 -> h1 etc.); keep the
+       size and spacing they had before. Rules below still override this. */
+    h1 { font-size: 1.5em; margin-top: 0.83em; margin-bottom: 0.83em; }
+
     body{background:#0a0a0a;color:#00d1b2;font-family:sans-serif;margin:0}
     .card{background:#1a1a1a;border:1px solid #00d1b2;padding:30px;border-radius:12px;width:100%;max-width:450px;box-sizing:border-box;margin:150px auto 0 auto;}
-    h2 {font-size: 32px; text-align: center;}
+    h1 {font-size: 32px; text-align: center;}
     label{display:block;margin-top:20px;font-size:15px}
     input,button{width:100%;padding:10px;margin-top:5px;border-radius:6px;box-sizing:border-box}
     input{background:#2a2a2a;border:1px solid #333;color:#fff}
@@ -54,7 +58,7 @@ layout: null
 {% include navbar.html %}
   <script src="/nav-bar.js"></script>
   <div class="card">
-    <h2>Reset Password</h2>
+    <h1>Reset Password</h1>
     <form id="reset-form">
       <label for="email">Email Address</label>
       <input type="email" id="email" required placeholder="you@example.com">

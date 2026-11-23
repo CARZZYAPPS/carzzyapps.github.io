@@ -36,6 +36,10 @@ layout: null
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
         <style>
+    /* These headings were moved up one level (h2 -> h1 etc.); keep the
+       size and spacing they had before. Rules below still override this. */
+    h1 { font-size: 1.5em; margin-top: 0.83em; margin-bottom: 0.83em; }
+
             body, html {
                 overflow: hidden;
             }
@@ -46,7 +50,7 @@ layout: null
                 text-align: center;
             }
 
-            h2 {
+            h1 {
 				margin-top: 100px;
                 font-size: 32px;
             }
@@ -96,6 +100,11 @@ layout: null
                 color: #444;
             }
 
+            .form-intro {
+                font-weight: bold;
+                margin: 1.33em 0;
+            }
+
         </style>
 
   <style>
@@ -110,8 +119,8 @@ layout: null
 
 		<script src="/nav-bar.js"></script>
 
-        <h2>Jeopardy Question Form</h2>
-        <h4>Fill out the form below to submit your question for Jeopardy!</h4>
+        <h1>Jeopardy Question Form</h1>
+        <p class="form-intro">Fill out the form below to submit your question for Jeopardy!</p>
 
         <form action="https://formsubmit.co/carzzyapps@gmail.com" method="post">
             <input type="text" name="Name" id="name" placeholder="Your Name" required><br><br>
