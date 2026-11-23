@@ -8,8 +8,6 @@ on:
   push:
     branches: [main]
     paths: ["firestore.rules", "functions/**", "arcade/roles.json", "arcade/creators.json", ".github/arcade-access.json", "arcade/tiers.json", "arcade/community/seed/**", ".github/workflows/lazer-arcade.yml", ".github/scripts/**"]
-  schedule:
-    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       diag:
