@@ -33,81 +33,42 @@ layout: null
     <link rel="canonical" href="https://www.carzzyapps.com/auth/verify-email/">
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
-  <style>
-    body {
-      background-color: #0a0a0a;
-      color: #ccc;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .card {
-      background-color: #1a1a1a;
-      padding: 2.5rem;
-      border: #00d1b2 solid 1px;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-    h1 {
-      color: #00d1b2;
-      margin-top: 0;
-      margin-bottom: 1rem;
-      font-size: 1.8rem;
-    }
-    p {
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
-    button {
-      background-color: #00d1b2;
-      color: #0a0a0a;
-      border: none;
-      padding: 0.8rem 2rem;
-      font-size: 1rem;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
-      transition: background-color 0.2s ease;
-    }
-    button:hover:not(:disabled) {
-      background-color: #00b59c;
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .status {
-      margin-top: 1.5rem;
-      font-size: 0.95rem;
-      font-weight: 500;
-    }
-  </style>
+  <link rel="stylesheet" href="/auth/auth.css">
 </head>
 <body>
 {% include navbar.html %}
-  
   <script src="/nav-bar.js"></script>
-  
-  <div class="card">
-    <h1>Verify Your Email</h1>
-    <p>We need to verify your email address to secure your account on Carzzy Apps.</p>
-    <button id="sendBtn" disabled>Send Verification Email</button>
-    <div id="statusMsg" class="status"></div>
-  </div>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-head">
+        <div class="auth-badge" id="badge" aria-hidden="true">
+          <svg id="icon-mail" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+          <svg id="icon-check" hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <svg id="icon-lock" hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </div>
+        <h1 id="title">Verify your email</h1>
+        <p id="subtitle">We need to verify your email address to secure your Carzzy Apps account.</p>
+      </div>
+
+      <button type="button" class="auth-submit" id="sendBtn" disabled>
+        <span class="auth-spinner" aria-hidden="true"></span>
+        <span class="auth-submit-text">Send Verification Email</span>
+      </button>
+      <a href="/auth/sign-in" class="auth-secondary" id="signInLink" hidden>Sign in</a>
+
+      <div id="statusMsg" class="auth-msg" role="status" aria-live="polite"></div>
+
+      <div class="auth-foot">
+        <a href="/">Back to Carzzy Apps</a>
+      </div>
+    </div>
+  </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4",
       authDomain: "carzzy-apps.firebaseapp.com",
@@ -116,39 +77,75 @@ layout: null
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const actionCodeSettings = {
-      url: sessionStorage.getItem("prevPage"), 
-      handleCodeInApp: false 
-    };
-    const sendBtn = document.getElementById('sendBtn');
-    const statusMsg = document.getElementById('statusMsg');
-    
+    // Send people back to where they were after verifying. Only pass a
+    // continue URL when we have one; Firebase rejects an empty one.
+    const prevPage = sessionStorage.getItem("prevPage");
+    const actionCodeSettings = prevPage ? { url: prevPage, handleCodeInApp: false } : undefined;
+
+    const sendBtn = document.getElementById("sendBtn");
+    const sendText = sendBtn.querySelector(".auth-submit-text");
+    const statusMsg = document.getElementById("statusMsg");
+    const badge = document.getElementById("badge");
+    const titleEl = document.getElementById("title");
+    const subtitleEl = document.getElementById("subtitle");
+    const signInLink = document.getElementById("signInLink");
+
     let cooldownInterval = null;
     const COOLDOWN_DURATION = 60000; // 60 seconds in milliseconds
 
-    // Helper to translate raw Firebase auth errors to readable user messages
+    function showMsg(text, kind, sub) {
+      statusMsg.className = "auth-msg is-" + kind;
+      statusMsg.textContent = text;
+      if (sub) {
+        const s = document.createElement("span");
+        s.className = "auth-msg-sub";
+        s.textContent = sub;
+        statusMsg.appendChild(s);
+      }
+    }
+
+    function clearMsg() {
+      statusMsg.className = "auth-msg";
+      statusMsg.textContent = "";
+    }
+
+    function setBadge(kind) {
+      badge.className = "auth-badge" + (kind === "mail" ? "" : " is-" + (kind === "check" ? "success" : "error"));
+      document.getElementById("icon-mail").toggleAttribute("hidden", kind !== "mail");
+      document.getElementById("icon-check").toggleAttribute("hidden", kind !== "check");
+      document.getElementById("icon-lock").toggleAttribute("hidden", kind !== "lock");
+    }
+
+    function setSubtitle(before, email, after) {
+      subtitleEl.textContent = before;
+      if (email) {
+        const strong = document.createElement("strong");
+        strong.textContent = email;
+        subtitleEl.append(strong, after || "");
+      }
+    }
+
+    // Translate raw Firebase auth errors into readable messages.
     function getFriendlyAuthErrorMessage(error) {
       const code = error.code || error;
-
       switch (code) {
-        case 'auth/too-many-requests':
+        case "auth/too-many-requests":
           return "You've made too many requests. Please wait a minute and try again.";
-        case 'auth/user-disabled':
+        case "auth/user-disabled":
           return "This account has been disabled. Please contact support for help.";
-        case 'auth/user-token-expired':
+        case "auth/user-token-expired":
           return "Your session has expired. Please sign out and log back in to try again.";
-        case 'auth/network-request-failed':
+        case "auth/network-request-failed":
           return "A network error occurred. Please check your internet connection.";
-        case 'auth/invalid-email':
+        case "auth/invalid-email":
           return "The associated email address is invalid.";
-        case 'auth/unauthorized-domain':
+        case "auth/unauthorized-domain":
           return "This domain is not authorized. Please configure your authorized domains in the Firebase Console.";
         default:
           return error.message || "An unexpected error occurred. Please try again later.";
       }
     }
 
-    // Function to run the button timer
     function startCooldown(remainingSeconds) {
       clearInterval(cooldownInterval);
       sendBtn.disabled = true;
@@ -157,10 +154,10 @@ layout: null
         if (remainingSeconds <= 0) {
           clearInterval(cooldownInterval);
           sendBtn.disabled = false;
-          sendBtn.textContent = "Resend Verification Email";
+          sendText.textContent = "Resend Verification Email";
           return;
         }
-        sendBtn.textContent = `Resend in ${remainingSeconds}s`;
+        sendText.textContent = `Resend in ${remainingSeconds}s`;
         remainingSeconds--;
       };
 
@@ -168,68 +165,73 @@ layout: null
       cooldownInterval = setInterval(updateTimer, 1000);
     }
 
-    // Function to check and resume previous cooldown from localStorage
+    // Resume a cooldown that was running before the page was refreshed.
     function checkCooldown(uid) {
       const lastSent = localStorage.getItem(`lastSentVerification_${uid}`);
       if (lastSent) {
         const timePassed = Date.now() - parseInt(lastSent, 10);
         if (timePassed < COOLDOWN_DURATION) {
-          const remainingSeconds = Math.ceil((COOLDOWN_DURATION - timePassed) / 1000);
-          startCooldown(remainingSeconds);
+          startCooldown(Math.ceil((COOLDOWN_DURATION - timePassed) / 1000));
         }
       }
     }
 
-    // Monitor Auth State and Verification Status
     onAuthStateChanged(auth, (user) => {
-      // Always clear running intervals if auth state changes
       clearInterval(cooldownInterval);
+      sendBtn.classList.remove("is-loading", "is-done");
+      signInLink.hidden = true;
+      sendBtn.hidden = false;
 
       if (user) {
         if (user.emailVerified) {
-          statusMsg.style.color = '#00d1b2';
-          statusMsg.textContent = "Your email is already verified!";
-          sendBtn.textContent = "Verified ✓";
+          setBadge("check");
+          titleEl.textContent = "Email verified";
+          setSubtitle("", user.email, " is verified. You're all set!");
+          sendText.textContent = "Verified ✓";
+          sendBtn.classList.add("is-done");
           sendBtn.disabled = true;
+          clearMsg();
         } else {
-          statusMsg.style.color = '#ccc';
-          statusMsg.textContent = "Your email is not verified yet.";
-          sendBtn.textContent = "Send Verification Email";
+          setBadge("mail");
+          titleEl.textContent = "Verify your email";
+          setSubtitle("We'll send a verification link to ", user.email, ". Click it to secure your account.");
+          sendText.textContent = "Send Verification Email";
           sendBtn.disabled = false;
-          
-          // Resume cooldown if the page was refreshed during a wait
+          clearMsg();
           checkCooldown(user.uid);
         }
       } else {
-        statusMsg.style.color = '#f00';
-        statusMsg.textContent = "You must be logged in to verify your email.";
+        setBadge("lock");
+        titleEl.textContent = "Sign in required";
+        setSubtitle("You must be signed in to verify your email.");
+        sendBtn.hidden = true;
         sendBtn.disabled = true;
+        signInLink.hidden = false;
+        clearMsg();
       }
     });
 
-    sendBtn.addEventListener('click', async () => {
+    sendBtn.addEventListener("click", async () => {
       const user = auth.currentUser;
       if (!user) return;
 
       try {
         sendBtn.disabled = true;
-        statusMsg.style.color = '#ccc';
-        statusMsg.textContent = "Sending verification link...";
+        sendBtn.classList.add("is-loading");
+        sendText.textContent = "Sending…";
+        showMsg("Sending verification link…", "info");
 
         await sendEmailVerification(user, actionCodeSettings);
 
-        // 1. Save timestamp to localStorage
         localStorage.setItem(`lastSentVerification_${user.uid}`, Date.now().toString());
-
-        statusMsg.style.color = '#00d1b2';
-        statusMsg.innerHTML = "Verification email sent! Please check your inbox.<br><span style='color: #ccc'>Didn't receive the email? Check your spam folder or resend the email.</span>";
-        
-        // 2. Start the client-side 60s cooldown countdown
+        sendBtn.classList.remove("is-loading");
+        showMsg("Verification email sent! Please check your inbox.", "success",
+          "Didn't receive it? Check your spam folder, or resend the email.");
         startCooldown(60);
       } catch (error) {
-        statusMsg.style.color = '#f00';
-        // 3. Display user-friendly translated error message
-        statusMsg.textContent = getFriendlyAuthErrorMessage(error);
+        sendBtn.classList.remove("is-loading");
+        showMsg(getFriendlyAuthErrorMessage(error), "error");
+        sendText.textContent = "Send Verification Email";
         sendBtn.disabled = false;
       }
     });

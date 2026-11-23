@@ -4,52 +4,70 @@ layout: null
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Security | Carzzy Apps</title>
-    <meta name="robots" content="noindex, nofollow">
-    <meta name="theme-color" content="#0a0a0a">
-    <meta name="color-scheme" content="dark">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <style>
-    /* These headings were moved up one level (h2 -> h1 etc.); keep the
-       size and spacing they had before. Rules below still override this. */
-    h1 { font-size: 1.5em; margin-top: 0.83em; margin-bottom: 0.83em; }
-
-      body { font-family: sans-serif; background: #0a0a0a; color: #ccc; display: grid; place-items: center; min-height: 100vh; margin: 0; }
-      .card { background: #1a1a1a; padding: 2.5rem; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7); max-width: 400px; width: 90%; text-align: center; border: 1px solid #00d1b2; }
-      h1 { color: #00d1b2; margin-top: 0; font-size: 1.6rem; letter-spacing: 1.5px; text-transform: uppercase; }
-      p { color: #ccc; font-size: 1rem; line-height: 1.5; }
-      input[type="password"] { width: 100%; padding: 0.8rem; margin: 0.6rem 0; border-radius: 6px; border: 1px solid #3a3a3a; box-sizing: border-box; font-size: 1rem; background: #2a2a2a; color: #ccc; outline: none; }
-      input:focus { border-color: #00d1b2 !important; }
-      .show-pwd-label { display: flex; align-items: center; gap: 0.5rem; margin: 0.6rem 0 1rem; font-size: 14px; cursor: pointer; color: #ccc; }
-      .show-pwd-label input[type="checkbox"] { accent-color: #00d1b2; cursor: pointer; }
-      button { width: 100%; padding: 0.8rem; border-radius: 6px; border: none; font-size: 1rem; background: #00d1b2; color: #0a0a0a; font-weight: bold; cursor: pointer; transition: background 0.2s ease; }
-      button:hover { background: #00b097; }
-      .hidden { display: none; }
-    </style>
-  <style>
-    /* Base page font and spacing. These used to be applied to every page by the
-       old fetched navbar; they now live on each page that relies on them. */
-    html, body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Security | Carzzy Apps</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/auth/auth.css">
 </head>
 <body>
 {% include navbar.html %}
   <script src="/nav-bar.js"></script>
-  <div class="card">
-    <h1 id="title">CARZZY APPS</h1>
-    <p id="status">Verifying secure request...</p>
 
-    <div id="reset-form" class="hidden">
-      <input type="password" id="new-password" placeholder="Enter new password" required />
-      <input type="password" id="confirm-password" placeholder="Confirm new password" required />
-      <label class="show-pwd-label">
-        <input type="checkbox" id="show-pwd" /> Show Password
-      </label>
-      <button id="submit-reset">Update Password</button>
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-head">
+        <div class="auth-badge" id="badge" aria-hidden="true">
+          <span class="auth-spinner" id="icon-loading"></span>
+          <svg id="icon-key" hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8"/><path d="m16 7 3 3"/><path d="m19 4 2 2"/></svg>
+          <svg id="icon-check" hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <svg id="icon-error" hidden viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></svg>
+        </div>
+        <h1 id="title">Account security</h1>
+        <p id="status">Verifying secure request…</p>
+      </div>
+
+      <form id="reset-form" hidden novalidate>
+        <div class="auth-field">
+          <label for="new-password">New password</label>
+          <div class="auth-input-wrap has-toggle">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            <input type="password" id="new-password" placeholder="Create a new password" autocomplete="new-password" required aria-describedby="password-hint">
+            <button type="button" class="auth-eye" id="show-pwd" aria-label="Show passwords" aria-pressed="false">
+              <svg class="eye-on" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+            </button>
+          </div>
+          <div class="auth-hint" id="password-hint">At least 6 characters, with upper &amp; lowercase letters, a number, and a symbol.</div>
+        </div>
+
+        <div class="auth-field">
+          <label for="confirm-password">Confirm new password</label>
+          <div class="auth-input-wrap">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+            <input type="password" id="confirm-password" placeholder="Re-enter your new password" autocomplete="new-password" required aria-describedby="confirm-hint">
+          </div>
+          <div class="auth-hint" id="confirm-hint" aria-live="polite"></div>
+        </div>
+
+        <button type="submit" class="auth-submit" id="submit-reset" style="margin-top:6px">
+          <span class="auth-spinner" aria-hidden="true"></span>
+          <span class="auth-submit-text">Update Password</span>
+        </button>
+      </form>
+
+      <div id="msg" class="auth-msg" role="alert" aria-live="polite"></div>
+
+      <a class="auth-secondary" id="retry-link" href="/auth/reset-password" hidden>Request a new link</a>
+
+      <div class="auth-foot">
+        <a href="/">Back to Carzzy Apps</a>
+      </div>
     </div>
-  </div>
+  </main>
 
  <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -62,27 +80,95 @@ layout: null
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode');
   const actionCode = params.get('oobCode');
-  const continueUrl = params.get('continueUrl'); 
+  const continueUrl = params.get('continueUrl');
 
   const titleEl = document.getElementById('title');
   const statusEl = document.getElementById('status');
+  const badge = document.getElementById('badge');
+  const msg = document.getElementById('msg');
+  const retryLink = document.getElementById('retry-link');
   const resetForm = document.getElementById('reset-form');
   const showPwd = document.getElementById('show-pwd');
   const newPwdInput = document.getElementById('new-password');
   const confirmPwdInput = document.getElementById('confirm-password');
+  const confirmHint = document.getElementById('confirm-hint');
+  const submitBtn = document.getElementById('submit-reset');
+  const submitText = submitBtn.querySelector('.auth-submit-text');
 
-  const titles = { resetPassword: "Reset Password", recoverEmail: "Recover Email", verifyEmail: "Verify Email", verifyAndChangeEmail: "Verify Email Change" };
+  const titles = { resetPassword: "Reset your password", recoverEmail: "Recover your email", verifyEmail: "Verify your email", verifyAndChangeEmail: "Confirm email change" };
+  const tabTitles = { resetPassword: "Reset Password", recoverEmail: "Recover Email", verifyEmail: "Verify Email", verifyAndChangeEmail: "Verify Email Change" };
 
   if (titles[mode]) {
-    document.title = `${titles[mode]} | Carzzy Apps`;
-    titleEl.innerText = titles[mode];
+    document.title = `${tabTitles[mode]} | Carzzy Apps`;
+    titleEl.textContent = titles[mode];
   }
 
-  showPwd.onchange = () => {
-    const type = showPwd.checked ? 'text' : 'password';
-    newPwdInput.type = type;
-    confirmPwdInput.type = type;
+  // Badge icon: "loading", "key", "check" or "error".
+  function setBadge(kind) {
+    badge.className = "auth-badge" + (kind === "check" ? " is-success" : kind === "error" ? " is-error" : "");
+    for (const k of ["loading", "key", "check", "error"]) {
+      document.getElementById("icon-" + k).toggleAttribute("hidden", k !== kind);
+    }
+  }
+
+  function setStatus(text, email, after) {
+    statusEl.textContent = text;
+    if (email) {
+      const strong = document.createElement("strong");
+      strong.textContent = email;
+      statusEl.append(strong, after || "");
+    }
+  }
+
+  function showMsg(text, kind) {
+    msg.className = "auth-msg is-" + kind;
+    msg.textContent = text;
+  }
+
+  function succeed(title, text) {
+    setBadge("check");
+    titleEl.textContent = title;
+    setStatus(text);
+    msg.className = "auth-msg";
+    resetForm.hidden = true;
+    handleRedirect();
+  }
+
+  // A link that failed can't be retried, so point people at where to get a new one.
+  function fail(err) {
+    setBadge("error");
+    titleEl.textContent = "This link didn't work";
+    setStatus(getFriendlyError(err));
+    resetForm.hidden = true;
+    if (mode === "resetPassword") {
+      retryLink.href = "/auth/reset-password";
+      retryLink.textContent = "Request a new reset link";
+      retryLink.hidden = false;
+    } else if (mode === "verifyEmail" || mode === "verifyAndChangeEmail") {
+      retryLink.href = "/auth/verify-email";
+      retryLink.textContent = "Send a new verification email";
+      retryLink.hidden = false;
+    }
+  }
+
+  showPwd.onclick = () => {
+    const show = newPwdInput.type === "password";
+    newPwdInput.type = confirmPwdInput.type = show ? "text" : "password";
+    showPwd.setAttribute("aria-pressed", String(show));
+    showPwd.setAttribute("aria-label", show ? "Hide passwords" : "Show passwords");
   };
+
+  function updateConfirmHint() {
+    if (!confirmPwdInput.value) {
+      confirmHint.textContent = ""; confirmHint.className = "auth-hint";
+    } else if (confirmPwdInput.value === newPwdInput.value) {
+      confirmHint.textContent = "Passwords match"; confirmHint.className = "auth-hint is-good";
+    } else {
+      confirmHint.textContent = "Passwords don't match yet"; confirmHint.className = "auth-hint is-bad";
+    }
+  }
+  newPwdInput.addEventListener("input", updateConfirmHint);
+  confirmPwdInput.addEventListener("input", updateConfirmHint);
 
   const handleRedirect = () => {
     setTimeout(() => { window.location.href = continueUrl || "https://www.carzzyapps.com/"; }, 2000);
@@ -91,58 +177,75 @@ layout: null
   const getFriendlyError = (err) => {
     switch (err?.code) {
       case 'auth/expired-action-code': return "This link has expired. Please request a new link.";
-      case 'auth/invalid-action-code': return "This link is invalid or already used.";
+      case 'auth/invalid-action-code': return "This link is invalid or has already been used.";
       case 'auth/weak-password': case 'auth/password-does-not-meet-requirements': return "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters.";
       case 'auth/user-disabled': return "This account has been disabled.";
+      case 'auth/network-request-failed': return "Network error. Check your connection and try again.";
       default: return "An error occurred. Please try again.";
     }
   };
 
   if (!actionCode) {
-    statusEl.innerText = "Error: Invalid action request.";
+    fail({ code: "auth/invalid-action-code" });
   } else {
     switch (mode) {
       case 'resetPassword':
         verifyPasswordResetCode(auth, actionCode).then(email => {
-          statusEl.innerText = `Choose a new password for ${email}`;
-          resetForm.classList.remove('hidden');
+          setBadge("key");
+          setStatus("Choose a new password for ", email, ".");
+          resetForm.hidden = false;
+          newPwdInput.focus();
 
-          document.getElementById('submit-reset').onclick = () => {
+          resetForm.onsubmit = (e) => {
+            e.preventDefault();
             const newPassword = newPwdInput.value;
             const confirmPassword = confirmPwdInput.value;
 
-            if (newPassword !== confirmPassword) { statusEl.innerText = "Error: Passwords do not match."; return; }
-            if (newPassword.length < 6) { statusEl.innerText = "Password must be at least 6 characters."; return; }
+            if (newPassword !== confirmPassword) { showMsg("Passwords do not match.", "error"); return; }
+            if (newPassword.length < 6) { showMsg("Password must be at least 6 characters.", "error"); return; }
+
+            submitBtn.disabled = true;
+            submitBtn.classList.add("is-loading");
+            submitText.textContent = "Updating…";
 
             confirmPasswordReset(auth, actionCode, newPassword).then(() => {
-              statusEl.innerText = "Success! Your password is updated. Redirecting...";
-              resetForm.classList.add('hidden');
-              handleRedirect(); 
-            }).catch(err => statusEl.innerText = getFriendlyError(err));
+              succeed("Password updated", "Your password has been changed. Redirecting…");
+            }).catch(err => {
+              submitBtn.disabled = false;
+              submitBtn.classList.remove("is-loading");
+              submitText.textContent = "Update Password";
+              // A weak password can be fixed on this page; anything else means the link is dead.
+              if (err?.code === 'auth/weak-password' || err?.code === 'auth/password-does-not-meet-requirements' || err?.code === 'auth/network-request-failed') {
+                showMsg(getFriendlyError(err), "error");
+              } else {
+                fail(err);
+              }
+            });
           };
-        }).catch(err => statusEl.innerText = getFriendlyError(err));
+        }).catch(fail);
         break;
 
       case 'recoverEmail':
         checkActionCode(auth, actionCode).then(info => {
           const revertedEmail = info.data.email;
           return applyActionCode(auth, actionCode).then(() => {
-            statusEl.innerText = `Email address reverted to ${revertedEmail}. Redirecting...`;
-            handleRedirect(); 
+            succeed("Email recovered", "");
+            setStatus("Your email address was changed back to ", revertedEmail, ". Redirecting…");
           });
-        }).catch(err => statusEl.innerText = getFriendlyError(err));
+        }).catch(fail);
         break;
 
       case 'verifyEmail':
       case 'verifyAndChangeEmail':
         applyActionCode(auth, actionCode).then(() => {
-          statusEl.innerText = "Your email address is verified! Redirecting...";
-          handleRedirect(); 
-        }).catch(err => statusEl.innerText = getFriendlyError(err));
+          succeed("Email verified", "Your email address is verified! Redirecting…");
+        }).catch(fail);
         break;
 
       default:
-        statusEl.innerText = "Unknown security request.";
+        setBadge("error");
+        titleEl.textContent = "Unknown request";
+        setStatus("We couldn't recognise this link. Please try opening it from your email again.");
     }
   }
 </script>

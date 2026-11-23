@@ -303,7 +303,7 @@ body {
     transition: transform 0.12s, box-shadow 0.15s, filter 0.15s;
 }
 
-.auth-submit:hover {
+.auth-submit:not([disabled]):hover {
     filter: brightness(1.06);
     box-shadow: 0 10px 30px rgba(0, 209, 178, 0.35);
     transform: translateY(-1px);
@@ -363,6 +363,93 @@ body {
     background: var(--auth-accent-soft);
     border: 1px solid rgba(0, 209, 178, 0.3);
 }
+
+/* Neutral message (e.g. "Sending…"). */
+.auth-msg.is-info {
+    display: block;
+    color: #d8d8d8;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--auth-line);
+}
+
+/* Smaller second line inside a message. */
+.auth-msg .auth-msg-sub {
+    display: block;
+    margin-top: 4px;
+    color: var(--auth-muted);
+    font-size: 13px;
+}
+
+/* ---------- Status pages (verify email, email actions) ---------- */
+
+.auth-badge.is-success {
+    background: var(--auth-accent-soft);
+    border-color: rgba(0, 209, 178, 0.45);
+    color: var(--auth-accent);
+}
+
+.auth-badge.is-error {
+    background: var(--auth-error-soft);
+    border-color: rgba(255, 107, 107, 0.35);
+    color: var(--auth-error);
+}
+
+.auth-badge .auth-spinner {
+    display: block;
+    width: 24px;
+    height: 24px;
+    border-color: rgba(0, 209, 178, 0.25);
+    border-top-color: var(--auth-accent);
+}
+
+.auth-head p strong {
+    color: var(--auth-text);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.auth-secondary {
+    width: 100%;
+    height: 46px;
+    margin-top: 12px;
+    border: 1px solid var(--auth-line);
+    border-radius: 12px;
+    background: transparent;
+    color: var(--auth-text);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.auth-card a.auth-secondary:hover,
+.auth-secondary:hover {
+    border-color: var(--auth-accent);
+    background: var(--auth-accent-soft);
+    text-decoration: none;
+}
+
+.auth-submit[disabled].is-done {
+    cursor: default;
+    filter: none;
+    background: var(--auth-accent-soft);
+    color: var(--auth-accent);
+    box-shadow: none;
+    border: 1px solid rgba(0, 209, 178, 0.35);
+}
+
+.auth-submit[disabled]:not(.is-loading):not(.is-done) {
+    cursor: not-allowed;
+    filter: saturate(0.3) brightness(0.65);
+    box-shadow: none;
+}
+
+[hidden] { display: none !important; }
 
 /* ---------- Footer ---------- */
 
