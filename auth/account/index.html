@@ -275,7 +275,7 @@ layout: null
           <!-- Delete -->
           <section class="acct-card acct-panel" role="tabpanel" id="panel-delete" aria-labelledby="tab-delete" hidden>
             <h2>Delete account</h2>
-            <p class="acct-lead">This permanently deletes your account and frees up your username. It can't be undone.</p>
+            <p class="acct-lead">This permanently deletes your account, your saved games and scores, and frees up your username. It can't be undone.</p>
             <form id="delete-form" novalidate>
               <div class="auth-field" id="del-pwd-field">
                 <label for="del-pwd">Current password</label>
@@ -313,7 +313,7 @@ layout: null
       reauthenticateWithCredential, reauthenticateWithPopup, linkWithCredential,
       EmailAuthProvider, GoogleAuthProvider, updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { claimUsername, findUsername, validateUsername, USERNAME_MAX } from "/auth/username.js";
     import { scrubGoogleProfile, CHOOSE_USERNAME_URL } from "/auth/google.js";
 
@@ -656,6 +656,33 @@ layout: null
 
     // ---------- Delete ----------
 
+    // Game data stored under the player's uid. The Firestore rules let players
+    // delete these, except Crema Rush progress an admin has corrected, which
+    // stays (deleting it would let someone undo the correction).
+    const PLAYER_DATA = [
+      "carzzyPlayers",               // Rhythm Runner best score (leaderboard)
+      "cremaRushProgress",
+      "cremaRushNoGraphicsProgress",
+      "cremaRushYesGraphicsSaves",
+      "cremaTycoonSaves"
+    ];
+
+    async function deletePlayerData(uid) {
+      const results = await Promise.allSettled(PLAYER_DATA.map((name) => deleteDoc(doc(db, name, uid))));
+      results.forEach((r, i) => {
+        if (r.status === "rejected") console.warn("Could not delete " + PLAYER_DATA[i] + "/" + uid, r.reason);
+      });
+    }
+
+    // Older accounts stored their username in a doc named after the username.
+    async function deleteLegacyUsernames(uid) {
+      const snap = await getDocs(query(collection(db, "usernames"), where("uid", "==", uid)));
+      const refs = [];
+      snap.forEach((d) => { if (d.id !== uid) refs.push(d.ref); });
+      await Promise.allSettled(refs.map((ref) => deleteDoc(ref)));
+    }
+
+
     $("delete-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector("button[type=submit]");
@@ -666,7 +693,10 @@ layout: null
         // Confirm first, so a wrong password can't leave things half-deleted.
         await confirmIdentity("del-pwd");
         setBusy(btn, false); setBusy(btn, true, "Deleting…");
-        // The username doc must go while still signed in (Firestore rules need it).
+        // Firestore rules need the player signed in to delete their data, so
+        // this all happens before the account itself is deleted.
+        await deletePlayerData(user.uid);
+        await deleteLegacyUsernames(user.uid).catch((e2) => console.warn("Could not delete old usernames.", e2));
         await deleteDoc(doc(db, "usernames", user.uid));
         try {
           await deleteUser(user);

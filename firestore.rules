@@ -139,7 +139,8 @@ service cloud.firestore {
       allow create, update: if request.auth != null
         && request.auth.uid == playerId
         && validGameSave(request.resource.data);
-      allow delete: if false;
+      // Owner can delete (used when deleting their account).
+      allow delete: if request.auth != null && request.auth.uid == playerId;
     }
 
     match /cremaRushYesGraphicsSaves/{playerId} {
@@ -150,7 +151,8 @@ service cloud.firestore {
         && request.resource.data.username.matches('^[^/]{1,30}$')
         && request.resource.data.gameVersion == 'yes-graphics'
         && validGameSave(request.resource.data);
-      allow delete: if false;
+      // Owner can delete (used when deleting their account).
+      allow delete: if request.auth != null && request.auth.uid == playerId;
     }
 
     match /{progressCollection}/{playerId} {
@@ -203,7 +205,14 @@ service cloud.firestore {
           && validRushProgress(request.resource.data)
           && request.resource.data.adminRevision
             == (('adminRevision' in resource.data) ? resource.data.adminRevision : 0) + 1));
-      allow delete: if false;
+      // Owner can delete (used when deleting their account), but not progress an
+      // admin has corrected: deleting and re-creating it would undo the correction.
+      allow delete: if isRushProgressCollection()
+        && request.auth != null
+        && request.auth.uid == playerId
+        && (resource == null
+          || !('adminRevision' in resource.data)
+          || resource.data.adminRevision == 0);
     }
 
     match /cremaRushScoreEvents/{eventId} {
@@ -268,7 +277,8 @@ service cloud.firestore {
       allow update: if request.auth != null && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['RRBest'])
         && validRRBest(request.resource.data, ('RRBest' in resource.data) ? resource.data.RRBest : 0);
-      allow delete: if false;
+      // Owner can delete (used when deleting their account).
+      allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
     match /rhythmRunnerScores/{playerId} {
