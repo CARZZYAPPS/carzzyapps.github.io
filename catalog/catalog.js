@@ -8,6 +8,7 @@
     cats:  the categories it appears in. The first one is its main category.
     kind:  the short label under the title.
     isNew: shows a "New" badge.
+    soon:  shows a "Coming soon" badge (for projects still under construction).
     img:   the card picture (a 16:9 screenshot works best, e.g. /images/my-game.jpg).
            Leave it out and the card shows a teal pattern instead.
 */
@@ -85,8 +86,8 @@ var PROJECTS = [
     },
     {
         id: 'jeopardy', img: '/images/jeopardy.jpg',
-        title: 'Jeopardy', url: '/jeopardy/',
-        cats: ['games'], kind: 'Trivia',
+        title: 'Jeopardy', url: 'https://carzzyapps.github.io/Under-Construction/',
+        cats: ['games'], kind: 'Trivia', soon: true,
         desc: 'Have questions you want featured on a Jeopardy game? Send them in via the contact page.',
         tags: ['Trivia', 'Group play']
     },
@@ -153,7 +154,7 @@ var PROJECTS = [
     function cardHTML(p, i) {
         var main = catById(p.cats[0]);
         var glow = (i * 37 + 15) % 100;
-        var badges = '<span>' + esc(main ? main.name : '') + '</span>' + (p.isNew ? '<span class="new">New</span>' : '');
+        var badges = '<span>' + esc(main ? main.name : '') + '</span>' + (p.isNew ? '<span class="new">New</span>' : '') + (p.soon ? '<span class="soon">Coming soon</span>' : '');
         var tags = (p.tags || []).map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('');
         var cta = p.cats[0] === 'games' ? 'Play' : 'Open';
         return '' +
