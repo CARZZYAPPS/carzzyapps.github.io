@@ -171,15 +171,17 @@ integrations; Rhythm Runner uses its Firebase callable and Firestore collection.
 ## Rhythm Runner under-construction gate
 
 `Rhythm-Runner/index.html` shows an "Under construction" overlay to everyone
-except admins. It reuses the same `adminUsers/{UID}` collection described above:
+except Rhythm Runner admins. Admins live in the `rhythmRunnerAdmins/{UID}`
+collection (`{ "enabled": true }`), separate from `adminUsers` so they get no
+leaderboard-editing access.
 
-1. In the Firebase console for `carzzy-apps`, open **Authentication → Users**
-   and copy the account's **User UID**.
-2. In **Firestore Database**, create collection `adminUsers` (if missing) and
-   add a document whose ID is that UID with field `enabled` (boolean) = `true`.
+The list is managed in `.github/rhythm-runner-admins.json`. Pushing a change
+to that file on `main` runs the **Lazer Arcade backend** workflow, which deploys
+the Firestore rules and syncs the collection (adds listed UIDs, removes unlisted
+ones) using the `FIREBASE_SERVICE_ACCOUNT` secret. Find a UID in the Firebase
+console under **Authentication → Users**.
 
 Signed-out visitors see a link to `/auth/sign-in/` (they return to the game
-after signing in). Signed-in accounts without an enabled `adminUsers` document
-are told their account is not an admin. The existing Firestore rules already
-let each user read only their own `adminUsers` document. To open the game to
-everyone, delete the `uc-overlay` markup and the gate script block.
+after signing in). Signed-in accounts that aren't listed are told their account
+is not an admin. To open the game to everyone, delete the `uc-overlay` markup
+and the gate script block.

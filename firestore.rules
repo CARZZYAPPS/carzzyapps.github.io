@@ -13,6 +13,12 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
     }
 
+    // Rhythm Runner under-construction access. Managed by .github/rhythm-runner-admins.json.
+    match /rhythmRunnerAdmins/{userId} {
+      allow get: if request.auth != null && request.auth.uid == userId;
+      allow list, create, update, delete: if false;
+    }
+
     match /usernames/{username} {
       // Legacy: doc id = lowercase username, fields uid/guest/username.
       function validUsernameClaim(data) {

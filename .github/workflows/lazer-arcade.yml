@@ -7,7 +7,7 @@ name: Lazer Arcade backend
 on:
   push:
     branches: [main]
-    paths: ["firestore.rules", "functions/**", "arcade/roles.json", "arcade/creators.json", ".github/arcade-access.json", "arcade/tiers.json", "arcade/community/seed/**", ".github/workflows/lazer-arcade.yml", ".github/scripts/**"]
+    paths: ["firestore.rules", "functions/**", "arcade/roles.json", "arcade/creators.json", ".github/arcade-access.json", ".github/rhythm-runner-admins.json", "arcade/tiers.json", "arcade/community/seed/**", ".github/workflows/lazer-arcade.yml", ".github/scripts/**"]
   workflow_dispatch:
     inputs:
       diag:
@@ -66,6 +66,11 @@ jobs:
         run: |
           cd "$RUNNER_TEMP" && npm init -y >/dev/null && npm i firebase-admin@12 >/dev/null
           NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-arcade-roles.js" "$GITHUB_WORKSPACE/arcade/roles.json"
+      - name: Sync Rhythm Runner admins
+        if: steps.s.outputs.ok == '1'
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: NODE_PATH="$RUNNER_TEMP/node_modules" node "$GITHUB_WORKSPACE/.github/scripts/sync-rhythm-runner-admins.js" "$GITHUB_WORKSPACE/.github/rhythm-runner-admins.json"
 
   tickets:
     runs-on: ubuntu-latest

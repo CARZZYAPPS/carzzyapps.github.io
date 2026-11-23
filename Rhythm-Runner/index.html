@@ -185,6 +185,9 @@
       text-align: center;
     }
     #uc-overlay[hidden] { display: none; }
+    /* Keep the site navbar usable above the construction overlay. */
+    nav { z-index: 100001 !important; }
+    .menu-overlay { z-index: 100002 !important; }
     #uc-overlay .uc-box {
       max-width: 420px;
       padding: 28px 24px;
@@ -213,7 +216,7 @@
 
   <div id="uc-overlay" role="dialog" aria-modal="true" aria-labelledby="uc-title">
     <div class="uc-box">
-      <h2 id="uc-title">🚧 UNDER CONSTRUCTION 🚧</h2>
+      <h2 id="uc-title">UNDER CONSTRUCTION</h2>
       <p id="uc-message">Rhythm Runner is being worked on. Sign in with an admin account to play.</p>
       <a id="uc-signin" href="/auth/sign-in/">SIGN IN</a>
     </div>
@@ -409,7 +412,7 @@
       askForUsername();
     };
 
-    // Under-construction gate: only accounts with adminUsers/{uid} { enabled: true } can play.
+    // Under-construction gate: only accounts with rhythmRunnerAdmins/{uid} { enabled: true } can play.
     const ucOverlay = document.getElementById("uc-overlay");
     const ucMessage = document.getElementById("uc-message");
     const ucSignIn = document.getElementById("uc-signin");
@@ -423,7 +426,7 @@
 
     async function isAdmin(user) {
       try {
-        const snap = await getDoc(doc(db, "adminUsers", user.uid));
+        const snap = await getDoc(doc(db, "rhythmRunnerAdmins", user.uid));
         return snap.exists() && snap.data().enabled === true;
       } catch (error) {
         console.warn("Could not check admin status.", error);
