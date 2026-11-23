@@ -142,7 +142,7 @@ layout: null
 </div>
 
 <h1>Mastermind</h1>
-<p id="status-text" aria-live="polite">Crack the code! Turn: 1/10</p>
+<p id="status-text" aria-live="polite">Crack the code! Turn 1/10</p>
 <!-- Floating Help Icon -->
 <button id="help-btn" onclick="showRules()">?</button>
 
@@ -234,7 +234,7 @@ layout: null
     document.getElementById("status-text").innerText = text;
   }
   function activateRow() {
-    setStatus(`Crack the code! Turn: ${turn + 1}/10`);
+    setStatus(`Crack the code! Turn ${turn + 1}/10`);
     const row = document.getElementById(`row-${turn}`);
     row.classList.add("active");
     currentGuess = Array(4).fill(null);
