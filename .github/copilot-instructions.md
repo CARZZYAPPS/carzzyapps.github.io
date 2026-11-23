@@ -4,7 +4,7 @@
 
 This repository is a static GitHub Pages site for a collection of small web apps and utilities. The site is not a framework app: it is mostly plain HTML, CSS, and vanilla JavaScript spread across the repo root and feature folders such as `Basketball/`, `Card-Games/`, `Leaderboards/`, `Rhythm-Runner/`, `scymores-games/`, and `trivia/`.
 
-The main site entry points are the root `index.html` and the page folders that each contain their own `index.html` plus optional local `script.js` and `style.css` files. Shared chrome is centralized in `nav-bar.html` and injected by `nav-bar.js`.
+The main site entry points are the root `index.html` and the page folders that each contain their own `index.html` plus optional local `script.js` and `style.css` files. Shared chrome (the navbar) lives in `_includes/navbar.html` and is built into each page by GitHub Pages' Jekyll step.
 
 ## Build, test, and lint commands
 
@@ -24,10 +24,12 @@ python -m http.server 8000
 
 Then open `http://localhost:8000/` or the page-specific path you changed (for example `http://localhost:8000/contact-us/`).
 
+A plain static server does not run Jekyll, so the shared navbar will not appear. To preview pages with the navbar, run `jekyll serve` from the repo root (install with `gem install jekyll`) and open `http://localhost:4000/`.
+
 ## High-level architecture
 
 - `index.html` is the homepage and acts as a catalog page listing the app sections.
-- `nav-bar.html` and `nav-bar.js` define the shared navigation and mobile menu; most pages fetch the nav bar dynamically instead of duplicating markup.
+- `_includes/navbar.html` is the shared navbar markup, `nav-bar.css` its styles (all selectors prefixed `.cz-`), and `nav-bar.js` the mobile-menu behaviour plus the feedback popup loader. Pages include the navbar with `{% include navbar.html %}` right after `<body>` and must start with Jekyll front matter (`---` / `layout: null` / `---`). `nav-bar.html` is a built copy of the include, used only as a fallback by `nav-bar.js` on pages without the include.
 - `firebase-config.js` holds the existing site's public Firebase web config; the feedback and contact forms use the admin project's `feedback/firebase-config.js`.
 - `contact-us/firebase-contact.js` saves submissions to the admin project's `contactSubmissions` collection, then submits them to Formcarry for email delivery. If the Firestore write fails, it still submits to Formcarry.
 - `feedback/index.html` is a modal-sized feedback form that writes to the admin Firebase project; `feedback/firestore.rules` allows public creation and signed-in reads for feedback and contact submissions, but denies updates and deletes.
@@ -38,7 +40,7 @@ Then open `http://localhost:8000/` or the page-specific path you changed (for ex
 ## Key conventions
 
 - Preserve the folder-per-feature pattern: when adding a new section, keep it under its own directory with a local `index.html` and any related assets instead of mixing unrelated code into the repo root.
-- Treat `nav-bar.html` as the source of truth for site navigation labels and URLs. If you change the menu, update both the desktop and mobile navigation markup together.
+- Treat `_includes/navbar.html` as the source of truth for site navigation labels and URLs. If you change the menu, update both the desktop and mobile navigation markup together.
 - Many links are intentionally absolute and point to `https://www.carzzyapps.com/...` rather than using relative paths. Keep that pattern when editing navigation, page redirects, or asset URLs unless a page is explicitly being moved to a different hosting setup.
 - If you change Firebase behavior, keep both web config files as public client configuration only. Do not add service-account JSON, private keys, or backend credentials to the repo.
 - Contact-form changes should preserve Formcarry email delivery in addition to Firestore collection, and must keep the Firebase config public client configuration only.
@@ -52,4 +54,4 @@ Then open `http://localhost:8000/` or the page-specific path you changed (for ex
 - Keep changes minimal and page-scoped; most tasks involve a single HTML page plus optional related CSS/JS.
 - Validate browser behavior manually after edits, especially for navigation, contact form flow, and content pages that rely on global shared scripts.
 - When a page depends on a Firebase config object, ensure it checks for placeholder values before attempting to initialize Firebase.
-- Preserve the static hosting model: GitHub Pages is the deployment target, and client-side code should work without a build step.
+- Preserve the static hosting model: GitHub Pages is the deployment target. The only build step is GitHub Pages' built-in Jekyll run, used for the shared navbar include; don't add other build tooling.

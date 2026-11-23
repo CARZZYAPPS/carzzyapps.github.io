@@ -1,3 +1,6 @@
+---
+layout: null
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -57,8 +60,14 @@
 		.bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:28px 0 31px}.leader{display:inline-flex;align-items:center;gap:10px;padding:12px 15px;border:1px solid var(--line);border-radius:8px;background:#16221d;text-decoration:none;font:500 12px var(--mono);transition:border-color .2s,color .2s}.leader:hover{border-color:var(--amber);color:var(--amber)}.leader b{color:var(--amber);font-size:16px}.note{color:#819087;font:400 10px var(--mono)}footer{border-top:1px solid var(--line);padding:17px 0 22px;color:#819087;font:400 10px var(--mono)}.foot{display:flex;justify-content:space-between;gap:15px}.foot a{text-decoration:none;color:inherit}.foot a:hover{color:var(--amber)}
 		@media(max-width:620px){.wrap{width:calc(100% - 28px)}.top{height:66px}.hero{padding:45px 0 28px}.hero-art{margin-top:20px}.options{grid-template-columns:1fr;gap:12px}.option{min-height:235px;padding:19px}.visual{height:60px}.bottom{align-items:flex-start;flex-direction:column;padding:23px 0}.foot{flex-direction:column;gap:7px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 	</style>
+  <style>
+    /* Base page font and spacing. These used to be applied to every page by the
+       old fetched navbar; they now live on each page that relies on them. */
+    html, body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  </style>
 </head>
 <body>
+{% include navbar.html %}
 	<div class="wrap">
 		<header class="top">
 			<a class="brand" href="https://www.carzzyapps.com/"><span class="brand-icon" aria-hidden="true">☕</span>Carzzy Apps</a>

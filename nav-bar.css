@@ -1,0 +1,192 @@
+/* Shared navbar styles. Every selector is prefixed with .cz- so nothing here
+   changes the rest of the page. */
+
+/* Undo any page-wide styles (like `button { width: 100% }` or `a { ... }`)
+   on the navbar's own elements, so every page shows the same navbar.
+   The rules below this one then set the navbar's look. */
+.cz-nav,
+.cz-nav *,
+.cz-menu-overlay,
+.cz-menu-overlay * {
+    all: revert;
+}
+
+.cz-nav {
+    background: #1a1a1a;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 80px;
+    padding: 0 0 4px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    user-select: none;
+    box-sizing: border-box;
+    z-index: 1000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: normal;
+}
+
+.cz-logo {
+    margin-top: 6px;
+    margin-left: 1.5vw;
+}
+
+.cz-logo img {
+    vertical-align: baseline;
+    width: 150px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.cz-nav-head {
+    color: #00d1b2;
+    font-size: 35px;
+    font-weight: bold;
+    margin-left: 5vw;
+}
+
+.cz-lzr {
+    background: linear-gradient(90deg, #a78bfa, #22d3ee);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
+    font-weight: 800;
+}
+
+.cz-nav-links {
+    position: absolute;
+    right: 1.5vw;
+    white-space: nowrap;
+}
+
+.cz-nav-link,
+.cz-nav-link:visited,
+.cz-nav-link:active {
+    color: white;
+    margin: 0 1.75vw;
+    font-size: 25px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.4s;
+}
+
+.cz-nav-link:hover,
+.cz-nav-link:focus-visible {
+    color: #00d1b2;
+}
+
+.cz-menu-button {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 16px;
+    margin: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    line-height: 0;
+}
+
+.cz-menu-button img {
+    height: 48px;
+}
+
+.cz-menu-button:hover,
+.cz-menu-button:focus-visible {
+    background: #3a3a3a;
+}
+
+.cz-menu-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    inset: 0;
+    z-index: 1001;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: normal;
+}
+
+.cz-menu-overlay[hidden] {
+    display: none;
+}
+
+.cz-menu-popup {
+    position: absolute;
+    top: 80px;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    background: #010101;
+    color: white;
+    list-style: none;
+    border: solid #00d1b2 5px;
+    box-shadow: -7px 7px 15px rgba(0, 0, 0, 0.5);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    max-width: 100vw;
+    box-sizing: border-box;
+}
+
+.cz-menu-close-item {
+    height: 0;
+    position: relative;
+}
+
+.cz-menu-close {
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    font-size: 40px;
+    color: white;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: normal;
+    transition: color 0.4s;
+}
+
+.cz-menu-close:hover,
+.cz-menu-close:focus-visible {
+    color: #00d1b2;
+}
+
+.cz-menu-link,
+.cz-menu-link:visited,
+.cz-menu-link:active {
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-size: 23px;
+    font-weight: bold;
+    padding: 17px 30px;
+    text-align: center;
+    transition: background-color 0.4s, color 0.4s;
+}
+
+.cz-menu-link:hover,
+.cz-menu-link:focus-visible {
+    background-color: #2a2a2a;
+    color: #00d1b2;
+}
+
+@media (max-width: 1520px) {
+    .cz-nav-head { display: none; }
+}
+
+@media (max-width: 1200px) {
+    .cz-nav { padding-bottom: 0; }
+    .cz-nav-head { display: inline; padding-bottom: 4px; }
+    .cz-menu-button { display: inline-block; }
+    .cz-nav-links { display: none; }
+    .cz-logo { margin-bottom: 4px; }
+}
+
+@media (max-width: 530px) {
+    .cz-nav-head { display: none; }
+}

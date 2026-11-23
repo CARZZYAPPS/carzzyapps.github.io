@@ -1,3 +1,6 @@
+---
+layout: null
+---
 <!doctype html>
 <html>
   <head>
@@ -63,8 +66,14 @@
         display: none !important;
       }
     </style>
+  <style>
+    /* Base page font and spacing. These used to be applied to every page by the
+       old fetched navbar; they now live on each page that relies on them. */
+    html, body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  </style>
 </head>
   <body>
+{% include navbar.html %}
     <style>
       /* Layout: one-screen shift. HUD on top, receipt rail of tickets always visible,
    swipeable station panels in the middle, station tabs with queue badges at the bottom. */
