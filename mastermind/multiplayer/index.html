@@ -368,7 +368,7 @@ layout: null
               secret = lobby.secret;
               if (!gameOver) {
                 document.getElementById("status-text").innerText = turn > 0
-                  ? `Codebreaker is guessing. Guess ${turn + 1}/10.`
+                  ? `Codebreaker is guessing. Turn: ${turn + 1}/10`
                   : "Secret code confirmed. Waiting for Codebreaker to guess...";
                 disableInput();
               }
