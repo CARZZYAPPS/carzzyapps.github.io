@@ -43,105 +43,125 @@ layout: null
   		gtag('config', 'G-VD38580YSL');
 	</script>
 
-      <style>
-
-        body {
-          background-color: #0a0a0a;
-          color: #ffffff;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          margin: 0;
-          padding: 50px 20px;
-        }
-
-        h1 {
-          color: #00d1b2;
-          text-shadow: 0 0 15px rgba(0, 209, 178, 0.5);
-          font-size: 2.5rem;
-          margin-top: 100px;
-          margin-bottom: 40px;
-        }
-
-        .container {
-          width: 100%;
-          max-width: 600px;
-        }
-
-        .project-card {
-          background: #151515;
-          border: 1px solid #333;
-          border-radius: 12px;
-          padding: 20px;
-          margin-bottom: 20px;
-          text-decoration: none;
-          color: white;
-          display: block;
-          transition: 0.3s;
-        }
-
-        .project-card:hover {
-          border-color: #00d1b2;
-          transform: translateY(-5px);
-          box-shadow: 0 5px 20px rgba(0, 209, 178, 0.2);
-        }
-
-        .project-title {
-          color: #00d1b2;
-          font-weight: bold;
-          font-size: 1.2rem;
-          margin-bottom: 5px;
-          display: block;
-        }
-
-        .project-desc {
-          font-size: 0.9rem;
-          color: #aaa;
-        }
-
-        footer {
-          text-align: center;
-          font-size: 0.8rem;
-          color: #444;
-        }
-
-      </style>
-  <style>
-    /* Base page font and spacing. These used to be applied to every page by the
-       old fetched navbar; they now live on each page that relies on them. */
-    html, body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-  </style>
+    <link rel="stylesheet" href="/catalog/catalog.css">
 </head>
-  
-    <body>
+
+<body>
 {% include navbar.html %}
 
-<script src="/nav-bar.js"></script>
-      <h1>Mastermind</h1>
-      <div class="container">
-        
-        <!-- PROJECT 1 -->
-          <a href="/mastermind/singleplayer" class="project-card">
-            <span class="project-title">Singleplayer Mode</span>
-            <span class="project-desc">Try to guess the computer generated code in under 10 tries!</span>
-          </a>
-        
-          <a href="/mastermind/multiplayer/lobby" class="project-card">
-            <span class="project-title">Multiplayer Mode</span>
-            <span class="project-desc"><b style="color: #00d1b2">Codemaker:</b> Try to stump the Codebreaker with your own code!</span><br>
-            <span class="project-desc"><b style="color: #00d1b2">Codebreaker:</b> Try to crack the Codemaker's code!</span>
-          </a>
+    <script src="/nav-bar.js"></script>
 
-      </div>
+    <div class="ambient" aria-hidden="true"></div>
 
-      <footer>
-        Avis & DeBus | v1.0.0 PRO<br>
-      </footer>
+    <main class="page">
 
- 
-    </body>
-	<script data-goatcounter="https://carzzyapps.goatcounter.com/count"
+        <header class="cat-hero">
+            <div role="navigation" class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/games/">Games</a><span aria-hidden="true">/</span><span>Mastermind</span></div>
+            <h1>Mastermind<span class="accent-text">.</span></h1>
+            <p class="lead">The classic code-breaking game. Crack the secret code in 10 moves or less, on your own or against a friend online.</p>
+        </header>
+
+        <section class="sec">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow">2 ways to play</span>
+                    <h2>Choose a mode</h2>
+                </div>
+            </div>
+            <div class="cz-grid">
+                <a class="cz-card" href="/mastermind/singleplayer/" data-cover="games" style="--glow:30%">
+                    <span class="cz-cover has-img">
+                        <img class="cz-shot" src="/images/mastermind.jpg" alt="Singleplayer screenshot" loading="lazy" decoding="async">
+                        <span class="cz-badges"><span>Puzzle</span></span>
+                    </span>
+                    <span class="cz-body">
+                        <span class="cz-kind">Solo</span>
+                        <span class="cz-title">Singleplayer</span>
+                        <span class="cz-desc">Try to guess the computer-generated code in under 10 tries!</span>
+                        <span class="cz-foot">
+                            <span class="cz-tags"><span class="tag">1 player</span></span>
+                            <span class="cz-play">Play <span aria-hidden="true">→</span></span>
+                        </span>
+                    </span>
+                </a>
+                <a class="cz-card" href="/mastermind/multiplayer/lobby/" data-cover="games" style="--glow:75%">
+                    <span class="cz-cover">
+                        <span class="cz-badges"><span>Puzzle</span></span>
+                    </span>
+                    <span class="cz-body">
+                        <span class="cz-kind">Online · 2 players</span>
+                        <span class="cz-title">Multiplayer</span>
+                        <span class="cz-desc"><b>Codemaker:</b> try to stump the Codebreaker with your own code. <b>Codebreaker:</b> try to crack the Codemaker&#39;s code!</span>
+                        <span class="cz-foot">
+                            <span class="cz-tags"><span class="tag">2 players</span><span class="tag">Online</span></span>
+                            <span class="cz-play">Play <span aria-hidden="true">→</span></span>
+                        </span>
+                    </span>
+                </a>
+            </div>
+        </section>
+
+        <section class="sec reveal">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow">Keep exploring</span>
+                    <h2>Browse categories</h2>
+                </div>
+                <a class="see-all" href="/">Back to home →</a>
+            </div>
+            <div role="navigation" class="cz-cats" data-cz="cats" aria-label="Categories"></div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="ft-inner">
+            <div class="ft-brand">
+                <a class="ft-logo" href="/" aria-label="Carzzy Apps home"><img src="/carzzy-apps-logo-300.png" alt="Carzzy Apps" width="150" height="39"></a>
+                <p>Free games and tools, made for fun. No downloads, no sign-ups, just click and play.</p>
+                <a class="btn btn-ghost ft-btn" href="/contact-us/">Contact us</a>
+            </div>
+
+            <div class="ft-col" role="navigation" aria-label="Explore">
+                <h2 class="ft-h">Explore</h2>
+                <a href="/">Home</a>
+                <a href="/games/">Games</a>
+                <a href="/tools/">Tools</a>
+                <a href="/math/">Math</a>
+                <a href="/music/">Music</a>
+            </div>
+
+            <div class="ft-col" role="navigation" aria-label="Community">
+                <h2 class="ft-h">Community</h2>
+                <a href="/Leaderboards/">Leaderboards</a>
+                <a href="/scymores-games/">Scymore&#39;s Games</a>
+                <a href="/feedback/">Send feedback</a>
+                <a href="/contact-us/">Advertise with us</a>
+            </div>
+
+            <div class="ft-col ft-partners" role="navigation" aria-label="Partners">
+                <h2 class="ft-h">Partners</h2>
+                <a href="https://kosherkitchenai.com/" target="_blank" rel="noopener noreferrer sponsored">
+                    <span class="ft-pname">KosherKitchenAI <span aria-hidden="true">↗</span></span>
+                    <span class="ft-pdesc">Kosher recipes, meal plans &amp; grocery lists powered by AI</span>
+                </a>
+                <a href="https://ewieds.github.io/arcade" target="_blank" rel="noopener noreferrer">
+                    <span class="ft-pname">Lazer Arcade <span aria-hidden="true">↗</span></span>
+                    <span class="ft-pdesc">Original browser games by Lazer Yudel</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="ft-bottom">
+            <span>&copy; <span data-cz="year">2026</span> Carzzy Apps · Made by Avis &amp; DeBus</span>
+            <a class="ft-top" href="#">Back to top <span aria-hidden="true">↑</span></a>
+        </div>
+    </footer>
+
+    <script src="/catalog/catalog.js"></script>
+
+    <script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 
+</body>
 </html>

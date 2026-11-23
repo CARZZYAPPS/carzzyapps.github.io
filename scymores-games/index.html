@@ -43,113 +43,109 @@ layout: null
   		gtag('config', 'G-VD38580YSL');
 	</script>
 
-      <style>
-
-        body {
-          background-color: #0a0a0a;
-          color: #ffffff;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          margin: 0;
-          padding: 130px 20px 50px; /* top leaves room for the site navbar */
-        }
-
-        h1 {
-          color: #00d1b2;
-          text-shadow: 0 0 15px rgba(0, 209, 178, 0.5);
-          font-size: 2.5rem;
-          margin-bottom: 40px;
-        }
-
-        .container {
-          width: 100%;
-          max-width: 600px;
-        }
-
-        /* Crediting the source of the external link icon so it can be used for free */
-        .attribution, .attribution:visited, .attribution:active {
-          color: #00d1b2;
-        }
-
-        .project-card {
-          position: relative;
-          background: #151515;
-          border: 1px solid #333;
-          border-radius: 12px;
-          padding: 20px;
-          margin-bottom: 20px;
-          text-decoration: none;
-          color: white;
-          display: block;
-          transition: 0.3s;
-        }
-
-        .project-card:hover {
-          border-color: #00d1b2;
-          transform: translateY(-5px);
-          box-shadow: 0 5px 20px rgba(0, 209, 178, 0.2);
-        }
-
-        .project-title {
-          color: #00d1b2;
-          font-weight: bold;
-          font-size: 1.2rem;
-          margin-bottom: 5px;
-          display: block;
-        }
-
-        .project-desc {
-          font-size: 0.9rem;
-          color: #aaa;
-        }
-
-        .external-link-icon {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-        }
-
-        footer {
-          position: absolute;
-          bottom: 40px;
-          text-align: center;
-          font-size: 0.8rem;
-          color: #aaa;
-        }
-
-
-      </style>
+    <link rel="stylesheet" href="/catalog/catalog.css">
 </head>
-  
-    <body>
+
+<body>
 {% include navbar.html %}
-<script src="/nav-bar.js"></script>
 
-      <header>
-        <h1>Scymore's Games</h1>
-      </header>
-      
-      <div class="container">
-        
-        <!-- PROJECT 1 -->
-          <a href="https://flowlab.io/game/play/3050146" class="project-card" target="_blank">
-            <span class="project-title">Shapes</span>
-            <span class="external-link-icon"><img src="external-link.png" alt="" style="width: 30px;"></span>
-            <span class="project-desc">Try to stack the shapes so that they collapse on each other and create bigger shapes</span><br>
-            <span class="project-desc">Used with permission of Scymore99</span>
-          </a>
+    <script src="/nav-bar.js"></script>
 
-      </div>
+    <div class="ambient" aria-hidden="true"></div>
 
-      <footer>
-        Avis & DeBus | v1.0.0 PRO<br>
-        <!-- Crediting the source of the external link icon so it can be used for free -->
-        <a class="attribution" href="https://www.flaticon.com/free-icons/external-link" target="_blank">External link icon created by Dixit Lakhani_02 - Flaticon</a>
-      </footer>
+    <main class="page">
 
-        <script>
+        <header class="cat-hero">
+            <div role="navigation" class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/games/">Games</a><span aria-hidden="true">/</span><span>Scymore&#39;s Games</span></div>
+            <h1>Scymore&#39;s Games<span class="accent-text">.</span></h1>
+            <p class="lead">Games made by Scymore99, shared on Carzzy Apps with permission. More coming soon!</p>
+        </header>
+
+        <section class="sec">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow">Collection</span>
+                    <h2>All of Scymore&#39;s games</h2>
+                </div>
+            </div>
+            <div class="cz-grid">
+                <a class="cz-card" href="https://flowlab.io/game/play/3050146" target="_blank" rel="noopener noreferrer" data-cover="games" style="--glow:40%">
+                    <span class="cz-cover">
+                        <span class="cz-badges"><span>Flowlab</span></span>
+                    </span>
+                    <span class="cz-body">
+                        <span class="cz-kind">Puzzle · by Scymore99</span>
+                        <span class="cz-title">Shapes</span>
+                        <span class="cz-desc">Try to stack the shapes so that they collapse on each other and create bigger shapes.</span>
+                        <span class="cz-foot">
+                            <span class="cz-tags"><span class="tag">Used with permission</span></span>
+                            <span class="cz-play">Play <span aria-hidden="true">↗</span></span>
+                        </span>
+                    </span>
+                </a>
+            </div>
+        </section>
+
+        <section class="sec reveal">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow">Keep exploring</span>
+                    <h2>Browse categories</h2>
+                </div>
+                <a class="see-all" href="/">Back to home →</a>
+            </div>
+            <div role="navigation" class="cz-cats" data-cz="cats" aria-label="Categories"></div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="ft-inner">
+            <div class="ft-brand">
+                <a class="ft-logo" href="/" aria-label="Carzzy Apps home"><img src="/carzzy-apps-logo-300.png" alt="Carzzy Apps" width="150" height="39"></a>
+                <p>Free games and tools, made for fun. No downloads, no sign-ups, just click and play.</p>
+                <a class="btn btn-ghost ft-btn" href="/contact-us/">Contact us</a>
+            </div>
+
+            <div class="ft-col" role="navigation" aria-label="Explore">
+                <h2 class="ft-h">Explore</h2>
+                <a href="/">Home</a>
+                <a href="/games/">Games</a>
+                <a href="/tools/">Tools</a>
+                <a href="/math/">Math</a>
+                <a href="/music/">Music</a>
+            </div>
+
+            <div class="ft-col" role="navigation" aria-label="Community">
+                <h2 class="ft-h">Community</h2>
+                <a href="/Leaderboards/">Leaderboards</a>
+                <a href="/scymores-games/">Scymore&#39;s Games</a>
+                <a href="/feedback/">Send feedback</a>
+                <a href="/contact-us/">Advertise with us</a>
+            </div>
+
+            <div class="ft-col ft-partners" role="navigation" aria-label="Partners">
+                <h2 class="ft-h">Partners</h2>
+                <a href="https://kosherkitchenai.com/" target="_blank" rel="noopener noreferrer sponsored">
+                    <span class="ft-pname">KosherKitchenAI <span aria-hidden="true">↗</span></span>
+                    <span class="ft-pdesc">Kosher recipes, meal plans &amp; grocery lists powered by AI</span>
+                </a>
+                <a href="https://ewieds.github.io/arcade" target="_blank" rel="noopener noreferrer">
+                    <span class="ft-pname">Lazer Arcade <span aria-hidden="true">↗</span></span>
+                    <span class="ft-pdesc">Original browser games by Lazer Yudel</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="ft-bottom">
+            <span>&copy; <span data-cz="year">2026</span> Carzzy Apps · Made by Avis &amp; DeBus</span>
+            <a class="ft-top" href="#">Back to top <span aria-hidden="true">↑</span></a>
+        </div>
+    </footer>
+
+    <script src="/catalog/catalog.js"></script>
+
+    <script>
           //tawk.to script
           var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
           (function(){
@@ -162,9 +158,9 @@ layout: null
           })();
           
         </script>
- 
-    </body>
-	<script data-goatcounter="https://carzzyapps.goatcounter.com/count"
+
+    <script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 
+</body>
 </html>

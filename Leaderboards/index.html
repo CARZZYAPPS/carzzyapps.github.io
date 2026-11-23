@@ -43,143 +43,154 @@ layout: null
   		gtag('config', 'G-VD38580YSL');
 	</script>
 
-    <style>
-    body {
-      background-color: #0a0a0a;
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0;
-    }
-
-    h1 {
-      color: #00d1b2;
-      text-shadow: 0 0 15px rgba(0, 209, 178, 0.5);
-      font-size: 2.5rem;
-      margin-top: 100px;
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      color: #aaa;
-      margin-bottom: 40px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 600px;
-    }
-
-    .project-card {
-      background: #151515;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-      text-decoration: none;
-      color: white;
-      display: block;
-      transition: 0.3s;
-    }
-
-    .project-card:hover {
-      border-color: #00d1b2;
-      transform: translateY(-5px);
-      box-shadow: 0 5px 20px rgba(0, 209, 178, 0.2);
-    }
-
-    .project-title {
-      color: #00d1b2;
-      font-weight: bold;
-      font-size: 1.2rem;
-      margin-bottom: 5px;
-      display: block;
-    }
-
-    .project-desc {
-      font-size: 0.9rem;
-      color: #aaa;
-    }
-
-    /* CONTACT SECTION */
-    .contact-section {
-      margin-top: 60px;
-      text-align: center;
-      border-top: 1px solid #222;
-      padding-top: 40px;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .contact-btn {
-      display: inline-block;
-      background: transparent;
-      color: #00d1b2;
-      border: 2px solid #00d1b2;
-      padding: 15px 30px;
-      border-radius: 50px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: 0.3s;
-      margin-top: 10px;
-    }
-
-    .contact-btn:hover {
-      background: #00d1b2;
-      color: #0a0a0a;
-      box-shadow: 0 0 20px rgba(0, 209, 178, 0.4);
-    }
-
-    footer {
-      margin: 50px;
-      font-size: 0.8rem;
-      color: #444;
-    }
-
-  </style>
+    <link rel="stylesheet" href="/catalog/catalog.css">
 </head>
+
 <body>
 {% include navbar.html %}
 
-  <script src="/nav-bar.js"></script>
-  
-  <h1>Leaderboards</h1>
-  <p class="subtitle">Leaderboards For Our Games & Apps</p>
+    <script src="/nav-bar.js"></script>
 
-  <div class="container">
+    <div class="ambient" aria-hidden="true"></div>
 
-    <a href="/arcade/leaderboard/" class="project-card" style="border-color:#7c4dff;background:linear-gradient(135deg,rgba(124,77,255,.16),rgba(34,228,255,.08)),#151515;box-shadow:0 0 24px rgba(124,77,255,.25)">
-      <span class="project-title" style="background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent">Lazer Arcade</span>
-      <span class="project-desc">Live boards for every Lazer Arcade game, plus overall Lazer Points</span>
-    </a>
-    <a href="/Leaderboards/RR" class="project-card">
-      <span class="project-title">Rhythm Runner</span>
-      <span class="project-desc">Rhythm Runner Leaderboard</span><br>
-    </a>
+    <main class="page">
 
-    <a href="/Leaderboards/Crema-Rush/" class="project-card">
-      <span class="project-title">Crema Rush</span>
-      <span class="project-desc">Shared leaderboard for both versions of Crema Rush</span><br>
-    </a>
+        <header class="cat-hero">
+            <div role="navigation" class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span>Leaderboards</span></div>
+            <h1>Leaderboards<span class="accent-text">.</span></h1>
+            <p class="lead">See who&#39;s on top. Pick a game to see its high scores and rankings.</p>
+        </header>
 
-    <a href="/Under-Construction" class="project-card">
-      <span class="project-title">DeCrossyBus</span>
-      <span class="project-desc">DeCrossyBus Leaderboard</span><br>
-    </a>
+        <section class="sec">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow">High scores</span>
+                    <h2>Pick a leaderboard</h2>
+                </div>
+            </div>
+            <div class="cz-grid">
+                <a class="cz-card" href="/arcade/leaderboard/" data-cover="arcade" style="--glow:20%">
+                    <span class="cz-cover">
+                        <span class="cz-badges"><span class="arcade">Arcade</span></span>
+                    </span>
+                    <span class="cz-body">
+                        <span class="cz-kind">Arcade · Lazer Points</span>
+                        <span class="cz-title">Lazer Arcade</span>
+                        <span class="cz-desc">Live boards for every Lazer Arcade game, plus overall Lazer Points.</span>
+                        <span class="cz-foot">
+                            <span class="cz-tags"><span class="tag">All arcade games</span></span>
+                            <span class="cz-play">View <span aria-hidden="true">→</span></span>
+                        </span>
+                    </span>
+                </a>
+                <a class="cz-card" href="/Leaderboards/RR/" data-cover="games" style="--glow:50%">
+                    <span class="cz-cover has-img">
+                        <img class="cz-shot" src="/images/rhythm-runner.jpg" alt="Rhythm Runner screenshot" loading="lazy" decoding="async">
+                        <span class="cz-badges"><span>Games</span></span>
+                    </span>
+                    <span class="cz-body">
+                        <span class="cz-kind">Endless runner</span>
+                        <span class="cz-title">Rhythm Runner</span>
+                        <span class="cz-desc">Rhythm Runner leaderboard.</span>
+                        <span class="cz-foot">
+                            <span class="cz-tags"><span class="tag">Music</span></span>
+                            <span class="cz-play">View <span aria-hidden="true">→</span></span>
+                        </span>
+                    </span>
+                </a>
+                <a class="cz-card" href="/Leaderboards/Crema-Rush/" data-cover="games" style="--glow:80%">
+                    <span class="cz-cover">
+                        <span class="cz-badges"><span>Games</span></span>
+                    </span>
+                    <span class="cz-body">
+                        <span class="cz-kind">Café game</span>
+                        <span class="cz-title">Crema Rush</span>
+                        <span class="cz-desc">Shared leaderboard for both versions of Crema Rush.</span>
+                        <span class="cz-foot">
+                            <span class="cz-tags"><span class="tag">Both versions</span></span>
+                            <span class="cz-play">View <span aria-hidden="true">→</span></span>
+                        </span>
+                    </span>
+                </a>
+                <a class="cz-card" href="/Under-Construction/" data-cover="games" style="--glow:50%">
+                    <span class="cz-cover has-img">
+                        <img class="cz-shot" src="/images/decrossybus.jpg" alt="DeCrossyBus screenshot" loading="lazy" decoding="async">
+                        <span class="cz-badges"><span class="soon">Coming soon</span></span>
+                    </span>
+                    <span class="cz-body">
+                        <span class="cz-kind">Arcade</span>
+                        <span class="cz-title">DeCrossyBus</span>
+                        <span class="cz-desc">DeCrossyBus leaderboard.</span>
+                        <span class="cz-foot">
+                            <span class="cz-tags"><span class="tag">Arcade</span></span>
+                            <span class="cz-play">View <span aria-hidden="true">→</span></span>
+                        </span>
+                    </span>
+                </a>
+            </div>
+        </section>
 
-  </div>
+        <section class="sec reveal">
+            <div class="sh">
+                <div>
+                    <span class="eyebrow">Keep exploring</span>
+                    <h2>Browse categories</h2>
+                </div>
+                <a class="see-all" href="/">Back to home →</a>
+            </div>
+            <div role="navigation" class="cz-cats" data-cz="cats" aria-label="Categories"></div>
+        </section>
 
-  <footer>
-    Avis & DeBus | v1.0.0 PRO
-  </footer>
-  <script data-goatcounter="https://carzzyapps.goatcounter.com/count"
+    </main>
+
+    <footer class="site-footer">
+        <div class="ft-inner">
+            <div class="ft-brand">
+                <a class="ft-logo" href="/" aria-label="Carzzy Apps home"><img src="/carzzy-apps-logo-300.png" alt="Carzzy Apps" width="150" height="39"></a>
+                <p>Free games and tools, made for fun. No downloads, no sign-ups, just click and play.</p>
+                <a class="btn btn-ghost ft-btn" href="/contact-us/">Contact us</a>
+            </div>
+
+            <div class="ft-col" role="navigation" aria-label="Explore">
+                <h2 class="ft-h">Explore</h2>
+                <a href="/">Home</a>
+                <a href="/games/">Games</a>
+                <a href="/tools/">Tools</a>
+                <a href="/math/">Math</a>
+                <a href="/music/">Music</a>
+            </div>
+
+            <div class="ft-col" role="navigation" aria-label="Community">
+                <h2 class="ft-h">Community</h2>
+                <a href="/Leaderboards/">Leaderboards</a>
+                <a href="/scymores-games/">Scymore&#39;s Games</a>
+                <a href="/feedback/">Send feedback</a>
+                <a href="/contact-us/">Advertise with us</a>
+            </div>
+
+            <div class="ft-col ft-partners" role="navigation" aria-label="Partners">
+                <h2 class="ft-h">Partners</h2>
+                <a href="https://kosherkitchenai.com/" target="_blank" rel="noopener noreferrer sponsored">
+                    <span class="ft-pname">KosherKitchenAI <span aria-hidden="true">↗</span></span>
+                    <span class="ft-pdesc">Kosher recipes, meal plans &amp; grocery lists powered by AI</span>
+                </a>
+                <a href="https://ewieds.github.io/arcade" target="_blank" rel="noopener noreferrer">
+                    <span class="ft-pname">Lazer Arcade <span aria-hidden="true">↗</span></span>
+                    <span class="ft-pdesc">Original browser games by Lazer Yudel</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="ft-bottom">
+            <span>&copy; <span data-cz="year">2026</span> Carzzy Apps · Made by Avis &amp; DeBus</span>
+            <a class="ft-top" href="#">Back to top <span aria-hidden="true">↑</span></a>
+        </div>
+    </footer>
+
+    <script src="/catalog/catalog.js"></script>
+
+    <script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 
 </body>
 </html>
-
-
-<!--UNDERLINE CODE-->
-<!--<u style=color:#00d1b2>. . .</u>"-->
