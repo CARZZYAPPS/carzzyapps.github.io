@@ -1,3 +1,6 @@
+---
+layout: null
+---
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -50,7 +53,7 @@
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
-      padding: 20px;
+      padding: 100px 20px 20px; /* top leaves room for the site navbar */
     }
     .app {
       width: 100%;
@@ -328,6 +331,8 @@
   </style>
 </head>
 <body>
+{% include navbar.html %}
+<script src="/nav-bar.js"></script>
   <div class="app">
     <div class="x2-badge" id="x2Badge">×2</div>
 
@@ -1333,7 +1338,6 @@ function shuffle(array) {
 
     init();
   </script>
-  <script src="/feedback-popup.js"></script>
 </body>
 	<script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>

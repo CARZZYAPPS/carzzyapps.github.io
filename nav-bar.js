@@ -193,6 +193,13 @@ document.head.appendChild(feedbackPopupScript);
     // Fallback for a page that loads this script but wasn't built with the
     // include (for example a page missing its front matter): fetch the navbar.
     function ensureNavbar() {
+        // Inside an iframe (e.g. the feedback form in the "Send Feedback"
+        // popup) the page is part of another page that already has a navbar.
+        if (window.self !== window.top) {
+            document.documentElement.classList.add('cz-framed');
+            document.querySelectorAll('.cz-nav, .cz-drawer-backdrop').forEach(el => el.remove());
+            return;
+        }
         if (document.querySelector('.cz-nav')) return initializeNavbar();
         fetch('/nav-bar.html')
             .then(response => {

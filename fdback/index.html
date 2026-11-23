@@ -1,3 +1,6 @@
+---
+layout: null
+---
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -343,8 +346,17 @@
       }
     }
   </style>
+  <style>
+    /* Room for the site navbar. When this form is shown inside the
+       "Send Feedback" popup, nav-bar.js hides the navbar and adds
+       .cz-framed, so the form keeps its original spacing there. */
+    body { padding-top: 92px; }
+    html.cz-framed body { padding-top: 12px; }
+  </style>
 </head>
 <body>
+{% include navbar.html %}
+<script src="/nav-bar.js"></script>
   <main class="feedback-card">
     <h1>Feedback Survey</h1>
     <form id="feedback-form">

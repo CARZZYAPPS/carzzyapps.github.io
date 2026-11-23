@@ -1,3 +1,6 @@
+---
+layout: null
+---
 <!doctype html><html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -26,6 +29,8 @@
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 </head><body>
+{% include navbar.html %}
+<script src="/nav-bar.js"></script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -60,7 +65,7 @@ button{font:inherit;color:inherit}
 #tags{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
 
 #ui{position:fixed;inset:0;z-index:5;pointer-events:none;display:flex;flex-direction:column;gap:8px;
-  padding-top:calc(8px + env(safe-area-inset-top,0px));
+  padding-top:calc(88px + env(safe-area-inset-top,0px)); /* 80px: site navbar */
   padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -177,7 +182,7 @@ button{font:inherit;color:inherit}
 
 /* Modals (receipt paper) */
 #modal{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(6,11,9,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow-x:hidden;
-  padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  padding:calc(92px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .rc{background:var(--paper);color:var(--paper-ink);font-family:var(--mono);width:100%;max-width:440px;min-width:0;max-height:100%;overflow-y:auto;overflow-x:hidden;overflow-wrap:anywhere;padding:20px 20px 30px;touch-action:pan-y;
   -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%;
   mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/16px 100%}

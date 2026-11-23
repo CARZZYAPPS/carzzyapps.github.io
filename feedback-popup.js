@@ -2,7 +2,7 @@
   if (window.self !== window.top) return;
 
   const path = window.location.pathname;
-  if (/^\/(?:feedback|admin)(?:\/|$)/i.test(path)) return;
+  if (/^\/(?:feedback|fdback|admin)(?:\/|$)/i.test(path)) return;
   const submissionStorageKey = "carzzyFeedbackSubmitted";
   const dismissalStorageKey = "carzzyFeedbackDismissedAt";
   const dismissalDurationMs = 30 * 24 * 60 * 60 * 1000;

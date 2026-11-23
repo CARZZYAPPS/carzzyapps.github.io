@@ -1,3 +1,6 @@
+---
+layout: null
+---
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -50,7 +53,7 @@
           flex-direction: column;
           align-items: center;
           margin: 0;
-          padding: 50px 20px;
+          padding: 130px 20px 50px; /* top leaves room for the site navbar */
         }
 
         h1 {
@@ -116,21 +119,15 @@
           color: #aaa;
         }
 
-        #logo {
-          position: fixed;
-          top: 20px;
-          left: 20px;
-        }
 
       </style>
 </head>
   
     <body>
+{% include navbar.html %}
+<script src="/nav-bar.js"></script>
 
       <header>
-        <div id="logo">
-          <a href="https://carzzyapps.github.io"><img src="https://www.carzzyapps.com/carzzy-apps-logo-300.png" alt="Carzzy Apps Logo" style="width:150px;height:50px;object-fit:contain;"></a>
-        </div>
         <h1>Scymore's Games</h1>
       </header>
       
@@ -166,7 +163,6 @@
           
         </script>
  
-        <script src="/feedback-popup.js"></script>
     </body>
 	<script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>

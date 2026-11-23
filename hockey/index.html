@@ -1,3 +1,6 @@
+---
+layout: null
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,6 +49,7 @@
     color:white;
     font-family:Arial, sans-serif;
     text-align:center;
+    padding-top:80px; /* room for the site navbar */
   }
   canvas {
     background:#0b3c5d;
@@ -64,6 +68,8 @@
 </style>
 </head>
 <body>
+{% include navbar.html %}
+<script src="/nav-bar.js"></script>
 
 <h1>NHL‑Style Hockey</h1>
 
@@ -251,7 +257,6 @@ async function sendScore() {
 }
 </script>
 
-<script src="/feedback-popup.js"></script>
 </body>
 	<script data-goatcounter="https://carzzyapps.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
