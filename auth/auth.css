@@ -514,6 +514,30 @@ body {
     background: var(--auth-line);
 }
 
+/* Destructive action (delete account). */
+.auth-submit.is-danger {
+    background: linear-gradient(135deg, #ff7a85, #ff4d5e 50%, #d93445);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(255, 77, 94, 0.25);
+}
+
+.auth-submit.is-danger:not([disabled]):hover {
+    box-shadow: 0 10px 30px rgba(255, 77, 94, 0.35);
+}
+
+.auth-submit.is-danger .auth-spinner {
+    border-color: rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+}
+
+.auth-note.is-danger {
+    background: var(--auth-error-soft);
+    border-color: rgba(255, 107, 107, 0.3);
+    color: #ffd6d6;
+}
+
+.auth-note.is-danger svg { color: var(--auth-error); }
+
 /* Small privacy note under the username field. */
 .auth-note {
     display: flex;

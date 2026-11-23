@@ -4,259 +4,687 @@ layout: null
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Account | Carzzy Apps</title>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="color-scheme" content="dark">
+  <title>Account | Carzzy Apps</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/auth/auth.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
   <style>
-    *, *:before, *:after { box-sizing: border-box; }
-    body { background:#0a0a0a; color:#ccc; font-family:sans-serif; margin:0; padding-top:80px; }
-    .container { display: flex; max-width: 900px; margin: 40px auto; gap: 20px; padding: 0 15px; }
-    .sidebar { width: 220px; flex-shrink: 0; background: #2a2a2a; border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 8px; margin-top: 100px; }
-    .sidebar-btn { background: none; border: none; color: #aaa; cursor: pointer; padding: 12px; text-align: left; font-weight: bold; border-radius: 4px; }
-    .sidebar-btn.active { color: #00d1b2; background: #1a1a1a; }
-    .main-content { flex: 1; min-width: 0; background: #2a2a2a; padding: 30px; border-radius: 8px; margin-top: 100px; }
-    .panel { display: none; }
-    .panel.active { display: block; }
-    h2, h3 { color: #00d1b2; margin-top: 0; }
-    h2 { border-bottom: 1px solid #444; padding-bottom: 10px; }
-    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-    label { font-size: 0.8rem; color: #aaa; display: block; margin: 15px 0 5px; }
-    input:not([type="checkbox"]) { background: #1a1a1a; border: 1px solid #444; color: #ccc; padding: 10px; width: 100%; border-radius: 4px; }
-    button.action-btn { background: #00d1b2; color: #0a0a0a; border: none; padding: 12px; font-weight: bold; border-radius: 4px; width: 100%; margin-top: 15px; cursor: pointer; }
-    .status { color: #00d1b2; margin-top: 15px; text-align: center; }
-    .file-upload-wrapper { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 15px; }
-    .custom-file-upload { display: block; background: #1a1a1a; border: 1.5px dashed #00d1b2; color: #00d1b2; padding: 25px; width: 100%; text-align: center; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .custom-file-upload.dragover { background: rgba(0,209,178,0.2); }
-    #pic-in { display: none; }
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); align-items: center; justify-content: center; }
-    .modal-content { background: #2a2a2a; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
-    .crop-box { max-height: 280px; width: 100%; overflow: hidden; margin: 15px 0; }
-    .cropper-view-box,
-    .cropper-face {
-      border-radius: 50%;
-      outline: none;
-    }
-    .cropper-view-box {
-      outline: 2px solid #00d1b2;
-      box-shadow: 0 0 0 4000px rgba(0, 0, 0, 0.4); /* Darkens the outer boundary */
+    .acct { box-sizing: border-box; max-width: 980px; margin: 0 auto; padding: 112px 16px 56px; }
+    .acct *, .acct *::before, .acct *::after { box-sizing: border-box; }
+
+    .acct-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent 40%), var(--auth-panel);
+      border: 1px solid var(--auth-line);
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
     }
 
-  </style>
-  <style>
-    /* Base page font and spacing. These used to be applied to every page by the
-       old fetched navbar; they now live on each page that relies on them. */
-    html, body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    /* ---------- Header ---------- */
+    .acct-header { display: flex; align-items: center; gap: 20px; padding: 24px 28px; margin-bottom: 20px; position: relative; overflow: hidden; }
+    .acct-header::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: linear-gradient(90deg, transparent, var(--auth-accent), transparent); }
+    .acct-avatar {
+      flex: none; width: 72px; height: 72px; border-radius: 50%;
+      display: grid; place-items: center; overflow: hidden;
+      background: linear-gradient(135deg, #00d1b2, #0a8f7c);
+      color: #04211c; font-size: 30px; font-weight: 700; text-transform: uppercase;
+      border: 3px solid rgba(0,209,178,0.35);
+    }
+    .acct-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .acct-who { min-width: 0; }
+    .acct-who h1 { margin: 0 0 2px; font-size: 24px; color: var(--auth-text); overflow-wrap: anywhere; }
+    .acct-who .acct-email { color: var(--auth-muted); font-size: 14px; overflow-wrap: anywhere; }
+    .acct-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .acct-chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+      border-radius: 999px; font-size: 12px; font-weight: 600;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--auth-line); color: #d8d8d8;
+    }
+
+    /* ---------- Layout ---------- */
+    .acct-body { display: grid; grid-template-columns: 230px 1fr; gap: 20px; align-items: start; }
+
+    .acct-nav { padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+    .acct-tab {
+      display: flex; align-items: center; gap: 12px; width: 100%;
+      padding: 11px 14px; margin: 0; border: 0; border-radius: 10px;
+      background: transparent; color: #bdbdbd; font: inherit; font-size: 15px; font-weight: 600;
+      text-align: left; cursor: pointer; white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .acct-tab svg { flex: none; }
+    .acct-tab:hover { background: rgba(255,255,255,0.05); color: var(--auth-text); }
+    .acct-tab[aria-selected="true"] { background: var(--auth-accent-soft); color: var(--auth-accent); }
+    .acct-tab.is-danger { color: #e08a8a; }
+    .acct-tab.is-danger:hover { background: var(--auth-error-soft); color: var(--auth-error); }
+    .acct-tab.is-danger[aria-selected="true"] { background: var(--auth-error-soft); color: var(--auth-error); }
+    .acct-tab:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 1px; }
+    .acct-nav hr { border: 0; border-top: 1px solid var(--auth-line); margin: 6px 4px; }
+
+    .acct-panel { padding: 28px 32px 32px; }
+    .acct-panel h2 { margin: 0 0 4px; font-size: 21px; color: var(--auth-text); }
+    .acct-panel .acct-lead { margin: 0 0 24px; color: var(--auth-muted); font-size: 14.5px; line-height: 1.5; }
+    .acct-panel .acct-lead strong { color: var(--auth-text); font-weight: 600; overflow-wrap: anywhere; }
+    .acct-panel form, .acct-panel .acct-narrow { max-width: 460px; }
+    .acct-panel .auth-msg { max-width: 460px; }
+
+    .acct-loading { padding: 60px 20px; text-align: center; color: var(--auth-muted); }
+    .acct-loading .auth-spinner { display: inline-block; width: 28px; height: 28px; margin-bottom: 12px; border-color: rgba(0,209,178,0.25); border-top-color: var(--auth-accent); }
+
+    /* ---------- Profile picture ---------- */
+    .pic-row { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; }
+    .pic-row .acct-avatar { width: 104px; height: 104px; font-size: 42px; }
+    .pic-drop {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+      min-height: 120px; padding: 18px; border: 1.5px dashed #3d3d3d; border-radius: 14px;
+      background: var(--auth-field); color: var(--auth-muted); font-size: 13.5px; text-align: center;
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .pic-drop strong { color: var(--auth-accent); font-size: 15px; }
+    .pic-drop:hover, .pic-drop.dragover { border-color: var(--auth-accent); background: var(--auth-accent-soft); }
+    .pic-drop:focus-within { outline: 2px solid var(--auth-accent); outline-offset: 2px; }
+    #pic-in { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+    /* ---------- Crop dialog ---------- */
+    .crop-modal {
+      position: fixed; inset: 0; z-index: 1100; display: none; align-items: center; justify-content: center;
+      padding: 16px; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+    }
+    .crop-modal.is-open { display: flex; }
+    .crop-modal .acct-card { width: 100%; max-width: 420px; padding: 24px; }
+    .crop-modal h2 { margin: 0 0 14px; font-size: 19px; color: var(--auth-text); }
+    .crop-box { max-height: 300px; width: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 16px; }
+    .cropper-view-box, .cropper-face { border-radius: 50%; outline: none; }
+    .cropper-view-box { outline: 2px solid #00d1b2; box-shadow: 0 0 0 4000px rgba(0,0,0,0.4); }
+
+    @media (max-width: 760px) {
+      .acct { padding-top: 100px; }
+      .acct-header { padding: 20px; gap: 16px; }
+      .acct-header .acct-avatar { width: 60px; height: 60px; font-size: 24px; }
+      .acct-who h1 { font-size: 20px; }
+      .acct-body { grid-template-columns: 1fr; }
+      .acct-nav { flex-direction: row; overflow-x: auto; scrollbar-width: none; padding: 6px; }
+      .acct-nav::-webkit-scrollbar { display: none; }
+      .acct-nav hr { display: none; }
+      .acct-tab { width: auto; padding: 9px 12px; font-size: 14px; gap: 8px; }
+      .acct-panel { padding: 22px 20px 24px; }
+      .pic-row { flex-direction: column; align-items: stretch; }
+      .pic-row .acct-avatar { align-self: center; }
+    }
   </style>
 </head>
 <body>
 {% include navbar.html %}
-<h1 class="visually-hidden">Account Settings</h1>
-<div class="container">
-  <div class="sidebar">
-    <button class="sidebar-btn active" onclick="showTab('tab-user')">Username</button>
-    <button class="sidebar-btn" onclick="showTab('tab-pwd')">Password</button>
-    <button class="sidebar-btn" onclick="showTab('tab-email')">Email</button>
-    <button class="sidebar-btn" onclick="showTab('tab-pic')">Profile Picture</button>
-    <button class="sidebar-btn" onclick="showTab('tab-del')">Delete Account</button>
-  </div>
-  <div class="main-content">
-    <div id="profile" style="display:none;">
-      <div id="tab-user" class="panel active">
-        <h2>Username</h2>
-        <label>New Username</label>
-        <input id="username-in" type="text" readonly onfocus="this.removeAttribute('readonly')" placeholder="Enter new username" />
-        <button class="action-btn" onclick="updateUsername()">Update</button>
-      </div>
-      <div id="tab-pwd" class="panel">
-        <h2>Password</h2>
-        <label>Current Password</label><input id="pwd-curr" type="password" autocomplete="new-password" />
-        <label>New Password</label><input id="pwd-new" type="password" autocomplete="new-password" />
-        <button class="action-btn" onclick="changePassword()">Update</button>
-      </div>
-      <div id="tab-email" class="panel">
-        <h2>Email</h2>
-        <label>Current Password</label><input id="email-curr-pwd" type="password" autocomplete="new-password" />
-        <label>New Email</label><input id="email-new" type="email" autocomplete="off" />
-        <button class="action-btn" onclick="changeEmail()">Update</button>
-      </div>
-      <div id="tab-pic" class="panel">
-        <h2>Profile Picture</h2>
-        <div class="file-upload-wrapper">
-          <img id="preview" style="width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid #00d1b2;display:none;" />
-          <label for="pic-in" class="custom-file-upload"><span id="upload-placeholder">Upload or Drag and Drop Photo</span></label>
-          <input id="pic-in" type="file" accept="image/*" onchange="showLocalPreview(this)" />
-          <button class="action-btn" style="background:#ff3860;color:#fff;" onclick="removeProfilePic()">Remove Photo</button>
+  <script src="/nav-bar.js"></script>
+
+  <main class="acct">
+    <div class="acct-card acct-loading" id="loading">
+      <span class="auth-spinner" aria-hidden="true"></span>
+      <div>Loading your account…</div>
+    </div>
+
+    <div id="account" hidden>
+      <section class="acct-card acct-header">
+        <div class="acct-avatar" data-avatar aria-hidden="true"></div>
+        <div class="acct-who">
+          <h1 id="hdr-name">Account</h1>
+          <div class="acct-email" id="hdr-email"></div>
+          <div class="acct-chips" id="hdr-chips"></div>
+        </div>
+      </section>
+
+      <div class="acct-body">
+        <nav class="acct-card acct-nav" role="tablist" aria-label="Account settings">
+          <button class="acct-tab" role="tab" id="tab-username" aria-controls="panel-username" data-tab="username">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            Username
+          </button>
+          <button class="acct-tab" role="tab" id="tab-picture" aria-controls="panel-picture" data-tab="picture">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+            Profile picture
+          </button>
+          <button class="acct-tab" role="tab" id="tab-password" aria-controls="panel-password" data-tab="password">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+            Password
+          </button>
+          <button class="acct-tab" role="tab" id="tab-email" aria-controls="panel-email" data-tab="email">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+            Email
+          </button>
+          <hr>
+          <button class="acct-tab is-danger" role="tab" id="tab-delete" aria-controls="panel-delete" data-tab="delete">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            Delete account
+          </button>
+        </nav>
+
+        <div>
+          <!-- Username -->
+          <section class="acct-card acct-panel" role="tabpanel" id="panel-username" aria-labelledby="tab-username" hidden>
+            <h2>Username</h2>
+            <p class="acct-lead">This is the name other players see on leaderboards. Your current username is <strong id="cur-username"></strong>.</p>
+            <form id="username-form" novalidate>
+              <div class="auth-field">
+                <div class="auth-label-row">
+                  <label for="username-in">New username</label>
+                  <span class="auth-hint" id="username-count">0/15</span>
+                </div>
+                <div class="auth-input-wrap">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+                  <input type="text" id="username-in" maxlength="15" autocomplete="off" placeholder="carzzy_boss">
+                </div>
+              </div>
+              <div class="auth-note">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg>
+                <span>Please don't use your real name.</span>
+              </div>
+              <button type="submit" class="auth-submit"><span class="auth-spinner" aria-hidden="true"></span><span class="auth-submit-text">Save username</span></button>
+            </form>
+            <div class="auth-msg" id="username-msg" role="alert" aria-live="polite"></div>
+          </section>
+
+          <!-- Profile picture -->
+          <section class="acct-card acct-panel" role="tabpanel" id="panel-picture" aria-labelledby="tab-picture" hidden>
+            <h2>Profile picture</h2>
+            <p class="acct-lead">Shown in the menu at the top of the site.</p>
+            <div class="acct-narrow">
+              <div class="pic-row">
+                <div class="acct-avatar" data-avatar aria-hidden="true"></div>
+                <label class="pic-drop" id="pic-drop">
+                  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+                  <strong>Upload a photo</strong>
+                  <span>or drag and drop it here</span>
+                  <input id="pic-in" type="file" accept="image/*">
+                </label>
+              </div>
+              <button type="button" class="auth-secondary" id="pic-remove" hidden>Remove photo</button>
+            </div>
+            <div class="auth-msg" id="picture-msg" role="alert" aria-live="polite"></div>
+          </section>
+
+          <!-- Password -->
+          <section class="acct-card acct-panel" role="tabpanel" id="panel-password" aria-labelledby="tab-password" hidden>
+            <h2 id="pwd-title">Password</h2>
+            <p class="acct-lead" id="pwd-lead"></p>
+            <form id="password-form" novalidate>
+              <div class="auth-field" id="pwd-curr-field">
+                <label for="pwd-curr">Current password</label>
+                <div class="auth-input-wrap">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                  <input type="password" id="pwd-curr" autocomplete="current-password" placeholder="Enter your current password">
+                </div>
+              </div>
+              <div class="auth-field">
+                <label for="pwd-new">New password</label>
+                <div class="auth-input-wrap has-toggle">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg>
+                  <input type="password" id="pwd-new" autocomplete="new-password" placeholder="Create a new password">
+                  <button type="button" class="auth-eye" aria-controls="pwd-new pwd-confirm" aria-label="Show passwords" aria-pressed="false">
+                    <svg class="eye-on" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+                  </button>
+                </div>
+                <div class="auth-hint">At least 6 characters, with upper &amp; lowercase letters, a number, and a symbol.</div>
+              </div>
+              <div class="auth-field">
+                <label for="pwd-confirm">Confirm new password</label>
+                <div class="auth-input-wrap">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+                  <input type="password" id="pwd-confirm" autocomplete="new-password" placeholder="Re-enter your new password">
+                </div>
+              </div>
+              <button type="submit" class="auth-submit"><span class="auth-spinner" aria-hidden="true"></span><span class="auth-submit-text" id="pwd-btn-text">Update password</span></button>
+            </form>
+            <div class="auth-msg" id="password-msg" role="alert" aria-live="polite"></div>
+          </section>
+
+          <!-- Email -->
+          <section class="acct-card acct-panel" role="tabpanel" id="panel-email" aria-labelledby="tab-email" hidden>
+            <h2>Email</h2>
+            <p class="acct-lead">Your account email is <strong id="cur-email"></strong>.</p>
+            <div class="auth-note acct-narrow" id="email-google-note" hidden>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+              <span>Your email comes from your Google account, so it can't be changed here. To use a different email, set a password first under <a href="#password" data-goto="password">Password</a>.</span>
+            </div>
+            <form id="email-form" novalidate>
+              <div class="auth-field">
+                <label for="email-new">New email address</label>
+                <div class="auth-input-wrap">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                  <input type="email" id="email-new" autocomplete="email" placeholder="you@example.com">
+                </div>
+              </div>
+              <div class="auth-field">
+                <label for="email-pwd">Current password</label>
+                <div class="auth-input-wrap">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                  <input type="password" id="email-pwd" autocomplete="current-password" placeholder="Enter your password">
+                </div>
+              </div>
+              <p class="auth-hint" style="margin:-4px 0 20px">We'll email a link to the new address. Your email changes once you click it.</p>
+              <button type="submit" class="auth-submit"><span class="auth-spinner" aria-hidden="true"></span><span class="auth-submit-text">Send verification link</span></button>
+            </form>
+            <div class="auth-msg" id="email-msg" role="alert" aria-live="polite"></div>
+          </section>
+
+          <!-- Delete -->
+          <section class="acct-card acct-panel" role="tabpanel" id="panel-delete" aria-labelledby="tab-delete" hidden>
+            <h2>Delete account</h2>
+            <p class="acct-lead">This permanently deletes your account and frees up your username. It can't be undone.</p>
+            <form id="delete-form" novalidate>
+              <div class="auth-field" id="del-pwd-field">
+                <label for="del-pwd">Current password</label>
+                <div class="auth-input-wrap">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                  <input type="password" id="del-pwd" autocomplete="current-password" placeholder="Enter your password">
+                </div>
+              </div>
+              <label class="auth-check">
+                <input type="checkbox" id="del-confirm">
+                I understand my account will be deleted permanently
+              </label>
+              <button type="submit" class="auth-submit is-danger"><span class="auth-spinner" aria-hidden="true"></span><span class="auth-submit-text" id="del-btn-text">Delete my account</span></button>
+            </form>
+            <div class="auth-msg" id="delete-msg" role="alert" aria-live="polite"></div>
+          </section>
         </div>
       </div>
-      <div id="tab-del" class="panel">
-        <h2 style="color:#ff3860;">Delete Account</h2>
-        <label>Current Password</label><input id="del-pwd" type="password" autocomplete="new-password" />
-        <button class="action-btn" style="background:#ff3860;color:#fff;" onclick="deleteAcc()">Delete</button>
-      </div>
-      <div id="status" class="status"></div>
+    </div>
+  </main>
+
+  <div class="crop-modal" id="crop-modal" role="dialog" aria-modal="true" aria-labelledby="crop-title">
+    <div class="acct-card">
+      <h2 id="crop-title">Crop your photo</h2>
+      <div class="crop-box"><img id="crop-preview" alt="" style="max-width:100%;display:block"></div>
+      <button type="button" class="auth-submit" id="crop-save"><span class="auth-spinner" aria-hidden="true"></span><span class="auth-submit-text">Save photo</span></button>
+      <button type="button" class="auth-secondary" id="crop-cancel">Cancel</button>
     </div>
   </div>
-</div>
 
-<div id="crop-modal" class="modal">
-  <div class="modal-content">
-    <h3>Crop Picture</h3>
-    <div class="crop-box">
-      <img id="crop-preview" style="max-width:100%; display:block;" />
-    </div>
-    <button class="action-btn" onclick="updateProfilePic()">Save</button>
-    <button class="action-btn" style="background:#555;color:#fff;margin-top:8px;" onclick="closeCropModal()">Cancel</button>
-  </div>
-</div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, deleteUser,
+      reauthenticateWithCredential, reauthenticateWithPopup, linkWithCredential,
+      EmailAuthProvider, GoogleAuthProvider, updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { claimUsername, findUsername, validateUsername, USERNAME_MAX } from "/auth/username.js";
+    import { scrubGoogleProfile, CHOOSE_USERNAME_URL } from "/auth/google.js";
 
-<script src="/nav-bar.js"></script>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateProfile } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, setDoc, updateDoc, serverTimestamp, collection, query, where, getDocs, limit, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const cloudName = "u5bvfdsm", uploadPreset = "Carzzy-Apps-Profile-Pictures";
 
-  const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "carzzy-apps.firebaseapp.com", projectId: "carzzy-apps" });
-  const auth = getAuth(app), db = getFirestore(app);
-  let curUser = null, cropper = null;
-  const cloudName = "u5bvfdsm", uploadPreset = "Carzzy-Apps-Profile-Pictures";
+    const $ = (id) => document.getElementById(id);
+    let user = null;
+    let username = "";
+    let cropper = null;
 
-  window.showTab = (id) => {
-    document.querySelectorAll('.panel, .sidebar-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    event.target.classList.add('active');
-    document.getElementById('status').innerText = "";
-  };
+    const hasPassword = () => user.providerData.some((p) => p.providerId === "password");
+    const hasGoogle = () => user.providerData.some((p) => p.providerId === "google.com");
 
-  onAuthStateChanged(auth, u => {
-    if (!u || u.isAnonymous) { window.location.href = "https://www.carzzyapps.com/auth/sign-in"; return; }
-    if (!u.emailVerified) { window.location.href = "/auth/verify-email"; return; }
-    curUser = u;
-    document.getElementById('profile').style.display = 'block';
-    if (u.photoURL) {
-      const preview = document.getElementById('preview');
-      preview.src = u.photoURL;
-      preview.style.display = 'inline-block';
+    // ---------- Small helpers ----------
+
+    function showMsg(id, text, kind) {
+      const el = $(id);
+      el.className = "auth-msg" + (text ? " is-" + kind : "");
+      el.textContent = text || "";
     }
-  });
 
-  const reauth = async (pwd) => reauthenticateWithCredential(curUser, EmailAuthProvider.credential(curUser.email, pwd));
-  const setStatus = (msg, err = false) => {
-    const el = document.getElementById('status');
-    el.style.color = err ? '#ff3860' : '#00d1b2';
-    el.innerText = msg;
-  };
+    function setBusy(btn, on, busyText) {
+      const label = btn.querySelector(".auth-submit-text");
+      if (on) { btn.dataset.label = label.textContent; label.textContent = busyText; }
+      else if (btn.dataset.label) { label.textContent = btn.dataset.label; }
+      btn.disabled = on;
+      btn.classList.toggle("is-loading", on);
+    }
 
-  window.showLocalPreview = (input) => {
-    const file = input.files[0];
-    if (file) {
-      const cropImg = document.getElementById('crop-preview');
-      cropImg.src = URL.createObjectURL(file);
-      document.getElementById('crop-modal').style.display = 'flex';
+    function friendlyError(err) {
+      switch (err && err.code) {
+        case "missing-password": return "Enter your current password.";
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+        case "auth/invalid-login-credentials": return "That password isn't right.";
+        case "auth/weak-password":
+        case "auth/password-does-not-meet-requirements": return "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters.";
+        case "auth/too-many-requests": return "Too many attempts. Please wait a moment and try again.";
+        case "auth/popup-closed-by-user":
+        case "auth/cancelled-popup-request": return "";
+        case "auth/popup-blocked": return "Your browser blocked the Google window. Allow pop-ups for this site and try again.";
+        case "auth/user-mismatch": return "That's a different Google account. Choose the one you use for Carzzy Apps.";
+        case "auth/email-already-in-use": return "That email is already used by another account.";
+        case "auth/invalid-email": return "Please enter a valid email address.";
+        case "auth/requires-recent-login": return "For your security, please sign out, sign back in, and try again.";
+        case "auth/provider-already-linked":
+        case "auth/credential-already-in-use": return "This account already has a password.";
+        case "auth/network-request-failed":
+        case "unavailable": return "Network error. Check your connection and try again.";
+        case "already-exists": return "That username is already taken.";
+        default: return "Something went wrong. Please try again.";
+      }
+    }
+
+    // Sensitive changes need a fresh sign-in. Password accounts type their
+    // password; Google-only accounts confirm in a Google popup instead.
+    async function confirmIdentity(passwordInputId) {
+      if (hasPassword()) {
+        const pwd = $(passwordInputId).value;
+        if (!pwd) { const e = new Error(); e.code = "missing-password"; throw e; }
+        await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, pwd));
+      } else {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: "select_account" });
+        await reauthenticateWithPopup(user, provider);
+        await scrubGoogleProfile(user, username);
+      }
+    }
+
+    // ---------- Tabs ----------
+
+    const tabs = [...document.querySelectorAll(".acct-tab")];
+    function selectTab(name, focus) {
+      if (!tabs.some((t) => t.dataset.tab === name)) name = "username";
+      tabs.forEach((t) => {
+        const on = t.dataset.tab === name;
+        t.setAttribute("aria-selected", String(on));
+        t.tabIndex = on ? 0 : -1;
+        $("panel-" + t.dataset.tab).hidden = !on;
+        if (on && focus) t.focus();
+      });
+      history.replaceState(null, "", "#" + name);
+    }
+    tabs.forEach((t, i) => {
+      t.addEventListener("click", () => selectTab(t.dataset.tab));
+      t.addEventListener("keydown", (e) => {
+        const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+        if (step) { e.preventDefault(); selectTab(tabs[(i + step + tabs.length) % tabs.length].dataset.tab, true); }
+      });
+    });
+    document.querySelectorAll("[data-goto]").forEach((a) => a.addEventListener("click", (e) => {
+      e.preventDefault(); selectTab(a.dataset.goto, true);
+    }));
+
+    document.querySelectorAll(".auth-eye").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const inputs = btn.getAttribute("aria-controls").split(" ").map((id) => $(id));
+        const show = inputs[0].type === "password";
+        inputs.forEach((input) => { input.type = show ? "text" : "password"; });
+        btn.setAttribute("aria-pressed", String(show));
+        btn.setAttribute("aria-label", show ? "Hide passwords" : "Show passwords");
+      });
+    });
+
+    // ---------- Render ----------
+
+    function renderAvatar() {
+      const initial = (username || user.email || "?").charAt(0);
+      document.querySelectorAll("[data-avatar]").forEach((el) => {
+        el.textContent = "";
+        if (user.photoURL) {
+          const img = document.createElement("img");
+          img.src = user.photoURL; img.alt = ""; img.referrerPolicy = "no-referrer";
+          img.onerror = () => { el.textContent = initial; };
+          el.appendChild(img);
+        } else {
+          el.textContent = initial;
+        }
+      });
+      $("pic-remove").hidden = !user.photoURL;
+    }
+
+    function chip(text, svg) {
+      const c = document.createElement("span");
+      c.className = "acct-chip";
+      c.innerHTML = svg;
+      c.append(text);
+      return c;
+    }
+
+    function render() {
+      $("hdr-name").textContent = username || "Your account";
+      $("hdr-email").textContent = user.email || "";
+      $("cur-username").textContent = username || "not set";
+      $("cur-email").textContent = user.email || "";
+
+      const chips = $("hdr-chips");
+      chips.textContent = "";
+      if (hasGoogle()) chips.append(chip("Google sign-in", '<svg viewBox="0 0 48 48" width="13" height="13" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>'));
+      if (hasPassword()) chips.append(chip("Password", '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'));
+
+      const pwd = hasPassword();
+      // Password tab: change it, or add one to a Google-only account.
+      $("pwd-title").textContent = pwd ? "Change password" : "Set a password";
+      $("pwd-lead").textContent = pwd
+        ? "Enter your current password, then choose a new one."
+        : "You sign in with Google. Add a password so you can also sign in with your email. You'll confirm with Google first.";
+      $("pwd-curr-field").hidden = !pwd;
+      $("pwd-btn-text").textContent = pwd ? "Update password" : "Confirm with Google & set password";
+
+      // Email tab: Google-only accounts keep their Google email.
+      $("email-google-note").hidden = pwd;
+      $("email-form").hidden = !pwd;
+
+      // Delete tab.
+      $("del-pwd-field").hidden = !pwd;
+      $("del-btn-text").textContent = pwd ? "Delete my account" : "Confirm with Google & delete";
+
+      renderAvatar();
+    }
+
+    // ---------- Load ----------
+
+    let loaded = false;
+    onAuthStateChanged(auth, async (u) => {
+      if (loaded) return;
+      if (!u || u.isAnonymous) { window.location.href = "/auth/sign-in"; return; }
+      if (!u.emailVerified) { window.location.href = "/auth/verify-email"; return; }
+      loaded = true;
+      user = u;
+      try {
+        username = (await findUsername(app, u.uid)) || "";
+      } catch (err) {
+        console.error("Could not load username.", err);
+        username = u.displayName || "";
+      }
+      if (!username && hasGoogle()) { window.location.href = CHOOSE_USERNAME_URL; return; }
+
+      render();
+      $("loading").hidden = true;
+      $("account").hidden = false;
+      selectTab(location.hash.slice(1));
+    });
+
+    // ---------- Username ----------
+
+    $("username-in").addEventListener("input", () => {
+      $("username-count").textContent = $("username-in").value.length + "/" + USERNAME_MAX;
+    });
+
+    $("username-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = e.submitter || e.target.querySelector("button[type=submit]");
+      const val = $("username-in").value.trim();
+      const problem = validateUsername(val);
+      if (problem) return showMsg("username-msg", problem, "error");
+      if (val === username) return showMsg("username-msg", "That's already your username.", "error");
+
+      setBusy(btn, true, "Saving…");
+      try {
+        await claimUsername(app, user, val);
+        await updateProfile(user, { displayName: val });
+        username = val;
+        $("username-in").value = "";
+        $("username-count").textContent = "0/" + USERNAME_MAX;
+        render();
+        showMsg("username-msg", "Username updated!", "success");
+      } catch (err) {
+        console.error(err);
+        showMsg("username-msg", friendlyError(err), "error");
+      } finally {
+        setBusy(btn, false);
+      }
+    });
+
+    // ---------- Profile picture ----------
+
+    const picIn = $("pic-in");
+    const drop = $("pic-drop");
+    const modal = $("crop-modal");
+
+    function openCrop(file) {
+      if (!file || !file.type.startsWith("image/")) return showMsg("picture-msg", "Please choose an image file.", "error");
+      const img = $("crop-preview");
+      img.src = URL.createObjectURL(file);
+      modal.classList.add("is-open");
       if (cropper) cropper.destroy();
-      cropper = new Cropper(cropImg, { aspectRatio: 1, viewMode: 1, background: false });
+      cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1, background: false });
+      $("crop-save").focus();
     }
-  };
 
-  window.closeCropModal = () => {
-    document.getElementById('crop-modal').style.display = 'none';
-    document.getElementById('pic-in').value = "";
-    if (cropper) { cropper.destroy(); cropper = null; }
-  };
+    function closeCrop() {
+      modal.classList.remove("is-open");
+      picIn.value = "";
+      if (cropper) { cropper.destroy(); cropper = null; }
+    }
 
-  const dropZone = document.querySelector('.custom-file-upload');
-  const fileInput = document.getElementById('pic-in');
+    picIn.addEventListener("change", () => openCrop(picIn.files[0]));
+    ["dragenter", "dragover"].forEach((n) => drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.add("dragover"); }));
+    ["dragleave", "dragend", "drop"].forEach((n) => drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.remove("dragover"); }));
+    drop.addEventListener("drop", (e) => { if (e.dataTransfer.files.length) openCrop(e.dataTransfer.files[0]); });
+    $("crop-cancel").addEventListener("click", closeCrop);
+    modal.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCrop(); });
 
-  ['dragenter', 'dragover'].forEach(n => dropZone.addEventListener(n, e => { e.preventDefault(); dropZone.classList.add('dragover'); }));
-  ['dragleave', 'dragend', 'drop'].forEach(n => dropZone.addEventListener(n, e => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; window.showLocalPreview(fileInput); }
-  });
-
-  window.updateUsername = async () => {
-    const val = document.getElementById('username-in').value.trim();
-    if (!val) return setStatus("Username cannot be empty.", true);
-    try {
-      setStatus("Checking availability...");
-      const q = query(collection(db, "usernames"), where("usernameLower", "==", val.toLowerCase()), limit(1));
-      const snap = await getDocs(q);
-      let isTaken = false;
-      snap.forEach(d => { if (d.id !== curUser.uid) isTaken = true; });
-      if (isTaken) return setStatus("Username taken.", true);
-      setStatus("Updating...");
-      await updateProfile(curUser, { displayName: val });
-      await setDoc(doc(db, "usernames", curUser.uid), { uid: curUser.uid, guest: false, username: val, usernameLower: val.toLowerCase() });
-      try { await updateDoc(doc(db, "arcadePlayers", curUser.uid), { username: val, updatedAt: serverTimestamp() }); } catch {}
-      setStatus("Username updated!");
-    } catch (e) { setStatus("Error updating username.", true); console.error(e);}
-  };
-
-  window.changePassword = async () => {
-    try {
-      setStatus("Verifying...");
-      await reauth(document.getElementById('pwd-curr').value);
-      await updatePassword(curUser, document.getElementById('pwd-new').value);
-      setStatus("Password changed!");
-    } catch (e) { setStatus("Password change failed.", true); console.error(e);}
-  };
-
-  window.changeEmail = async () => {
-    try {
-      setStatus("Verifying...");
-      await reauth(document.getElementById('email-curr-pwd').value);
-      await verifyBeforeUpdateEmail(curUser, document.getElementById('email-new').value, { url: window.location.href });
-      setStatus("Verification email sent!");
-    } catch (e) { setStatus("Email change failed.", true); console.error(e);}
-  };
-
-  window.updateProfilePic = async () => {
-    if (!cropper) return setStatus("No active image crop.", true);
-    try {
-      setStatus("Uploading image...");
-      cropper.getCroppedCanvas({ width: 150, height: 150 }).toBlob(async (blob) => {
+    $("crop-save").addEventListener("click", async () => {
+      if (!cropper) return;
+      const btn = $("crop-save");
+      setBusy(btn, true, "Uploading…");
+      try {
+        const blob = await new Promise((res) => cropper.getCroppedCanvas({ width: 300, height: 300 }).toBlob(res, "image/jpeg", 0.9));
         const formData = new FormData();
         formData.append("file", blob, "profile.jpg");
         formData.append("upload_preset", uploadPreset);
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setStatus("Saving...");
-        await updateProfile(curUser, { photoURL: data.secure_url });
-        await updateDoc(doc(db, "arcadePlayers", curUser.uid), { photoURL: data.secure_url, updatedAt: serverTimestamp() });
-        const preview = document.getElementById('preview');
-        preview.src = data.secure_url;
-        preview.style.display = 'inline-block';
-        window.closeCropModal();
-        setStatus("Profile picture updated!");
-      }, 'image/jpeg');
-    } catch (e) { setStatus("Upload failed.", true); console.error(e);}
-  };
+        const resp = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: "POST", body: formData });
+        if (!resp.ok) throw new Error("Upload failed: " + resp.status);
+        const data = await resp.json();
+        await updateProfile(user, { photoURL: data.secure_url });
+        closeCrop();
+        renderAvatar();
+        showMsg("picture-msg", "Profile picture updated!", "success");
+      } catch (err) {
+        console.error(err);
+        showMsg("picture-msg", "Upload failed. Please try again.", "error");
+      } finally {
+        setBusy(btn, false);
+      }
+    });
 
-  window.removeProfilePic = async () => {
-    try {
-      setStatus("Removing profile picture...");
-      await updateProfile(curUser, { photoURL: "" });
-      await updateDoc(doc(db, "arcadePlayers", curUser.uid), { photoURL: "", updatedAt: serverTimestamp() });
-      if (cropper) window.closeCropModal();
-      const preview = document.getElementById('preview');
-      preview.src = "";
-      preview.style.display = 'none';
-      setStatus("Profile picture removed!");
-    } catch (e) { setStatus("Failed to remove picture.", true); console.error(e); }
-  };
+    $("pic-remove").addEventListener("click", async () => {
+      try {
+        await updateProfile(user, { photoURL: null });
+        renderAvatar();
+        showMsg("picture-msg", "Profile picture removed.", "success");
+      } catch (err) {
+        console.error(err);
+        showMsg("picture-msg", "Couldn't remove the picture. Please try again.", "error");
+      }
+    });
 
-  window.deleteAcc = async () => {
-    try {
-      setStatus("Deleting...");
-      await reauth(document.getElementById('del-pwd').value);
-      await deleteDoc(doc(db, "usernames", curUser.uid));
-      await deleteDoc(doc(db, "arcadePlayers", curUser.uid));
-      await deleteUser(curUser);
-      location.reload();
-    } catch (e) { setStatus("Deletion failed.", true); console.error(e);}
-  };
-</script>
+    // ---------- Password ----------
+
+    $("password-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector("button[type=submit]");
+      const next = $("pwd-new").value;
+      if (!next) return showMsg("password-msg", "Enter a new password.", "error");
+      if (next !== $("pwd-confirm").value) return showMsg("password-msg", "New passwords don't match.", "error");
+
+      const adding = !hasPassword();
+      setBusy(btn, true, adding ? "Waiting for Google…" : "Updating…");
+      showMsg("password-msg", "");
+      try {
+        await confirmIdentity("pwd-curr");
+        if (adding) {
+          const result = await linkWithCredential(user, EmailAuthProvider.credential(user.email, next));
+          user = result.user;
+        } else {
+          await updatePassword(user, next);
+        }
+        ["pwd-curr", "pwd-new", "pwd-confirm"].forEach((id) => { $(id).value = ""; });
+        render();
+        showMsg("password-msg", adding
+          ? "Password added! You can now also sign in with your email and password."
+          : "Password changed!", "success");
+      } catch (err) {
+        console.error(err);
+        const text = friendlyError(err);
+        if (text) showMsg("password-msg", text, "error");
+      } finally {
+        setBusy(btn, false);
+      }
+    });
+
+    // ---------- Email ----------
+
+    $("email-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector("button[type=submit]");
+      const next = $("email-new").value.trim();
+      if (!next) return showMsg("email-msg", "Enter your new email address.", "error");
+      if (next.toLowerCase() === (user.email || "").toLowerCase()) return showMsg("email-msg", "That's already your email.", "error");
+
+      setBusy(btn, true, "Sending…");
+      try {
+        await confirmIdentity("email-pwd");
+        await verifyBeforeUpdateEmail(user, next, { url: window.location.origin + "/auth/account/" });
+        $("email-pwd").value = "";
+        showMsg("email-msg", "Check " + next + " for a link to confirm the change.", "success");
+      } catch (err) {
+        console.error(err);
+        const text = friendlyError(err);
+        if (text) showMsg("email-msg", text, "error");
+      } finally {
+        setBusy(btn, false);
+      }
+    });
+
+    // ---------- Delete ----------
+
+    $("delete-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector("button[type=submit]");
+      if (!$("del-confirm").checked) return showMsg("delete-msg", "Tick the box to confirm you want to delete your account.", "error");
+
+      setBusy(btn, true, hasPassword() ? "Deleting…" : "Waiting for Google…");
+      try {
+        // Confirm first, so a wrong password can't leave things half-deleted.
+        await confirmIdentity("del-pwd");
+        setBusy(btn, false); setBusy(btn, true, "Deleting…");
+        // The username doc must go while still signed in (Firestore rules need it).
+        await deleteDoc(doc(db, "usernames", user.uid));
+        try {
+          await deleteUser(user);
+        } catch (err) {
+          // Account still exists: give the username back before reporting it.
+          if (username) await claimUsername(app, user, username).catch((e2) => console.error("Could not restore username.", e2));
+          throw err;
+        }
+        localStorage.removeItem("signIn");
+        try { localStorage.removeItem("czNavUser"); } catch (_) { /* ignore */ }
+        window.location.href = "/";
+      } catch (err) {
+        console.error(err);
+        const text = friendlyError(err);
+        if (text) showMsg("delete-msg", text, "error");
+        setBusy(btn, false);
+      }
+    });
+  </script>
 </body>
 </html>
