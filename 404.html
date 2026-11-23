@@ -30,6 +30,15 @@
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
+    <script>
+        // Lazer Arcade moved to its own standalone site — forward any /arcade/* deep link there.
+        (function () {
+            var p = location.pathname;
+            if (p === "/arcade" || p.indexOf("/arcade/") === 0) {
+                location.replace("https://ewieds.github.io" + p + location.search + location.hash);
+            }
+        })();
+    </script>
     <style>
         :root {
             --primary: #00d1b2;
