@@ -1,11 +1,25 @@
 (() => {
   if (window.self !== window.top) return;
+  // Only run once per page, even if a page loads this script more than once.
+  if (window.__carzzyFeedbackPopup) return;
+  window.__carzzyFeedbackPopup = true;
 
   const path = window.location.pathname;
   if (/^\/(?:feedback|fdback|admin)(?:\/|$)/i.test(path)) return;
   const submissionStorageKey = "carzzyFeedbackSubmitted";
   const dismissalStorageKey = "carzzyFeedbackDismissedAt";
-  const dismissalDurationMs = 30 * 24 * 60 * 60 * 1000;
+  const activeTimeStorageKey = "carzzyFeedbackActiveMs";
+
+  // When the form opens by itself:
+  //  - after someone has spent AUTO_OPEN_AFTER_MS on the site in total
+  //    (added up across pages, only while the tab is visible),
+  //  - never again once they've sent feedback,
+  //  - if they close it without sending, not again for dismissalDurationMs,
+  //    and then only after another AUTO_OPEN_AFTER_MS on the site.
+  // The "Send Feedback" button always opens it.
+  const AUTO_OPEN_AFTER_MS = 3 * 60 * 1000;
+  const dismissalDurationMs = 7 * 24 * 60 * 60 * 1000;
+  const TICK_MS = 5000;
 
   const launcherStyles = document.createElement("style");
   launcherStyles.textContent = `
@@ -13,7 +27,7 @@
       position: fixed !important;
       right: 8px !important;
       bottom: 8px !important;
-      z-index: 9999 !important;
+      z-index: 999 !important; /* below the navbar and its menu */
       display: inline-flex !important;
       width: auto !important;
       min-width: 0 !important;
@@ -84,13 +98,62 @@
   function saveDismissalStatus() {
     try {
       localStorage.setItem(dismissalStorageKey, String(Date.now()));
+      localStorage.setItem(activeTimeStorageKey, "0");
     } catch (error) {
       console.error("Unable to save feedback popup dismissal status", error);
     }
   }
 
+  function readActiveTime() {
+    try {
+      return Number(localStorage.getItem(activeTimeStorageKey)) || 0;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function addActiveTime(ms) {
+    try {
+      const total = readActiveTime() + ms;
+      localStorage.setItem(activeTimeStorageKey, String(total));
+      return total;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  function isBusy() {
+    // Don't interrupt someone who is typing or using the navbar menus.
+    const active = document.activeElement;
+    if (active && (active.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))) return true;
+    const drawer = document.querySelector(".cz-drawer-backdrop");
+    if (drawer && !drawer.hidden) return true;
+    const accountMenu = document.querySelector(".cz-account-menu");
+    return !!(accountMenu && !accountMenu.hidden);
+  }
+
+  function startAutoOpenTimer() {
+    if (getSubmissionStatus()) return;
+    let last = Date.now();
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.min(now - last, TICK_MS * 2);
+      last = now;
+      if (document.visibilityState !== "visible") return;
+      if (getSubmissionStatus()) return clearInterval(timer);
+      if (isDismissalActive()) return;
+      const total = addActiveTime(elapsed);
+      if (total >= AUTO_OPEN_AFTER_MS && !isBusy() && !document.querySelector("#feedback-popup")) {
+        clearInterval(timer);
+        showFeedbackPopup();
+      }
+    }, TICK_MS);
+    document.addEventListener("visibilitychange", () => { last = Date.now(); });
+  }
+
   function showFeedbackPopup(force = false) {
     if (!force && (getSubmissionStatus() || isDismissalActive())) return;
+    const openedAutomatically = !force;
     if (document.querySelector("#feedback-popup")) return;
 
     const previousOverflow = document.documentElement.style.overflow;
@@ -164,9 +227,11 @@
     const closeButton = overlay.querySelector(".feedback-popup__close");
     const frame = overlay.querySelector("iframe");
 
-    function closePopup(submitted = false, dismissed = false) {
+    function closePopup(submitted = false) {
       if (submitted) saveSubmissionStatus(true);
-      if (dismissed) saveDismissalStatus();
+      // Closing a popup that opened by itself without sending counts as
+      // "not now", so it waits before asking again.
+      else if (openedAutomatically) saveDismissalStatus();
       overlay.remove();
       document.documentElement.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeydown);
@@ -187,7 +252,7 @@
       }
     }
 
-    closeButton.addEventListener("click", () => closePopup(false, true));
+    closeButton.addEventListener("click", () => closePopup());
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) closePopup();
     });
@@ -198,8 +263,8 @@
     closeButton.focus({ preventScroll: true });
   }
 
-  function addHomepageLauncher() {
-    if (!/^\/(?:index\.html)?$/i.test(path) || document.querySelector("#feedback-launcher")) return;
+  function addLauncher() {
+    if (document.querySelector("#feedback-launcher")) return;
 
     const launcher = document.createElement("button");
     launcher.id = "feedback-launcher";
@@ -210,11 +275,14 @@
     document.body.append(launcher);
   }
 
+  function start() {
+    addLauncher();
+    startAutoOpenTimer();
+  }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      addHomepageLauncher();
-    }, { once: true });
+    document.addEventListener("DOMContentLoaded", start, { once: true });
   } else {
-    addHomepageLauncher();
+    start();
   }
 })();
