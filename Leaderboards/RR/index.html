@@ -107,11 +107,54 @@
       color: #444;
     }
 
+    #uc-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(10, 10, 10, 0.97);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+    }
+    #uc-overlay[hidden] { display: none; }
+    /* Keep the site navbar usable above the construction overlay. */
+    nav { z-index: 100001 !important; }
+    .menu-overlay { z-index: 100002 !important; }
+    #uc-overlay .uc-box {
+      max-width: 420px;
+      padding: 28px 24px;
+      border: 1px solid #00d1b2;
+      border-radius: 12px;
+      background: #111;
+    }
+    #uc-overlay h2 { margin: 0 0 12px; color: #00d1b2; letter-spacing: 2px; }
+    #uc-overlay p { margin: 0 0 18px; line-height: 1.5; }
+    #uc-overlay a {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 6px;
+      background: #00d1b2;
+      color: #0a0a0a;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    #uc-overlay .uc-warn { color: #ff6b6b; }
   </style>
 </head>
 <body>
   
   <script src="/nav-bar.js"></script>
+
+  <div id="uc-overlay" role="dialog" aria-modal="true" aria-labelledby="uc-title">
+    <div class="uc-box">
+      <h2 id="uc-title">UNDER CONSTRUCTION</h2>
+      <p id="uc-message">The Rhythm Runner leaderboard is being worked on. Sign in with an admin account to get access.</p>
+      <a id="uc-signin" href="/auth/sign-in/">SIGN IN</a>
+    </div>
 
   <h2>RHYTHM RUNNER — GLOBAL LEADERBOARD</h2>
   <p style="margin-bottom: 40px;">Our leaderboard system isn't perfect, so if there is a bug, <a href="/contact-us" style="color:#00d1b2">let us know</a>.</p>
@@ -135,17 +178,56 @@
   <script src="/firebase-config.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import {
       collection, doc, getDoc, getDocs, getFirestore, limit, orderBy, query
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
+    if (!window.CARZZY_FIREBASE_CONFIG) {
+      throw new Error("Rhythm Runner Firebase configuration is unavailable.");
+    }
+    const app = initializeApp(window.CARZZY_FIREBASE_CONFIG);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // Under-construction gate: only accounts with siteAdmins/{uid} { enabled: true } can view.
+    const ucOverlay = document.getElementById("uc-overlay");
+    const ucMessage = document.getElementById("uc-message");
+    const ucSignIn = document.getElementById("uc-signin");
+    ucSignIn.addEventListener("click", () => {
+      sessionStorage.setItem("prevPage", window.location.href);
+    });
+
+    async function isAdmin(user) {
+      try {
+        const snap = await getDoc(doc(db, "siteAdmins", user.uid));
+        return snap.exists() && snap.data().enabled === true;
+      } catch (error) {
+        console.warn("Could not check admin status.", error);
+        return false;
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user || user.isAnonymous) {
+        ucMessage.classList.remove("uc-warn");
+        ucMessage.textContent = "The Rhythm Runner leaderboard is being worked on. Sign in with an admin account to view it.";
+        ucSignIn.textContent = "SIGN IN";
+        ucOverlay.hidden = false;
+        return;
+      }
+      if (await isAdmin(user)) {
+        ucOverlay.hidden = true;
+        return;
+      }
+      ucMessage.classList.add("uc-warn");
+      ucMessage.textContent = "You're signed in, but your account is not an admin. The Rhythm Runner leaderboard is only available to admins while it's under construction.";
+      ucSignIn.textContent = "SIGN IN WITH A DIFFERENT ACCOUNT";
+      ucOverlay.hidden = false;
+    });
+
     async function loadLeaderboard() {
       try {
-        if (!window.CARZZY_FIREBASE_CONFIG) {
-          throw new Error("Rhythm Runner Firebase configuration is unavailable.");
-        }
-        const app = initializeApp(window.CARZZY_FIREBASE_CONFIG);
-        const db = getFirestore(app);
         const snapshot = await getDocs(query(
           collection(db, "carzzyPlayers"),
           orderBy("RRBest", "desc"),
