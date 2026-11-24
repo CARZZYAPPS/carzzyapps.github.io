@@ -43,7 +43,7 @@ layout: null
 
         <div class="auth-note" id="username-note">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg>
-          <span>Your username is shown on leaderboards, so please don't use your real name. Your Google name stays private.</span>
+          <span>Your username is shown on leaderboards, so please don't use your real name.<span id="google-name-note"> Your Google name stays private.</span></span>
         </div>
 
         <label class="auth-check auth-photo-choice" id="photo-choice" hidden>
@@ -151,6 +151,7 @@ layout: null
       setBadge("user");
       subtitleEl.textContent = "One last step: pick the name other players will see.";
       document.getElementById("signed-in-as").textContent = "Signed in as " + (user.email || "your account");
+      document.getElementById("google-name-note").hidden = !user.providerData.some((p) => p.providerId === "google.com");
       // Let Google users choose whether their Google photo is their picture.
       const googlePhoto = googlePhotoOf(user);
       if (googlePhoto) {

@@ -101,15 +101,18 @@ document.head.appendChild(feedbackPopupScript);
         };
     }
 
-    // Google accounts start with no username (their Google name is removed on
-    // purpose, see /auth/google.js). If someone left before picking one,
-    // send them back to do it. /auth pages are skipped so sign-in can finish.
+    // Anyone signed in without a username (Google accounts start without one;
+    // their Google name is removed on purpose, see /auth/google.js) is sent to
+    // choose-username from any page, then brought back to it. Only the pages
+    // needed to finish signing in are skipped.
     // (Don't compare against the Google name here: a username can match it,
     // and choose-username would send them straight back, in a loop.)
+    const USERNAME_NOT_REQUIRED = ['/auth/sign-in', '/auth/sign-up', '/auth/choose-username', '/auth/action'];
+
     function needsUsername(u) {
-        return !!u && !u.isAnonymous && !u.displayName
-            && u.providerData.some(p => p.providerId === 'google.com')
-            && !location.pathname.startsWith('/auth/');
+        if (!u || u.isAnonymous || u.displayName) return false;
+        const here = location.pathname.toLowerCase();
+        return !USERNAME_NOT_REQUIRED.some(path => here.startsWith(path));
     }
 
     function watchSignIn() {
