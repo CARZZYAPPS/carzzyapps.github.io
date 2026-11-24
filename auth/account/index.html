@@ -319,7 +319,7 @@ layout: null
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { claimUsername, getProfile, setUseGooglePhoto, validateUsername, USERNAME_MAX } from "/auth/username.js?v=3";
-    import { scrubGoogleProfile, googlePhotoOf, rememberGooglePhotoChoice, rememberUsername, profileChanged, CHOOSE_USERNAME_URL } from "/auth/google.js?v=5";
+    import { scrubGoogleProfile, clearProfileFields, googlePhotoOf, rememberGooglePhotoChoice, rememberUsername, profileChanged, CHOOSE_USERNAME_URL } from "/auth/google.js?v=6";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -639,7 +639,7 @@ layout: null
 
     $("pic-remove").addEventListener("click", async () => {
       try {
-        await updateProfile(user, { photoURL: null });
+        await clearProfileFields(user, { photo: true });
         await stopUsingGooglePhoto();
         profileChanged();
         renderAvatar();

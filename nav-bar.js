@@ -110,9 +110,15 @@ document.head.appendChild(feedbackPopupScript);
     const USERNAME_NOT_REQUIRED = ['/auth/sign-in', '/auth/sign-up', '/auth/choose-username', '/auth/action'];
 
     function needsUsername(u) {
-        if (!u || u.isAnonymous || u.displayName) return false;
+        if (!u || u.isAnonymous) return false;
         const here = location.pathname.toLowerCase();
-        return !USERNAME_NOT_REQUIRED.some(path => here.startsWith(path));
+        if (USERNAME_NOT_REQUIRED.some(path => here.startsWith(path))) return false;
+        if (!u.displayName) return true;
+        // /auth/google.js notes the username at Google sign-in ("" = none yet),
+        // which catches a Google name still sitting on the profile.
+        let knownUsername = null;
+        try { knownUsername = localStorage.getItem('czUsername:' + u.uid); } catch (e) { /* ignore */ }
+        return knownUsername === '';
     }
 
     function watchSignIn() {

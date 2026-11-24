@@ -32,6 +32,31 @@ export function rememberGooglePhotoChoice(uid, useGooglePhoto) {
   try { localStorage.setItem("czGooglePhoto:" + uid, useGooglePhoto ? "1" : "0"); } catch (e) { /* ignore */ }
 }
 
+// Removes the name and/or photo from the person's Firebase profile.
+// updateProfile(user, { displayName: null }) does NOT do this: the server
+// treats null as "leave unchanged" and the SDK then puts the old value back.
+// Removing needs the API's deleteAttribute, which the SDK doesn't send.
+const API_KEY = "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4";
+
+export async function clearProfileFields(user, { name = false, photo = false }) {
+  const deleteAttribute = [];
+  if (name) deleteAttribute.push("DISPLAY_NAME");
+  if (photo) deleteAttribute.push("PHOTO_URL");
+  if (!deleteAttribute.length) return;
+  const idToken = await user.getIdToken();
+  const response = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:update?key=" + API_KEY, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken, deleteAttribute })
+  });
+  if (!response.ok) {
+    const e = new Error("Could not update the profile (" + response.status + ")");
+    e.code = response.status >= 500 || response.status === 0 ? "unavailable" : "profile-update-failed";
+    throw e;
+  }
+  await user.reload();   // pick up the change on this page
+}
+
 // Tells the navbar the person's username, so on /auth pages it can tell a
 // username that happens to match their Google name apart from the Google
 // name itself (which is briefly on the profile right after Google sign-in).
@@ -53,17 +78,19 @@ export async function scrubGoogleProfile(user, username, useGooglePhoto = false)
   const google = user.providerData.find((p) => p.providerId === "google.com");
   const googlePhoto = googlePhotoOf(user);
   const updates = {};
+  const clear = { name: false, photo: false };
   if (username) {
     if (user.displayName !== username) updates.displayName = username;
   } else if (user.displayName) {
-    updates.displayName = null;
+    clear.name = true;
   }
   if (useGooglePhoto && googlePhoto) {
     if (user.photoURL !== googlePhoto) updates.photoURL = googlePhoto;
   } else if (googlePhoto && user.photoURL === googlePhoto) {
-    updates.photoURL = null;
+    clear.photo = true;
   }
   if (Object.keys(updates).length) await updateProfile(user, updates);
+  await clearProfileFields(user, clear);
   rememberUsername(user.uid, username);
   if (google) rememberGooglePhotoChoice(user.uid, useGooglePhoto && !!googlePhoto);
   profileChanged();
