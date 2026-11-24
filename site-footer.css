@@ -126,8 +126,8 @@ html.cz-framed .site-footer { display: none; }
     color: var(--dim);
 }
 .site-footer .ft-top { margin-left: auto; color: var(--muted); text-decoration: none; font-weight: 600; }
-.site-footer .ft-legal { color: var(--muted); text-decoration: none; font-weight: 600; }
-.site-footer .ft-legal:hover { color: var(--accent); }
+.site-footer .ft-legal { color: var(--accent); text-decoration: none; font-weight: 600; }
+.site-footer .ft-legal:hover { text-decoration: underline; }
 .site-footer .ft-top:hover { color: var(--accent); }
 
 @media (max-width: 900px) {
