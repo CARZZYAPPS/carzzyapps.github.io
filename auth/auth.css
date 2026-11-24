@@ -589,3 +589,9 @@ body {
     .auth-submit, .auth-check input::after { transition: none; }
     .auth-spinner { animation-duration: 2s; }
 }
+
+/* "Stay signed in" sits above both sign-in options, so it applies to each. */
+.auth-check.auth-check-top {
+    justify-content: center;
+    margin: 0 0 16px;
+}
