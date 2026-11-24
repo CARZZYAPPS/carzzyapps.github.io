@@ -618,6 +618,8 @@ h1, h2, h3, h4 { margin: 0; letter-spacing: -0.02em; }
     color: var(--dim);
 }
 .ft-top { margin-left: auto; color: var(--muted); text-decoration: none; font-weight: 600; }
+.ft-legal { color: var(--muted); text-decoration: none; font-weight: 600; }
+.ft-legal:hover { color: var(--accent); }
 .ft-top:hover { color: var(--accent); }
 
 @media (max-width: 900px) {
