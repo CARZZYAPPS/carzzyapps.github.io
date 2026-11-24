@@ -1,0 +1,5 @@
+# GitHub Pages (Jekyll) settings.
+# Folders starting with "_" are skipped by default; publish __/ because it
+# holds Firebase's sign-in helper files (see .github/workflows/firebase-auth-helper.yml).
+include:
+  - __

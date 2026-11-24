@@ -1,0 +1,51 @@
+name: Firebase sign-in helper files
+
+# Google sign-in runs through www.carzzyapps.com/__/auth/ instead of
+# carzzy-apps.firebaseapp.com, so the Google popup shows our own domain.
+# Firebase's helper files are copied from the firebaseapp.com domain into
+# __/ here. This keeps them up to date: it runs monthly and can be run by hand
+# (Actions tab -> this workflow -> Run workflow). Commits only if they changed.
+#
+# GitHub Pages serves /__/auth/handler from handler.html, so the two HTML pages
+# are saved with a .html extension. _config.yml tells Jekyll to publish __/.
+
+on:
+  schedule:
+    - cron: "17 6 3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download helper files
+        run: |
+          set -euo pipefail
+          base="https://carzzy-apps.firebaseapp.com/__"
+          mkdir -p __/auth __/firebase
+          get() {
+            curl -fsSL --retry 3 -o "$2" "$base/$1"
+            test -s "$2" || { echo "Empty download: $1"; exit 1; }
+          }
+          get auth/handler        __/auth/handler.html
+          get auth/handler.js     __/auth/handler.js
+          get auth/experiments.js __/auth/experiments.js
+          get auth/iframe         __/auth/iframe.html
+          get auth/iframe.js      __/auth/iframe.js
+          get firebase/init.json  __/firebase/init.json
+          ls -la __/auth __/firebase
+      - name: Commit if changed
+        run: |
+          git add __
+          if git diff --cached --quiet; then
+            echo "Helper files are already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update Firebase sign-in helper files"
+          git push
