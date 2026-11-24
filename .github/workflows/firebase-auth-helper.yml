@@ -54,3 +54,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Update Firebase sign-in helper files"
           git push
+      - name: Check the live site serves them
+        # Right after a commit the site may still be rebuilding, so this only
+        # warns. A real problem shows up here on the next run.
+        run: |
+          ok=1
+          check() {
+            body=$(curl -sSL --retry 2 "https://www.carzzyapps.com/__/auth/$1" || true)
+            if printf '%s' "$body" | grep -q "$2"; then echo "OK: /__/auth/$1"; else echo "::warning::/__/auth/$1 is not serving the Firebase helper yet"; ok=0; fi
+          }
+          check handler     "fireauth.oauthhelper.widget.initialize"
+          check iframe      "fireauth.iframe.AuthRelay.initialize"
+          check handler.js  "fireauth"
+          [ "$ok" = 1 ] && echo "All helper files are live."
