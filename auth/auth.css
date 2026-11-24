@@ -595,3 +595,16 @@ body {
     justify-content: center;
     margin: 0 0 16px;
 }
+
+/* "Use my Google photo" choice, with a small preview of the photo. */
+.auth-photo-choice img {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--auth-line);
+}
+
+.auth-secondary.auth-photo-choice { gap: 10px; }
+.auth-secondary.auth-photo-choice img { width: 26px; height: 26px; }

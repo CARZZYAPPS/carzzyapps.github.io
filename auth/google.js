@@ -16,24 +16,42 @@ import {
   signInWithRedirect,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { findUsername } from "/auth/username.js?v=2";
+import { getProfile } from "/auth/username.js?v=3";
 
 export const CHOOSE_USERNAME_URL = "/auth/choose-username/";
 
-// Makes the profile show the username (or nothing) instead of Google's
-// real name and photo. Safe to call on every sign-in.
-export async function scrubGoogleProfile(user, username) {
+// The photo on the person's Google account, or "" if none.
+export function googlePhotoOf(user) {
   const google = user.providerData.find((p) => p.providerId === "google.com");
+  return (google && google.photoURL) || "";
+}
+
+// Tells the navbar (which can't read Firestore) whether this person chose to
+// use their Google photo, so it knows whether to show it.
+export function rememberGooglePhotoChoice(uid, useGooglePhoto) {
+  try { localStorage.setItem("czGooglePhoto:" + uid, useGooglePhoto ? "1" : "0"); } catch (e) { /* ignore */ }
+}
+
+// Makes the profile show the username (or nothing) instead of Google's real
+// name, and the Google photo only if the person chose to use it
+// (useGooglePhoto, saved in their usernames doc). Safe to call on every
+// sign-in; Google can put its name and photo back when someone signs in.
+export async function scrubGoogleProfile(user, username, useGooglePhoto = false) {
+  const google = user.providerData.find((p) => p.providerId === "google.com");
+  const googlePhoto = googlePhotoOf(user);
   const updates = {};
   if (username) {
     if (user.displayName !== username) updates.displayName = username;
   } else if (user.displayName) {
     updates.displayName = null;
   }
-  if (google && google.photoURL && user.photoURL === google.photoURL) {
+  if (useGooglePhoto && googlePhoto) {
+    if (user.photoURL !== googlePhoto) updates.photoURL = googlePhoto;
+  } else if (googlePhoto && user.photoURL === googlePhoto) {
     updates.photoURL = null;
   }
   if (Object.keys(updates).length) await updateProfile(user, updates);
+  if (google) rememberGooglePhotoChoice(user.uid, useGooglePhoto && !!googlePhoto);
 }
 
 // Google sign-in uses the whole window: the page goes to Google and Google
@@ -76,8 +94,8 @@ export async function finishGoogleSignIn(app, auth) {
   const user = result ? result.user : auth.currentUser;
   if (!user || !user.providerData.some((p) => p.providerId === "google.com")) return null;
 
-  const username = await findUsername(app, user.uid);
-  await scrubGoogleProfile(user, username);
+  const { username, useGooglePhoto } = await getProfile(app, user.uid);
+  await scrubGoogleProfile(user, username, useGooglePhoto);
 
   if (staySignedIn) localStorage.setItem("signIn", "true");
   else localStorage.removeItem("signIn");

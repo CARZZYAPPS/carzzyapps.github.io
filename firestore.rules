@@ -28,11 +28,14 @@ service cloud.firestore {
           && data.username is string
           && data.username.matches('^[^/]{1,30}$')
           && username.matches('^[^/]{1,30}$')
+          && (!('useGooglePhoto' in data) || data.useGooglePhoto is bool)
           && (data.guest
             ? request.auth.token.firebase.sign_in_provider == 'anonymous'
             : request.auth.token.email is string);
       }
-      // Current sign-up: doc id = uid, fields uid/guest/username/usernameLower.
+      // Current sign-up: doc id = uid, fields uid/guest/username/usernameLower,
+      // plus optional useGooglePhoto (whether a Google user's Google photo is
+      // their profile picture).
       function validUidClaim(data) {
         return username == request.auth.uid
           && data.keys().hasAll(['uid', 'guest', 'username', 'usernameLower'])
@@ -42,6 +45,7 @@ service cloud.firestore {
           && data.username.size() >= 1 && data.username.size() <= 30
           && !data.username.matches('.*/.*')
           && data.usernameLower == data.username.lower()
+          && (!('useGooglePhoto' in data) || data.useGooglePhoto is bool)
           && (data.guest
             ? request.auth.token.firebase.sign_in_provider == 'anonymous'
             : request.auth.token.email is string);

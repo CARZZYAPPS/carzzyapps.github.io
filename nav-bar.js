@@ -79,14 +79,18 @@ document.head.appendChild(feedbackPopupScript);
 
     function userFromFirebase(u) {
         if (!u || u.isAnonymous) return null;
-        // Right after Google sign-in, the Google name and photo are on the
-        // profile for a moment until /auth/google.js swaps in the username.
-        // That only happens on /auth pages, so hide them there. (Elsewhere a
-        // username that happens to match the Google name should still show.)
+        // Right after Google sign-in, the Google name is on the profile for a
+        // moment until /auth/google.js swaps in the username. That only
+        // happens on /auth pages, so hide it there. (Elsewhere a username that
+        // happens to match the Google name should still show.)
         const google = u.providerData.find(p => p.providerId === 'google.com');
         const onAuthPage = location.pathname.startsWith('/auth/');
         const name = onAuthPage && google && u.displayName === google.displayName ? '' : u.displayName;
-        const photo = google && u.photoURL === google.photoURL ? '' : u.photoURL;
+        // The Google photo shows only for people who chose it as their
+        // picture (saved by /auth/google.js; the navbar can't read Firestore).
+        let choseGooglePhoto = false;
+        try { choseGooglePhoto = localStorage.getItem('czGooglePhoto:' + u.uid) === '1'; } catch (e) { /* ignore */ }
+        const photo = google && u.photoURL === google.photoURL && !choseGooglePhoto ? '' : u.photoURL;
         return {
             name: name || (u.email ? u.email.split('@')[0] : 'Account'),
             email: u.email || '',

@@ -202,6 +202,10 @@ layout: null
                   <input id="pic-in" type="file" accept="image/*">
                 </label>
               </div>
+              <button type="button" class="auth-secondary auth-photo-choice" id="pic-google" hidden>
+                <img id="pic-google-img" alt="" referrerpolicy="no-referrer">
+                <span id="pic-google-text">Use my Google photo</span>
+              </button>
               <button type="button" class="auth-secondary" id="pic-remove" hidden>Remove photo</button>
             </div>
             <div class="auth-msg" id="picture-msg" role="alert" aria-live="polite"></div>
@@ -314,8 +318,8 @@ layout: null
       EmailAuthProvider, GoogleAuthProvider, updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { claimUsername, findUsername, validateUsername, USERNAME_MAX } from "/auth/username.js?v=2";
-    import { scrubGoogleProfile, CHOOSE_USERNAME_URL } from "/auth/google.js?v=2";
+    import { claimUsername, getProfile, setUseGooglePhoto, validateUsername, USERNAME_MAX } from "/auth/username.js?v=3";
+    import { scrubGoogleProfile, googlePhotoOf, rememberGooglePhotoChoice, CHOOSE_USERNAME_URL } from "/auth/google.js?v=3";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -325,6 +329,7 @@ layout: null
     const $ = (id) => document.getElementById(id);
     let user = null;
     let username = "";
+    let useGooglePhoto = false;   // Google users: is their Google photo their picture?
     let cropper = null;
 
     const hasPassword = () => user.providerData.some((p) => p.providerId === "password");
@@ -382,7 +387,7 @@ layout: null
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: "select_account" });
         await reauthenticateWithPopup(user, provider);
-        await scrubGoogleProfile(user, username);
+        await scrubGoogleProfile(user, username, useGooglePhoto);
       }
     }
 
@@ -437,6 +442,14 @@ layout: null
         }
       });
       $("pic-remove").hidden = !user.photoURL;
+
+      // Google users choose whether their Google photo is their picture.
+      const googlePhoto = hasGoogle() ? googlePhotoOf(user) : "";
+      $("pic-google").hidden = !googlePhoto;
+      if (googlePhoto) {
+        $("pic-google-img").src = googlePhoto;
+        $("pic-google-text").textContent = useGooglePhoto ? "Stop using my Google photo" : "Use my Google photo";
+      }
     }
 
     function chip(text, svg) {
@@ -488,12 +501,20 @@ layout: null
       loaded = true;
       user = u;
       try {
-        username = (await findUsername(app, u.uid)) || "";
+        const profile = await getProfile(app, u.uid);
+        username = profile.username || "";
+        useGooglePhoto = profile.useGooglePhoto;
       } catch (err) {
         console.error("Could not load username.", err);
         username = u.displayName || "";
       }
       if (!username && hasGoogle()) { window.location.href = CHOOSE_USERNAME_URL; return; }
+      // Google can put its name and photo back on the profile; apply the
+      // person's choices again.
+      if (hasGoogle()) {
+        try { await scrubGoogleProfile(user, username, useGooglePhoto); }
+        catch (err) { console.error("Could not update profile.", err); }
+      }
 
       render();
       $("loading").hidden = true;
@@ -574,6 +595,7 @@ layout: null
         if (!resp.ok) throw new Error("Upload failed: " + resp.status);
         const data = await resp.json();
         await updateProfile(user, { photoURL: data.secure_url });
+        await stopUsingGooglePhoto();
         closeCrop();
         renderAvatar();
         showMsg("picture-msg", "Profile picture updated!", "success");
@@ -585,9 +607,36 @@ layout: null
       }
     });
 
+    // An uploaded or removed photo replaces the Google photo.
+    async function stopUsingGooglePhoto() {
+      if (!useGooglePhoto) return;
+      await setUseGooglePhoto(app, user, username, false);
+      useGooglePhoto = false;
+      rememberGooglePhotoChoice(user.uid, false);
+    }
+
+    $("pic-google").addEventListener("click", async () => {
+      const btn = $("pic-google");
+      const next = !useGooglePhoto;
+      btn.disabled = true;
+      try {
+        await setUseGooglePhoto(app, user, username, next);
+        useGooglePhoto = next;
+        await scrubGoogleProfile(user, username, next);   // puts the Google photo on, or takes it off
+        renderAvatar();
+        showMsg("picture-msg", next ? "Your Google photo is now your profile picture." : "Your Google photo is no longer used.", "success");
+      } catch (err) {
+        console.error(err);
+        showMsg("picture-msg", "Couldn't change your picture. Please try again.", "error");
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
     $("pic-remove").addEventListener("click", async () => {
       try {
         await updateProfile(user, { photoURL: null });
+        await stopUsingGooglePhoto();
         renderAvatar();
         showMsg("picture-msg", "Profile picture removed.", "success");
       } catch (err) {

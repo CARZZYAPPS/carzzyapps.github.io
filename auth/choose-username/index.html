@@ -46,6 +46,12 @@ layout: null
           <span>Your username is shown on leaderboards, so please don't use your real name. Your Google name stays private.</span>
         </div>
 
+        <label class="auth-check auth-photo-choice" id="photo-choice" hidden>
+          <input type="checkbox" id="use-google-photo">
+          <img id="google-photo" alt="" referrerpolicy="no-referrer">
+          <span>Use my Google photo as my profile picture</span>
+        </label>
+
         <button type="submit" class="auth-submit" id="submit-btn">
           <span class="auth-spinner" aria-hidden="true"></span>
           <span class="auth-submit-text">Continue</span>
@@ -65,9 +71,9 @@ layout: null
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { claimUsername, findUsername, validateUsername, USERNAME_MAX } from "/auth/username.js?v=2";
-    import { scrubGoogleProfile } from "/auth/google.js?v=2";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { claimUsername, getProfile, setUseGooglePhoto, validateUsername, USERNAME_MAX } from "/auth/username.js?v=3";
+    import { scrubGoogleProfile, googlePhotoOf } from "/auth/google.js?v=3";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -128,11 +134,11 @@ layout: null
       }
 
       try {
-        const existing = await findUsername(app, user.uid);
-        if (existing) {
+        const existing = await getProfile(app, user.uid);
+        if (existing.username) {
           // Already has one (e.g. opened this page again): make sure the
           // profile shows it rather than a Google name, then carry on.
-          await scrubGoogleProfile(user, existing);
+          await scrubGoogleProfile(user, existing.username, existing.useGooglePhoto);
           goBack();
           return;
         }
@@ -145,6 +151,12 @@ layout: null
       setBadge("user");
       subtitleEl.textContent = "One last step: pick the name other players will see.";
       document.getElementById("signed-in-as").textContent = "Signed in as " + (user.email || "your account");
+      // Let Google users choose whether their Google photo is their picture.
+      const googlePhoto = googlePhotoOf(user);
+      if (googlePhoto) {
+        document.getElementById("google-photo").src = googlePhoto;
+        document.getElementById("photo-choice").hidden = false;
+      }
       foot.hidden = false;
       form.hidden = false;
       usernameInput.focus();
@@ -162,7 +174,9 @@ layout: null
       setLoading(true);
       try {
         await claimUsername(app, user, username);
-        await updateProfile(user, { displayName: username });
+        const useGooglePhoto = document.getElementById("use-google-photo").checked && !!googlePhotoOf(user);
+        if (useGooglePhoto) await setUseGooglePhoto(app, user, username, true);
+        await scrubGoogleProfile(user, username, useGooglePhoto);
         showMsg("You're all set, " + username + "!", "success");
         setTimeout(goBack, 600);
       } catch (err) {
