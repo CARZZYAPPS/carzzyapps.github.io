@@ -28,15 +28,18 @@ jobs:
           base="https://carzzy-apps.firebaseapp.com/__"
           mkdir -p __/auth __/firebase
           get() {
-            curl -fsSL --retry 3 -o "$2" "$base/$1"
-            test -s "$2" || { echo "Empty download: $1"; exit 1; }
+            code=$(curl -sSL --retry 3 -o "$2" -w "%{http_code}" "$base/$1")
+            echo "$1 -> HTTP $code, $(wc -c < "$2") bytes"
+            [ "$code" = 200 ] && [ -s "$2" ]
           }
-          get auth/handler        __/auth/handler.html
-          get auth/handler.js     __/auth/handler.js
-          get auth/experiments.js __/auth/experiments.js
-          get auth/iframe         __/auth/iframe.html
-          get auth/iframe.js      __/auth/iframe.js
-          get firebase/init.json  __/firebase/init.json
+          failed=0
+          get auth/handler        __/auth/handler.html   || failed=1
+          get auth/handler.js     __/auth/handler.js     || failed=1
+          get auth/experiments.js __/auth/experiments.js || failed=1
+          get auth/iframe         __/auth/iframe.html    || failed=1
+          get auth/iframe.js      __/auth/iframe.js      || failed=1
+          get firebase/init.json  __/firebase/init.json  || failed=1
+          [ "$failed" = 0 ] || { echo "Some files could not be downloaded."; exit 1; }
           ls -la __/auth __/firebase
       - name: Commit if changed
         run: |
