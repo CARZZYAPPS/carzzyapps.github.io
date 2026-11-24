@@ -79,20 +79,27 @@ document.head.appendChild(feedbackPopupScript);
 
     function userFromFirebase(u) {
         if (!u || u.isAnonymous) return null;
+        // Never show someone's real Google name or photo: right after Google
+        // sign-in they're on the profile until /auth/google.js swaps in the
+        // username.
+        const google = u.providerData.find(p => p.providerId === 'google.com');
+        const name = google && u.displayName === google.displayName ? '' : u.displayName;
+        const photo = google && u.photoURL === google.photoURL ? '' : u.photoURL;
         return {
-            name: u.displayName || (u.email ? u.email.split('@')[0] : 'Account'),
+            name: name || (u.email ? u.email.split('@')[0] : 'Account'),
             email: u.email || '',
-            photo: u.photoURL || ''
+            photo: photo || ''
         };
     }
 
     // Google accounts start with no username (their Google name is removed on
-    // purpose, see /auth/google.js). If someone left before picking one,
-    // send them back to do it. /auth pages are skipped so sign-in can finish.
+    // purpose, see /auth/google.js). If someone left before picking one, or
+    // before the Google name was removed, send them to choose-username (which
+    // also removes it). /auth pages are skipped so sign-in can finish.
     function needsUsername(u) {
-        return !!u && !u.isAnonymous && !u.displayName
-            && u.providerData.some(p => p.providerId === 'google.com')
-            && !location.pathname.startsWith('/auth/');
+        if (!u || u.isAnonymous || location.pathname.startsWith('/auth/')) return false;
+        const google = u.providerData.find(p => p.providerId === 'google.com');
+        return !!google && (!u.displayName || u.displayName === google.displayName);
     }
 
     function watchSignIn() {
@@ -101,7 +108,16 @@ document.head.appendChild(feedbackPopupScript);
             .then(([appSdk, authSdk]) => {
                 const app = appSdk.getApps().length ? appSdk.getApp() : appSdk.initializeApp(FIREBASE_CONFIG);
                 firebaseAuth = authSdk;
-                auth = authSdk.getAuth(app);
+                // Watch sign-in state only. getAuth() would also handle Google's
+                // full-window sign-in and could take the result before the
+                // sign-in page does, so leave out the popup/redirect handler.
+                try {
+                    auth = authSdk.initializeAuth(app, {
+                        persistence: [authSdk.indexedDBLocalPersistence, authSdk.browserLocalPersistence, authSdk.browserSessionPersistence]
+                    });
+                } catch (e) {
+                    auth = authSdk.getAuth(app);
+                }
                 authSdk.onAuthStateChanged(auth, u => {
                     if (needsUsername(u)) {
                         try { sessionStorage.setItem('prevPage', location.href); } catch (e) { /* ignore */ }

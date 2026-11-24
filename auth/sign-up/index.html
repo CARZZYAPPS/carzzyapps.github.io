@@ -106,7 +106,7 @@ layout: null
       setPersistence,
       updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { signInWithGoogle, googleErrorMessage, CHOOSE_USERNAME_URL } from "/auth/google.js";
+    import { startGoogleSignIn, finishGoogleSignIn, isFinishingGoogleSignIn, googleErrorMessage, CHOOSE_USERNAME_URL } from "/auth/google.js";
     import { claimUsername, validateUsername } from "/auth/username.js";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
@@ -212,28 +212,48 @@ layout: null
     });
 
     // ---------- Continue with Google ----------
+    // The whole window goes to Google, then Google sends the person back here.
     const googleBtn = document.getElementById("google-btn");
+    const googleText = googleBtn.querySelector("span:last-child");
+
+    function setGoogleBusy(on, text) {
+      googleBtn.disabled = on;
+      googleBtn.classList.toggle("is-loading", on);
+      googleText.textContent = on ? text : "Continue with Google";
+    }
+
     googleBtn.addEventListener("click", async () => {
-      googleBtn.disabled = true;
-      googleBtn.classList.add("is-loading");
+      setGoogleBusy(true, "Going to Google…");
       msg.className = "auth-msg";
       try {
         const staySignedIn = document.getElementById("stay-signed-in").checked;
-        const { needsUsername } = await signInWithGoogle(app, auth, staySignedIn);
-        if (needsUsername) {
-          window.location.href = CHOOSE_USERNAME_URL;
-        } else {
-          showMsg("Signed in! Taking you back…", "success");
-          window.location.href = sessionStorage.getItem("prevPage") || "/";
-        }
+        await startGoogleSignIn(auth, staySignedIn);
       } catch (err) {
         console.error("Google sign-in failed.", err);
-        googleBtn.disabled = false;
-        googleBtn.classList.remove("is-loading");
+        setGoogleBusy(false);
         const text = googleErrorMessage(err);
         if (text) showMsg(text, "error");
       }
     });
+
+    // Back from Google: finish signing in, then move on.
+    if (isFinishingGoogleSignIn()) {
+      setGoogleBusy(true, "Signing you in…");
+      finishGoogleSignIn(app, auth).then((done) => {
+        if (!done) { setGoogleBusy(false); return; }   // cancelled at Google
+        if (done.needsUsername) {
+          window.location.replace(CHOOSE_USERNAME_URL);
+        } else {
+          showMsg("Signed in! Taking you back…", "success");
+          window.location.replace(sessionStorage.getItem("prevPage") || "/");
+        }
+      }).catch((err) => {
+        console.error("Google sign-in failed.", err);
+        setGoogleBusy(false);
+        const text = googleErrorMessage(err);
+        if (text) showMsg(text, "error");
+      });
+    }
   </script>
 </body>
 </html>
