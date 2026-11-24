@@ -38,9 +38,11 @@ jobs:
           get auth/experiments.js __/auth/experiments.js || failed=1
           get auth/iframe         __/auth/iframe.html    || failed=1
           get auth/iframe.js      __/auth/iframe.js      || failed=1
-          get firebase/init.json  __/firebase/init.json  || failed=1
+          # Only exists if Firebase Hosting is set up; the sign-in pages work
+          # without it (it 404s on carzzy-apps.firebaseapp.com too).
+          get firebase/init.json  __/firebase/init.json  || rm -f __/firebase/init.json
           [ "$failed" = 0 ] || { echo "Some files could not be downloaded."; exit 1; }
-          ls -la __/auth __/firebase
+          ls -la __/auth
       - name: Commit if changed
         run: |
           git add __
