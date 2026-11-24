@@ -1,0 +1,49 @@
+<!-- Shared site footer: include it on a page just before the closing body tag. -->
+<link rel="stylesheet" href="/site-footer.css">
+<footer class="site-footer">
+    <div class="ft-inner">
+        <div class="ft-brand">
+            <a class="ft-logo" href="/" aria-label="Carzzy Apps home"><img src="/carzzy-apps-logo-300.png" alt="Carzzy Apps" width="150" height="39"></a>
+            <p>Free games and tools, made for fun. No downloads, just click and play. Make a free account to save your scores and climb the leaderboards.</p>
+            <a class="ft-btn" href="/contact-us/">Contact us</a>
+        </div>
+
+        <div class="ft-col" role="navigation" aria-label="Explore">
+            <h2 class="ft-h">Explore</h2>
+            <a href="/">Home</a>
+            <a href="/games/">Games</a>
+            <a href="/tools/">Tools</a>
+            <a href="/math/">Math</a>
+            <a href="/music/">Music</a>
+        </div>
+
+        <div class="ft-col" role="navigation" aria-label="Community">
+            <h2 class="ft-h">Community</h2>
+            <a href="/Leaderboards/">Leaderboards</a>
+            <a href="/scymores-games/">Scymore&#39;s Games</a>
+            <a href="/feedback/">Send feedback</a>
+            <a href="/contact-us/">Advertise with us</a>
+        </div>
+
+        <div class="ft-col ft-partners" role="navigation" aria-label="Partners">
+            <h2 class="ft-h">Partners</h2>
+            <a href="https://kosherkitchenai.com/" target="_blank" rel="noopener noreferrer sponsored">
+                <span class="ft-pname">KosherKitchenAI <span aria-hidden="true">↗</span></span>
+                <span class="ft-pdesc">Kosher recipes, meal plans &amp; grocery lists powered by AI</span>
+            </a>
+            <a href="https://ewieds.github.io/arcade" target="_blank" rel="noopener noreferrer">
+                <span class="ft-pname">Lazer Arcade <span aria-hidden="true">↗</span></span>
+                <span class="ft-pdesc">Original browser games by Lazer Yudel</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="ft-bottom">
+        <span>&copy; <span data-cz="year">2026</span> Carzzy Apps · Made by Avis &amp; DeBus</span>
+        <a class="ft-legal" href="/privacy-policy/">Privacy Policy</a>
+        <a class="ft-top" href="#">Back to top <span aria-hidden="true">↑</span></a>
+    </div>
+</footer>
+<script>
+    document.querySelectorAll('.site-footer [data-cz="year"]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
+</script>

@@ -40,6 +40,9 @@ layout: null
       user-select: none;
     }
 
+    /* Cancel the body bottom padding under the site footer. */
+    body .site-footer { margin-bottom: -24px; }
+
     h1 {
       margin: 100px 16px 40px;
       color: #00d1b2;
@@ -119,11 +122,6 @@ layout: null
       font-size: 20px;
     }
 
-    footer {
-      margin: 50px 16px 35px;
-      color: #777;
-      font-size: 0.8rem;
-    }
 
     @media (max-width: 480px) {
       h1 {
@@ -164,7 +162,6 @@ layout: null
     </thead>
     <tbody id="leaderboard"></tbody>
   </table>
-  <footer>Avis &amp; DeBus v1.0.0 PRO</footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
@@ -235,5 +232,6 @@ layout: null
     refresh.addEventListener("click", loadLeaderboard);
     loadLeaderboard();
   </script>
+{% include site-footer.html %}
 </body>
 </html>

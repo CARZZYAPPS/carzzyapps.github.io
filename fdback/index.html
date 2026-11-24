@@ -352,6 +352,9 @@ layout: null
        .cz-framed, so the form keeps its original spacing there. */
     body { padding-top: 92px; }
     html.cz-framed body { padding-top: 12px; }
+
+    /* Site footer runs edge to edge under the 12px body padding. */
+    body .site-footer { margin: 60px -12px -12px; width: calc(100% + 24px); }
   </style>
 </head>
 <body>
@@ -513,5 +516,6 @@ layout: null
       });
     }
   </script>
+{% include site-footer.html %}
 </body>
 </html>

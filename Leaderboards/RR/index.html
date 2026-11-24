@@ -45,6 +45,7 @@ layout: null
 
   <style>
     body {
+      margin: 0;
       background: #0a0a0a;
       color: white;
       font-family: 'Segoe UI', sans-serif;
@@ -103,12 +104,6 @@ layout: null
       min-height: 0;
     }
 
-    footer {
-      margin-top: 50px;
-      margin-bottom: 35px;
-      font-size: 0.8rem;
-      color: #444;
-    }
 
     #uc-overlay {
       position: fixed;
@@ -176,9 +171,6 @@ layout: null
     </thead>
     <tbody id="leaderboard"></tbody>
   </table>
-  <footer>
-    Avis & DeBus v1.0.0 PRO
-  </footer>
 
   <script src="/firebase-config.js"></script>
   <script type="module">
@@ -277,5 +269,6 @@ layout: null
     loadLeaderboard();
   </script>
 
+{% include site-footer.html %}
 </body>
 </html>

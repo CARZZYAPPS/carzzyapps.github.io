@@ -7,3 +7,7 @@
 ## Shared auth scripts
 - Pages import `/auth/google.js`, `/auth/username.js` and `/auth/password-rules.js` with a version tag (e.g. `/auth/google.js?v=2`) so browsers don't use a stale cached copy. When you change one of these files, bump the `?v=` number everywhere it's imported (including inside `google.js`).
 - To remove a name or photo from a Firebase profile, use `clearProfileFields` in `/auth/google.js`. `updateProfile(user, { displayName: null })` does not remove anything: the server treats null as "unchanged".
+
+## Site footer
+- The footer lives in `/_includes/site-footer.html` (styles in `/site-footer.css`). Pages add it with `{% include site-footer.html %}` just before `</body>`; edit the include, not individual pages.
+- It goes on every page except the games and tools themselves (hub pages like `/mastermind/` and `/jeopardy/` keep it).

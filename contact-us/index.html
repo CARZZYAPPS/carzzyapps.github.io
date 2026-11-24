@@ -51,6 +51,7 @@ layout: null
 
 
             body {
+                margin: 0;
                 background: #0a0a0a;
                 color: #00d1b2;
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -102,21 +103,8 @@ layout: null
                 box-shadow: 0px 0px 15px rgba(0, 209, 178, 0.5);
             }
 
-            footer {
-                margin-top: 50px;
-                margin-bottom: 29px;
-                font-size: 12.8px;
-                color: #444;
-            }
 
-            footer a {
-                color: #00d1b2;
-                text-decoration: none;
-            }
 
-            footer a:hover {
-                text-decoration: underline;
-            }
 
         </style>
 
@@ -136,8 +124,8 @@ layout: null
 			<button type="submit" class="submit-btn">Send</button>
         </form>
 
-        <footer>Avis &amp; DeBus v1.0.0 PRO · <a href="/privacy-policy/">Privacy Policy</a></footer>
 
+{% include site-footer.html %}
 </body>
     <script src="/feedback/firebase-config.js"></script>
     <script type="module" src="/contact-us/firebase-contact.js"></script>
