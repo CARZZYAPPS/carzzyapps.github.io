@@ -79,11 +79,13 @@ document.head.appendChild(feedbackPopupScript);
 
     function userFromFirebase(u) {
         if (!u || u.isAnonymous) return null;
-        // Never show someone's real Google name or photo: right after Google
-        // sign-in they're on the profile until /auth/google.js swaps in the
-        // username.
+        // Right after Google sign-in, the Google name and photo are on the
+        // profile for a moment until /auth/google.js swaps in the username.
+        // That only happens on /auth pages, so hide them there. (Elsewhere a
+        // username that happens to match the Google name should still show.)
         const google = u.providerData.find(p => p.providerId === 'google.com');
-        const name = google && u.displayName === google.displayName ? '' : u.displayName;
+        const onAuthPage = location.pathname.startsWith('/auth/');
+        const name = onAuthPage && google && u.displayName === google.displayName ? '' : u.displayName;
         const photo = google && u.photoURL === google.photoURL ? '' : u.photoURL;
         return {
             name: name || (u.email ? u.email.split('@')[0] : 'Account'),
@@ -93,13 +95,14 @@ document.head.appendChild(feedbackPopupScript);
     }
 
     // Google accounts start with no username (their Google name is removed on
-    // purpose, see /auth/google.js). If someone left before picking one, or
-    // before the Google name was removed, send them to choose-username (which
-    // also removes it). /auth pages are skipped so sign-in can finish.
+    // purpose, see /auth/google.js). If someone left before picking one,
+    // send them back to do it. /auth pages are skipped so sign-in can finish.
+    // (Don't compare against the Google name here: a username can match it,
+    // and choose-username would send them straight back, in a loop.)
     function needsUsername(u) {
-        if (!u || u.isAnonymous || location.pathname.startsWith('/auth/')) return false;
-        const google = u.providerData.find(p => p.providerId === 'google.com');
-        return !!google && (!u.displayName || u.displayName === google.displayName);
+        return !!u && !u.isAnonymous && !u.displayName
+            && u.providerData.some(p => p.providerId === 'google.com')
+            && !location.pathname.startsWith('/auth/');
     }
 
     function watchSignIn() {
