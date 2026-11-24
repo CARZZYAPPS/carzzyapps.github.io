@@ -1,7 +1,7 @@
 // Public Firebase web configuration for both Crema Rush games.
 window.CARZZY_FIREBASE_CONFIG = {
   apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4",
-  authDomain: "carzzy-apps.firebaseapp.com",
+  authDomain: "www.carzzyapps.com",
   databaseURL: "https://carzzy-apps-default-rtdb.firebaseio.com",
   projectId: "carzzy-apps",
   storageBucket: "carzzy-apps.firebasestorage.app",
