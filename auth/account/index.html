@@ -319,7 +319,7 @@ layout: null
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { claimUsername, getProfile, setUseGooglePhoto, validateUsername, USERNAME_MAX } from "/auth/username.js?v=3";
-    import { scrubGoogleProfile, googlePhotoOf, rememberGooglePhotoChoice, rememberUsername, profileChanged, CHOOSE_USERNAME_URL } from "/auth/google.js?v=4";
+    import { scrubGoogleProfile, googlePhotoOf, rememberGooglePhotoChoice, rememberUsername, profileChanged, CHOOSE_USERNAME_URL } from "/auth/google.js?v=5";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -361,6 +361,7 @@ layout: null
         case "auth/password-does-not-meet-requirements": return "Password is too weak. Must be at least six characters long and include a lowercase, uppercase, numeric, and special characters.";
         case "auth/too-many-requests": return "Too many attempts. Please wait a moment and try again.";
         case "auth/popup-closed-by-user":
+        case "auth/user-cancelled": return "Google confirmation was cancelled. Nothing was changed.";
         case "auth/cancelled-popup-request": return "";
         case "auth/popup-blocked": return "Your browser blocked the Google window. Allow pop-ups for this site and try again.";
         case "auth/user-mismatch": return "That's a different Google account. Choose the one you use for Carzzy Apps.";

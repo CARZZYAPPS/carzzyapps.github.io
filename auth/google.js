@@ -93,8 +93,9 @@ export function isFinishingGoogleSignIn() {
   return sessionStorage.getItem(PENDING_KEY) !== null;
 }
 
-// Call on page load. Returns null if this isn't a return from Google;
-// otherwise { needsUsername } so the page can send new users to choose one.
+// Call on page load. Returns null if this isn't a return from Google,
+// { cancelled: true } if they left Google without signing in, otherwise
+// { needsUsername } so the page can send new users to choose one.
 // Throws on errors (e.g. account-exists-with-different-credential).
 export async function finishGoogleSignIn(app, auth) {
   const pending = sessionStorage.getItem(PENDING_KEY);
@@ -107,7 +108,7 @@ export async function finishGoogleSignIn(app, auth) {
   // If something else on the page picked up the result first, the person is
   // still signed in: use the current user instead.
   const user = result ? result.user : auth.currentUser;
-  if (!user || !user.providerData.some((p) => p.providerId === "google.com")) return null;
+  if (!user || !user.providerData.some((p) => p.providerId === "google.com")) return { cancelled: true };
 
   const { username, useGooglePhoto } = await getProfile(app, user.uid);
   await scrubGoogleProfile(user, username, useGooglePhoto);
@@ -123,6 +124,8 @@ export async function finishGoogleSignIn(app, auth) {
 export function googleErrorMessage(err) {
   switch (err && err.code) {
     case "auth/popup-closed-by-user":
+    case "auth/user-cancelled":
+      return "Google sign-in was cancelled. Please try again.";
     case "auth/cancelled-popup-request":
       return "";
     case "auth/popup-blocked":
