@@ -314,8 +314,8 @@ layout: null
       EmailAuthProvider, GoogleAuthProvider, updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { claimUsername, findUsername, validateUsername, USERNAME_MAX } from "/auth/username.js";
-    import { scrubGoogleProfile, CHOOSE_USERNAME_URL } from "/auth/google.js";
+    import { claimUsername, findUsername, validateUsername, USERNAME_MAX } from "/auth/username.js?v=2";
+    import { scrubGoogleProfile, CHOOSE_USERNAME_URL } from "/auth/google.js?v=2";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
