@@ -319,7 +319,7 @@ layout: null
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { claimUsername, getProfile, setUseGooglePhoto, validateUsername, USERNAME_MAX } from "/auth/username.js?v=3";
-    import { scrubGoogleProfile, googlePhotoOf, rememberGooglePhotoChoice, CHOOSE_USERNAME_URL } from "/auth/google.js?v=3";
+    import { scrubGoogleProfile, googlePhotoOf, rememberGooglePhotoChoice, rememberUsername, profileChanged, CHOOSE_USERNAME_URL } from "/auth/google.js?v=4";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -540,6 +540,8 @@ layout: null
       try {
         await claimUsername(app, user, val);
         await updateProfile(user, { displayName: val });
+        rememberUsername(user.uid, val);
+        profileChanged();
         username = val;
         $("username-in").value = "";
         $("username-count").textContent = "0/" + USERNAME_MAX;
@@ -596,6 +598,7 @@ layout: null
         const data = await resp.json();
         await updateProfile(user, { photoURL: data.secure_url });
         await stopUsingGooglePhoto();
+        profileChanged();
         closeCrop();
         renderAvatar();
         showMsg("picture-msg", "Profile picture updated!", "success");
@@ -637,6 +640,7 @@ layout: null
       try {
         await updateProfile(user, { photoURL: null });
         await stopUsingGooglePhoto();
+        profileChanged();
         renderAvatar();
         showMsg("picture-msg", "Profile picture removed.", "success");
       } catch (err) {

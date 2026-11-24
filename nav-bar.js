@@ -81,11 +81,14 @@ document.head.appendChild(feedbackPopupScript);
         if (!u || u.isAnonymous) return null;
         // Right after Google sign-in, the Google name is on the profile for a
         // moment until /auth/google.js swaps in the username. That only
-        // happens on /auth pages, so hide it there. (Elsewhere a username that
-        // happens to match the Google name should still show.)
+        // happens on /auth pages, so hide it there, unless it's also the
+        // person's username (remembered by /auth/google.js).
         const google = u.providerData.find(p => p.providerId === 'google.com');
         const onAuthPage = location.pathname.startsWith('/auth/');
-        const name = onAuthPage && google && u.displayName === google.displayName ? '' : u.displayName;
+        let knownUsername = null;
+        try { knownUsername = localStorage.getItem('czUsername:' + u.uid); } catch (e) { /* ignore */ }
+        const isGoogleName = google && u.displayName === google.displayName && u.displayName !== knownUsername;
+        const name = onAuthPage && isGoogleName ? '' : u.displayName;
         // The Google photo shows only for people who chose it as their
         // picture (saved by /auth/google.js; the navbar can't read Firestore).
         let choseGooglePhoto = false;
@@ -125,6 +128,17 @@ document.head.appendChild(feedbackPopupScript);
                 } catch (e) {
                     auth = authSdk.getAuth(app);
                 }
+                // The /auth pages change the name and photo with their own copy
+                // of Firebase; reload and redraw when they say so.
+                window.addEventListener('cz-profile-changed', () => {
+                    const u = auth.currentUser;
+                    if (!u) return;
+                    u.reload().catch(() => {}).then(() => {
+                        const user = userFromFirebase(auth.currentUser);
+                        writeCache(user);
+                        showUser(user);
+                    });
+                });
                 authSdk.onAuthStateChanged(auth, u => {
                     if (needsUsername(u)) {
                         try { sessionStorage.setItem('prevPage', location.href); } catch (e) { /* ignore */ }

@@ -32,6 +32,19 @@ export function rememberGooglePhotoChoice(uid, useGooglePhoto) {
   try { localStorage.setItem("czGooglePhoto:" + uid, useGooglePhoto ? "1" : "0"); } catch (e) { /* ignore */ }
 }
 
+// Tells the navbar the person's username, so on /auth pages it can tell a
+// username that happens to match their Google name apart from the Google
+// name itself (which is briefly on the profile right after Google sign-in).
+export function rememberUsername(uid, username) {
+  try { localStorage.setItem("czUsername:" + uid, username || ""); } catch (e) { /* ignore */ }
+}
+
+// Asks the navbar to reload the profile and redraw (name and photo). The
+// navbar runs its own copy of Firebase, which doesn't see changes made here.
+export function profileChanged() {
+  window.dispatchEvent(new Event("cz-profile-changed"));
+}
+
 // Makes the profile show the username (or nothing) instead of Google's real
 // name, and the Google photo only if the person chose to use it
 // (useGooglePhoto, saved in their usernames doc). Safe to call on every
@@ -51,7 +64,9 @@ export async function scrubGoogleProfile(user, username, useGooglePhoto = false)
     updates.photoURL = null;
   }
   if (Object.keys(updates).length) await updateProfile(user, updates);
+  rememberUsername(user.uid, username);
   if (google) rememberGooglePhotoChoice(user.uid, useGooglePhoto && !!googlePhoto);
+  profileChanged();
 }
 
 // Google sign-in uses the whole window: the page goes to Google and Google
