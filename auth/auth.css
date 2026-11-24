@@ -608,3 +608,36 @@ body {
 
 .auth-secondary.auth-photo-choice { gap: 10px; }
 .auth-secondary.auth-photo-choice img { width: 26px; height: 26px; }
+
+/* ---------- Password requirements checklist ---------- */
+
+.pw-rules {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px 12px;
+    font-size: 12.5px;
+    color: var(--auth-muted);
+}
+
+.pw-rules li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: color 0.15s;
+}
+
+.pw-rules svg { flex: none; }
+.pw-rules .pw-tick { opacity: 0; transition: opacity 0.15s; }
+
+.pw-rules li.is-met { color: var(--auth-accent); }
+.pw-rules li.is-met .pw-dot { fill: currentColor; stroke: currentColor; }
+.pw-rules li.is-met .pw-tick { opacity: 1; stroke: #04211c; }
+
+.pw-rules li.is-missing { color: var(--auth-error); }
+
+@media (max-width: 380px) {
+    .pw-rules { grid-template-columns: 1fr; }
+}
