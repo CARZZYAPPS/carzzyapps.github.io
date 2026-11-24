@@ -16,7 +16,7 @@ import {
   signInWithRedirect,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getProfile } from "/auth/username.js?v=3";
+import { getProfile } from "/auth/username.js?v=4";
 
 export const CHOOSE_USERNAME_URL = "/auth/choose-username/";
 

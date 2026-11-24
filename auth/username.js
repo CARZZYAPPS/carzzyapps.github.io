@@ -9,7 +9,7 @@ import {
   getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, limit, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-export const USERNAME_MAX = 15;
+export const USERNAME_MAX = 20;
 
 // Returns an error message, or "" if the username is fine.
 export function validateUsername(username) {

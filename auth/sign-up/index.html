@@ -45,11 +45,11 @@ layout: null
         <div class="auth-field">
           <div class="auth-label-row">
             <label for="username">Username</label>
-            <span class="auth-hint" id="username-count">0/15</span>
+            <span class="auth-hint" id="username-count">0/20</span>
           </div>
           <div class="auth-input-wrap">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
-            <input type="text" id="username" required placeholder="carzzy_boss" maxlength="15" autocomplete="username" aria-describedby="username-count">
+            <input type="text" id="username" required placeholder="carzzy_boss" maxlength="20" autocomplete="username" aria-describedby="username-count">
           </div>
         </div>
 
@@ -71,13 +71,7 @@ layout: null
               <svg class="eye-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
             </button>
           </div>
-          <ul class="pw-rules" id="password-hint" aria-label="Password requirements">
-            <li data-rule="length"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle class="pw-dot" cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="pw-tick" d="M4.8 8.3l2.1 2.1 4.3-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>At least 6 characters</span></li>
-            <li data-rule="lower"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle class="pw-dot" cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="pw-tick" d="M4.8 8.3l2.1 2.1 4.3-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>A lowercase letter</span></li>
-            <li data-rule="upper"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle class="pw-dot" cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="pw-tick" d="M4.8 8.3l2.1 2.1 4.3-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>An uppercase letter</span></li>
-            <li data-rule="number"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle class="pw-dot" cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="pw-tick" d="M4.8 8.3l2.1 2.1 4.3-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>A number</span></li>
-            <li data-rule="symbol"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle class="pw-dot" cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="pw-tick" d="M4.8 8.3l2.1 2.1 4.3-4.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>A symbol, like ! ? # @</span></li>
-          </ul>
+          <ul id="password-hint"></ul>
         </div>
 
         <div class="auth-field">
@@ -114,8 +108,9 @@ layout: null
       setPersistence,
       updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { startGoogleSignIn, finishGoogleSignIn, isFinishingGoogleSignIn, googleErrorMessage, CHOOSE_USERNAME_URL } from "/auth/google.js?v=6";
-    import { claimUsername, validateUsername } from "/auth/username.js?v=3";
+    import { startGoogleSignIn, finishGoogleSignIn, isFinishingGoogleSignIn, googleErrorMessage, CHOOSE_USERNAME_URL } from "/auth/google.js?v=7";
+    import { claimUsername, validateUsername, USERNAME_MAX } from "/auth/username.js?v=4";
+    import { attachPasswordChecklist, PASSWORD_RULES_MESSAGE } from "/auth/password-rules.js?v=1";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -152,7 +147,7 @@ layout: null
     });
 
     usernameInput.addEventListener("input", () => {
-      usernameCount.textContent = usernameInput.value.length + "/15";
+      usernameCount.textContent = usernameInput.value.length + "/" + USERNAME_MAX;
     });
 
     function updateConfirmHint() {
@@ -170,30 +165,8 @@ layout: null
     passwordInput.addEventListener("input", updateConfirmHint);
 
     // Password requirements checklist: each item ticks as it's met.
-    // These match the Firebase password policy for this project.
-    const PASSWORD_RULES = {
-      length: (p) => p.length >= 6,
-      lower: (p) => /[a-z]/.test(p),
-      upper: (p) => /[A-Z]/.test(p),
-      number: (p) => /[0-9]/.test(p),
-      symbol: (p) => /[^A-Za-z0-9\s]/.test(p)
-    };
-    const ruleItems = document.querySelectorAll("#password-hint li");
+    const checkPasswordRules = attachPasswordChecklist(passwordInput, document.getElementById("password-hint"));
 
-    // Updates the checklist; returns true if every rule is met. With
-    // showMissing, unmet rules turn red (used when they try to submit).
-    function checkPasswordRules(showMissing) {
-      let allMet = true;
-      ruleItems.forEach((li) => {
-        const met = PASSWORD_RULES[li.dataset.rule](passwordInput.value);
-        li.classList.toggle("is-met", met);
-        if (met) li.classList.remove("is-missing");
-        else if (showMissing) li.classList.add("is-missing");
-        allMet = allMet && met;
-      });
-      return allMet;
-    }
-    passwordInput.addEventListener("input", () => checkPasswordRules(false));
     confirmPasswordInput.addEventListener("input", updateConfirmHint);
 
     document.getElementById("signup-form").addEventListener("submit", async (e) => {
@@ -209,7 +182,7 @@ layout: null
         showMsg("Please fill in every field.", "error"); return;
       }
       if (!checkPasswordRules(true)) {
-        showMsg("Your password doesn't meet all the requirements yet.", "error");
+        showMsg(PASSWORD_RULES_MESSAGE, "error");
         passwordInput.focus();
         return;
       }
