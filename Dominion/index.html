@@ -1,0 +1,432 @@
+<!-- 
+===========================================================================
+    DOMINION: INFINITE FRONTIERS - COMMANDER'S MANUAL & FEATURE MANIFEST
+===========================================================================
+
+[1] RESOURCE ECONOMY:
+    - CREDITS (💰): Primary currency for supplies and Mobilization.
+    - ALLOY (🔩): Secondary material for Lab Research and Fortress Defense.
+    - FOOD (🥫): Energy for scouting. 1 battle = 1 unit.
+    - STRENGTH (⚡): Calculated as (Army * Skill) + (Mercs * Generals) + (Def * 2).
+
+[2] SCOUTING TIERS (DYNAMIC POWER SCALING):
+    - SCOUT (Green): Capped at 70% of your power. Safe training.
+    - TACTICAL (Blue): Capped at 110% of your power. The fair fight.
+    - OVERLORD (Red): Capped at 150% of your power. High risk/High loot.
+    - WORLD EATER (Boss): Spawns every 5 levels. Hard-locked at 150% strength.
+
+[3] THE RESEARCH LAB:
+    - MOBILIZE: Doubles current Army. 
+        * First 2 uses: Flat (500💰 / 250🔩).
+        * 3+ uses: Scaled (5 * Army^2 in 💰 | 50% of that in 🔩).
+    - GENERALS: Permanent multiplier for Mercenary combat power.
+    - TRAINING: Increases Army Skill. Triggers "MOVE IT!" visual/audio FX.
+    - NEURAL LINK (Lv 75): Auto-scouts/fights largest beatable target every 3s.
+
+[4] OVERLOAD PROTOCOL (POWER SURGE):
+    - Cost: 50 Food.
+    - Effect: Power DOUBLED for 30 seconds. Strength meter hits 200%.
+    - Visual: Red Alert background strobe.
+    - Security: 60s cooldown is time-stamped. refreshing the page will NOT skip it.
+
+[6] MILESTONES:
+    - Every 15 Levels: Automatic Loyalty Commission of +15 Mercenaries.
+
+[7] IMMERSIVE SYSTEMS:
+    - Audio: Mechanical clicks, metallic clashes, commander screams, surge sirens.
+    - Visual: Screen shake, clashing sparks, floating text, dynamic status fills.
+    - Save: All progress, cheat snapshots, and cooldowns persist in localStorage.
+===========================================================================
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Carzzy Apps | Dominion: Infinite Frontiers</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+<script>
+  // Disable right-click context menu
+  document.addEventListener('contextmenu', event => event.preventDefault());
+
+  // Disable specific keyboard shortcuts
+  document.onkeydown = function(e) {
+    // Disable F12
+    if (event.keyCode == 123) {
+      return false;
+    }
+    // Disable Ctrl+Shift+I (Inspect)
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) {
+      return false;
+    }
+    // Disable Ctrl+Shift+J (Console)
+    if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) {
+      return false;
+    }
+    // Disable Ctrl+U (View Source)
+    if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) {
+      return false;
+    }
+  };
+</script>
+
+    
+    <style>
+        body { background: #1a1a2e; color: #e9e9e9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; padding: 20px; padding-bottom: 100px; overflow-x: hidden; transition: background 0.3s; }
+        #game-container { background: #16213e; border: 2px solid #4ecca3; border-radius: 10px; width: 620px; padding: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; z-index: 2; }
+        
+        /* FX Animations */
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 40% { transform: translate(3px, 2px) rotate(-1deg); } 100% { transform: translate(0,0); } }
+        .battle-shake { animation: shake 0.4s; }
+        .shout-fx { position: fixed; color: #ff0055; font-weight: bold; font-size: 50px; pointer-events: none; animation: floatUp 0.6s forwards; z-index: 1000; text-shadow: 3px 3px #000; }
+        @keyframes floatUp { from { transform: scale(0.5); opacity: 1; } to { transform: scale(1.5) translateY(-100px); opacity: 0; } }
+
+        /* UI Styles */
+        .header { text-align: center; border-bottom: 1px solid #4ecca3; padding-bottom: 10px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 20px 0; background: #0f3460; padding: 15px; border-radius: 5px; }
+        .stat-item { font-weight: bold; color: #4ecca3; font-size: 11px; }
+        .strength-meter { grid-column: span 3; background: #1a1a2e; height: 10px; border-radius: 5px; margin-top: 5px; overflow: hidden; border: 1px solid #4ecca3; }
+        #strength-fill { height: 100%; width: 5%; background: linear-gradient(90deg, #4ecca3, #3498db); transition: 0.5s; }
+        .surging #strength-fill { background: linear-gradient(90deg, #f39c12, #e94560); animation: pulse 0.5s infinite; }
+        
+        .log { height: 150px; background: #000; padding: 10px; overflow-y: auto; font-family: monospace; font-size: 13px; border-radius: 5px; margin-bottom: 20px; color: #00ff41; border: 1px solid #333; }
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { background: #4ecca3; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-weight: bold; color: #1a1a2e; transition: 0.2s; }
+        button:hover:not(:disabled) { background: #45b393; transform: scale(1.02); }
+        button:disabled { background: #444; color: #888; cursor: not-allowed; }
+        
+        .overload-btn { background: #f39c12; color: #1a1a2e; position: relative; }
+        .overload-btn.active { background: #e94560; color: white; }
+        .overload-btn.cooldown { background: #555; }
+        .cd-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: rgba(255,255,255,0.5); width: 0%; }
+        
+        .choice-btn { height: 85px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; text-align: center; font-size: 10px; }
+        .sub-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; background: #1a1a2e; padding: 10px; border-radius: 5px; margin-top: 10px; min-height: 50px;}
+        .best-target { border: 2px solid #f1c40f !important; box-shadow: 0 0 15px #f1c40f; animation: gold-pulse 1s infinite alternate; }
+        @keyframes gold-pulse { from { transform: scale(1); } to { transform: scale(1.04); } }
+
+        .settings-btn { position: absolute; top: 10px; right: 10px; background: none; color: #4ecca3; font-size: 20px; border:none; cursor:pointer; }
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #16213e; border: 2px solid #4ecca3; padding: 25px; border-radius: 10px; width: 450px; text-align: center; max-height: 80vh; overflow-y: auto; }
+        .auto-fight-active { background: #f39c12 !important; color: #000 !important; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 15px; font-size: 12px; color: #4ecca3; background: #1a1a2e; border-top: 1px solid #4ecca3; }
+        #logo {
+            position:absolute; 
+            top:20px; 
+            left:20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="logo">
+    <a href="https://carzzyapps.github.io"><img src="/Carzzy Apps Logo.png" style="width:150px;height:50px;"></a>
+    </div>
+<div id="game-container">
+    <button class="settings-btn" onclick="triggerSfx('click'); toggleModal(true)">⚙️</button>
+    <div class="header">
+        <h1>DOMINION</h1>
+        <p>Infinite Frontiers • <span id="level-display">Level 1</span></p>
+        <div id="timer-display" style="color: #e94560; font-size: 12px; font-weight: bold; display: none;">OVERRIDE ACTIVE: <span id="time-left">15:00</span></div>
+    </div>
+
+    <div class="stats-grid" id="stats-area">
+        <div class="stat-item">💰 Credits: <span id="res-val">100</span></div>
+        <div class="stat-item">🥫 Food: <span id="food-val">20</span></div>
+        <div class="stat-item">🔩 Alloy: <span id="alloy-val">0</span></div>
+        <div class="stat-item">⚔️ Army: <span id="army-val">5</span></div>
+        <div class="stat-item">🎓 Skill: <span id="skill-val">1</span></div>
+        <div class="stat-item">🏴‍☠️ Mercs: <span id="merc-val">0</span></div>
+        <div class="stat-item">🛡️ Def: <span id="def-val">10</span></div>
+        <div class="stat-item">✨ XP: <span id="xp-val">0</span> / 100</div>
+        <div class="stat-item">⚡ Str: <span id="str-val">1</span>%</div>
+        <div class="strength-meter"><div id="strength-fill"></div></div>
+    </div>
+
+    <div id="game-log" class="log">Awaiting orders, Commander. See Manual in Settings.</div>
+
+    <div class="actions">
+        <button id="scout-btn" onclick="triggerSfx('click'); scoutEnemies()">Scout Targets</button>
+        <button id="lab-btn" onclick="triggerSfx('click'); toggleLab()">Research Lab</button>
+        <button onclick="triggerSfx('click'); buySupplies()">Buy Supplies (20💰)</button>
+        <button onclick="triggerSfx('click'); fortify()">Upgrade Fortress (50🔩)</button>
+        <button id="overload-btn" class="overload-btn" onclick="triggerOverload()">
+            Power Surge (50🥫)
+            <div id="overload-bar" class="cd-bar"></div>
+        </button>
+        <button id="auto-fight-btn" style="display:none; grid-column: span 2;" onclick="toggleAutoFight()">Enable Auto-Fight</button>
+    </div>
+
+    <div id="enemy-selection" class="sub-section" style="display:none;"></div>
+    <div id="lab-selection" class="sub-section" style="display:none;"></div>
+
+    <h3>Mercenary Guild</h3>
+    <div class="sub-section" style="grid-template-columns: 1fr 1fr 1fr;">
+        <button class="choice-btn" onclick="hireMerc('res', 15, 5)"><strong>Corsairs</strong><span>+5 🏴‍☠️</span><span>15💰</span></button>
+        <button class="choice-btn" onclick="hireMerc('alloy', 10, 15)"><strong>Ironclads</strong><span>+15 🏴‍☠️</span><span>10🔩</span></button>
+        <button class="choice-btn" onclick="hireMerc('alloy', 30, 50)"><strong>Void Hunters</strong><span>+50 🏴‍☠️</span><span>30🔩</span></button>
+    </div>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <h2 style="color:#4ecca3;">COMMAND MANUAL</h2>
+        <div style="text-align:left; font-size:12px; line-height:1.5;">
+            <p><b>Resource Economy</b> Credits (💰) are for supplies and Mobilization; Alloy (🔩) is for Lab Research and Fortress Defense; Food (🥫) is your energy where 1 battle consumes 1 unit.</p>
+
+    <p><b>Combat Strength</b> Your total Strength (⚡) is calculated by combining your Army multiplied by Skill, your Mercenaries multiplied by Generals, and your Defense multiplied by two.</p>
+
+    <p><b>Scouting Tiers</b> Scout (Green) is capped at 70% power for safe training; Tactical (Blue) is capped at 110% for fair fights; Overlord (Red) is capped at 150% for high-risk loot.</p>
+
+    <p><b>World Eater Boss</b> A unique boss spawns every 5 levels, hard-locked at 150% strength relative to your rank, providing massive XP and resource rewards upon victory.</p>
+
+    <p><b>Mobilization Protocol</b> This Lab upgrade doubles your current Army size; the first 2 uses are a flat 500 Credits and 250 Alloy, but 3+ uses scale to 5 * Army² in Credits.</p>
+
+    <p><b>Mercenary Generals</b> Buying Generals in the Lab provides a permanent, stackable multiplier to your Mercenary combat power pool, making contractors more effective.</p>
+
+    <p><b>Infinite Training</b> The Training upgrade increases Army Skill indefinitely and triggers visual "MOVE IT!" shouts accompanied by commander audio effects.</p>
+
+    <p><b>Neural Link Automation</b> Unlocked at Level 75, this system auto-scouts and fights the largest beatable target every 3 seconds until a defeat is detected.</p>
+
+    <p><b>Power Surge Overload</b> By consuming 50 Food, your power is doubled for 30 seconds and your Strength meter hits 200%, followed by a persistent 60-second cooldown.</p>
+
+        <p><b>Loyalty Commissions</b> A milestone system that automatically grants a free commission of +15 Mercenaries every 15 levels regardless of your play style.</p>
+
+    <p><b>Immersive Feedback</b> The system utilizes screen shaking, metallic clashing sparks, synthesized commander screams, and red alert background strobes during surges.</p>
+
+    <p><b>Persistent Data</b> All progress, including cheat snapshots and active cooldown timers, is saved to your browser's local storage and cannot be bypassed by refreshing.</p>
+
+        </div>
+        <hr border="1" color="#4ecca3">
+        <button onclick="resetGame()" style="background:#e94560; color:white; width:100%; margin-bottom:10px;">RESET ALL DATA</button>
+        <button onclick="triggerSfx('click'); toggleModal(false)" style="background:#4ecca3; width:100%;">CLOSE</button>
+    </div>
+</div>
+
+<footer>Avis & DeBus | v1.0.0 PRO</footer>
+
+<script>
+    let state = {
+        level: 1, res: 100, food: 20, army: 5, armySkill: 1, mercs: 0, mercLevel: 1, def: 10, xp: 0, alloy: 0, 
+        mobilizeCount: 0, surgeUntil: 0, cooldownUntil: 0,
+        cheatTimestamp: null, preCheatData: null, isLocked: false,
+        upgrades: { orbital: 0, plating: 0, med: 0, autoScout: 0, colony: 0, autoFight: 0, generals: 1 }
+    };
+
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(f, t, d, v=0.1) {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = t; o.frequency.setValueAtTime(f, ctx.currentTime);
+        g.gain.setValueAtTime(v, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + d);
+        o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + d);
+    }
+
+    function triggerSfx(type) {
+        if(type === 'click') playSound(800, 'sine', 0.05, 0.05);
+        if(type === 'shout') {
+            playSound(150, 'sawtooth', 0.4, 0.15);
+            const div = document.createElement('div'); div.className = 'shout-fx';
+            div.innerText = ["MOVE IT!", "HYAH!", "AGAIN!", "FASTER!"][Math.floor(Math.random()*4)];
+            div.style.left = "45%"; div.style.top = "40%"; document.body.appendChild(div);
+            setTimeout(() => div.remove(), 600);
+        }
+        if(type === 'clash') {
+            for(let i=0; i<3; i++) setTimeout(() => playSound(200 + (Math.random()*500), 'square', 0.1, 0.05), i*50);
+            document.getElementById('game-container').classList.add('battle-shake');
+            setTimeout(() => document.getElementById('game-container').classList.remove('battle-shake'), 400);
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key.toLowerCase() === 'c') {
+            const code = prompt("OVERRIDE:");
+            if(code) applyCheat(code.toLowerCase().trim());
+        }
+    });
+
+    let cheatInterval = null;
+    function applyCheat(code) {
+        if(code === 'israel') {
+            if(state.isLocked) return log("LOCKED. Sign 'treaty'.");
+            if(cheatInterval) { state.isLocked = true; revertCheat(); return; }
+            state.preCheatData = JSON.parse(JSON.stringify(state));
+            state.cheatTimestamp = Date.now();
+            state.res += 10000; state.alloy += 100000;
+            document.getElementById('timer-display').style.display = 'block';
+            updateUI();
+            cheatInterval = setInterval(() => {
+                if(state.level < 100) {
+                    state.level++; state.army = Math.max(state.army, state.level * 2);
+                    state.armySkill = Math.max(state.armySkill, state.level);
+                    checkMilestones(); updateUI();
+                } else { clearInterval(cheatInterval); cheatInterval = null; }
+            }, 150);
+        } else if (code === 'iran') { revertCheat(); }
+        else if (code === 'treaty') { state.isLocked = false; log("Security reset."); }
+    }
+
+    function revertCheat() {
+        if(cheatInterval) { clearInterval(cheatInterval); cheatInterval = null; }
+        if(state.preCheatData) {
+            state = JSON.parse(JSON.stringify(state.preCheatData));
+            state.preCheatData = null; state.cheatTimestamp = null;
+            document.getElementById('timer-display').style.display = 'none';
+            updateUI();
+        }
+    }
+
+    function triggerOverload() {
+        const now = Date.now();
+        if(state.food >= 50 && now > state.cooldownUntil) {
+            state.food -= 50; state.surgeUntil = now + 30000; state.cooldownUntil = state.surgeUntil + 60000;
+            playSound(440, 'triangle', 1, 0.2); updateUI();
+        }
+    }
+
+    function updateUI() {
+        const now = Date.now();
+        let surging = now < state.surgeUntil;
+        let pwr = (state.army * state.armySkill) + (state.mercs * (state.upgrades.generals || 1)) + (state.def * 2);
+        let myStr = Math.floor((pwr / (state.level * 50)) * 100);
+        myStr = surging ? Math.min(200, myStr + 100) : Math.min(145, Math.max(1, myStr));
+        document.body.style.background = surging && (Math.sin(now/150)>0) ? "#4a0000" : "#1a1a2e";
+        
+        document.getElementById('level-display').innerText = "Level " + state.level;
+        document.getElementById('res-val').innerText = Math.floor(state.res);
+        document.getElementById('food-val').innerText = state.food;
+        document.getElementById('army-val').innerText = state.army;
+        document.getElementById('skill-val').innerText = state.armySkill;
+        document.getElementById('merc-val').innerText = state.mercs;
+        document.getElementById('def-val').innerText = state.def;
+        document.getElementById('xp-val').innerText = state.xp;
+        document.getElementById('alloy-val').innerText = state.alloy;
+        document.getElementById('str-val').innerText = myStr;
+        document.getElementById('strength-fill').style.width = (myStr / (surging ? 2.0 : 1.45)) + "%";
+        document.getElementById('lab-btn').disabled = state.level < 3;
+        if(state.upgrades.autoFight) document.getElementById('auto-fight-btn').style.display = "block";
+        localStorage.setItem('dominion_save', JSON.stringify(state));
+    }
+
+    let currentTargets = [];
+    function scoutEnemies(isAuto = false) {
+        if(state.food < 1) { if(isAuto) toggleAutoFight(); return; }
+        document.getElementById('lab-selection').style.display = 'none';
+        const container = document.getElementById('enemy-selection');
+        container.innerHTML = ''; currentTargets = [];
+        let pwr = (state.army * state.armySkill) + state.mercs;
+        const surging = Date.now() < state.surgeUntil;
+
+        if (state.level % 5 === 0) {
+            let bSize = Math.floor(pwr * 1.3);
+            currentTargets.push({ id: 0, name: "BOSS", size: bSize, res: bSize * 5, alloy: bSize, isBoss: true, str: 150 });
+            container.innerHTML = `<button class="choice-btn boss-btn" onclick="deploy(0)">FIGHT BOSS (%150 STR)</button>`;
+        } else {
+            const diffs = [{l:"Scout", m:0.4, c:"#4ecca3", s:30}, {l:"Tactical", m:0.8, c:"#3498db", s:75}, {l:"Overlord", m:1.1, c:"#e94560", s:100}];
+            currentTargets = diffs.map((d, i) => {
+                let size = Math.max(1, Math.floor(pwr * (d.m + (Math.random() * 0.2))));
+                return { id: i, name: d.l, size: size, res: Math.floor(size * 1.5), alloy: Math.floor(size/4), color: d.c, str: d.s };
+            });
+            let bestIdx = 0; let maxB = -1; const eff = surging ? pwr * 2 : pwr;
+            currentTargets.forEach((t, i) => { if(t.size <= eff && t.size > maxB) { maxB = t.size; bestIdx = i; } });
+            if(isAuto) deploy(bestIdx, true);
+            else {
+                currentTargets.forEach((t, i) => {
+                    let h = (state.upgrades.autoScout && i === bestIdx) ? 'best-target' : '';
+                    container.innerHTML += `<button class="choice-btn ${h}" onclick="deploy(${i})" style="background:${t.color}; width:100%;"><strong>${t.name}</strong> ⚔️${t.size} (%${t.str})</button>`;
+                });
+                container.style.display = 'grid';
+            }
+        }
+    }
+
+    function deploy(targetId, isAuto = false) {
+        triggerSfx('clash'); const target = currentTargets[targetId];
+        const surging = Date.now() < state.surgeUntil;
+        let pPwr = ((state.army * state.armySkill * 10) + (state.mercs * (state.upgrades.generals || 1) * 10)) * (surging?2:1);
+        let ePwr = (target.size * 10) * (Math.random() + 0.5);
+        state.food -= 1;
+        if(pPwr > ePwr) {
+            state.res += target.res; state.alloy += target.alloy; state.xp += target.isBoss ? 100 : 25; checkLevelUp();
+        } else {
+            let loss = Math.ceil((state.army + state.mercs) * 0.15);
+            state.army = Math.max(0, state.army - Math.floor(loss * 0.5)); state.mercs = Math.max(0, state.mercs - Math.floor(loss * 0.5));
+            if(isAuto) toggleAutoFight();
+        }
+        if(!isAuto) document.getElementById('enemy-selection').style.display = 'none';
+        updateUI();
+    }
+
+    let autoFightActive = false; let autoFightTimer = null;
+    function toggleAutoFight() {
+        autoFightActive = !autoFightActive; const btn = document.getElementById('auto-fight-btn');
+        if(autoFightActive) { btn.innerText = "Auto: ON"; btn.classList.add('auto-fight-active'); autoFightTimer = setInterval(() => scoutEnemies(true), 3000); }
+        else { btn.innerText = "Auto: OFF"; btn.classList.remove('auto-fight-active'); clearInterval(autoFightTimer); }
+    }
+
+    function toggleLab() {
+        document.getElementById('enemy-selection').style.display = 'none';
+        const container = document.getElementById('lab-selection');
+        if(container.style.display === 'grid') { container.style.display = 'none'; return; }
+        let mRes = state.mobilizeCount < 2 ? 500 : 5 * Math.pow(state.army, 2);
+        const techs = [
+            { id: 'mobilize', n: "Mobilize", cr: mRes, ca: mRes*0.5, d: "Double Army", type: 'mobilize' },
+            { id: 'generals', n: "Generals", c: 200*(state.upgrades.generals||1), d: "+1 Merc Pwr", type: 'generals' },
+            { id: 'train', n: "Training", c: 25 + Math.pow(state.armySkill, 2), d: "+1 Skill", type: 'skill' },
+            { id: 'autoScout', n: "Auto-AI", c: 150, d: "Highlight Best", type: 'special', req: 10 },
+            { id: 'autoFight', n: "Auto-Fight", c: 2500, d: "Level 75 Unlock", type: 'special', req: 75 }
+        ];
+        container.innerHTML = techs.map(t => {
+            let l = (t.req && state.level < t.req);
+            let costText = t.type === 'mobilize' ? `${Math.floor(t.cr)}💰` : `${t.c}🔩`;
+            return `<button class="choice-btn" ${l ? 'disabled' : ''} onclick="research('${t.id}', ${t.c||0}, '${t.type}', ${t.cr||0}, ${t.ca||0})"><strong>${t.n}</strong><span>${costText}</span></button>`;
+        }).join('');
+        container.style.display = 'grid';
+    }
+
+    function research(id, cost, type, cr, ca) {
+        if(type === 'skill') triggerSfx('shout');
+        if(type === 'mobilize' && state.res >= cr && state.alloy >= ca) { state.res -= cr; state.alloy -= ca; state.army *= 2; state.mobilizeCount++; }
+        else if(state.alloy >= cost) { 
+            state.alloy -= cost; if(type === 'generals') state.upgrades.generals++; else if(type === 'skill') state.armySkill++; else state.upgrades[id] = 1; 
+        }
+        updateUI(); toggleLab();
+    }
+
+    function checkMilestones() { if(state.level % 15 === 0) { state.mercs += 15; log("MILESTONE: +15 Mercs."); } }
+    function checkLevelUp() { if(state.xp >= 100) { state.level++; state.xp = 0; log(`RANK UP: ${state.level}`); checkMilestones(); } }
+    function buySupplies() { if(state.res >= 20) { state.res -= 20; state.food += 15; state.army += 2; updateUI(); } }
+    function fortify() { if(state.alloy >= 50) { state.alloy -= 50; state.def += 15; updateUI(); } }
+    function hireMerc(t, c, a) { if(state[t] >= c) { state[t] -= c; state.mercs += a; updateUI(); } }
+    function toggleModal(s) { document.getElementById('modal').style.display = s ? 'flex' : 'none'; }
+    function resetGame() { localStorage.removeItem('dominion_save'); location.reload(); }
+    function log(msg) { const b = document.getElementById('game-log'); b.innerHTML += `<div>> ${msg}</div>`; b.scrollTop = b.scrollHeight; }
+
+    const saved = localStorage.getItem('dominion_save');
+    if(saved) state = {...state, ...JSON.parse(saved)};
+    if(!state.upgrades.generals) state.upgrades.generals = 1;
+
+    setInterval(() => {
+        const now = Date.now();
+        const bar = document.getElementById('overload-bar'); const btn = document.getElementById('overload-btn');
+        if(state.cheatTimestamp && (now - state.cheatTimestamp) > 900000) revertCheat();
+        if(state.cheatTimestamp) {
+            const rem = Math.max(0, 900000 - (now - state.cheatTimestamp));
+            const m = Math.floor(rem / 60000); const s = Math.floor((rem % 60000) / 1000);
+            document.getElementById('time-left').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+        }
+        if(now < state.surgeUntil) {
+            bar.style.width = ((state.surgeUntil - now) / 30000 * 100) + "%";
+            btn.innerText = `SURGING (${Math.ceil((state.surgeUntil - now)/1000)}s)`;
+        } else if(now < state.cooldownUntil) {
+            bar.style.width = (100 - (state.cooldownUntil - now) / 60000 * 100) + "%";
+            btn.innerText = `COOLING (${Math.ceil((state.cooldownUntil - now)/1000)}s)`;
+        } else { btn.innerText = "Power Surge (50🥫)"; bar.style.width = "0%"; }
+        updateUI();
+    }, 1000);
+    updateUI();
+</script>
+</body>
+</html>

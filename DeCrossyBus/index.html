@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Try to drive your school bus across roads, streams, and railroads while picking up your students and driving them to the school.">
+    <meta name="keywords" content="carzzy apps, games, apps, crazzy apps, decrossybus, crossy road, school, bus">
+    <meta name="author" content="Avis, DeBus">
+    <title>DeCrossyBus</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="canonical" href="https://www.carzzyapps.com/DeCrossyBus/">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #71c5cf;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+
+            color: white;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 5;
+        }
+
+        #timer-ui {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            color: #ff4d4d;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+            z-index: 5;
+        }
+
+
+        .stat-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: rgba(0,0,0,0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        #score, #students, #route-level, #timer {
+            font-size: 48px;
+            font-weight: 900;
+            margin-top: 5px;
+        }
+
+        #students { color: #ffdb00; }
+        #route-level { color: #5effbc; }
+
+        #timer { font-family: 'Courier New', Courier, monospace; }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 100;
+        }
+
+        #overlay h1 {
+            font-size: 90px;
+
+            margin: 0;
+            color: #ff3333;
+            text-shadow: 6px 6px 0px #000;
+            letter-spacing: -2px;
+            text-align: center;
+            line-height: 0.9;
+        }
+
+        #overlay p {
+            font-size: 18px;
+            margin: 20px 0 40px;
+            text-align: center;
+            line-height: 1.6;
+            max-width: 500px;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+
+        button {
+            padding: 18px 50px;
+            font-size: 28px;
+            background: #ffdb00;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 900;
+            color: #222;
+            box-shadow: 0 8px 0 #b39a00;
+            transition: transform 0.1s;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #b39a00;
+        }
+
+        #touch-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            transform: none;
+            display: grid;
+            grid-template-columns: repeat(3, 70px);
+            grid-template-rows: repeat(2, 70px);
+            gap: 10px;
+            z-index: 5;
+            pointer-events: auto;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            background: #00d1b2;
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2);
+            color: #fff;
+            font-size: 28px;
+            font-weight: 900;
+            touch-action: manipulation;
+        }
+
+        .control-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+
+        #message-box {
+
+            position: absolute;
+            bottom: 60px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 32px;
+            font-weight: 900;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 50;
+        }
+
+        .hidden { display: none !important; }
+            #logo {
+            position:absolute; 
+            top:20px; 
+            left:20px;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="ui">
+
+        <div>
+            <div class="stat-label">Route Level</div>
+            <div id="route-level">1</div>
+        </div>
+        <div>
+            <div class="stat-label">Bus Passengers</div>
+            <div id="students">0 / 0</div>
+        </div>
+        <div>
+            <div class="stat-label">Progress</div>
+            <div id="score">0</div>
+        </div>
+    </div>
+
+    <div id="timer-ui">
+        <div class="stat-label">Route Timer</div>
+        <div id="timer">00:00</div>
+    </div>
+
+    <div id="touch-controls">
+        <div></div>
+        <button class="control-btn" data-dir="up">↑</button>
+        <div></div>
+        <button class="control-btn" data-dir="left">←</button>
+        <button class="control-btn" data-dir="down">↓</button>
+        <button class="control-btn" data-dir="right">→</button>
+    </div>
+
+    <div id="message-box">CHECKPOINT!</div>
+
+    <div id="overlay">
+            <div id="logo">
+    <a href="https://carzzyapps.github.io"><img src="/Carzzy Apps Logo.png" style="width:150px;height:50px;"></a>
+    </div>
+        <h1 id="overlay-title">DeCrossyBus</h1>
+        <p id="overlay-desc">
+            Drive the route to the School.<br>
+            <b>ALL</b> students must be on board to finish the level!<br>
+            If you crash, you'll keep your passengers.
+        </p>
+        <button id="start-btn">START ROUTE 1</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        // --- GAME STATE ---
+        const COLUMN_WIDTH = 40;
+        const LANE_WIDTH = 40;
+        const BUS_SIZE = 16;
+
+        
+        let scene, camera, renderer, clock;
+        let bus, navArrow;
+        let lanes = [];
+        let currentLane = 0;
+        let score = 0;
+        let studentsOnBoard = 0;
+        let studentsNeededForRoute = 0;
+        let routeLevel = 1;
+        let targetSchoolLane = 20;
+        let pickupIndices = []; 
+        let gameActive = false;
+        let consecutiveRoads = 0;
+        
+        let timeLeft = 0;
+        let lastCheckpoint = { x: 0, z: 0, laneIndex: 0, students: 0 };
+        
+        const carColors = [0xff5555, 0x5588ff, 0xffffff, 0x333333, 0xffaa00];
+        const roofColors = [0x993333, 0x334499, 0x444444, 0x5d3a1a];
+
+        // --- INITIALIZATION ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x71c5cf);
+            scene.fog = new THREE.Fog(0x71c5cf, 400, 1000);
+
+            const aspect = window.innerWidth / window.innerHeight;
+            const d = 160;
+            camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 3000);
+            camera.position.set(150, 300, -250);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+            sun.position.set(100, 400, 100);
+            sun.castShadow = true;
+            sun.shadow.camera.left = -600;
+            sun.shadow.camera.right = 600;
+            sun.shadow.camera.top = 600;
+            sun.shadow.camera.bottom = -600;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            scene.add(sun);
+
+
+            clock = new THREE.Clock();
+            createBus();
+            setupRoute(1);
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', handleKeyDown);
+            document.getElementById('start-btn').onclick = startGame;
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    moveInDirection(btn.dataset.dir);
+                });
+            });
+
+            animate();
+        }
+
+        // --- MODELING ---
+        function createBus() {
+            const busGroup = new THREE.Group();
+            const bodyMat = new THREE.MeshPhongMaterial({ color: 0xffcc00 });
+            const blackMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+            const winMat = new THREE.MeshPhongMaterial({ color: 0x44ccff, transparent: true, opacity: 0.8 });
+
+            const body = new THREE.Mesh(new THREE.BoxGeometry(16, 11, 24), bodyMat);
+
+            body.position.y = 7.5; body.castShadow = true; body.name = "chassis"; busGroup.add(body);
+
+            const fWin = new THREE.Mesh(new THREE.BoxGeometry(14, 5, 1), winMat);
+            fWin.position.set(0, 10, 12); busGroup.add(fWin);
+            
+            for(let i=-1; i<=1; i++) {
+                const sWin = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 4), winMat);
+                sWin.position.set(8, 10, i * 6); busGroup.add(sWin);
+                const sWinR = sWin.clone(); sWinR.position.x = -8; busGroup.add(sWinR);
+            }
+
+            const bumper = new THREE.Mesh(new THREE.BoxGeometry(18, 2, 2), blackMat);
+            bumper.position.set(0, 4, 12); busGroup.add(bumper);
+            const rBumper = bumper.clone(); rBumper.position.z = -12; busGroup.add(rBumper);
+
+            const headLightGeo = new THREE.BoxGeometry(3, 3, 1);
+            const headLightMat = new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0xffffaa });
+            const hL = new THREE.Mesh(headLightGeo, headLightMat);
+            hL.position.set(5, 7, 12.1); busGroup.add(hL);
+
+            const hR = hL.clone(); hR.position.x = -5; busGroup.add(hR);
+
+            const wheelGeo = new THREE.BoxGeometry(5, 5, 5);
+            [[-7, 2.5, 8], [7, 2.5, 8], [-7, 2.5, -8], [7, 2.5, -8]].forEach(pos => {
+                const w = new THREE.Mesh(wheelGeo, blackMat);
+                w.position.set(...pos); busGroup.add(w);
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffcc00'; ctx.fillRect(0,0,256,64);
+            ctx.fillStyle = 'black'; ctx.font = 'bold 44px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillText('DeBus', 128, 32);
+            const tex = new THREE.CanvasTexture(canvas);
+            const tMat = new THREE.MeshPhongMaterial({ map: tex, transparent: true });
+
+            const topLabel = new THREE.Mesh(new THREE.PlaneGeometry(12, 10), tMat);
+            topLabel.position.set(0, 13.1, 0); topLabel.rotation.x = -Math.PI/2; topLabel.rotation.z = Math.PI;
+
+            busGroup.add(topLabel);
+
+            const arrowGroup = new THREE.Group();
+            const arrowHead = new THREE.Mesh(new THREE.ConeGeometry(7, 18, 4), new THREE.MeshPhongMaterial({ color: 0x00ff88, emissive: 0x00ff88, emissiveIntensity: 0.5 }));
+            arrowHead.rotation.x = Math.PI/2; arrowGroup.add(arrowHead);
+            arrowGroup.position.y = 45; busGroup.add(arrowGroup);
+            navArrow = arrowGroup;
+
+            bus = busGroup; scene.add(bus);
+        }
+
+        function createTree() {
+            const tree = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.BoxGeometry(6, 12, 6), new THREE.MeshPhongMaterial({ color: 0x5d3a1a }));
+            trunk.position.y = 6; tree.add(trunk);
+            for(let i=0; i<3; i++) {
+                const s = 24 - (i*6);
+                const layer = new THREE.Mesh(new THREE.BoxGeometry(s, 8, s), new THREE.MeshPhongMaterial({ color: 0x3a6f42 }));
+                layer.position.y = 16 + (i*6); layer.castShadow = true; tree.add(layer);
+
+            }
+            return tree;
+        }
+
+        function createHouse(isPickup = false) {
+            const house = new THREE.Group();
+            const baseColor = isPickup ? 0xefefef : 0xdddddd;
+            const roofColor = 0x993333; 
+            
+            const base = new THREE.Mesh(new THREE.BoxGeometry(28, 22, 28), new THREE.MeshPhongMaterial({ color: baseColor }));
+            base.position.y = 11; house.add(base);
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(32, 10, 32), new THREE.MeshPhongMaterial({ color: roofColor }));
+            roof.position.y = 26; house.add(roof);
+            const door = new THREE.Mesh(new THREE.BoxGeometry(8, 12, 1), new THREE.MeshPhongMaterial({ color: 0x442211 }));
+            door.position.set(0, 6, 14.1); house.add(door);
+            
+            if (isPickup) {
+                const marker = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), new THREE.MeshPhongMaterial({ color: 0xffdb00, emissive: 0xffaa00 }));
+                marker.position.y = 45; marker.name = "marker"; house.add(marker);
+
+            }
+            return house;
+        }
+
+        // --- LANE GENERATION ---
+        function createLane(index) {
+            const isSchool = index === targetSchoolLane;
+            const isBuffer = index < targetSchoolLane && index >= targetSchoolLane - 3;
+            const isPickupLane = pickupIndices.includes(index); 
+            const prevType = lanes.length > 0 ? lanes[lanes.length-1].type : 'forest';
+            
+            let type = 'forest';
+            if (isSchool) type = 'school';
+            else if (isBuffer) type = 'forest'; 
+            else if (isPickupLane) type = 'forest'; 
+            else if (index > 0) {
+                const possible = ['forest', 'road', 'river', 'rail'];
+                let filtered = possible.filter(t => {
+                    if (prevType === 'road' && t === 'rail') return false;
+
+                    if (prevType === 'rail' && t === 'road') return false;
+                    if (prevType === 'river' && (t === 'river' || t === 'rail')) return false;
+                    if (prevType === 'rail' && (t === 'river' || t === 'rail')) return false;
+                    if (consecutiveRoads >= 3 && t === 'road') return false;
+                    return true;
+                });
+                type = filtered[Math.floor(Math.random() * filtered.length)];
+            }
+            if (type === 'road') consecutiveRoads++; else consecutiveRoads = 0;
+
+            const laneGroup = new THREE.Group();
+            laneGroup.position.z = index * LANE_WIDTH;
+            
+            const isDark = index % 2 === 0;
+            let color = isDark ? 0x8fc14d : 0x99cc55;
+            if (type === 'road') color = 0x444444;
+            if (type === 'river') color = 0x4499ff;
+            if (type === 'rail') color = 0x555555;
+            if (type === 'school') color = 0x777777;
+
+
+            const plane = new THREE.Mesh(new THREE.PlaneGeometry(2000, LANE_WIDTH), new THREE.MeshPhongMaterial({ color }));
+            plane.rotation.x = -Math.PI / 2; plane.receiveShadow = true; laneGroup.add(plane);
+
+            if (type === 'road') {
+                for (let i = -20; i < 20; i++) {
+                    if (i % 2 === 0) {
+                        const line = new THREE.Mesh(new THREE.PlaneGeometry(20, 2), new THREE.MeshPhongMaterial({ color: 0xffffff }));
+                        line.rotation.x = -Math.PI / 2;
+                        line.position.set(i * 50, 0.1, 0);
+                        laneGroup.add(line);
+                    }
+                }
+            }
+
+            if (type === 'rail') {
+                for (let i = -50; i < 50; i++) {
+                    const sleeper = new THREE.Mesh(new THREE.BoxGeometry(4, 1, 30), new THREE.MeshPhongMaterial({ color: 0x4d2926 }));
+                    sleeper.position.set(i * 20, 0.5, 0);
+                    laneGroup.add(sleeper);
+
+                }
+                [10, -10].forEach(z => {
+                    const track = new THREE.Mesh(new THREE.BoxGeometry(2000, 2, 2), new THREE.MeshPhongMaterial({ color: 0x222222 }));
+                    track.position.set(0, 1.5, z);
+                    laneGroup.add(track);
+                });
+            }
+
+            const laneData = { index, type, mesh: laneGroup, vehicles: [], solids: [], houses: [], direction: Math.random() > 0.5 ? 1 : -1, speed: 1.0 + Math.random() * 1.5, trainTimer: 0 };
+
+            if (type === 'forest') {
+                const isStartHouse = index === 0;
+                const pickupX = (Math.floor(Math.random() * 6) - 3);
+
+                for (let i = -15; i < 15; i++) {
+                    const xPos = i * COLUMN_WIDTH;
+                    
+                    if (isPickupLane && i === pickupX) {
+                        const h = createHouse(true); h.position.x = xPos; laneGroup.add(h);
+
+                        laneData.houses.push({ mesh: h, active: true, x: xPos });
+                    } 
+                    else if (isStartHouse && i === 2) {
+                        const h = createHouse(false); h.position.x = xPos; laneGroup.add(h);
+                    }
+                    else {
+                        const r = Math.random();
+                        if (isPickupLane && Math.abs(i - pickupX) < 2) continue;
+
+                        if (r < 0.20) { const t = createTree(); t.position.x = xPos; laneGroup.add(t); }
+                        else if (r < 0.04) {
+                            const rk = new THREE.Mesh(new THREE.BoxGeometry(14, 10, 14), new THREE.MeshPhongMaterial({color: 0x888888}));
+                            rk.position.set(xPos, 5, 0); rk.castShadow = true; laneGroup.add(rk); laneData.solids.push(xPos);
+                        }
+                    }
+                }
+            } else if (type === 'school') {
+                const schoolGroup = new THREE.Group();
+
+                const schoolBase = new THREE.Mesh(
+                    new THREE.BoxGeometry(150, 60, 80),
+                    new THREE.MeshPhongMaterial({ color: 0xcc4444 })
+                );
+                schoolBase.position.y = 30;
+                schoolBase.castShadow = true;
+                schoolGroup.add(schoolBase);
+
+                const schoolRoof = new THREE.Mesh(
+                    new THREE.BoxGeometry(170, 10, 90),
+                    new THREE.MeshPhongMaterial({ color: 0x222222 })
+                );
+                schoolRoof.position.y = 65;
+                schoolRoof.castShadow = true;
+                schoolGroup.add(schoolRoof);
+
+                const schoolDoor = new THREE.Mesh(
+                    new THREE.BoxGeometry(18, 32, 2),
+                    new THREE.MeshPhongMaterial({ color: 0x333333 })
+                );
+                schoolDoor.position.set(0, 16, 41.1);
+                schoolGroup.add(schoolDoor);
+
+                const signCanvas = document.createElement('canvas');
+                signCanvas.width = 256;
+                signCanvas.height = 64;
+                const signCtx = signCanvas.getContext('2d');
+                signCtx.fillStyle = '#ffffff';
+                signCtx.fillRect(0, 0, 256, 64);
+                signCtx.fillStyle = '#333333';
+                signCtx.font = 'bold 24px Arial';
+                signCtx.textAlign = 'center';
+                signCtx.textBaseline = 'middle';
+                signCtx.fillText('SCHOOL', 128, 32);
+                const signTexture = new THREE.CanvasTexture(signCanvas);
+                const sign = new THREE.Mesh(
+                    new THREE.PlaneGeometry(90, 22),
+                    new THREE.MeshPhongMaterial({ map: signTexture, transparent: true })
+                );
+                sign.position.set(0, 52, 41.2);
+                schoolGroup.add(sign);
+
+                const windowMat = new THREE.MeshPhongMaterial({ color: 0x88c4ff, emissive: 0x3f7fb5, emissiveIntensity: 0.2 });
+                for (let i = -1; i <= 1; i++) {
+                    const win = new THREE.Mesh(new THREE.BoxGeometry(20, 14, 1), windowMat);
+                    win.position.set(i * 40, 32, 41.2);
+                    schoolGroup.add(win);
+                }
+
+                const wingMat = new THREE.MeshPhongMaterial({ color: 0xbb3333 });
+                const leftWing = new THREE.Mesh(new THREE.BoxGeometry(40, 40, 80), wingMat);
+                leftWing.position.set(-100, 20, 0);
+                leftWing.castShadow = true;
+                schoolGroup.add(leftWing);
+
+                const rightWing = leftWing.clone();
+                rightWing.position.x = 100;
+                schoolGroup.add(rightWing);
+
+                laneGroup.add(schoolGroup);
+            }
+
+            if ((type === 'road' || type === 'river') && index > 0) {
+                for(let i=0; i<3; i++) spawnVehicle(laneData, (Math.random()-0.5)*1200);
+            }
+
+            scene.add(laneGroup);
+            return laneData;
+        }
+
+        function spawnVehicle(lane, x) {
+            let obj;
+            if (lane.type === 'road') {
+                obj = new THREE.Group();
+                const c = new THREE.Mesh(new THREE.BoxGeometry(25, 10, 16), new THREE.MeshPhongMaterial({color: carColors[Math.floor(Math.random()*carColors.length)]}));
+                c.position.y = 6; c.castShadow = true; obj.add(c);
+                const w1 = new THREE.Mesh(new THREE.BoxGeometry(20, 5, 1), new THREE.MeshPhongMaterial({color: 0x99ccff})); w1.position.set(0, 10, 8); obj.add(w1);
+            } else if (lane.type === 'river') {
+                obj = new THREE.Mesh(new THREE.BoxGeometry(55, 6, 28), new THREE.MeshPhongMaterial({color: 0x5d3a1a})); obj.position.y = 3;
+            } else if (lane.type === 'rail') {
+                obj = new THREE.Mesh(new THREE.BoxGeometry(400, 25, 30), new THREE.MeshPhongMaterial({color: 0x222222})); obj.position.y = 14; lane.speed = 18;
+            }
+
+            let spawnX = x !== undefined ? x : lane.direction * -900;
+            const minGap = lane.type === 'rail' ? 500 : lane.type === 'river' ? 100 : 90;
+            const overlapsExisting = () => lane.vehicles.some(v => Math.abs(v.position.x - spawnX) < minGap);
+
+            if (x !== undefined) {
+                let attempts = 0;
+                while (attempts < 20 && overlapsExisting()) {
+                    spawnX = (Math.random() - 0.5) * 1200;
+                    attempts++;
+                }
+            } else {
+                let attempts = 0;
+                while (attempts < 20 && overlapsExisting()) {
+                    spawnX += lane.direction * minGap;
+                    attempts++;
+                }
+            }
+
+            obj.position.x = spawnX;
+            lane.mesh.add(obj); lane.vehicles.push(obj);
+        }
+
+        // --- GAMEPLAY LOGIC ---
+        function updateStudentUI() {
+            document.getElementById('students').innerText = `${studentsOnBoard} / ${studentsNeededForRoute}`;
+        }
+
+        function setupRoute(level) {
+            lanes.forEach(l => scene.remove(l.mesh));
+            lanes = [];
+            routeLevel = level;
+            targetSchoolLane = 15 + level * 6;
+            studentsNeededForRoute = 2 + Math.floor(level/2);
+
+            studentsOnBoard = 0; currentLane = 0;
+            timeLeft = 45 + (level * 10);
+            lastCheckpoint = { x: 0, z: 0, laneIndex: 0, students: 0 };
+            
+            pickupIndices = [];
+            let pool = [];
+            for(let p = 2; p < targetSchoolLane - 5; p++) pool.push(p);
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            pickupIndices = pool.slice(0, studentsNeededForRoute);
+
+            document.getElementById('route-level').innerText = routeLevel;
+            updateStudentUI();
+            
+            for (let i = -5; i <= targetSchoolLane + 8; i++) lanes.push(createLane(i));
+            bus.position.set(0, 0, 0);
+        }
+
+
+        function startGame() {
+            document.getElementById('overlay').classList.add('hidden');
+            setupRoute(1);
+            score = 0;
+            gameActive = true;
+        }
+
+        function moveInDirection(direction) {
+            let nX = bus.position.x, nZ = bus.position.z, nL = currentLane;
+            let forward = false;
+
+            if (direction === 'up') { nZ += LANE_WIDTH; nL++; forward = true; }
+            else if (direction === 'down') { if (currentLane > -3) { nZ -= LANE_WIDTH; nL--; } }
+            else if (direction === 'left') { nX += COLUMN_WIDTH; }
+            else if (direction === 'right') { nX -= COLUMN_WIDTH; }
+
+            const targetLane = lanes.find(l => l.index === nL);
+            if (targetLane && targetLane.solids.includes(nX)) return;
+
+            if (forward) {
+                const cur = lanes.find(l => l.index === currentLane);
+                if (cur && cur.houses.some(h => h.active)) { routeFail("MISSING STUDENT!"); return; }
+            }
+
+            if (targetLane) {
+                targetLane.houses.forEach(h => {
+                    if (h.active && Math.abs(nX - h.x) < 40) {
+                        h.active = false;
+                        studentsOnBoard++;
+                        updateStudentUI();
+                        const m = h.mesh.getObjectByName("marker"); if (m) m.visible = false;
+                        lastCheckpoint = { x: nX, z: nZ, laneIndex: nL, students: studentsOnBoard };
+                        msg("PICKED UP!");
+                    }
+                });
+
+                if (targetLane.type === 'school') {
+                    const inSchoolEntrance = Math.abs(nX) <= 20;
+                    if (studentsOnBoard < studentsNeededForRoute) {
+                        routeFail("INCOMPLETE ROUTE!");
+                    } else if (!inSchoolEntrance) {
+                        msg("DRIVE INTO SCHOOL!");
+                    } else {
+                        setupRoute(routeLevel + 1);
+                        msg("LEVEL COMPLETE!");
+                    }
+                    return;
+                }
+            }
+
+            bus.position.set(nX, 0, nZ);
+            if (nL !== currentLane) { currentLane = nL; score = Math.max(score, currentLane); document.getElementById('score').innerText = score; }
+        }
+
+        function handleKeyDown(e) {
+            if (!gameActive) return;
+            let direction = null;
+            if (e.key === 'ArrowUp' || e.key === 'w') direction = 'up';
+            else if (e.key === 'ArrowDown' || e.key === 's') direction = 'down';
+            else if (e.key === 'ArrowLeft' || e.key === 'a') direction = 'left';
+            else if (e.key === 'ArrowRight' || e.key === 'd') direction = 'right';
+            if (direction) {
+                e.preventDefault();
+                moveInDirection(direction);
+            }
+        }
+
+        function msg(t) {
+            const b = document.getElementById('message-box'); b.innerText = t; b.style.opacity = 1;
+            setTimeout(() => b.style.opacity = 0, 1500);
+        }
+
+        function routeFail(reason) {
+            gameActive = false;
+            document.getElementById('overlay').classList.remove('hidden');
+            
+            let isDeath = reason.includes("YOU DIED");
+            // UPDATED TEXT HERE AS REQUESTED
+            document.getElementById('overlay-title').innerHTML = isDeath ? "YOU DIED.<br>HOOOOYYYY!" : reason.replace("\n", "<br>");
+            
+            let desc = "";
+            if (isDeath) {
+
+                desc = "Don't worry, your students are still on board!<br>Respawning at the last pickup location.";
+            } else if (reason === "INCOMPLETE ROUTE!") {
+                desc = `You arrived at school with empty seats!<br>Restarting the level.`;
+                studentsOnBoard = 0;
+            } else if (reason === "MISSING STUDENT!") {
+                desc = "You skipped a student's house!<br>Restarting the level.";
+                studentsOnBoard = 0;
+            } else {
+                desc = `Restarting Route Level ${routeLevel}`;
+                studentsOnBoard = 0;
+            }
+            
+            document.getElementById('overlay-desc').innerHTML = desc;
+            document.getElementById('start-btn').innerText = `TRY AGAIN`;
+            
+            document.getElementById('start-btn').onclick = () => {
+                document.getElementById('overlay').classList.add('hidden');
+                if (isDeath) {
+                    bus.position.set(lastCheckpoint.x, 0, lastCheckpoint.z);
+
+                    currentLane = lastCheckpoint.laneIndex;
+                    updateStudentUI();
+                } else {
+                    setupRoute(routeLevel);
+                }
+                gameActive = true;
+            };
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (gameActive) {
+                const delta = clock.getDelta();
+                
+                timeLeft -= delta;
+                if (timeLeft <= 0) { routeFail("OUT OF TIME!"); return; }
+                
+
+                const m = Math.floor(timeLeft/60), s = Math.floor(timeLeft%60);
+                document.getElementById('timer').innerText = `${m}:${s<10?'0':''}${s}`;
+
+                let onLog = false, target = null;
+                const pulse = 1.3 + Math.sin(Date.now() * 0.01) * 0.4;
+                navArrow.scale.set(pulse,pulse,pulse);
+
+                lanes.forEach(lane => {
+                    lane.houses.forEach(h => {
+                        const marker = h.mesh.getObjectByName("marker");
+                        if (marker && marker.visible) {
+                            marker.position.y = 45 + Math.sin(Date.now()*0.006)*6; marker.rotation.y += 0.05;
+                            if (!target && lane.index >= currentLane) target = new THREE.Vector3(h.x, 25, lane.mesh.position.z);
+                        }
+                    });
+
+                    if (lane.type === 'road' && Math.random() < 0.01) spawnVehicle(lane);
+                    if (lane.type === 'river' && Math.random() < 0.02) spawnVehicle(lane);
+                    if (lane.type === 'rail') { lane.trainTimer++; if(lane.trainTimer > 150) { spawnVehicle(lane); lane.trainTimer = 0; } }
+
+
+                    lane.vehicles.forEach((v, idx) => {
+                        v.position.x += lane.speed * lane.direction;
+                        const bP = bus.position, vW = new THREE.Vector3(); v.getWorldPosition(vW);
+                        if (Math.abs(bP.x - vW.x) < (lane.type==='rail'?180:26) && Math.abs(bP.z - vW.z) < 18) {
+                            if (lane.type === 'river') { if (currentLane === lane.index) { onLog = true; bus.position.x += lane.speed * lane.direction; } }
+                            else { routeFail("YOU DIED.\nHOOOOOOY"); }
+                        }
+                        if (Math.abs(v.position.x) > 1100) { lane.mesh.remove(v); lane.vehicles.splice(idx, 1); }
+                    });
+                    if (currentLane === lane.index && lane.type === 'river' && !onLog) { routeFail("YOU DIED.\nHOOOOOOY"); }
+                });
+
+                if (!target) {
+                    const sch = lanes.find(l => l.type === 'school');
+                    if (sch) target = new THREE.Vector3(0, 25, sch.mesh.position.z);
+                }
+                if (target) {
+                    const d = new THREE.Vector3().subVectors(target, bus.position).normalize();
+                    navArrow.rotation.y = Math.atan2(d.x, d.z);
+
+                }
+
+                camera.position.z = THREE.MathUtils.lerp(camera.position.z, bus.position.z - 220, 0.1);
+                camera.position.x = THREE.MathUtils.lerp(camera.position.x, bus.position.x + 120, 0.1);
+                if (Math.abs(bus.position.x) > 650) { bus.position.x = Math.sign(bus.position.x) * 650; }
+            }
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const aspect = window.innerWidth / window.innerHeight; const d = 160;
+            camera.left = -d * aspect; camera.right = d * aspect; camera.top = d; camera.bottom = -d;
+            camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

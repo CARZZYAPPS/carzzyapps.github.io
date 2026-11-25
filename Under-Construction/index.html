@@ -1,0 +1,269 @@
+---
+layout: null
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Under Construction | Carzzy Apps</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <!-- Google Fonts for a clean, modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d1b2;
+            --bg: #0a0a0a;
+            --surface: #1a1a1a;
+            --text-secondary: #888;
+            --danger: #ff3860;
+        }
+
+        * {
+            box-sizing: border-box;
+
+        }
+
+        body {
+            /* Radial gradient adds depth compared to a flat color */
+            background: radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow: hidden;
+            text-align: center;
+            /* Prevent text selection which often accompanies right-click blocking */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+
+        .container {
+            padding: 2rem;
+            max-width: 600px;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        /* Animated construction icon */
+        .icon-wrapper {
+            margin-bottom: 2.5rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .gear-svg {
+            animation: rotateGear 15s linear infinite;
+            filter: drop-shadow(0 0 10px rgba(0, 209, 178, 0.3));
+        }
+
+        h1 {
+
+            color: var(--primary);
+            font-size: clamp(1.8rem, 5vw, 2.5rem); /* Fluid typography */
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin: 0;
+            text-shadow: 0 0 20px rgba(0, 209, 178, 0.4);
+            animation: pulseText 3s ease-in-out infinite;
+        }
+
+        h5 {
+            color: var(--text-secondary);
+            font-weight: 400;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            margin: 1.5rem 0 3rem;
+            letter-spacing: 0.1em;
+            line-height: 1.6;
+        }
+
+        /* Styled button with transitions and hover effects */
+
+        .btn {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 1.2rem 2.5rem;
+            border-radius: 100px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+
+        .btn:hover {
+            background-color: var(--primary);
+            color: var(--bg);
+            box-shadow: 0 0 30px rgba(0, 209, 178, 0.6);
+            transform: translateY(-3px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Custom Message Box for Right-Click/Shortcuts */
+        #security-modal {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150%);
+            background: var(--surface);
+            border: 1px solid var(--primary);
+
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(0, 209, 178, 0.2);
+            z-index: 1000;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        #security-modal.active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #security-modal p {
+            margin: 0;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+
+        /* Keyframe Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulseText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        @keyframes rotateGear {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Subtle background particle effect (simulated with CSS) */
+        body::before {
+            content: "";
+
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(var(--primary) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.05;
+            z-index: -1;
+        }
+            #logo {
+            position:absolute; 
+            top:20px; 
+            left:20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="logo">
+    <a href="https://carzzyapps.github.io"><img src="/Carzzy Apps Logo.png" style="width:150px;height:50px;"></a>
+    </div>
+    <!-- Custom Security Notification -->
+    <div id="security-modal">
+        <p>Please be respectful of our work. Thank You.</p>
+    </div>
+
+    <div class="container">
+
+        <div class="icon-wrapper">
+            <!-- Inline SVG for the construction gear -->
+            <svg class="gear-svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#00d1b2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        </div>
+        
+        <h1>This Page is Under Construction</h1>
+        <h5>We are working hard to bring you something amazing.<br>Please come back later!</h5>
+        
+        <a href="https://carzzyapps.github.io/" class="btn">
+            View Our Other Games
+        </a>
+    </div>
+
+    <script>
+        const modal = document.getElementById('security-modal');
+        let modalTimeout;
+
+
+        function showSecurityMessage() {
+            modal.classList.add('active');
+            clearTimeout(modalTimeout);
+            modalTimeout = setTimeout(() => {
+                modal.classList.remove('active');
+            }, 3000);
+        }
+
+        // Disables the right-click context menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showSecurityMessage();
+        }, false);
+
+        // Block developer tools and specific shortcuts
+        document.addEventListener('keydown', function(e) {
+            // F12 key
+            if (e.key === 'F12') {
+                e.preventDefault();
+
+                showSecurityMessage();
+                return false;
+            }
+
+            // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Elements)
+            // Also handles Mac Cmd+Option+I etc.
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+                e.preventDefault();
+                showSecurityMessage();
+                return false;
+            }
+
+            // Ctrl+U or Cmd+U (View Source)
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
+                e.preventDefault();
+                showSecurityMessage();
+                return false;
+            }
+
+
+            // Ctrl+S or Cmd+S (Save Page)
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault();
+                showSecurityMessage();
+                return false;
+            }
+        }, false);
+    </script>
+{% include site-footer.html %}
+</body>
+</html>
+
+

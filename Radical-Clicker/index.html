@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A clicker game that on every click, the number increments. It counts normally and in radicals. Try to reach 100,000 clicks to unlock the autoclicker.">
+    <meta name="keywords" content="carzzy apps, games, apps, crazzy apps, clicker, radicals, square roots, radical clicker">
+    <meta name="author" content="Avis, DeBus">
+    <title>CARZZY CLICKER v1.0.0-PRO</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="canonical" href="https://www.carzzyapps.com/Radical-Clicker/">
+    <style>
+        :root { --bg: #000000; --card: #151515; --text: #00d1b2; --subtext: #00d1b2; --accent: #2563eb; --text-shadow: 0 10 30px #00d1b2 }
+
+        body { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; 
+            font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; 
+            transition: all 0.3s ease; user-select: none; overflow: hidden;
+        }
+        body.auto-active { background: #0a0a0a !important; }
+        body.auto-active .clicker-card { animation: shake 0.1s infinite; border: 4px solid #db2777; }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            50% { transform: translate(-1px, -2px) rotate(-1deg); }
+            100% { transform: translate(1px, -1px) rotate(1deg); }
+        }
+
+        h1 { color: var(--text); margin-bottom: 10px; letter-spacing: 2px; }
+        .clicker-card { text-align: center; background: var(--card); padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 15px #00d1b2; width: 360px; position: relative; }
+        
+        #boss-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            background-color: white; 
+            background-image: url('https://unsplash.com'); 
+            background-size: cover; background-position: center; z-index: 9999; 
+        }
+
+        .header-btns { position: absolute; top: 10px; right: 10px; display: flex; gap: 5px; }
+        .icon-btn { background: #64748b; color: white; border: none; border-radius: 5px; padding: 5px 8px; cursor: pointer; font-size: 0.75rem; font-weight: bold; }
+        #radical-display { font-size: 2.5rem; font-weight: bold; color: var(--accent); min-height: 4.5rem; display: flex; align-items: center; justify-content: center;}
+        #warning-banner { display: none; background: #fbbf24; color: #78350f; font-size: 0.7rem; padding: 5px; border-radius: 5px; margin-bottom: 10px; font-weight: bold; }
+        #alltime-display { font-size: 0.9rem; color: var(--subtext); margin-bottom: 10px; font-weight: bold; }
+        .btn-click { background: var(--accent); color: white; width: 100%; padding: 1.2rem; font-size: 1.2rem; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px #1d4ed8; transition: transform 0.1s; }
+        .btn-click:active { transform: scale(0.96); box-shadow: 0 0 #1d4ed8; }
+        
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card); color: var(--text); padding: 25px; border-radius: 15px; width: 380px; text-align: left; max-height: 85vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
+        footer { margin-top: 50px; font-size: 0.8rem; color: #444; }
+        #logo {
+            position:absolute; 
+            top:20px; 
+            left:20px;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+    <div id="logo">
+    <a href="https://carzzyapps.github.io"><img src="/Carzzy Apps Logo.png" style="width:150px;height:50px;"></a>
+    </div>
+<div id="boss-overlay"></div>
+
+<h1>CARZZY CLICKER</h1>
+
+<div class="clicker-card">
+    <div class="header-btns">
+        <button class="icon-btn" onclick="toggleModal('settings-modal', true)">⚙️</button>
+        <button class="icon-btn" onclick="toggleModal('rules-modal', true)">?</button>
+    </div>
+    <div id="warning-banner">⚠️ INACTIVITY WARNING: Auto-Clicker Lock Imminent!</div>
+    <div id="radical-display">√0</div>
+    <div id="standard-display" style="font-size: 1rem; color: var(--subtext);">Session: 0</div>
+    <div id="alltime-display">All-Time: 0</div>
+    <div id="power-level" style="font-size: 0.75rem; font-weight: bold; color: #10b981; margin-bottom: 1rem;">Click Power: +1</div>
+    
+    <div id="auto-container" style="margin-bottom: 10px;">
+        <button id="auto-btn" onclick="startAutoClicker()" style="background: #db2777; color: white; width: 100%; padding: 10px; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">START AUTO (60s)</button>
+        <div id="auto-timer" style="font-size:0.7rem; color:#be185d; font-weight: bold; margin-top:5px;">LOCKED (Need 100K)</div>
+    </div>
+    
+    <button class="btn-click" onclick="manualIncrement()">CLICK!</button>
+    <button onclick="resetSession()" style="font-size:0.7rem; padding:8px; background:#ef4444; color:white; border:none; border-radius:5px; margin-top:10px; cursor:pointer; width:100%;">Reset Session</button>
+</div>
+
+<footer>Avis and DeBus v1.0.0 PRO</footer>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Settings</h2>
+        <button onclick="nuclearReset()" style="background:black; color:red; width:100%; padding:10px; margin-top:10px; border:none; border-radius:8px; cursor:pointer;">NUCLEAR RESET</button>
+        <button onclick="toggleModal('settings-modal', false)" style="width:100%; margin-top:10px; padding:10px; border-radius:8px; cursor:pointer; background:#64748b; color:white; border:none;">Close</button>
+    </div>
+</div>
+
+<!-- Rules Modal -->
+<div id="rules-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Official Game Guide</h2>
+        <p><b>1. Counter:</b> Session score is simplified (e.g., 12 = 2√3).</p>
+        <p><b>2. Progression:</b> At 1,000 clicks, +10 Power; at 10,000 clicks, +20 Power.</p>
+        <p><b>3. Auto-Clicker:</b> 100,000 clicks to unlock. 10 CPS for 60s.</p>
+        <p><b>4. Boss Mode:</b> Press <b>'I'</b> to hide game.</p>
+        <button onclick="toggleModal('rules-modal', false)" style="width:100%; padding:10px; cursor:pointer; background:#2563eb; color:white; border:none; border-radius:8px; font-weight:bold;">Close Guide</button>
+    </div>
+</div>
+
+<script>
+    let count = 0;
+    let allTimeCount = parseInt(localStorage.getItem('allTimeCount')) || 0;
+    let lastClickTime = parseInt(localStorage.getItem('lastClickTime')) || Date.now();
+    let autoActive = false;
+    let bossActive = false;
+    let autoClicker;
+    let autoClickerTimer;
+
+    // --- Core Logic ---
+    function manualIncrement() {
+        if (autoActive) {
+            stopAutoClicker();
+            return;
+        }
+        let power = getClickPower();
+        count += power;
+        allTimeCount += power;
+        lastClickTime = Date.now();
+        updateUI();
+    }
+
+    function getClickPower() {
+        if (allTimeCount >= 10000) return 20;
+        if (allTimeCount >= 1000) return 10;
+        return 1;
+    }
+
+    function simplifyRadical(n) {
+        if (n === 0) return "0";
+        let outside = 1, inside = n, d = 2;
+        while (d * d <= inside) {
+            if (inside % (d * d) === 0) { inside /= (d * d); outside *= d; }
+            else { d++; }
+        }
+        if (inside === 1) return outside;
+        if (outside === 1) return "√" + inside;
+        return outside + "√" + inside;
+    }
+
+    // --- UI Helpers ---
+    function updateUI() {
+        document.getElementById('radical-display').innerText = simplifyRadical(count);
+        document.getElementById('standard-display').innerText = `Session: ${count.toLocaleString()}`;
+        document.getElementById('alltime-display').innerText = `All-Time: ${allTimeCount.toLocaleString()}`;
+        document.getElementById('power-level').innerText = `Click Power: +${getClickPower()}`;
+        
+        // Auto clicker lock status
+        if (allTimeCount < 100000) {
+            document.getElementById('auto-timer').innerText = "LOCKED (Need 100K)";
+        } else if (!autoActive) {
+            document.getElementById('auto-timer').innerText = "READY";
+        }
+        
+        localStorage.setItem('allTimeCount', allTimeCount);
+        localStorage.setItem('lastClickTime', lastClickTime);
+    }
+
+    // --- Systems ---
+    function startAutoClicker() {
+        if (allTimeCount < 100000) return alert("⚠️Not enough clicks!");
+        if (autoActive) return;
+
+        autoActive = true;
+        document.body.classList.add('auto-active');
+        let timeLeft = 60;
+
+        autoClicker = setInterval(() => {
+            count += 20;
+            allTimeCount += 20;           
+            updateUI();
+        }, 100);
+
+        autoClickerTimer = setInterval(() => {
+          timeLeft--;
+          document.getElementById('auto-timer').innerText = timeLeft + "s REMAINING"; 
+          if (timeLeft <= 0) stopAutoClicker();
+        }, 1000);
+    }
+    function stopAutoClicker() {
+        clearInterval(autoClicker);
+        clearInterval(autoClickerTimer);
+        timeLeft = 60;
+        document.getElementById('auto-timer').innerText = "READY";
+        autoActive = false;
+        document.body.classList.remove('auto-active');
+    }
+
+    function toggleDark() { document.body.classList.toggle('dark-mode'); }
+    function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
+    function resetSession() { count = 0; updateUI(); }
+    function nuclearReset() { if(confirm("Clear all data?")) { localStorage.removeItem('allTimeCount'); localStorage.removeItem('lastClickTime'); location.reload(); } }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'i') {
+            bossActive = !bossActive;
+            document.getElementById('boss-overlay').style.display = bossActive ? 'block' : 'none';
+        }
+    });
+
+    // Initial Run
+    updateUI();
+</script>
+</body>
+</html>

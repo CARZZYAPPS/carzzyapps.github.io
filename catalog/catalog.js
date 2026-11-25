@@ -30,7 +30,7 @@ var PROJECTS = [
     },
     {
         id: 'decrossybus', img: '/images/decrossybus.jpg',
-        title: 'DeCrossyBus', url: 'https://carzzyapps.github.io/DeCrossyBus/',
+        title: 'DeCrossyBus', url: '/DeCrossyBus/',
         cats: ['games'], kind: 'Arcade',
         desc: 'Why did DeBus cross the road? To save us from copyright infringement, of course.',
         tags: ['Arcade', 'Mobile friendly']
@@ -51,14 +51,14 @@ var PROJECTS = [
     },
     {
         id: 'rhythm-runner', img: '/images/rhythm-runner.jpg',
-        title: 'Rhythm Runner', url: 'https://carzzyapps.github.io/Under-Construction/',
+        title: 'Rhythm Runner', url: '/Under-Construction/',
         cats: ['games', 'music'], kind: 'Endless runner',
         desc: 'An endless runner where you jump spikes and duck drones, all to a built-in soundtrack.',
         tags: ['Built-in music', 'Mobile friendly']
     },
     {
         id: 'hockey-shootout', img: '/images/hockey-shootout.jpg',
-        title: 'Hockey Shootout', url: 'https://carzzyapps.github.io/Hockey-Shootout/',
+        title: 'Hockey Shootout', url: '/Hockey-Shootout/',
         cats: ['games'], kind: 'Sports',
         desc: 'Exactly what it sounds like.',
         tags: ['Sports', 'Arcade']
@@ -79,14 +79,14 @@ var PROJECTS = [
     },
     {
         id: 'radical-clicker', img: '/images/radical-clicker.jpg',
-        title: 'Radical Clicker', url: 'https://carzzyapps.github.io/Radical-Clicker/',
+        title: 'Radical Clicker', url: '/Radical-Clicker/',
         cats: ['games', 'math'], kind: 'Clicker',
         desc: 'A clicker game that counts in radicals.',
         tags: ['Math', 'Idle']
     },
     {
         id: 'jeopardy', img: '/images/jeopardy.jpg',
-        title: 'Jeopardy', url: 'https://carzzyapps.github.io/Under-Construction/',
+        title: 'Jeopardy', url: '/Under-Construction/',
         cats: ['games'], kind: 'Trivia', soon: true,
         desc: 'Have questions you want featured on a Jeopardy game? Send them in via the contact page.',
         tags: ['Trivia', 'Group play']
@@ -100,7 +100,7 @@ var PROJECTS = [
     },
     {
         id: 'metronome', img: '/images/metronome.jpg',
-        title: 'Metronome', url: 'https://carzzyapps.github.io/Metronome/',
+        title: 'Metronome', url: '/Metronome/',
         cats: ['music', 'tools'], kind: 'Music tool',
         desc: 'An online metronome to keep your practice perfectly in time.',
         tags: ['Music', 'Practice']
@@ -114,14 +114,14 @@ var PROJECTS = [
     },
     {
         id: 'radical-stopwatch', img: '/images/radical-stopwatch.jpg',
-        title: 'Radical Stopwatch', url: 'https://carzzyapps.github.io/Radical-Stopwatch/',
+        title: 'Radical Stopwatch', url: '/Radical-Stopwatch/',
         cats: ['math'], kind: 'Utility',
         desc: 'A stopwatch that counts in radicals.',
         tags: ['Math', 'Timer']
     },
     {
         id: 'stat-calc', img: '/images/stat-calc.jpg',
-        title: 'Statistics Calculator', url: 'https://carzzyapps.github.io/Stat-Calc/',
+        title: 'Statistics Calculator', url: '/Stat-Calc/',
         cats: ['math', 'tools'], kind: 'Calculator',
         desc: 'Calculator for mean, median, mode, z-scores, and more.',
         tags: ['Statistics', 'Study']

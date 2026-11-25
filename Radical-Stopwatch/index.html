@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="A wacky stopwatch that counts in radical numbers. It also has a normal stopwatch.">
+    <meta name="keywords" content="carzzy apps, games, apps, crazzy apps, radicals, square roots, stopwatch">
+    <meta name="author" content="Avis, DeBus">
+    <title>Radical & Normal Stopwatch</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            padding-top: 80px; 
+            background: #0a0a0a; 
+            color: #00d1b2;
+            user-select: none;
+        }
+        #radical-display { 
+            font-size: 6rem; 
+            margin-bottom: 0px; 
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(0, 209, 178, 0.5);
+        }
+        #normal-display {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            opacity: 0.8;
+            text-shadow: 0 0 15px rgba(0, 209, 178, 0.5);
+        }
+        button { 
+            font-size: 1.1rem; 
+            padding: 12px 30px; 
+            margin: 10px; 
+            cursor: pointer; 
+            border-radius: 30px; 
+            border: 2px solid #e94560; 
+            background: transparent;
+            color: #e94560;
+            font-weight: bold;
+            transition: 0.3s; 
+        }
+        button:hover { 
+            background: #e94560; 
+            color: #1a1a2e; 
+        }
+        .reset-btn {
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+        .reset-btn:hover {
+            background: #ffffff;
+            color: #1a1a2e;
+        }
+        #logo {
+            position:absolute; 
+            top:20px; 
+            left:20px;
+        }
+    </style>
+        <script>
+        // Anti-Inspect protection
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', function(e) {
+            if (e.keyCode === 123 || 
+               (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+               (e.ctrlKey && e.keyCode === 85)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <div id="logo">
+    <a href="https://carzzyapps.github.io"><img src="/Carzzy Apps Logo.png" style="width:150px;height:50px;"></a>
+    </div>
+    <div id="radical-display">√0</div>
+    <div id="normal-display">Standard: 0s</div>
+    
+    <button onclick="startStop()" id="toggleBtn">Start</button>
+    <button class="reset-btn" onclick="resetTimer()">Reset</button>
+
+    <script>
+        let seconds = 0;
+        let timer = null;
+
+        // Scrambled logic names to make it harder to read without breaking the symbols
+        function _0x_calc(_n) {
+            if (_n === 0) return "√0";
+            let _a = 1, _b = _n, _d = 2;
+            while (_d * _d <= _b) {
+                if (_b % (_d * _d) === 0) {
+                    _b /= (_d * _d);
+                    _a *= _d;
+                } else {
+                    _d++;
+                }
+            }
+            if (_b === 1) return _a;
+            let _p = _a > 1 ? _a : "";
+            return _p + "√" + _b;
+        }
+
+        function startStop() {
+            const b = document.getElementById('toggleBtn');
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+                b.innerText = "Start";
+            } else {
+                b.innerText = "Stop";
+                timer = setInterval(() => {
+                    seconds++;
+                    document.getElementById('radical-display').innerText = _0x_calc(seconds);
+                    document.getElementById('normal-display').innerText = "Standard: " + seconds + "s";
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timer = null;
+            seconds = 0;
+            document.getElementById('radical-display').innerText = "√0";
+            document.getElementById('normal-display').innerText = "Standard: 0s";
+            document.getElementById('toggleBtn').innerText = "Start";
+        }
+    </script>
+</body>
+</html>

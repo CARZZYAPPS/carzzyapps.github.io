@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistics Calculator</title>
+<style>
+  
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+
+body {
+display: flex;
+justify-content: center;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: radial-gradient(circle at top left, rgba(0, 209, 178, 0.2), transparent 24%),
+radial-gradient(circle at bottom right, rgba(0, 177, 210, 0.14), transparent 24%),
+#070707;
+color: #dff9f0;
+}
+
+.container {
+width: 100%;
+max-width: 560px;
+background: rgba(10, 12, 15, 0.96);
+border: 1px solid rgba(0, 209, 178, 0.18);
+border-radius: 24px;
+box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+padding: 34px;
+backdrop-filter: blur(12px);
+margin: 100px;
+}
+
+h2 {
+font-size: 30px;
+color: #00d1b2;
+text-align: center;
+margin-bottom: 10px;
+letter-spacing: 0.04em;
+text-shadow: 0 0 18px rgba(0, 209, 178, 0.35);
+}
+
+.intro {
+color: #aeece7;
+opacity: 0.9;
+text-align: center;
+margin-bottom: 28px;
+line-height: 1.55;
+font-size: 14px;
+}
+
+.section {
+margin-bottom: 22px;
+}
+
+label {
+display: block;
+margin-bottom: 10px;
+color: #b5fff3;
+font-weight: 600;
+letter-spacing: 0.01em;
+font-size: 14px;
+}
+
+textarea,
+.range-inputs input {
+width: 100%;
+padding: 14px 14px;
+border-radius: 14px;
+border: 1px solid rgba(0, 209, 178, 0.35);
+background: rgba(10, 12, 15, 0.95);
+color: #e7fff8;
+font-family: 'Courier New', monospace;
+font-size: 14px;
+transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+textarea {
+min-height: 120px;
+resize: vertical;
+}
+
+textarea::placeholder,
+.range-inputs input::placeholder {
+color: rgba(0, 209, 178, 0.65);
+}
+
+textarea:focus,
+.range-inputs input:focus {
+outline: none;
+border-color: #00d1b2;
+box-shadow: 0 0 16px rgba(0, 209, 178, 0.16);
+}
+
+.range-inputs {
+display: flex;
+gap: 10px;
+flex-wrap: wrap;
+}
+
+.range-inputs input {
+max-width: 160px;
+}
+
+.checkboxes {
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 12px 20px;
+}
+
+.checkbox-item {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+input[type="checkbox"] {
+width: 18px;
+height: 18px;
+accent-color: #00d1b2;
+cursor: pointer;
+}
+
+.checkbox-item label {
+color: #d8fff7;
+font-size: 14px;
+cursor: pointer;
+}
+
+.button-group {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 14px;
+margin-bottom: 24px;
+}
+
+button {
+background: linear-gradient(135deg, #00d1b2 0%, #00b1d2 100%);
+border: none;
+border-radius: 14px;
+padding: 14px 16px;
+color: #081014;
+font-size: 15px;
+font-weight: 700;
+cursor: pointer;
+transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+button:hover {
+transform: translateY(-2px);
+box-shadow: 0 12px 22px rgba(0, 209, 178, 0.22);
+}
+
+.results,
+.error,
+#boxPlotContainer {
+border-radius: 18px;
+}
+
+.results {
+display: none;
+margin-top: 14px;
+padding: 18px;
+background: rgba(7, 12, 17, 0.95);
+border: 1px solid rgba(0, 209, 178, 0.18);
+}
+
+.results.show {
+display: block;
+}
+
+.result-item {
+margin-bottom: 14px;
+padding-bottom: 12px;
+border-bottom: 1px solid rgba(0, 209, 178, 0.18);
+}
+
+.result-item:last-child {
+border-bottom: none;
+margin-bottom: 0;
+padding-bottom: 0;
+}
+
+.result-label {
+color: #8cf2dc;
+font-size: 12px;
+font-weight: 700;
+letter-spacing: 0.02em;
+}
+
+.result-value {
+margin-top: 6px;
+color: #eafdf7;
+font-size: 15px;
+font-weight: 700;
+word-break: break-word;
+}
+
+.error {
+display: none;
+margin-top: 14px;
+padding: 16px;
+background: rgba(211, 47, 47, 0.14);
+color: #ffb3b3;
+border: 1px solid rgba(211, 47, 47, 0.26);
+}
+
+.error.show {
+display: block;
+}
+
+@media (max-width: 520px) {
+.container {
+padding: 24px;
+}
+
+.checkboxes {
+grid-template-columns: 1fr;
+}
+
+.button-group {
+grid-template-columns: 1fr;
+}
+
+.range-inputs input {
+max-width: 100%;
+}
+}
+</style>
+</head>
+<body>
+<script src="/nav-bar.js"></script>
+<div class="container">
+<h2><i><u>Statistics Calculator</u></i></h2>
+
+<div class="section">
+<label for="numbers">Enter Numbers (Commas or spaces in between numbers) or random for Random Range:</label>
+<textarea id="numbers" placeholder="Example: 10, 20, 30, 40, 50"></textarea>
+</div>
+
+<div class="section" id="randomRangeSection">
+<label>Random Range (leave blank for -100 to 100):</label>
+<div class="range-inputs">
+<input type="number" id="randomMin" placeholder="Lowest number" />
+<input type="number" id="randomMax" placeholder="Highest number" />
+</div>
+</div>
+
+<div class="section">
+<label>Select Outputs:</label>
+<div class="checkboxes">
+<div class="checkbox-item">
+<input type="checkbox" id="mean" checked>
+<label for="mean">Mean</label>
+</div>
+<div class="checkbox-item">
+<input type="checkbox" id="median">
+<label for="median">Median</label>
+</div>
+<div class="checkbox-item">
+<input type="checkbox" id="mode">
+<label for="mode">Mode</label>
+</div>
+<div class="checkbox-item">
+<input type="checkbox" id="range">
+<label for="range">Range</label>
+</div>
+<div class="checkbox-item">
+<input type="checkbox" id="std">
+<label for="std">σ Std Deviation</label>
+</div>
+<div class="checkbox-item">
+<input type="checkbox" id="variance">
+<label for="variance">σ² Variance</label>
+</div>
+<div class="checkbox-item">
+<input type="checkbox" id="zscore">
+<label for="zscore">Z-Scores</label>
+</div>
+<div class="checkbox-item">
+<input type="checkbox" id="count">
+<label for="count">Count</label>
+</div>
+<!-- Id is result for anchor when displaying results -->
+<div class="checkbox-item" id="result">
+<input type="checkbox" id="quartiles">
+<label for="quartiles">Quartiles</label>
+</div>
+</div>
+</div>
+
+<div class="button-group">
+<button onclick="calculate()">Calculate</button>
+<button onclick="calculateAll()">All</button>
+</div>
+
+<div class="error" id="error"></div>
+<div class="results" id="results"></div>
+</div>
+
+<script>
+let currentNumbers = [];
+
+function calculateAll() {
+const ids = ['mean', 'median', 'mode', 'range', 'std', 'variance', 'zscore', 'count', 'quartiles'];
+ids.forEach(id => document.getElementById(id).checked = true);
+calculate();
+}
+
+function parseNumbers(input) {
+return input
+.split(/[\s,]+/)
+.map(token => parseFloat(token.trim()))
+.filter(num => !Number.isNaN(num));
+}
+
+function quartile(sorted, position) {
+const n = sorted.length;
+if (n === 0) return 0;
+const index = (n - 1) * position;
+const lower = Math.floor(index);
+const upper = Math.ceil(index);
+if (lower === upper) return sorted[lower];
+const weight = index - lower;
+return sorted[lower] + (sorted[upper] - sorted[lower]) * weight;
+}
+
+function calculate() {
+const errorDiv = document.getElementById('error');
+const resultsDiv = document.getElementById('results');
+errorDiv.classList.remove('show');
+resultsDiv.classList.remove('show');
+
+try {
+let input = document.getElementById('numbers').value.trim();
+if (!input) throw new Error('Please enter at least one number or type random.');
+
+if (input.toLowerCase() === 'random') {
+const minVal = parseFloat(document.getElementById('randomMin').value.trim());
+const maxVal = parseFloat(document.getElementById('randomMax').value.trim());
+let randomMin = Number.isNaN(minVal) ? -100 : minVal;
+let randomMax = Number.isNaN(maxVal) ? 100 : maxVal;
+if (randomMin > randomMax) [randomMin, randomMax] = [randomMax, randomMin];
+
+const randomCount = Math.floor(Math.random() * 15) + 5;
+const randomNumbers = Array.from({ length: randomCount }, () =>
+Math.floor(Math.random() * (randomMax - randomMin + 1)) + randomMin
+);
+input = randomNumbers.join(', ');
+document.getElementById('numbers').value = input;
+}
+
+const numbers = parseNumbers(input);
+if (numbers.length === 0) throw new Error('No valid numbers found.');
+
+const optionIds = ['mean', 'median', 'mode', 'range', 'std', 'variance', 'zscore', 'count', 'quartiles'];
+if (!optionIds.some(id => document.getElementById(id).checked)) {
+throw new Error('Select at least one output option.');
+}
+
+currentNumbers = numbers;
+const sorted = [...numbers].sort((a, b) => a - b);
+const sum = numbers.reduce((acc, value) => acc + value, 0);
+const mean = sum / numbers.length;
+const variance = numbers.reduce((acc, value) => acc + Math.pow(value - mean, 2), 0) / numbers.length;
+const stdDev = Math.sqrt(variance);
+
+const results = {};
+if (document.getElementById('mean').checked) {
+results.mean = mean.toFixed(4);
+}
+if (document.getElementById('median').checked) {
+const mid = Math.floor(sorted.length / 2);
+const median = sorted.length % 2 === 0
+? (sorted[mid - 1] + sorted[mid]) / 2
+: sorted[mid];
+results.median = median.toFixed(4);
+}
+if (document.getElementById('mode').checked) {
+const frequency = {};
+sorted.forEach(num => { frequency[num] = (frequency[num] || 0) + 1; });
+const maxFreq = Math.max(...Object.values(frequency));
+const modes = Object.keys(frequency)
+.filter(key => frequency[key] === maxFreq)
+.map(Number)
+.sort((a, b) => a - b);
+results.mode = modes.length === Object.keys(frequency).length ? 'No mode' : modes.join(', ');
+}
+if (document.getElementById('range').checked) {
+results.range = (sorted[sorted.length - 1] - sorted[0]).toFixed(4);
+}
+if (document.getElementById('count').checked) {
+results.count = numbers.length;
+}
+if (document.getElementById('std').checked) {
+results.stdDev = stdDev.toFixed(4);
+}
+if (document.getElementById('variance').checked) {
+results.variance = variance.toFixed(4);
+}
+if (document.getElementById('zscore').checked) {
+results.zScores = stdDev === 0
+? 'Cannot calculate (std deviation = 0)'
+: numbers.map(num => ((num - mean) / stdDev).toFixed(4)).join(', ');
+}
+if (document.getElementById('quartiles').checked) {
+const q1 = quartile(sorted, 0.25);
+const q2 = quartile(sorted, 0.5);
+const q3 = quartile(sorted, 0.75);
+if (document.getElementById('quartiles').checked) {
+results.Q1 = q1.toFixed(4);
+results.Q3 = q3.toFixed(4);
+results.IQR = (q3 - q1).toFixed(4);
+}
+}
+
+displayResults(results, currentNumbers);
+} catch (error) {
+errorDiv.textContent = '❌ ' + error.message;
+errorDiv.classList.add('show');
+document.location.href = '#error';
+}
+}
+
+function displayResults(results, numbers) {
+const resultsDiv = document.getElementById('results');
+const labels = {
+mean: 'Mean (Average)',
+median: 'Median',
+mode: 'Mode',
+range: 'Range',
+count: 'Count',
+stdDev: 'Standard Deviation',
+variance: 'Variance',
+zScores: 'Z-Scores',
+Q1: 'Lower Quartile (Q1)',
+Q3: 'Upper Quartile (Q3)',
+IQR: 'Interquartile Range (IQR)'
+};
+let html = '';
+
+Object.entries(results).forEach(([key, value]) => {
+html += `
+                   <div class="result-item">
+                       <div class="result-label">${labels[key] || key}:</div>
+                       <div class="result-value">${value}</div>
+                   </div>
+               `;
+});
+
+resultsDiv.innerHTML = html;
+resultsDiv.classList.add('show');
+document.location.href = '#result';
+}
+
+
+document.getElementById('numbers').addEventListener('keydown', function(event) {
+const value = this.value.trim().toLowerCase();
+if (event.key === 'Enter' && value === 'random') {
+event.preventDefault();
+document.getElementById('randomMin').focus();
+} else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+event.preventDefault();
+calculate();
+}
+});
+
+</script>
+</body>
+</html>
