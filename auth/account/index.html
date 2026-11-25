@@ -593,7 +593,7 @@ layout: null
       const btn = $("crop-save");
       setBusy(btn, true, "Uploading…");
       try {
-        const blob = await new Promise((res) => cropper.getCroppedCanvas({ width: 300, height: 300 }).toBlob(res, "image/jpeg", 0.9));
+        const blob = await new Promise((res) => cropper.getCroppedCanvas({ width: 200, height: 200, imageSmoothingQuality: "high" }).toBlob(res, "image/jpeg", 0.9));
         const formData = new FormData();
         formData.append("file", blob, "profile.jpg");
         formData.append("upload_preset", uploadPreset);
