@@ -113,10 +113,8 @@
         '<div style="font-size:48px;line-height:1;margin-bottom:14px">✨</div>' +
         '<h1 style="margin:0 0 14px;font-size:clamp(26px,5.2vw,46px);font-weight:800;line-height:1.25">' +
         'It’s not over until it’s ' +
-        '<span style="color:#ffd24a;font-weight:900" dir="rtl" lang="he">ע״ב</span>-er.</h1>' +
-        '<p style="margin:0 0 8px;font-size:clamp(16px,3vw,22px);font-weight:700;color:#cdd8ff">Rabbeinu Tam — 72 Minutes</p>' +
-        '<p style="margin:0 0 18px;font-size:13px;opacity:.55">' +
-        '<span dir="rtl" lang="he">ע״ב</span> = 72 = over</p>' +
+        '<span style="color:#ffd24a;font-weight:900" dir="rtl" lang="he">ע״ב</span>er.</h1>' +
+        '<p style="margin:0 0 18px;font-size:clamp(16px,3vw,22px);font-weight:700;color:#cdd8ff">Rabbeinu Tam — 72 Minutes</p>' +
         '<div style="display:inline-block;padding:9px 16px;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:14px;opacity:.9">' +
         'about ' + mins + ' more minute' + (mins === 1 ? "" : "s") + ' · ' + SITE + ' reopens at ' + fmtTime(z.rt) + '</div>';
     }
