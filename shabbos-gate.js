@@ -2,7 +2,7 @@
    Shabbos gate — closes the whole site during Shabbos (Boca Raton zmanim).
    - From candle-lighting (shkiah − 18 min) Friday the site goes fully dark.
    - From the earliest shita that Shabbos is out (tzeis, 3 stars / 8.5°) until
-     Rabbeinu Tam (shkiah + 72 min) Motzei Shabbos, it shows the "ע״ב-er" screen.
+     Rabbeinu Tam (shkiah + 72 min) Motzei Shabbos, it shows the "עב-er" screen.
    - After Rabbeinu Tam the site reopens on its own (re-checks every 15s).
    Pure client-side, no dependencies. Tweak the CONFIG block to adjust.
    ========================================================================== */
@@ -59,7 +59,7 @@
     return { candle: candle, tzeis: tzeis, rt: rt };
   }
 
-  // 'shabbos' (fully dark) | 'motzei' (ע״ב-er screen) | 'open'
+  // 'shabbos' (fully dark) | 'motzei' (עב-er screen) | 'open'
   function stateNow() {
     var now = new Date(), z = zmanim(now);
     if (now < z.candle || now >= z.rt) return { s: "open", z: z, now: now };
@@ -107,13 +107,13 @@
         '<p style="margin:0 0 6px;font-size:clamp(16px,2.6vw,20px);opacity:.92">' + SITE + ' is closed for Shabbos.</p>' +
         '<p style="margin:0;font-size:14px;opacity:.6">Boca Raton · Shabbos ends ' + fmtTime(z.tzeis) +
         ' &nbsp;·&nbsp; Rabbeinu Tam ' + fmtTime(z.rt) + '</p>';
-    } else { // motzei — the ע״ב-er screen
+    } else { // motzei — the עב-er screen
       var mins = Math.max(1, Math.round((z.rt - st.now) / 60000));
       inner =
         '<div style="font-size:48px;line-height:1;margin-bottom:14px">✨</div>' +
         '<h1 style="margin:0 0 14px;font-size:clamp(26px,5.2vw,46px);font-weight:800;line-height:1.25">' +
         'It’s not over until it’s ' +
-        '<span style="color:#ffd24a;font-weight:900" dir="rtl" lang="he">ע״ב</span>er.</h1>' +
+        '<span style="color:#ffd24a;font-weight:900" dir="rtl" lang="he">עב</span>er.</h1>' +
         '<p style="margin:0 0 18px;font-size:clamp(16px,3vw,22px);font-weight:700;color:#cdd8ff">Rabbeinu Tam — 72 Minutes</p>' +
         '<div style="display:inline-block;padding:9px 16px;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:14px;opacity:.9">' +
         'about ' + mins + ' more minute' + (mins === 1 ? "" : "s") + ' · ' + SITE + ' reopens at ' + fmtTime(z.rt) + '</div>';
