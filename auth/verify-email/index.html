@@ -177,7 +177,55 @@ layout: null
       }
     }
 
+    // ---------- Continue once verified ----------
+    // People verify by clicking the link in their email, often in another tab,
+    // so this page keeps checking and takes them back to where they were
+    // (prevPage) once it's done.
+    const goBack = () => window.location.replace(sessionStorage.getItem("prevPage") || "/");
+    let watchTimer = null;
+    let watchedUser = null;
+
+    function showVerifiedAndGo(user) {
+      stopWatching();
+      clearInterval(cooldownInterval);
+      setBadge("check");
+      titleEl.textContent = "Email verified";
+      setSubtitle("", user.email, " is verified. Taking you back…");
+      sendText.textContent = "Verified ✓";
+      sendBtn.classList.remove("is-loading");
+      sendBtn.classList.add("is-done");
+      sendBtn.disabled = true;
+      clearMsg();
+      setTimeout(goBack, 1200);
+    }
+
+    async function checkVerified() {
+      const user = watchedUser;
+      if (!user || document.hidden) return;
+      try { await user.reload(); } catch (err) { return; }   // try again next time
+      if (user !== watchedUser || !user.emailVerified) return;
+      // Refresh the sign-in token so the site sees the verified email at once.
+      await user.getIdToken(true).catch(() => {});
+      showVerifiedAndGo(user);
+    }
+
+    function watchForVerification(user) {
+      watchedUser = user;
+      clearInterval(watchTimer);
+      watchTimer = setInterval(checkVerified, 4000);
+    }
+
+    function stopWatching() {
+      watchedUser = null;
+      clearInterval(watchTimer);
+    }
+
+    // Check straight away when they come back to this tab.
+    document.addEventListener("visibilitychange", checkVerified);
+    window.addEventListener("focus", checkVerified);
+
     onAuthStateChanged(auth, (user) => {
+      stopWatching();
       clearInterval(cooldownInterval);
       sendBtn.classList.remove("is-loading", "is-done");
       signInLink.hidden = true;
@@ -185,21 +233,16 @@ layout: null
 
       if (user) {
         if (user.emailVerified) {
-          setBadge("check");
-          titleEl.textContent = "Email verified";
-          setSubtitle("", user.email, " is verified. You're all set!");
-          sendText.textContent = "Verified ✓";
-          sendBtn.classList.add("is-done");
-          sendBtn.disabled = true;
-          clearMsg();
+          showVerifiedAndGo(user);
         } else {
           setBadge("mail");
           titleEl.textContent = "Verify your email";
-          setSubtitle("We'll send a verification link to ", user.email, ". Click it to secure your account.");
+          setSubtitle("We'll send a verification link to ", user.email, ". Click it, and this page will continue on its own.");
           sendText.textContent = "Send Verification Email";
           sendBtn.disabled = false;
           clearMsg();
           checkCooldown(user.uid);
+          watchForVerification(user);
         }
       } else {
         setBadge("lock");
