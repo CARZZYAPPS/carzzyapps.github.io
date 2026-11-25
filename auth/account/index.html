@@ -315,13 +315,13 @@ layout: null
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import {
       getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, deleteUser,
-      reauthenticateWithCredential, reauthenticateWithPopup, reauthenticateWithRedirect, getRedirectResult, linkWithCredential,
+      reauthenticateWithCredential, reauthenticateWithPopup, linkWithCredential,
       EmailAuthProvider, GoogleAuthProvider, updateProfile
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, deleteDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { claimUsername, getProfile, setUseGooglePhoto, validateUsername, USERNAME_MAX } from "/auth/username.js?v=4";
     import { attachPasswordChecklist, PASSWORD_RULES_MESSAGE } from "/auth/password-rules.js?v=1";
-    import { scrubGoogleProfile, clearProfileFields, googlePhotoOf, rememberGooglePhotoChoice, rememberUsername, profileChanged, CHOOSE_USERNAME_URL } from "/auth/google.js?v=7";
+    import { scrubGoogleProfile, clearProfileFields, googlePhotoOf, rememberGooglePhotoChoice, rememberUsername, profileChanged, CHOOSE_USERNAME_URL } from "/auth/google.js?v=8";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -523,7 +523,6 @@ layout: null
       $("loading").hidden = true;
       $("account").hidden = false;
       selectTab(location.hash.slice(1));
-      if (sessionStorage.getItem(PENDING_DELETE_KEY)) finishDeleteAfterGoogle();
     });
 
     // ---------- Username ----------
@@ -771,67 +770,29 @@ layout: null
       setBusy(btn, false);
     }
 
-    // Google-only accounts confirm by going to Google in the whole window
-    // (like sign-in). Google sends them back here and the delete finishes
-    // straight away, while the sign-in is fresh, so Firebase doesn't ask
-    // them to sign out and back in.
-    const PENDING_DELETE_KEY = "czPendingDelete";
-
     $("delete-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector("button[type=submit]");
       if (!$("del-confirm").checked) return showMsg("delete-msg", "Check the box to confirm you want to delete your account.", "error");
       showMsg("delete-msg", "");
 
-      if (!hasPassword()) {
-        setBusy(btn, true, "Going to Google…");
-        try {
-          sessionStorage.setItem(PENDING_DELETE_KEY, user.uid);
+      setBusy(btn, true, hasPassword() ? "Deleting…" : "Waiting for Google…");
+      try {
+        if (hasPassword()) {
+          // Confirm first, so a wrong password can't leave things half-deleted.
+          await confirmIdentity("del-pwd");
+        } else {
+          // Google-only: confirm in a Google popup, then delete straight away
+          // while that confirmation is fresh (Firebase only lets an account
+          // be deleted shortly after signing in).
           const provider = new GoogleAuthProvider();
           provider.setCustomParameters({ prompt: "select_account" });
-          await reauthenticateWithRedirect(user, provider);
-        } catch (err) {
-          sessionStorage.removeItem(PENDING_DELETE_KEY);
-          deleteFailed(btn, err);
-        }
-        return;
-      }
-
-      setBusy(btn, true, "Deleting…");
-      try {
-        // Confirm first, so a wrong password can't leave things half-deleted.
-        await confirmIdentity("del-pwd");
-        await deleteEverything(btn);
-      } catch (err) {
-        deleteFailed(btn, err);
-      }
-    });
-
-    // Back from Google after choosing to delete.
-    async function finishDeleteAfterGoogle() {
-      const pendingUid = sessionStorage.getItem(PENDING_DELETE_KEY);
-      sessionStorage.removeItem(PENDING_DELETE_KEY);
-      selectTab("delete");
-      const btn = $("delete-form").querySelector("button[type=submit]");
-      $("del-confirm").checked = true;
-      setBusy(btn, true, "Confirming…");
-      try {
-        const result = await getRedirectResult(auth);
-        if (!result || pendingUid !== user.uid || result.user.uid !== user.uid) {
-          setBusy(btn, false);
-          showMsg("delete-msg", "Google confirmation was cancelled. Nothing was changed.", "error");
-          return;
+          await reauthenticateWithPopup(user, provider);
         }
         await deleteEverything(btn);
       } catch (err) {
         deleteFailed(btn, err);
       }
-    }
-
-    // Back on Google's page can restore this page from memory without
-    // reloading; reload so the delete finishes (or reports it was cancelled).
-    window.addEventListener("pageshow", (e) => {
-      if (e.persisted && sessionStorage.getItem(PENDING_DELETE_KEY)) location.reload();
     });
   </script>
 {% include site-footer.html %}

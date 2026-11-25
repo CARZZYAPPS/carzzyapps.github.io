@@ -90,7 +90,7 @@ layout: null
       setPersistence,
       signInWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { startGoogleSignIn, finishGoogleSignIn, isFinishingGoogleSignIn, googleErrorMessage, CHOOSE_USERNAME_URL } from "/auth/google.js?v=7";
+    import { signInWithGoogle, googleErrorMessage, CHOOSE_USERNAME_URL } from "/auth/google.js?v=8";
 
     const app = initializeApp({ apiKey: "AIzaSyAgu1uiobgixRWcvIja6bI1l6M2KQ36FL4", authDomain: "www.carzzyapps.com", projectId: "carzzy-apps" });
     const auth = getAuth(app);
@@ -159,16 +159,16 @@ layout: null
     });
 
     // ---------- Continue with Google ----------
-    // The whole window goes to Google, then Google sends the person back here.
+    // Google opens in a popup; this page stays put.
     const googleBtn = document.getElementById("google-btn");
     const googleMsg = document.getElementById("google-msg");
+    const googleText = googleBtn.querySelector("span:last-child");
 
     // Google messages show right under the Google button.
     function showGoogleMsg(text, kind) {
       googleMsg.className = "auth-msg is-" + kind;
       googleMsg.textContent = text;
     }
-    const googleText = googleBtn.querySelector("span:last-child");
 
     function setGoogleBusy(on, text) {
       googleBtn.disabled = on;
@@ -177,50 +177,23 @@ layout: null
     }
 
     googleBtn.addEventListener("click", async () => {
-      setGoogleBusy(true, "Going to Google…");
+      setGoogleBusy(true, "Waiting for Google…");
       googleMsg.className = "auth-msg";
       try {
         const staySignedIn = document.getElementById("stay-signed-in").checked;
-        await startGoogleSignIn(auth, staySignedIn);
+        const { needsUsername } = await signInWithGoogle(app, auth, staySignedIn);
+        if (needsUsername) {
+          window.location.replace(CHOOSE_USERNAME_URL);
+        } else {
+          showGoogleMsg("Signed in! Taking you back…", "success");
+          window.location.replace(sessionStorage.getItem("prevPage") || "/");
+        }
       } catch (err) {
         console.error("Google sign-in failed.", err);
         setGoogleBusy(false);
         const text = googleErrorMessage(err);
         if (text) showGoogleMsg(text, "error");
       }
-    });
-
-    // Back from Google: finish signing in, then move on.
-    function finishFromGoogle() {
-      setGoogleBusy(true, "Signing you in…");
-      finishGoogleSignIn(app, auth).then((done) => {
-        if (!done) { setGoogleBusy(false); return; }
-        if (done.cancelled) {
-          setGoogleBusy(false);
-          showGoogleMsg("Google sign-in was cancelled. Please try again.", "error");
-          return;
-        }
-        if (done.needsUsername) {
-          window.location.replace(CHOOSE_USERNAME_URL);
-        } else {
-          showGoogleMsg("Signed in! Taking you back…", "success");
-          window.location.replace(sessionStorage.getItem("prevPage") || "/");
-        }
-      }).catch((err) => {
-        console.error("Google sign-in failed.", err);
-        setGoogleBusy(false);
-        const text = googleErrorMessage(err);
-        if (text) showGoogleMsg(text, "error");
-      });
-    }
-    if (isFinishingGoogleSignIn()) finishFromGoogle();
-
-    // Pressing Back on Google's page can bring this page back from the
-    // browser's memory without reloading it; finish (or reset) then too.
-    window.addEventListener("pageshow", (e) => {
-      if (!e.persisted) return;
-      if (isFinishingGoogleSignIn()) finishFromGoogle();
-      else setGoogleBusy(false);
     });
   </script>
 {% include site-footer.html %}

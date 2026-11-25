@@ -11,9 +11,8 @@ import {
   GoogleAuthProvider,
   browserLocalPersistence,
   browserSessionPersistence,
-  getRedirectResult,
   setPersistence,
-  signInWithRedirect,
+  signInWithPopup,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getProfile } from "/auth/username.js?v=4";
@@ -96,46 +95,15 @@ export async function scrubGoogleProfile(user, username, useGooglePhoto = false)
   profileChanged();
 }
 
-// Google sign-in uses the whole window: the page goes to Google and Google
-// sends the person back to the same page, which then calls
-// finishGoogleSignIn(). This works because authDomain is www.carzzyapps.com
-// (see /__/auth/); through firebaseapp.com, Safari would block it.
-const PENDING_KEY = "czGoogleSignIn";   // sessionStorage: "stay" or "session"
-
-async function applyPersistence(auth, staySignedIn) {
+// Google sign-in opens Google in a popup window; the page stays where it is.
+// Returns { needsUsername } so the page can send new users to choose one.
+// Throws on errors, including the person closing the popup
+// (auth/popup-closed-by-user); googleErrorMessage() turns those into text.
+export async function signInWithGoogle(app, auth, staySignedIn) {
   await setPersistence(auth, staySignedIn ? browserLocalPersistence : browserSessionPersistence);
-}
-
-// Leaves the page for Google. Only returns if something goes wrong.
-export async function startGoogleSignIn(auth, staySignedIn) {
-  await applyPersistence(auth, staySignedIn);
-  sessionStorage.setItem(PENDING_KEY, staySignedIn ? "stay" : "session");
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  await signInWithRedirect(auth, provider);
-}
-
-// True while coming back from Google, so the page can show it's busy.
-export function isFinishingGoogleSignIn() {
-  return sessionStorage.getItem(PENDING_KEY) !== null;
-}
-
-// Call on page load. Returns null if this isn't a return from Google,
-// { cancelled: true } if they left Google without signing in, otherwise
-// { needsUsername } so the page can send new users to choose one.
-// Throws on errors (e.g. account-exists-with-different-credential).
-export async function finishGoogleSignIn(app, auth) {
-  const pending = sessionStorage.getItem(PENDING_KEY);
-  if (pending === null) return null;
-  sessionStorage.removeItem(PENDING_KEY);
-  const staySignedIn = pending === "stay";
-  await applyPersistence(auth, staySignedIn);
-
-  const result = await getRedirectResult(auth);
-  // If something else on the page picked up the result first, the person is
-  // still signed in: use the current user instead.
-  const user = result ? result.user : auth.currentUser;
-  if (!user || !user.providerData.some((p) => p.providerId === "google.com")) return { cancelled: true };
+  const { user } = await signInWithPopup(auth, provider);
 
   const { username, useGooglePhoto } = await getProfile(app, user.uid);
   await scrubGoogleProfile(user, username, useGooglePhoto);
